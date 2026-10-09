@@ -1,0 +1,40 @@
+{
+  "id": "TICKET-IMPL-006",
+  "story": "STORY-007",
+  "plan": "PLAN-006",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/camera.ts",
+    "src/globe/camera.test.ts",
+    "src/globe/main.ts",
+    "src/main.ts",
+    "index.html",
+    "tests/e2e/camera.e2e.ts",
+    "playwright.config.ts"
+  ],
+  "change_summary": "GlobeCamera sai lentotilan: flyTo kiertää kohdepistettä isoympyrää pitkin (quaternion-slerp), interpoloi etäisyyden logaritmisesti ja siirtää suunnan rinnakkain. Lento kestää 1 s smoothstep-pehmennyksellä. Rulla, raahaus ja pinch keskeyttävät lennon, ja prefers-reduced-motion tekee siirtymästä välittömän. Tuplaklikkaus valitsee lähimmän heksan säteen ja pallon leikkauksella. Kohde-etäisyys on R × 0,25, tai nykyinen etäisyys, jos ollaan jo lähempänä. Overlayn jäänteet poistettiin: openHexSimulation-kutsu, #sim-overlay, #sim-close ja closeSimulation. CI-korjaus: animaatiosilmukka rajasi aika-askeleen 0,1 s:iin, jolloin lento venyi GitHubin hitaalla ajokoneella. Nyt rigi saa todellisen kuluneen ajan. Playwright raportoi CI:ssä myös github-raportoijalla, jotta virheet näkyvät annotaatioina ilman lokioikeuksia.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "GlobeCamera: flyTo, update, cancelFlight, flying (uudet)",
+      "attachInput: wheel ja pointerdown kutsuvat cancelFlight",
+      "main.ts: raycaster poistettu, tuplaklikkaus käyttää rig.raycast-kutsua",
+      "main.ts: animate(now) kutsuu rig.update(dt) ilman rajausta",
+      "src/main.ts: window.closeSimulation poistettu",
+      "index.html: #sim-overlay ja #sim-close tyyleineen poistettu"
+    ],
+    "call_sites_found": [
+      "window.openHexSimulation: ei määritelty missään",
+      "closeSimulation: vain index.html:n sim-close-napissa",
+      "raycaster: vain tuplaklikkauksessa"
+    ],
+    "call_sites_updated": [
+      "Kaikki poistettu tai korvattu"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Mainin CI oli punainen kahdessa ajossa (37958747541 ja 37960340626), ja julkaisu ohitettiin kummassakin. Tämä vahvisti, että punainen testi estää julkaisun (STORY-003). Korjaus on ajossa 37961936593 (vihreä)."
+  },
+  "commit": "79b22c8",
+  "progress": 100
+}

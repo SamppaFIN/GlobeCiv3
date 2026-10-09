@@ -283,10 +283,10 @@ hakemisto.
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005"],
-  "next": "STORY-007"
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006"],
+  "next": "STORY-008"
 }
 ```
 
@@ -334,6 +334,13 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 **Käytännössä:** Yksiköt, teknologiat ja rakennukset nimetään omilla nimillä. Jokaisen lainatun luvun lähde kirjataan koodikommenttiin tai tikettiin.
 **Kiellettyä:** Civilization-nimen käyttö pelissä sekä tekstien, kuvien tai äänien kopiointi.
 
+### 5. Aikaan sidottu animaatio seuraa seinäkelloa
+
+**Sääntö:** Animaatio, jolla on kesto (lento, häivytys), etenee todellisen kuluneen ajan mukaan. Framen aika-askelta ei rajata sille.
+**Miksi:** 0,1 s:n dt-raja venytti 1 s:n lennon GitHubin GPU:ttomalla ajokoneella, ja CI oli kahdesti punainen (STORY-007).
+**Käytännössä:** `rig.update((now - lastFrame) / 1000)`. Mahdollinen raja kuuluu simulaatiotikkiin, ei animaatioihin. Kestoa testataan hidastetuilla frameilla.
+**Kiellettyä:** Ajastettu E2E-tarkistus kiinteällä odotuksella. Odota tilaa (waitForFunction) ja mittaa kesto sivun sisältä.
+
 ## 13. Päätökset
 
 | Päivä | Päätös | Perustelu | Kuka |
@@ -361,6 +368,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | Pelimekaniikkoina käytetään aluksi Civilization I:n perusmekaniikkoja. Omat pelimekaniikat ja säännöt suunnitellaan erikseen, kun perusmoottori (EPIC-001–003) on valmis. STORY-013 ja STORY-016 muutettiin tämän mukaisiksi. | Moottori tarvitsee toimivan pelin testattavaksi ennen omaa sääntösuunnittelua | Sami |
 | 2026-10-09 | STORY-003 hyväksyttiin, ja EPIC-001 on valmis. Playwrightin savutestit ajetaan CI:ssä ennen julkaisua. Ensimmäinen ajo löysi puuttuvan favicon-linkin (404), joka korjattiin. | Työnkulku: suunnitelma, testi ja hyväksyntä | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-005 hyväksyttiin: oma kamerarigi korvaa OrbitControlsin. Zoom kohti kursoria pätee aina, kun kursori näkee pallon zoomin jälkeen. Ulos zoomatessa pallon reunalla pallo voi kutistua kursorin alta. Järjestys jatkossa: STORY-007, sitten STORY-008. STORY-006 (tarkkuus) todennetaan vasta, kun pintaruudut ovat pääpelissä. | Tarkkuutta ei voi todentaa pääpelissä ilman pintaa | Linssi (Samin valtuutuksella) |
+| 2026-10-09 | STORY-007 hyväksyttiin: tuplaklikkaus lentää heksaan, ja overlayn jäänteet on poistettu. CI oli kahdesti punainen, koska lennon kesto riippui ruudunpäivityksestä. Korjattu, ja regressiotesti lisätty (sääntö 5). | Julkaisu pysyi edellisessä vihreässä versiossa koko ajan | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T16:20:02Z",
+    "generated_at": "2026-10-09T16:54:52Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "e440640",
+    "git_commit": "79b22c8",
     "git_branch": "main",
     "language": "fi"
   },
@@ -71,7 +71,7 @@
         "STORY-006",
         "STORY-007"
       ],
-      "progress": 33
+      "progress": 67
     },
     {
       "id": "EPIC-003",
@@ -269,17 +269,17 @@
       "depends_on": [
         "STORY-005"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Tuplaklikkaus interpoloi korkeuden ja isoympyrän noin sekunnissa, eikä overlay-ikkunaa avata",
         "Kun prefers-reduced-motion on päällä, siirtymä on välitön",
         "Rulla tai raahaus keskeyttää lennon"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-006",
+        "implementation": "TICKET-IMPL-006",
+        "testing": "TICKET-TEST-006"
       }
     },
     {
@@ -890,6 +890,54 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-006",
+      "story": "STORY-007",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "GlobeCamera saa lentotilan: flyTo(piste, etäisyys, kesto) interpoloi kohdepisteen isoympyrää pitkin (slerp), etäisyyden logaritmisesti ja suunnan rinnakkaissiirtona. Kesto on 1 s smoothstep-pehmennyksellä, ja update(dt) etenee framettain. Rulla, raahaus ja pinch keskeyttävät lennon. Kun prefers-reduced-motion on päällä, kesto on 0 ja siirtymä välitön. Tuplaklikkaus etsii lähimmän heksan pallon säteenleikkauksella (rig.raycast) eikä enää pisteiden raycastilla, jonka 0,3 yksikön kynnys ei toimi läheltä. Kohde-etäisyys on alueen näkymä (R × 0,25) tai nykyinen, jos ollaan jo lähempänä. Overlayn jäänteet poistetaan, koska lentäminen korvaa ne: openHexSimulation-kutsu, #sim-overlay, #sim-close ja closeSimulation.",
+      "alternatives_considered": [
+        {
+          "name": "Tween-kirjasto (esim. @tweenjs/tween.js)",
+          "pros": "Valmiit pehmennyskäyrät",
+          "cons": "Uusi riippuvuus kolmen rivin interpolaatioon. Isoympyrä ja logaritminen etäisyys pitäisi silti laskea itse.",
+          "rejected_because": "Yksinkertaisuus ensin"
+        },
+        {
+          "name": "Lineaarinen interpolaatio kohdepisteelle",
+          "pros": "Yksinkertaisempi",
+          "cons": "Kulkee pallon sisäkautta ja vaatii normalisoinnin, mikä tekee nopeudesta epätasaisen. Pitkillä matkoilla (yli 90°) reitti vääristyy.",
+          "rejected_because": "Kriteeri vaatii isoympyrän"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/camera.ts",
+        "src/globe/camera.test.ts",
+        "src/globe/main.ts",
+        "src/main.ts (closeSimulation pois)",
+        "index.html (overlay-elementit ja -tyylit pois)",
+        "tests/e2e/camera.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "flyTo, update, cancelFlight ja flying camera.ts:ään yksikkötesteineen",
+          "verify": "Lento päättyy 1 s:ssa tarkasti kohteeseen, kulkee isoympyrän tasossa monotonisesti, keskeytys pysäyttää sen, ja kesto 0 on välitön"
+        },
+        {
+          "step": 2,
+          "action": "Kytke tuplaklikkaus, update(dt) animaatiosilmukkaan, keskeytys syötteeseen ja reduced motion. Poista overlayn jäänteet.",
+          "verify": "npm run build menee läpi, eikä sim-overlay tai openHexSimulation esiinny koodissa (grep)"
+        },
+        {
+          "step": 3,
+          "action": "E2E: tuplaklikkaus lentää (ei perillä 0,3 s:ssa, perillä 1,3 s:ssa), reduced motion on välitön, rulla keskeyttää, eikä overlay-elementtiä ole",
+          "verify": "npm run test:e2e vihreä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -1055,6 +1103,46 @@
         "notes": "Tuplaklikkaus toimii ennallaan (raycast kameran kautta). Läheltä katsottuna pääpeli näyttää lähes tyhjältä, koska pintaa ei vielä ole."
       },
       "commit": "5fa783f",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-006",
+      "story": "STORY-007",
+      "plan": "PLAN-006",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/camera.ts",
+        "src/globe/camera.test.ts",
+        "src/globe/main.ts",
+        "src/main.ts",
+        "index.html",
+        "tests/e2e/camera.e2e.ts",
+        "playwright.config.ts"
+      ],
+      "change_summary": "GlobeCamera sai lentotilan: flyTo kiertää kohdepistettä isoympyrää pitkin (quaternion-slerp), interpoloi etäisyyden logaritmisesti ja siirtää suunnan rinnakkain. Lento kestää 1 s smoothstep-pehmennyksellä. Rulla, raahaus ja pinch keskeyttävät lennon, ja prefers-reduced-motion tekee siirtymästä välittömän. Tuplaklikkaus valitsee lähimmän heksan säteen ja pallon leikkauksella. Kohde-etäisyys on R × 0,25, tai nykyinen etäisyys, jos ollaan jo lähempänä. Overlayn jäänteet poistettiin: openHexSimulation-kutsu, #sim-overlay, #sim-close ja closeSimulation. CI-korjaus: animaatiosilmukka rajasi aika-askeleen 0,1 s:iin, jolloin lento venyi GitHubin hitaalla ajokoneella. Nyt rigi saa todellisen kuluneen ajan. Playwright raportoi CI:ssä myös github-raportoijalla, jotta virheet näkyvät annotaatioina ilman lokioikeuksia.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "GlobeCamera: flyTo, update, cancelFlight, flying (uudet)",
+          "attachInput: wheel ja pointerdown kutsuvat cancelFlight",
+          "main.ts: raycaster poistettu, tuplaklikkaus käyttää rig.raycast-kutsua",
+          "main.ts: animate(now) kutsuu rig.update(dt) ilman rajausta",
+          "src/main.ts: window.closeSimulation poistettu",
+          "index.html: #sim-overlay ja #sim-close tyyleineen poistettu"
+        ],
+        "call_sites_found": [
+          "window.openHexSimulation: ei määritelty missään",
+          "closeSimulation: vain index.html:n sim-close-napissa",
+          "raycaster: vain tuplaklikkauksessa"
+        ],
+        "call_sites_updated": [
+          "Kaikki poistettu tai korvattu"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Mainin CI oli punainen kahdessa ajossa (37958747541 ja 37960340626), ja julkaisu ohitettiin kummassakin. Tämä vahvisti, että punainen testi estää julkaisun (STORY-003). Korjaus on ajossa 37961936593 (vihreä)."
+      },
+      "commit": "79b22c8",
       "progress": 100
     }
   ],
@@ -1500,6 +1588,88 @@
           },
           {
             "item": "Kallistus on jatkuva, ja OrbitControlsin rajat on poistettu",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-006",
+      "story": "STORY-007",
+      "implementation_ticket": "TICKET-IMPL-006",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. CI-vika: animaatiosilmukka rajasi dt:n 0,1 s:iin, joten hitailla frameilla 1 s:n lento kesti seinäkellolla pidempään. Tuplaklikkaustesti odotti kiinteät 1,3 s ja näki lennon yhä käynnissä. Juurisyy oli koodissa (lennon kesto riippui ruudunpäivityksestä). Testin kiinteä odotus oli lisäksi hauras.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "tests/e2e/camera.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright: paikallisesti Chrome ja Intel UHD sekä CI-tila (Playwrightin Chromium ja SwiftShader). GitHub Actions ubuntu-latest.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0, GitHubin check-run-annotaatiot",
+        "cases": [
+          {
+            "steps": "Yksikkötestit: lento päättyy 1 s:ssa eikä ennen, kulkee isoympyrän tasossa monotonisesti, suunta pysyy tangenttina, keskeytys pysäyttää, kesto 0 on välitön ja kohde-etäisyys rajataan",
+            "expected": "Kaikki vihreitä",
+            "result": "22/22 yksikkötestiä vihreitä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tuplaklikkaus lentää lähimpään heksaan",
+            "expected": "Lento on käynnissä 0,3 s:n kohdalla, päätyy heksaan, eikä overlay-elementtejä ole",
+            "result": "pass paikallisesti ja CI:ssä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: reduced motion (emulateMedia)",
+            "expected": "Siirtymä on valmis seuraavassa framessa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: rulla keskeyttää lennon",
+            "expected": "flying false heti, eikä kohdetta saavuteta",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E-regressio: jokainen frame kestää noin 150 ms, ja lento ajoitetaan pelin omista update-kutsuista",
+            "expected": "Lento päättyy yhden framen tarkkuudella sekunnissa",
+            "result": "Vanhalla dt-rajauksella punainen (1 527 ms ja 1 533 ms), korjauksella vihreä viidesti peräkkäin kummassakin tilassa",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Mainin CI-ajo 37961936593 (commit 79b22c8)",
+            "expected": "Kaikki testit vihreitä ja julkaisu",
+            "result": "9 passed (16,0 s), deploy success",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Tuplaklikkaus ja lento oikealla puhelimella (S23 Ultra) Pagesista",
+            "expected": "Tuplanapautus lentää alueelle",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Tuplaklikkaus lentää noin sekunnissa, eikä overlay avaudu",
+            "checked": true
+          },
+          {
+            "item": "Reduced motion tekee siirtymästä välittömän",
+            "checked": true
+          },
+          {
+            "item": "Rulla ja raahaus keskeyttävät lennon",
             "checked": true
           }
         ],

@@ -1,0 +1,82 @@
+{
+  "id": "TICKET-TEST-006",
+  "story": "STORY-007",
+  "implementation_ticket": "TICKET-IMPL-006",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. CI-vika: animaatiosilmukka rajasi dt:n 0,1 s:iin, joten hitailla frameilla 1 s:n lento kesti seinäkellolla pidempään. Tuplaklikkaustesti odotti kiinteät 1,3 s ja näki lennon yhä käynnissä. Juurisyy oli koodissa (lennon kesto riippui ruudunpäivityksestä). Testin kiinteä odotus oli lisäksi hauras.",
+    "files_changed": [
+      "src/globe/main.ts",
+      "tests/e2e/camera.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright: paikallisesti Chrome ja Intel UHD sekä CI-tila (Playwrightin Chromium ja SwiftShader). GitHub Actions ubuntu-latest.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0, GitHubin check-run-annotaatiot",
+    "cases": [
+      {
+        "steps": "Yksikkötestit: lento päättyy 1 s:ssa eikä ennen, kulkee isoympyrän tasossa monotonisesti, suunta pysyy tangenttina, keskeytys pysäyttää, kesto 0 on välitön ja kohde-etäisyys rajataan",
+        "expected": "Kaikki vihreitä",
+        "result": "22/22 yksikkötestiä vihreitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tuplaklikkaus lentää lähimpään heksaan",
+        "expected": "Lento on käynnissä 0,3 s:n kohdalla, päätyy heksaan, eikä overlay-elementtejä ole",
+        "result": "pass paikallisesti ja CI:ssä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: reduced motion (emulateMedia)",
+        "expected": "Siirtymä on valmis seuraavassa framessa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rulla keskeyttää lennon",
+        "expected": "flying false heti, eikä kohdetta saavuteta",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E-regressio: jokainen frame kestää noin 150 ms, ja lento ajoitetaan pelin omista update-kutsuista",
+        "expected": "Lento päättyy yhden framen tarkkuudella sekunnissa",
+        "result": "Vanhalla dt-rajauksella punainen (1 527 ms ja 1 533 ms), korjauksella vihreä viidesti peräkkäin kummassakin tilassa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Mainin CI-ajo 37961936593 (commit 79b22c8)",
+        "expected": "Kaikki testit vihreitä ja julkaisu",
+        "result": "9 passed (16,0 s), deploy success",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Tuplaklikkaus ja lento oikealla puhelimella (S23 Ultra) Pagesista",
+        "expected": "Tuplanapautus lentää alueelle",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tuplaklikkaus lentää noin sekunnissa, eikä overlay avaudu",
+        "checked": true
+      },
+      {
+        "item": "Reduced motion tekee siirtymästä välittömän",
+        "checked": true
+      },
+      {
+        "item": "Rulla ja raahaus keskeyttävät lennon",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}
