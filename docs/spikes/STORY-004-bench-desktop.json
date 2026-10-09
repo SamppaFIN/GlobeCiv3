@@ -1,0 +1,134 @@
+{
+  "device": {
+    "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009BC4) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "devicePixelRatio": 1,
+    "viewport": "1280×800"
+  },
+  "route": {
+    "startDist": 25,
+    "endDist": 0.0001,
+    "downS": 30,
+    "holdS": 4,
+    "upS": 15
+  },
+  "frames": 2930,
+  "avgFps": 59.9,
+  "p1LowFps": 59.5,
+  "worstFrameMs": 33.4,
+  "maxDrawn": 482,
+  "maxMeshes": 2045,
+  "reachedLevel": 17,
+  "tilesCreated": 4684,
+  "genMsPerTile": 0.9,
+  "maxGenMsPerFrame": 5.7,
+  "perLevel": {
+    "1": {
+      "frames": 51,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 14
+    },
+    "2": {
+      "frames": 135,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 38
+    },
+    "3": {
+      "frames": 155,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 91
+    },
+    "4": {
+      "frames": 158,
+      "avgFps": 60,
+      "worstMs": 17.1,
+      "avgDrawn": 135
+    },
+    "5": {
+      "frames": 154,
+      "avgFps": 60,
+      "worstMs": 17,
+      "avgDrawn": 124
+    },
+    "6": {
+      "frames": 148,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 108
+    },
+    "7": {
+      "frames": 143,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 107
+    },
+    "8": {
+      "frames": 139,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 112
+    },
+    "9": {
+      "frames": 126,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 129
+    },
+    "10": {
+      "frames": 133,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 151
+    },
+    "11": {
+      "frames": 128,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 201
+    },
+    "12": {
+      "frames": 142,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 271
+    },
+    "13": {
+      "frames": 150,
+      "avgFps": 58.5,
+      "worstMs": 33.4,
+      "avgDrawn": 296
+    },
+    "14": {
+      "frames": 145,
+      "avgFps": 58.4,
+      "worstMs": 33.3,
+      "avgDrawn": 310
+    },
+    "15": {
+      "frames": 150,
+      "avgFps": 60,
+      "worstMs": 16.8,
+      "avgDrawn": 336
+    },
+    "16": {
+      "frames": 153,
+      "avgFps": 60,
+      "worstMs": 16.9,
+      "avgDrawn": 343
+    },
+    "17": {
+      "frames": 720,
+      "avgFps": 60,
+      "worstMs": 17,
+      "avgDrawn": 297
+    }
+  },
+  "jitterPx": {
+    "rtc": 0.03611440026472115,
+    "naive": 4091.953719961374
+  },
+  "zoomCursorErrorPx": 0
+}
