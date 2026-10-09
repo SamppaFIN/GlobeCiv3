@@ -1,0 +1,54 @@
+{
+  "id": "PLAN-011",
+  "story": "STORY-029",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Uusi moduuli src/globe/levels.ts määrittelee näkymän tasot (0 planeetta, 1 valtio, 2 lääni, 3 kaupunkialue). Jokaisella tasolla on kehysetäisyys, jolla tason alue (heksan ympäryssäde = sisäsäde × 2/√3) täyttää 70 % näytön kapeammasta mitasta. Planeetalla koko pallo täyttää saman osuuden. Näkymän taso on se, jonka kehysetäisyys on lähinnä logaritmisesti (rajat kehysetäisyyksien geometrisissä keskiarvoissa), joten vapaa zoom vaihtaa tasoa luontevasti. Napautus (osoitin alas ja ylös alle 8 px:n liikkeellä ja alle 500 ms:ssa, yksi osoitin) valitsee napautetun alueen näkymän tasolla: planeetalla valtion, valtiotasolla läänin ja läänitasolla kaupunkialueen. Toinen napautus samaan alueeseen lentää sen keskelle seuraavan tason kehysetäisyydelle (1 s, vähennetyllä liikkeellä heti). Tuplaklikkaus on kaksi napautusta, joten vanha tuplaklikkauslento säilyy. Shaderi saa kaksi uutta tietoa ruutukohtaisina uniformeina: valitun alueen keskus ja taso (aksenttireuna ja hehku sisäpuolella) sekä kontekstialue, eli alue, jonka sisällä kamera on (taso yksi ylempänä kuin näkymä). Kontekstin ulkopuolinen maailma himmennetään, jolloin näkyvä heksataso vaihtuu napautetun heksan mukaan. Alue tunnistetaan vertaamalla ruudun ehdokaslistan keskusta uniformiin, ja molemmat lasketaan samalla tavalla float64:ssä, joten float32-arvot ovat samat. Hehku käyttää laskettua rajaetäisyyttä tai, kun silmukka ohitetaan, verteksien rajavihjettä. Murupolku ja 44 px:n takaisin-nappi ovat DOM-kerros (src/ui), ja tyylit tulevat design-paketin tokens.css:stä ja Nocturne-luokista. Inter-fontti paketoidaan (@fontsource/inter, OFL-1.1).",
+  "alternatives_considered": [
+    {
+      "name": "Erillinen tasotila (diskreetti tila-automaatti) kameran etäisyyden sijaan",
+      "pros": "Selkeä tila, jota HUD voi seurata",
+      "cons": "Vapaa zoom (rulla, nipistys) ja tila voisivat mennä ristiin, ja saumaton zoom on moottorin ydinlupaus",
+      "rejected_because": "Taso johdetaan etäisyydestä, jolloin rulla, nipistys ja napautus ovat aina yhtäpitäviä"
+    },
+    {
+      "name": "Yksi napautus sukeltaa heti",
+      "pros": "Yksi kosketus vähemmän",
+      "cons": "Lääni- ja valtionäkymissä napautus valitsee alueen paneelia varten (design-paketin 6a ja 7a), ja vahingossa tehty napautus lentäisi pois",
+      "rejected_because": "Valinta ensin ja sukellus toisella napautuksella sopii yhteen paneelien kanssa, ja tuplaklikkaus toimii yhä"
+    },
+    {
+      "name": "Svelte-komponentit HUDille heti",
+      "pros": "Myöhemmät HUDit (2b, kortit) hyötyvät",
+      "cons": "Murupolku ja yksi nappi ovat muutama rivi DOM-koodia, ja runes-tyypitys tsc:ssä vaatii lisäasetuksia",
+      "rejected_because": "Yksinkertaisuus. Svelte arvioidaan uudelleen STORY-025:n HUDissa."
+    }
+  ],
+  "files_to_change": [
+    "src/globe/levels.ts (uusi) ja src/globe/levels.test.ts",
+    "src/globe/tiles.ts (valinta- ja kontekstiuniformit, shaderin korostus ja himmennys)",
+    "src/globe/main.ts (napautus, tasotila, murupolku)",
+    "src/ui/tokens.css, src/ui/hud.css ja src/ui/levelBar.ts (uudet)",
+    "package.json (@fontsource/inter)",
+    "tests/e2e/levels.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "levels.ts ja yksikkötestit: kehysetäisyydet pysty- ja vaakanäytöllä, tasot etäisyydestä, alueen polku pisteestä ja sukelluskohde",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Shaderin valinta ja konteksti, napautus ja murupolku pääpeliin",
+      "verify": "npm run build menee läpi, ja kuvissa valittu alue näkyy aksenttireunalla ja konteksti kirkkaana"
+    },
+    {
+      "step": 3,
+      "action": "E2E: napautus valitsee, toinen napautus lentää, takaisin palaa. Vanhat kameratestit pysyvät vihreinä. Merge ja CI.",
+      "verify": "Kaikki vihreitä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

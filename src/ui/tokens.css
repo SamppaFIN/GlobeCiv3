@@ -1,0 +1,64 @@
+/* Copied from the Claude Design handoff (docs/Aloitusnäyttö design directions/design_handoff_globeciv3/tokens.css). Edit there first, then copy. */
+/* GlobeCiv3 — Kartografi tokens. UI tokens come from Nocturne (styles.css); these extend them for the game world.
+   Terrain values are meant to be copied directly into the shader. */
+:root {
+  /* UI (Nocturne) */
+  --c-bg: #161826;
+  --c-surface: #232532;
+  --c-text: #e9e9ed;
+  --c-accent: #9184d9;          /* lines, glow, selection — never a fill */
+  --c-accent-light: #b5abfc;    /* accent-400: selection rings, highlighted borders */
+  --c-accent-text: #d2cefd;     /* accent-300: accent-coloured small text */
+  --c-muted: #b2b6ca;           /* neutral-400 */
+  --c-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+  --c-hud: color-mix(in srgb, #161826 80%, transparent);  /* + backdrop-filter: blur(10px) */
+
+  /* Ink (Kartografi) */
+  --ink: oklch(0.82 0.04 80);        /* mapped-edge line, state border, compass, meter fill */
+  --ink-dark: oklch(0.26 0.03 60);   /* terrain glyphs on land */
+
+  /* Terrain */
+  --terrain-ocean-deep:    oklch(0.30 0.06 246);
+  --terrain-ocean-shallow: oklch(0.47 0.072 228); /* lerp deep→shallow by depth */
+  --terrain-arctic:    oklch(0.90 0.02 240);
+  --terrain-snow:      oklch(0.95 0.01 240);
+  --terrain-tundra:    oklch(0.66 0.04 160);
+  --terrain-desert:    oklch(0.80 0.08 82);
+  --terrain-forest:    oklch(0.50 0.09 148);
+  --terrain-grassland: oklch(0.67 0.12 132);
+  --terrain-hills:     oklch(0.63 0.07 92);
+  --terrain-jungle:    oklch(0.45 0.11 162);
+  --terrain-mountains: oklch(0.60 0.02 60);
+  --terrain-plains:    oklch(0.75 0.09 105);
+  --terrain-swamp:     oklch(0.48 0.06 122);
+
+  /* Fog */
+  --fog: oklch(0.18 0.02 265);           /* opacity 0.86–0.90, lets terrain hue bleed */
+  --fog-hatch: oklch(0.82 0.04 80 / 0.11); /* 0.7px lines, 7px pitch, 38° */
+  --fog-edge: var(--ink);                /* 1.6px, hand-drawn (displacement ~3px), fog mask blurred ≈ 0.22 × hex size */
+  --fog-coast: oklch(0.82 0.04 80 / 0.4);/* dashed 2/3 — coastline hinted inside fog */
+
+  /* Borders */
+  --border-state:    var(--ink);                    /* 3px solid, opacity .95 */
+  --border-province: oklch(0.82 0.04 80 / 0.7);     /* 1.75px, dash 6 4 */
+  --border-city:     oklch(0.80 0.02 260 / 0.35);   /* 1px solid */
+  --hex-edge:        oklch(0.22 0.02 260 / 0.35);   /* 0.6px, only at city-area zoom */
+
+  /* Yields (always paired with icon + text) */
+  --yield-food:  oklch(0.78 0.12 135);
+  --yield-prod:  oklch(0.76 0.10 50);
+  --yield-trade: oklch(0.84 0.11 90);
+  --faith:       oklch(0.85 0.12 85);
+
+  /* Relations */
+  --rel-friendly: oklch(0.72 0.14 150);
+  --rel-neutral:  oklch(0.80 0.02 260);
+  --rel-wary:     oklch(0.70 0.15 40);
+
+  --touch-target: 44px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
