@@ -68,3 +68,35 @@ test('region borders are drawn from orbit to level 17', async ({ page }, testInf
   expect(levels[levels.length - 1]).toBe(17);
   expect(errors).toEqual([]);
 });
+
+test('the coastline stays sharp from continent view to level 17', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const errors = await openGame(page);
+  // Find a coast at full resolution: walk from a start point until land and sea swap, then bisect
+  await page.evaluate(() => {
+    const w = window as any;
+    const height = (v: any) => w.globeTerrain.terrainHeight(v, 30);
+    const start = w.globeCamera.target.clone().set(0.35, 0.42, 0.84).normalize();
+    const axis = start.clone().set(1, 0, 0);
+    const at = (a: number) => start.clone().applyAxisAngle(axis, -a);
+    const s0 = Math.sign(height(start));
+    let lo = 0, hi = 0;
+    for (let a = 0.005; a < Math.PI; a += 0.005) {
+      if (Math.sign(height(at(a))) !== s0) { lo = a - 0.005; hi = a; break; }
+    }
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (Math.sign(height(at(mid))) === s0) lo = mid; else hi = mid;
+    }
+    w.globeCamera.target.copy(at((lo + hi) / 2));
+  });
+  const levels: number[] = [];
+  for (const d of [0.04, 0.0025, 2e-5]) {
+    const s = await settleAt(page, d);
+    levels.push(s.maxLevel);
+    await page.screenshot({ path: testInfo.outputPath(`coast-L${s.maxLevel}.png`) });
+  }
+  console.log('[coast-levels] ' + JSON.stringify(levels));
+  expect(levels[levels.length - 1]).toBe(17);
+  expect(errors).toEqual([]);
+});
