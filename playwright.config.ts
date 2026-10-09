@@ -10,6 +10,8 @@ export default defineConfig({
   testMatch: /.*\.e2e\.ts$/,
   forbidOnly: CI,
   retries: CI ? 1 : 0,
+  // Parallel SwiftShader renderers compete for the runner's CPU cores and time out
+  workers: CI ? 1 : undefined,
   // 'github' turns failures into check-run annotations, readable without logs access
   reporter: CI ? [['list'], ['github'], ['html', { open: 'never' }]] : 'list',
   use: {

@@ -64,14 +64,15 @@ test('mouse wheel zooms toward the cursor by the same factor at every altitude',
 test('the camera goes beyond the old OrbitControls limits and tilts near the surface', async ({ page }, testInfo) => {
   await openGame(page);
   await page.mouse.move(640, 400);
-  for (let i = 0; i < 40; i++) await page.mouse.wheel(0, -400);
+  // Few large notches: each wheel call waits for a frame, and CI frames are slow
+  for (let i = 0; i < 5; i++) await page.mouse.wheel(0, -3000);
   await nextFrame(page);
   const near = await rigState(page, 640, 400);
   expect(near.centerDist).toBeLessThan(6);
   expect(near.tilt).toBeGreaterThan(0.5);
   await page.screenshot({ path: testInfo.outputPath('near.png') });
 
-  for (let i = 0; i < 40; i++) await page.mouse.wheel(0, 400);
+  for (let i = 0; i < 5; i++) await page.mouse.wheel(0, 3000);
   await nextFrame(page);
   const far = await rigState(page, 640, 400);
   expect(far.centerDist).toBeGreaterThan(30);
