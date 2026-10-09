@@ -280,13 +280,14 @@ hakemisto.
     { "id": "EPIC-002", "icon": "🔭", "title": "Saumaton kamera", "status": "in_progress", "stories": ["STORY-005", "STORY-006", "STORY-007"] },
     { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012", "STORY-019"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
-    { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] }
+    { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] },
+    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "todo", "stories": ["STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028"] }
   ],
-  "stories_total": 20,
+  "stories_total": 28,
   "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010"],
   "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010"],
   "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010"],
-  "next": "STORY-006"
+  "next": "Claude Design (design-brief.md), sitten STORY-021"
 }
 ```
 
@@ -374,6 +375,10 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | STORY-009 hyväksyttiin: maasto on f(siemen, piste, taso), ja hienot oktaavit lasketaan pikseleittäin shaderissa. Rannikot ovat tarkkoja kaikilla tasoilla, ja värimorfi poistui. | Porrastuneet rannikot olivat suurin visuaalinen puute | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | Aluehierarkia: 362 valtiota, joista kussakin 7 lääniä, ja kussakin läänissä 7 kaupunkialuetta. Alueet ovat tarkasti sisäkkäisiä, ja jokaisella kerroksella on omat toimintonsa. Pelaaja valloittaa valtion lääni kerrallaan, ja vallattu valtio avaa naapurinsa. Uudet STORY-019 (läänit ja kaupunkialueet) ja STORY-020 (kerroskohtaiset toiminnot), ja STORY-016 muutettiin. Suunnitelma: docs/design/aluehierarkia.md. | Samin visio. Määrät (7 ja 7) ovat Linssin ehdotus. | Sami |
 | 2026-10-09 | STORY-019 hyväksyttiin: läänit ja kaupunkialueet ovat moottorissa. Pikselishaderin kustannus pidetään kurissa aluekohtaisilla väleillä, verteksien rajavihjeillä ja oktaavien varhaisella lopetuksella. Intel UHD 56–61 fps, kun tavoite on 60. | Mittaus ennen ja jälkeen kirjattu tikettiin TICKET-TEST-010 | Linssi (Samin valtuutuksella) |
+| 2026-10-09 | Pelin kulku hyväksyttiin (docs/design/pelin-kulku.md): aloitusnäyttö → Uusi peli → lento arvottuun kaupunkialueeseen. Alin taso on geodeettinen heksaruudukko (noin 61 ruutua kaupunkialuetta kohden), jossa on Civ I -maastot ja -resurssit. Kartoittamaton on sumussa, ja zoom ulos aukeaa kartoituksen myötä. | Samin visio | Sami |
+| 2026-10-09 | Yksiköt toimivat autonomisesti, ja jokaisella zoom-tasolla on omat toimintonsa. Aika kulkee reaaliajassa (noin 1,5 s per päivä), ja peliä voi tauottaa ja nopeuttaa. Seuraava taso aukeaa, kun 60 % alueesta on kartoitettu (säädettävä vakio). | Samin valinnat suunnittelukysymyksiin | Sami |
+| 2026-10-09 | Grafiikat ensin: Claude Design tekee ilmeen ja kuvakkeet design-brief.md:n mukaan ennen EPIC-006:n toteutusta. Uusi EPIC-006 (STORY-021–028). Simulaatio-LOD-storyt 013–015 siirtyvät MVP:n jälkeen, ja STORY-020 sulautuu STORY-026:een. | Samin pyyntö. MVP pysyy rajattuna. | Sami |
+| 2026-10-09 | Civ I -luvut (maastot, tuotot ja resurssit) tulevat Freecivin civ1-sääntösarjasta (data/civ1/terrain.ruleset, GPL). Nimet ovat omia, esimerkiksi tundran resurssi on Poro ja ruohomaan Hedelmällinen maa. | Sääntö 4 ja koodaussääntö 5 | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 

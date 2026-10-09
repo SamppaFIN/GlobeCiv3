@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T19:12:03Z",
+    "generated_at": "2026-10-09T19:35:52Z",
     "generated_by": "init-project v1.0",
     "git_commit": "46a16b0",
     "git_branch": "main",
@@ -93,7 +93,7 @@
       "id": "EPIC-004",
       "title": "Simulaatio-LOD",
       "icon": "⚙️",
-      "description": "Koko planeetta elää tilastotasolla, ja pelin yksiköt ja väestö materialisoituvat sinne, minne kamera laskeutuu. Tila säilyy tasojen välillä. Pelimekaniikkana käytetään aluksi Civilization I:n perusmekaniikkoja (kaupungit, maaston ruoka, tuotanto ja kauppa, yksiköt, teknologiat ja taistelu). Varsinaiset säännöt suunnitellaan erikseen, kun moottori on valmis.",
+      "description": "Koko planeetta elää tilastotasolla, ja pelin yksiköt ja väestö materialisoituvat sinne, minne kamera laskeutuu. Tila säilyy tasojen välillä. Pelimekaniikkana käytetään aluksi Civilization I:n perusmekaniikkoja (kaupungit, maaston ruoka, tuotanto ja kauppa, yksiköt, teknologiat ja taistelu). Varsinaiset säännöt suunnitellaan erikseen, kun moottori on valmis. Simulaatio-LOD-storyt 013–015 siirtyivät MVP:n jälkeen (päätös 2026-10-09). Pelin kulku on EPIC-006:ssa.",
       "status": "todo",
       "stories": [
         "STORY-013",
@@ -113,6 +113,24 @@
         "STORY-017",
         "STORY-018",
         "STORY-020"
+      ],
+      "progress": 0
+    },
+    {
+      "id": "EPIC-006",
+      "title": "Pelin kulku",
+      "icon": "🗺️",
+      "description": "Aloitusnäytöstä uuteen peliin, heksaruutukarttaan ja fog of wariin. Autonomiset tiedustelijat kartoittavat maailmaa, ja zoom-tasot aukeavat kartoituksen myötä. Suunnitelma: docs/design/pelin-kulku.md. Grafiikat: design-brief.md (Claude Design) ennen toteutusta.",
+      "status": "todo",
+      "stories": [
+        "STORY-021",
+        "STORY-022",
+        "STORY-023",
+        "STORY-024",
+        "STORY-025",
+        "STORY-026",
+        "STORY-027",
+        "STORY-028"
       ],
       "progress": 0
     }
@@ -422,7 +440,8 @@
         "plan": null,
         "implementation": null,
         "testing": null
-      }
+      },
+      "scope": "post-mvp"
     },
     {
       "id": "STORY-014",
@@ -446,7 +465,8 @@
         "plan": null,
         "implementation": null,
         "testing": null
-      }
+      },
+      "scope": "post-mvp"
     },
     {
       "id": "STORY-015",
@@ -472,7 +492,8 @@
         "plan": null,
         "implementation": null,
         "testing": null
-      }
+      },
+      "scope": "post-mvp"
     },
     {
       "id": "STORY-016",
@@ -586,6 +607,192 @@
         "HUD tunnistaa nykyisen kerroksen alueen kameran kohdalta (valtio, lääni ja kaupunkialue) ja näyttää sen nimen tai tunnuksen",
         "Jokaisella kerroksella on omat toiminnot docs/design/aluehierarkia.md:n mukaan. Aluksi vähintään yksi toiminto per kerros.",
         "Toiminnot ovat 44 × 44 px:n kosketuskohteita ja toimivat testipuhelimella"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      },
+      "superseded_by": "STORY-026"
+    },
+    {
+      "id": "STORY-021",
+      "epic": "EPIC-006",
+      "title": "Aloitusnäyttö, uusi peli ja lento aloituspaikkaan",
+      "type": "story",
+      "narrative": "Pelaajana haluan aloittaa pelin näkymästä, jossa koko planeetta näkyy, ja lentää Uusi peli -napista arvottuun aloituspaikkaan, jotta peli alkaa elämyksellä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-019"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Aloitusnäytössä näkyy koko planeetta ja Uusi peli -nappi (44 × 44 px tai suurempi). Ulkoasu on Claude Designin mukainen.",
+        "Uusi peli arpoo aloituskaupunkialueen deterministisesti siemenestä (maata, ei napa-aluetta), ja sama siemen antaa saman paikan (yksikkötesti)",
+        "Kamera lentää kaupunkialueeseen noin 3 sekunnissa. Vähennetyllä liikkeellä siirtymä on välitön.",
+        "Zoom ulos on lukittu kaupunkialueen tasolle, kunnes avautuminen (STORY-026) sallii enemmän"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-022",
+      "epic": "EPIC-006",
+      "title": "Geodeettinen heksaruudukko ja alueet ruutujen joukkoina",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että alin karttataso on yhtenäinen heksaruudukko koko planeetalla, jotta kartta toimii kuten strategiapeleissä.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-019"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Ikosaedrin jakoon perustuva ruudukko, noin 61 ruutua kaupunkialuetta kohden (f ≈ 330). Ruutuja on 10f² + 2, ja 12 niistä on viisikulmioita (yksikkötesti).",
+        "Piste → ruutu → keskipiste toimii edestakaisin kaikilla tahkoilla, ja naapureita on 6 (tai 5) (yksikkötesti)",
+        "Valtiot, läänit ja kaupunkialueet ovat ruutujen joukkoja, ja niiden rajat kulkevat ruutujen reunoja pitkin. Sisäkkäisyys on tarkka (yksikkötesti)."
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-023",
+      "epic": "EPIC-006",
+      "title": "Ruutujen maasto, resurssit ja piirto ruutuzoomissa",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä heksaruutujen maaston ja resurssit, jotta voin arvioida, missä on hyvä elää.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-022"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Ruudun maasto (11 tyyppiä) ja erikoisresurssi määräytyvät deterministisesti siemenestä, ja tuotot vastaavat lähdetaulukkoa (Freeciv civ1 terrain.ruleset, kirjattu koodiin)",
+        "Ruutuzoomissa näkyvät heksareunat ja ruudun maasto Claude Designin väreillä, ja resurssit kuvakkeina",
+        "Suorituskyky Intel UHD:lla on vähintään 55 fps ruutuzoomissa (mittaus kirjataan)"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-024",
+      "epic": "EPIC-006",
+      "title": "Fog of war",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kaikki aloitusalueen ulkopuolella on kartoittamatonta, jotta tutkiminen on palkitsevaa.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-022"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Ruutukohtainen tila (tuntematon, kartoitettu) on pelitilassa ja tekstuurissa, ja kerran nähty pysyy kartoitettuna",
+        "Kartoittamaton piirretään Claude Designin sumutyylillä kaikilla zoom-tasoilla. Planeettatasolla mantereet aavistuvat.",
+        "Uudessa pelissä vain aloituskaupunkialue on kartoitettu"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-025",
+      "epic": "EPIC-006",
+      "title": "Päiväkello ja autonomiset tiedustelijat",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että aika kulkee itsestään ja tiedustelijat tutkivat itse, ja voin ohjata niitä moodeilla ja lipuilla, jotta peli on helppo pelata puhelimella.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-024"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Päivä vaihtuu noin 1,5 sekunnin välein seinäkellon mukaan. Tauko ja nopeudet 1×, 2× ja 4× toimivat (sääntö 5).",
+        "Tiedustelija kulkee A*-reittiä maaston liikkumiskustannuksin kohti lähintä sumun reunaa tai pelaajan lippua ja paljastaa ruudut 2 ruudun säteellä",
+        "Uudessa pelissä on 2 tiedustelijaa ja uudisasukas, ja ne näkyvät kuvakkeina ruuduillaan"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-026",
+      "epic": "EPIC-006",
+      "title": "Tasojen avautuminen ja kerroskohtaiset toiminnot",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että seuraava zoom-taso aukeaa, kun olen kartoittanut riittävästi, ja että jokaisella tasolla on omat toimintonsa.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-025"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Lääni aukeaa, kun 60 % sen ruuduista on kartoitettu, ja valtio vastaavasti. Raja on yksi vakio (yksikkötesti).",
+        "Avautuessa HUD ilmoittaa siitä, ja kameran zoom-raja kasvaa seuraavalle tasolle",
+        "Jokaisella avatulla tasolla on omat toimintonsa docs/design/pelin-kulku.md:n taulukon mukaan (vähintään yksi per taso)"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-027",
+      "epic": "EPIC-006",
+      "title": "Löydöt ja valintakortit",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että tiedustelijat tekevät löytöjä, joista valitsen toisen kahdesta palkkiosta, jotta tutkiminen on yllätyksellistä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-025"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Löydöt syntyvät deterministisesti siemenestä tutkituille ruuduille, ja peli pysähtyy kortin ajaksi",
+        "Valinta muuttaa pelitilaa (esim. ruokaa tai uusi tiedustelija), ja vaikutus näkyy HUDissa"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-028",
+      "epic": "EPIC-006",
+      "title": "Kaupungin perustaminen ja tuotot",
+      "type": "story",
+      "narrative": "Pelaajana haluan perustaa kaupungin uudisasukkaalla ja nähdä sen ruoan, tuotannon ja kaupan, jotta sivilisaatio alkaa kasvaa.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-023",
+        "STORY-025"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Uudisasukas perustaa kaupungin pelaajan merkitsemään ruutuun tai sen lähelle maalle",
+        "Kaupungin tuotot lasketaan sen ympäröivistä ruuduista lähdetaulukon arvoilla (yksikkötesti)",
+        "Kaupunkikortti näyttää koon, ruoan, tuotannon ja kaupan Claude Designin ulkoasulla"
       ],
       "progress": 0,
       "linked": {
