@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T18:16:17Z",
+    "generated_at": "2026-10-09T18:18:10Z",
     "generated_by": "init-project v1.0",
     "git_commit": "4f8b467",
     "git_branch": "main",
@@ -84,9 +84,10 @@
         "STORY-009",
         "STORY-010",
         "STORY-011",
-        "STORY-012"
+        "STORY-012",
+        "STORY-019"
       ],
-      "progress": 60
+      "progress": 50
     },
     {
       "id": "EPIC-004",
@@ -110,7 +111,8 @@
       "status": "todo",
       "stories": [
         "STORY-017",
-        "STORY-018"
+        "STORY-018",
+        "STORY-020"
       ],
       "progress": 0
     }
@@ -475,18 +477,20 @@
     {
       "id": "STORY-016",
       "epic": "EPIC-004",
-      "title": "Laajentuminen ja valloitus Civ I -tapaan",
+      "title": "Valtion valloitus avaa naapurivaltiot",
       "type": "story",
-      "narrative": "Pelaajana haluan perustaa uusia kaupunkeja ja vallata vihollisen kaupunkeja, jotta imperiumi kasvaa planeetan yli.",
+      "narrative": "Pelaajana haluan tutkia ja vallata valtion lääni kerrallaan, ja kun koko valtio on hallussani, haluan sen naapurivaltioiden avautuvan, jotta imperiumi kasvaa planeetan yli.",
       "effort": "M",
       "depends_on": [
-        "STORY-014"
+        "STORY-014",
+        "STORY-019"
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Uudisasukasyksikkö perustaa kaupungin vapaalle maaruudulle Civilization I:n sääntöjen mukaan (lähde kirjattu)",
-        "Kun vihollisen kaupunki vallataan, sen omistaja vaihtuu, ja muutos näkyy alueen väreissä planeettatasolla seuraavan makrotikin jälkeen",
-        "Alueen omistus lasketaan sen kaupungeista, ja sääntö on dokumentoitu, kunnes omat säännöt korvaavat sen"
+        "Peli alkaa yhdestä valtiosta, ja muut valtiot ovat lukittuja",
+        "Lääni vallataan Civilization I:n tapaan yksiköillä tai kaupungin perustamisella (lähde kirjattu)",
+        "Valtio on vallattu, kun kaikki sen läänit ovat pelaajan hallussa, ja silloin sen naapurivaltiot avautuvat",
+        "Avautuminen näkyy planeettatason väreissä seuraavan makrotikin jälkeen"
       ],
       "progress": 0,
       "linked": {
@@ -534,6 +538,54 @@
       "acceptance_criteria": [
         "Hover tai napautus näyttää alueen tunnuksen, tilan suomeksi, väestön, ruoan ja valloitus-%:n",
         "Tooltip on luettavissa myös näppäimistöllä valitulle alueelle"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-019",
+      "epic": "EPIC-003",
+      "title": "Läänit ja kaupunkialueet valtioiden sisällä",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä valtioon zoomatessa sen läänit ja lääniin zoomatessa sen kaupunkialueet, jotta jokaisella zoom-tasolla on oma pelattava alueensa.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-012"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Jokaisella valtiolla on 7 lääniä ja jokaisella läänillä 7 kaupunkialuetta. Sijoittelu on deterministinen siemenestä (yksikkötesti).",
+        "Sisäkkäisyys on tarkka: jokainen läänin keskus on oman valtionsa sisällä ja jokainen kaupunkialueen keskus oman lääninsä sisällä, eikä mikään alue ylitä yläalueensa rajaa (yksikkötesti)",
+        "Rajat piirretään kolmella tyylillä (valtio, lääni, kaupunkialue). Alemmat häivytetään esiin, kun alue on ruudulla tarpeeksi suuri.",
+        "Ruudun ehdokaslistat löytävät oikean valtion, läänin ja kaupunkialueen sekä niiden rajat kaikilla tasoilla, joilla rajat piirretään (yksikkötesti)"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-020",
+      "epic": "EPIC-005",
+      "title": "Kerroskohtaiset toiminnot",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että jokaisella kerroksella (planeetta, valtio, lääni ja kaupunki) on omat toimintonsa, jotta zoomaus on samalla pelin rakenne.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-017",
+        "STORY-019"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "HUD tunnistaa nykyisen kerroksen alueen kameran kohdalta (valtio, lääni ja kaupunkialue) ja näyttää sen nimen tai tunnuksen",
+        "Jokaisella kerroksella on omat toiminnot docs/design/aluehierarkia.md:n mukaan. Aluksi vähintään yksi toiminto per kerros.",
+        "Toiminnot ovat 44 × 44 px:n kosketuskohteita ja toimivat testipuhelimella"
       ],
       "progress": 0,
       "linked": {
