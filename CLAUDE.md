@@ -327,6 +327,13 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 **Käytännössä:** Karkean tason tekseli on lasten keskiarvo: generoidulle datalle kaistarajattu kohina, pelaajan datalle aggregointi.
 **Kiellettyä:** Koko maailman generointi taulukoksi etukäteen ja `Math.random()` generoinnissa.
 
+### 4. Civilization I:stä lainataan vain säännöt
+
+**Sääntö:** Civilization I:stä otetaan pelimekaniikat (säännöt ja luvut), mutta ei nimiä, tekstejä, grafiikkaa, ääniä eikä muuta aineistoa.
+**Miksi:** Pelimekaniikka ei ole tekijänoikeuden suojaamaa, mutta nimet, tekstit ja aineistot ovat, ja repo on julkinen GPL-projekti.
+**Käytännössä:** Yksiköt, teknologiat ja rakennukset nimetään omilla nimillä. Jokaisen lainatun luvun lähde kirjataan koodikommenttiin tai tikettiin.
+**Kiellettyä:** Civilization-nimen käyttö pelissä sekä tekstien, kuvien tai äänien kopiointi.
+
 ## 13. Päätökset
 
 | Päivä | Päätös | Perustelu | Kuka |
@@ -351,6 +358,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | Testipuhelin on Samin Samsung Galaxy S23 Ultra, ja suorituskykytavoite on 30 fps sillä. Keskitason puhelin mitataan, jos sellainen tulee käyttöön. | S23 Ultra on lippulaivamalli, mutta Sami katsoi sen riittäväksi | Sami |
 | 2026-10-09 | Kehitysvaiheessa Linssillä on täydet oikeudet: se tekee tekniset ja prosessipäätökset, hyväksyy omat suunnitelmansa, merkitsee storyt valmiiksi (hyväksyjänä "Linssi (Samin valtuutuksella)") ja mergeää mainiin. Päätökset kirjataan tähän taulukkoon, ja Sami voi avata minkä tahansa storyn tai päätöksen uudelleen. Puhelintestit tekee Sami. | Nopeus. Sami seuraa tuloksia Pagesista. | Sami |
 | 2026-10-09 | Dependabotin 9 PR:ää (#1–#9) yhdistettiin yhdeksi päivitykseksi: three 0.186.1 (ja @types/three 0.186.0), zustand 5.0.15, svelte 5.57.2, vite 8.3.3, @sveltejs/vite-plugin-svelte 7.3.1, checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5. Testit, build ja työpöydän bench pysyivät ennallaan (60 fps, taso 17, värinä 0,036 px). | Erillisinä PR:inä lukitustiedosto olisi mennyt ristiin. Actionsien rikkovat muutokset (Node 24 ja piilotiedostojen pois jättäminen) eivät koske projektia. | Sami |
+| 2026-10-09 | Pelimekaniikkoina käytetään aluksi Civilization I:n perusmekaniikkoja. Omat pelimekaniikat ja säännöt suunnitellaan erikseen, kun perusmoottori (EPIC-001–003) on valmis. STORY-013 ja STORY-016 muutettiin tämän mukaisiksi. | Moottori tarvitsee toimivan pelin testattavaksi ennen omaa sääntösuunnittelua | Sami |
 
 ### Avoimet kysymykset
 

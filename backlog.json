@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T15:52:16Z",
+    "generated_at": "2026-10-09T15:53:06Z",
     "generated_by": "init-project v1.0",
     "git_commit": "e5329c1",
     "git_branch": "main",
@@ -92,7 +92,7 @@
       "id": "EPIC-004",
       "title": "Simulaatio-LOD",
       "icon": "⚙️",
-      "description": "Koko planeetta elää tilastotasolla, ja kansalaiset materialisoituvat agenteiksi siellä, minne kamera laskeutuu. Tila säilyy tasojen välillä.",
+      "description": "Koko planeetta elää tilastotasolla, ja pelin yksiköt ja väestö materialisoituvat sinne, minne kamera laskeutuu. Tila säilyy tasojen välillä. Pelimekaniikkana käytetään aluksi Civilization I:n perusmekaniikkoja (kaupungit, maaston ruoka, tuotanto ja kauppa, yksiköt, teknologiat ja taistelu). Varsinaiset säännöt suunnitellaan erikseen, kun moottori on valmis.",
       "status": "todo",
       "stories": [
         "STORY-013",
@@ -402,16 +402,16 @@
     {
       "id": "STORY-013",
       "epic": "EPIC-004",
-      "title": "Simulaatiotila instanssikohtaiseksi",
+      "title": "Pelitila instanssikohtaiseksi (Civ I -perusmekaniikat)",
       "type": "chore",
-      "narrative": "Kehittäjänä haluan, että simulaation tila on olio eikä globaali store, jotta samaan aikaan voi olla käynnissä useita alueita.",
+      "narrative": "Kehittäjänä haluan pelitilan oliona eikä globaalina storena, ja sen säännöt aluksi Civilization I:n perusmekaniikoista, jotta moottori saa toimivan pelin ennen kuin omat säännöt suunnitellaan.",
       "effort": "M",
       "depends_on": [
         "STORY-003"
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "GlobeCiv2:n renderöijästä riippumaton logiikka (SimLoop, järjestelmät ja entiteetit) on kopioitu ilman Phaser-importteja (Phaser on poistettu riippuvuuksista), ja lähdecommit on kirjattu",
+        "Pelitilan perusmalli (kaupunki, väestö, maastotyypit ja niiden ruoka, tuotanto ja kauppa) on renderöijästä riippumaton ja noudattaa Civilization I:n perusmekaniikkoja. Jokaisen luvun lähde on kirjattu (koodaussääntö 5). GlobeCiv2:sta käytetään soveltuvat osat, ja lähdecommit kirjataan.",
         "Kaksi simulaatioinstanssia voi ajaa rinnakkain ilman, että ne vaikuttavat toisiinsa (yksikkötesti)",
         "Sama siemen ja sama määrä tikkejä tuottavat saman tilan (yksikkötesti)"
       ],
@@ -475,18 +475,18 @@
     {
       "id": "STORY-016",
       "epic": "EPIC-004",
-      "title": "Valloitus leviää naapurialueisiin",
+      "title": "Laajentuminen ja valloitus Civ I -tapaan",
       "type": "story",
-      "narrative": "Pelaajana haluan, että vallattu alue avaa naapurinsa asutettaviksi, jotta imperiumi kasvaa planeetan yli.",
+      "narrative": "Pelaajana haluan perustaa uusia kaupunkeja ja vallata vihollisen kaupunkeja, jotta imperiumi kasvaa planeetan yli.",
       "effort": "M",
       "depends_on": [
         "STORY-014"
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Kun alueen valloitus-% saavuttaa 100, sen lukitut naapurit muuttuvat saataville. Meri- ja vuoriruutuja ei lasketa.",
-        "Uudelle alueelle syntyy kolme siirtolaista: tutkija, soturi ja ruoankerääjä",
-        "Muutos näkyy planeettatason väreissä seuraavan makrotikin jälkeen"
+        "Uudisasukasyksikkö perustaa kaupungin vapaalle maaruudulle Civilization I:n sääntöjen mukaan (lähde kirjattu)",
+        "Kun vihollisen kaupunki vallataan, sen omistaja vaihtuu, ja muutos näkyy alueen väreissä planeettatasolla seuraavan makrotikin jälkeen",
+        "Alueen omistus lasketaan sen kaupungeista, ja sääntö on dokumentoitu, kunnes omat säännöt korvaavat sen"
       ],
       "progress": 0,
       "linked": {
