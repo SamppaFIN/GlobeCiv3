@@ -94,10 +94,7 @@ starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3))
 const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
 starScene.add(new THREE.Points(starsGeo, starsMat));
 
-// ─── Raycaster for hex clicking ───────────────────
-const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 0.3;
-
+// ─── Double-click flies to a hex ──────────────────
 let lastClickTime = 0;
 renderer.domElement.addEventListener('click', (event: MouseEvent) => {
   const now = Date.now();
@@ -110,10 +107,10 @@ renderer.domElement.addEventListener('click', (event: MouseEvent) => {
     ((event.clientX - rect.left) / rect.width) * 2 - 1,
     -((event.clientY - rect.top) / rect.height) * 2 + 1,
   );
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(dotsMesh);
-  if (intersects.length > 0) {
-    const point = intersects[0].point.clone().normalize();
+  // Ray against the sphere itself: works at every zoom level, unlike a points threshold
+  const hit = rig.raycast(mouse);
+  if (hit) {
+    const point = hit.normalize();
     // Find closest node
     let bestIdx = -1, bestDist = Infinity;
     for (let i = 0; i < nodes.length; i++) {
@@ -121,13 +118,17 @@ renderer.domElement.addEventListener('click', (event: MouseEvent) => {
       if (d < bestDist) { bestDist = d; bestIdx = i; }
     }
     console.log(`[GlobeCiv3] Double-clicked hex #${bestIdx} (${nodes[bestIdx]?.neighbors.length ?? 0} neighbors)`);
-    (window as any).openHexSimulation?.(bestIdx);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    rig.flyTo(nodes[bestIdx].position, Math.min(rig.dist, RADIUS * 0.25), reduceMotion ? 0 : 1);
   }
 });
 
 // ─── Animation loop ───────────────────────────────
-function animate() {
+let lastFrame = performance.now();
+function animate(now = performance.now()) {
   requestAnimationFrame(animate);
+  rig.update(Math.min((now - lastFrame) / 1000, 0.1));
+  lastFrame = now;
   starCamera.quaternion.copy(camera.quaternion);
   renderer.clear();
   renderer.render(starScene, starCamera);

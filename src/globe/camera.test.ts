@@ -120,3 +120,65 @@ describe('GlobeCamera', () => {
     }
   });
 });
+
+describe('GlobeCamera flight', () => {
+  const B = new THREE.Vector3(-0.6, 0.3, 0.74).normalize();
+
+  it('arrives at the point and distance after the duration, not before', () => {
+    const rig = makeRig(R * 1.5);
+    rig.flyTo(B.clone().multiplyScalar(R), R * 0.25, 1);
+    rig.update(0.5);
+    expect(rig.flying).toBe(true);
+    expect(rig.target.angleTo(B)).toBeGreaterThan(0.01);
+    rig.update(0.49);
+    expect(rig.flying).toBe(true);
+    rig.update(0.01);
+    expect(rig.flying).toBe(false);
+    expect(rig.target.angleTo(B)).toBeLessThan(1e-9);
+    expect(rig.dist).toBeCloseTo(R * 0.25, 10);
+  });
+
+  it('follows the great circle and keeps the heading tangent', () => {
+    const rig = makeRig(R * 1.5);
+    const A = rig.target.clone();
+    const normal = A.clone().cross(B).normalize();
+    rig.flyTo(B, R * 0.25, 1);
+    let prevAngle = 0;
+    while (rig.flying) {
+      rig.update(0.01);
+      expect(Math.abs(rig.target.dot(normal))).toBeLessThan(1e-9);
+      const angle = A.angleTo(rig.target);
+      expect(angle).toBeGreaterThanOrEqual(prevAngle - 1e-12);
+      prevAngle = angle;
+      expect(Math.abs(rig.forward.dot(rig.target))).toBeLessThan(1e-9);
+      expect(rig.forward.length()).toBeCloseTo(1, 9);
+    }
+  });
+
+  it('stops where it is when cancelled', () => {
+    const rig = makeRig(R * 1.5);
+    rig.flyTo(B, R * 0.25, 1);
+    rig.update(0.3);
+    rig.cancelFlight();
+    const at = rig.target.clone();
+    const dist = rig.dist;
+    rig.update(1);
+    expect(rig.flying).toBe(false);
+    expect(rig.target.distanceTo(at)).toBe(0);
+    expect(rig.dist).toBe(dist);
+  });
+
+  it('jumps at once with a zero duration (reduced motion)', () => {
+    const rig = makeRig(R * 1.5);
+    rig.flyTo(B, R * 0.25, 0);
+    expect(rig.flying).toBe(false);
+    expect(rig.target.angleTo(B)).toBeLessThan(1e-9);
+    expect(rig.dist).toBeCloseTo(R * 0.25, 10);
+  });
+
+  it('clamps the destination distance to the rig limits', () => {
+    const rig = makeRig(R * 1.5, R * 0.01, R * 6);
+    rig.flyTo(B, R * 1e-6, 0);
+    expect(rig.dist).toBeCloseTo(R * 0.01, 12);
+  });
+});
