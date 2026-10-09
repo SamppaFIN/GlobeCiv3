@@ -59,8 +59,8 @@
       {
         "steps": "Pinch oikealla puhelimella (S23 Ultra) Pagesista",
         "expected": "Nipistys zoomaa peliä eikä sivua",
-        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
-        "outcome": "not_run"
+        "result": "Sami vahvisti 2026-10-09, että tuplaklikkaus ja zoom toimivat hyvin hänen testatessaan Pagesia puhelimella.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

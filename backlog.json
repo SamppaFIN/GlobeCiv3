@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T16:54:52Z",
+    "generated_at": "2026-10-09T17:05:41Z",
     "generated_by": "init-project v1.0",
     "git_commit": "79b22c8",
     "git_branch": "main",
@@ -1569,8 +1569,8 @@
           {
             "steps": "Pinch oikealla puhelimella (S23 Ultra) Pagesista",
             "expected": "Nipistys zoomaa peliä eikä sivua",
-            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
-            "outcome": "not_run"
+            "result": "Sami vahvisti 2026-10-09, että tuplaklikkaus ja zoom toimivat hyvin hänen testatessaan Pagesia puhelimella.",
+            "outcome": "pass"
           }
         ],
         "console_findings": [],
@@ -1651,8 +1651,8 @@
           {
             "steps": "Tuplaklikkaus ja lento oikealla puhelimella (S23 Ultra) Pagesista",
             "expected": "Tuplanapautus lentää alueelle",
-            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
-            "outcome": "not_run"
+            "result": "Sami vahvisti 2026-10-09, että tuplaklikkaus ja zoom toimivat hyvin hänen testatessaan Pagesia puhelimella.",
+            "outcome": "pass"
           }
         ],
         "console_findings": [],
