@@ -283,9 +283,9 @@ hakemisto.
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007"],
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008"],
   "next": "STORY-009"
 }
 ```
@@ -370,6 +370,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | STORY-005 hyväksyttiin: oma kamerarigi korvaa OrbitControlsin. Zoom kohti kursoria pätee aina, kun kursori näkee pallon zoomin jälkeen. Ulos zoomatessa pallon reunalla pallo voi kutistua kursorin alta. Järjestys jatkossa: STORY-007, sitten STORY-008. STORY-006 (tarkkuus) todennetaan vasta, kun pintaruudut ovat pääpelissä. | Tarkkuutta ei voi todentaa pääpelissä ilman pintaa | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-007 hyväksyttiin: tuplaklikkaus lentää heksaan, ja overlayn jäänteet on poistettu. CI oli kahdesti punainen, koska lennon kesto riippui ruudunpäivityksestä. Korjattu, ja regressiotesti lisätty (sääntö 5). | Julkaisu pysyi edellisessä vihreässä versiossa koko ajan | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-008 hyväksyttiin: pääpelissä on kuutiopallon pinta tasoille 0–17, ja ruutuja on 5–300. CI renderöi selaintestit pikselisuhteella 0,5, koska SwiftShader ei jaksa pintaa täydellä resoluutiolla. Järjestys: STORY-009 (maasto), sitten STORY-012 (heksarajat kolmioiden tilalle). | Sami toivoi kolmiopallon tilalle oikeaa pintaa ja heksoja | Linssi (Samin valtuutuksella) |
+| 2026-10-09 | STORY-012 tehtiin ennen STORY-009:ää ja hyväksyttiin. Heksarajat piirretään pinnan shaderissa pikseleittäin ruudun paikallisissa koordinaateissa, ja kolmioverkko poistettiin. CI ajaa E2E:n yhdellä workerilla. | Sami nosti kolmiot esiin, eivätkä rajat riipu maastosta | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 
@@ -381,6 +382,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 6. ~~**Dependabotin 9 PR:ää.**~~ Ratkaistu 2026-10-09: mergetty yhtenä päivityksenä (päätöstaulukko).
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
+9. **Rajashaderin kustannus keskitason puhelimella.** Rajat maksavat pikseliä kohden 2 × ruudun ehdokasalueiden määrän (aloitusnäkymässä noin 16–26). S23 Ultralla ei ongelmaa. Mitataan, jos keskitason laite tulee käyttöön tai FPS putoaa. Keinoja: pienempi marginaali, aluetunnisteiden tekstuuri tai rajojen piirto vain lähellä.
 
 ### Ratkenneet kysymykset
 

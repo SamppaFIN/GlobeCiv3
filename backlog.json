@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T17:27:40Z",
+    "generated_at": "2026-10-09T17:52:24Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "1293e9f",
+    "git_commit": "fcd3367",
     "git_branch": "main",
     "language": "fi"
   },
@@ -86,7 +86,7 @@
         "STORY-011",
         "STORY-012"
       ],
-      "progress": 20
+      "progress": 40
     },
     {
       "id": "EPIC-004",
@@ -386,17 +386,17 @@
         "STORY-001",
         "STORY-009"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Jokainen solu kuuluu lähimmän heksakeskuksen alueeseen, ja jako on sama kaikilla tasoilla (yksikkötesti)",
         "Rajat piirretään viivoina, jotka pysyvät ohuina näytöllä zoomista riippumatta",
         "Aluegraafin naapuruudet vastaavat STORY-001:n ruudukkoa"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-008",
+        "implementation": "TICKET-IMPL-008",
+        "testing": "TICKET-TEST-008"
       }
     },
     {
@@ -998,6 +998,59 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-008",
+      "story": "STORY-012",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "Uusi moduuli src/globe/regions.ts: 362 heksakeskusta (STORY-001:n ruudukko), regionOf(piste) eli lähin keskus, ja candidatesForTile(ruutu), joka palauttaa enintään 128 keskusta, joiden alue voi ulottua ruudulle tai sen naapurialueen rajalle. Ehto on kulma ruudun keskipisteeseen alle ruudun kulmasäde + 0,3 rad. Ruudun materiaali saa ehdokkaat ruudun omissa koordinaateissa (float64 → pieni float32). Fragmenttishaderi etsii lähimmän keskuksen ja laskee etäisyyden lähimpään rajatasoon kaavalla (|p − cj|² − |p − c1|²) / (2 |cj − c1|). Molempien keskusten säde on R, joten rajataso kulkee origon kautta, ja raja on pallolla tarkalleen isoympyrän kaari. fwidth() pitää viivan noin 1,5 px:n levyisenä zoomista riippumatta. Tarkkuus säilyy syvimmilläkin tasoilla, koska laskenta tehdään ruudun paikallisissa koordinaateissa. Kolmioverkko ja pisteet poistetaan pääpelistä. Tuplaklikkaus käyttää regionOf-funktiota. Järjestyksen muutos: STORY-012 tehdään ennen STORY-009:ää, koska Sami nosti kolmiot esiin, ja rajat eivät riipu maastosta.",
+      "alternatives_considered": [
+        {
+          "name": "Rajat erillisinä viivoina (heksojen duaalisärmät isoympyrää pitkin)",
+          "pros": "Yksinkertainen geometria",
+          "cons": "Viivat ovat jänteitä pinnan alla, tai ne nostetaan pinnan yläpuolelle. Lähellä pintaa kamera menee niiden alle, tai ne z-fightaavat pinnan kanssa. Paksuus on aina 1 px.",
+          "rejected_because": "Ei pysy oikein kaikilla 17 tasolla"
+        },
+        {
+          "name": "Kaikki 362 keskusta jokaiselle pikselille",
+          "pros": "Ei ruutukohtaista ehdokaslistaa",
+          "cons": "362 × 2 silmukkakierrosta pikseliä kohden on liikaa mobiilissa, ja maailmankoordinaateissa float32-tarkkuus loppuu syvillä tasoilla",
+          "rejected_because": "Suorituskyky ja tarkkuus"
+        },
+        {
+          "name": "Rajaetäisyys verteksiattribuuttina CPU:lla",
+          "pros": "Kevyt shaderi",
+          "cons": "Interpolointi 16 × 16 -verkossa rikkoo rajat karkeilla tasoilla, joissa yksi kolmio on lähes heksan kokoinen",
+          "rejected_because": "Planeettanäkymä, jossa rajat näkyvät eniten, olisi epätarkin"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/regions.ts (uusi)",
+        "src/globe/regions.test.ts (uusi)",
+        "src/globe/tiles.ts (shaderi ja ehdokkaat)",
+        "src/globe/main.ts (verkko pois, regions mukaan)",
+        "tests/e2e/surface.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "regions.ts testeineen: regionOf, naapuruudet vastaavat STORY-001:n särmiä, ja ehdokaslistat ovat täydellisiä tasoilla 0–17 (lähin alue ja lähin raja löytyvät listasta)",
+          "verify": "npm test vihreä. Ehdokkaita on enintään 128."
+        },
+        {
+          "step": 2,
+          "action": "Shaderiin rajat (fwidth), materiaalille ehdokkaat ja pääpelistä kolmioverkko pois",
+          "verify": "npm run build menee läpi. Kuvissa rajat ovat heksoja ja yhtä ohuita planeetta-, manner- ja ruututasolla."
+        },
+        {
+          "step": 3,
+          "action": "E2E-kuvat ja CI",
+          "verify": "Kaikki testit vihreitä paikallisesti ja CI:ssä, eikä konsolissa ole virheitä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -1242,6 +1295,43 @@
         "notes": "src/spike-kansion vastaavat tiedostot jäävät ennalleen ja poistetaan myöhemmin (päätös 2026-10-09). Tarkkuuden (STORY-006) mittaus pääpelissä on nyt mahdollinen."
       },
       "commit": "1293e9f",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-008",
+      "story": "STORY-012",
+      "plan": "PLAN-008",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/regions.ts",
+        "src/globe/regions.test.ts",
+        "src/globe/tiles.ts",
+        "src/globe/main.ts",
+        "tests/e2e/surface.e2e.ts",
+        "tests/e2e/camera.e2e.ts",
+        "playwright.config.ts"
+      ],
+      "change_summary": "Uusi moduuli regions.ts: 362 aluetta pallon Voronoi-jakona heksasolmujen ympärillä, regionOf() ja ruutukohtaiset ehdokaslistat (enintään 128, kulma alle ruudun kulmasäde + 0,3 rad). Ruudun fragmenttishaderi piirtää rajat pikseleittäin: etäisyys lähimpään puolittavaan tasoon lasketaan ruudun paikallisissa koordinaateissa. Raja on tarkka isoympyrän kaari, ja tarkkuus pysyy kaikilla tasoilla. Viivan leveys tulee yhden pikselin maailmakoosta (paikan dFdx ja dFdy), koska rajaetäisyyden fwidth häviää V-muotoisen funktion kärjessä, mikä teki ensimmäisestä versiosta katkoviivan. Kolmioverkko ja pisteet poistettiin pääpelistä, ja tuplaklikkaus käyttää regionOf-funktiota. Poikkeama: STORY-012 tehtiin ennen STORY-009:ää. CI-korjaukset: E2E ajetaan CI:ssä yhdellä workerilla, ja rajatesti käyttää viittä suurta rullapykälää 80 pienen sijaan.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "TileManager(radius, regions?)",
+          "tiles.ts: fragmentShader (rajat), uniformit regionCount, regionCenters, borderColor ja borderStrength",
+          "main.ts: dotsMesh ja edgeLines poistettu, regions lisätty",
+          "playwright.config.ts: workers 1 CI:ssä"
+        ],
+        "call_sites_found": [
+          "TileManager: main.ts ja tiles.test.ts (ilman alueita)",
+          "dotsMesh ja edgeLines: vain main.ts"
+        ],
+        "call_sites_updated": [
+          "main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Shaderin kustannus pikseliä kohden on 2 × ehdokkaiden määrä: aloitusnäkymässä noin 16–26, ja vain kaukaa 50–125, kun pallo on ruudulla pieni. Mainin CI oli kerran punainen (ajo 37967552042, deploy ohitettiin). Korjaus on ajossa 37968877101."
+      },
+      "commit": "fcd3367",
       "progress": 100
     }
   ],
@@ -1869,6 +1959,94 @@
           },
           {
             "item": "Ruutumäärä on rajattu tasoilla 0–17, ja mittaus on kirjattu",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-008",
+      "story": "STORY-012",
+      "implementation_ticket": "TICKET-IMPL-008",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen shaderiversio piirsi katkoviivaa (fwidth V-muotoisesta funktiosta), mikä korjattiin ennen mergeä. CI-aikakatkaisut johtuivat raskaammasta ohjelmistorenderöinnistä.",
+        "files_changed": [
+          "src/globe/tiles.ts",
+          "playwright.config.ts",
+          "tests/e2e/camera.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "regionOf: jokainen 362 keskuksesta kuuluu omaan alueeseensa",
+            "expected": "Kaikki omissa alueissaan",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Naapuruudet: kaikille 1 080 STORY-001:n särmälle keskipisteen eri puolilla on oikeat alueet, eikä mikään kolmas keskus ole lähempänä",
+            "expected": "Särmät ovat tarkalleen yhteiset rajat",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ehdokaslistat: 12 satunnaista ruutua jokaiselta tasolta 0–17, 20 pistettä kussakin",
+            "expected": "Listasta löytyy oikea alue aina ja lähin raja aina, kun raja on alle 0,05 päässä. Enintään 128 ehdokasta.",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: yksi raja tasoilla 1, 8, 13 ja 17 (kuvat)",
+            "expected": "Raja näkyy yhtenäisenä ja yhtä ohuena jokaisella tasolla, eikä konsolissa ole virheitä",
+            "result": "Tasot [1, 8, 13, 17]. Kuvissa yhtenäinen noin 1,5 px:n viiva kaikilla tasoilla, ja planeettanäkymässä heksat kolmioiden tilalla.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI: ajo 37967552042",
+            "expected": "Vihreä",
+            "result": "Punainen: rajojen ylitystesti aikakatkaistiin (80 rullatapahtumaa hitailla frameilla). Deploy ohitettiin.",
+            "outcome": "fail"
+          },
+          {
+            "steps": "CI: ajo 37968877101 (commit fcd3367)",
+            "expected": "Vihreä ja julkaisu",
+            "result": "11 passed (1,3 min), deploy success",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Heksat puhelimella (S23 Ultra) Pagesista",
+            "expected": "Rajat näkyvät, ja peli pysyy sulavana",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-008-border-L1.png",
+          "docs/screenshots/TICKET-TEST-008-border-L8.png",
+          "docs/screenshots/TICKET-TEST-008-border-L13.png",
+          "docs/screenshots/TICKET-TEST-008-border-L17.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Jokainen piste kuuluu lähimmän keskuksen alueeseen samalla tavalla kaikilla tasoilla",
+            "checked": true
+          },
+          {
+            "item": "Rajat ovat ohuita viivoja zoomista riippumatta",
+            "checked": true
+          },
+          {
+            "item": "Naapuruudet vastaavat STORY-001:n ruudukkoa",
             "checked": true
           }
         ],

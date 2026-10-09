@@ -1,0 +1,37 @@
+{
+  "id": "TICKET-IMPL-008",
+  "story": "STORY-012",
+  "plan": "PLAN-008",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/regions.ts",
+    "src/globe/regions.test.ts",
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "tests/e2e/surface.e2e.ts",
+    "tests/e2e/camera.e2e.ts",
+    "playwright.config.ts"
+  ],
+  "change_summary": "Uusi moduuli regions.ts: 362 aluetta pallon Voronoi-jakona heksasolmujen ympärillä, regionOf() ja ruutukohtaiset ehdokaslistat (enintään 128, kulma alle ruudun kulmasäde + 0,3 rad). Ruudun fragmenttishaderi piirtää rajat pikseleittäin: etäisyys lähimpään puolittavaan tasoon lasketaan ruudun paikallisissa koordinaateissa. Raja on tarkka isoympyrän kaari, ja tarkkuus pysyy kaikilla tasoilla. Viivan leveys tulee yhden pikselin maailmakoosta (paikan dFdx ja dFdy), koska rajaetäisyyden fwidth häviää V-muotoisen funktion kärjessä, mikä teki ensimmäisestä versiosta katkoviivan. Kolmioverkko ja pisteet poistettiin pääpelistä, ja tuplaklikkaus käyttää regionOf-funktiota. Poikkeama: STORY-012 tehtiin ennen STORY-009:ää. CI-korjaukset: E2E ajetaan CI:ssä yhdellä workerilla, ja rajatesti käyttää viittä suurta rullapykälää 80 pienen sijaan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "TileManager(radius, regions?)",
+      "tiles.ts: fragmentShader (rajat), uniformit regionCount, regionCenters, borderColor ja borderStrength",
+      "main.ts: dotsMesh ja edgeLines poistettu, regions lisätty",
+      "playwright.config.ts: workers 1 CI:ssä"
+    ],
+    "call_sites_found": [
+      "TileManager: main.ts ja tiles.test.ts (ilman alueita)",
+      "dotsMesh ja edgeLines: vain main.ts"
+    ],
+    "call_sites_updated": [
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Shaderin kustannus pikseliä kohden on 2 × ehdokkaiden määrä: aloitusnäkymässä noin 16–26, ja vain kaukaa 50–125, kun pallo on ruudulla pieni. Mainin CI oli kerran punainen (ajo 37967552042, deploy ohitettiin). Korjaus on ajossa 37968877101."
+  },
+  "commit": "fcd3367",
+  "progress": 100
+}

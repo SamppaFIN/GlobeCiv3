@@ -1,0 +1,88 @@
+{
+  "id": "TICKET-TEST-008",
+  "story": "STORY-012",
+  "implementation_ticket": "TICKET-IMPL-008",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen shaderiversio piirsi katkoviivaa (fwidth V-muotoisesta funktiosta), mikä korjattiin ennen mergeä. CI-aikakatkaisut johtuivat raskaammasta ohjelmistorenderöinnistä.",
+    "files_changed": [
+      "src/globe/tiles.ts",
+      "playwright.config.ts",
+      "tests/e2e/camera.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "regionOf: jokainen 362 keskuksesta kuuluu omaan alueeseensa",
+        "expected": "Kaikki omissa alueissaan",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Naapuruudet: kaikille 1 080 STORY-001:n särmälle keskipisteen eri puolilla on oikeat alueet, eikä mikään kolmas keskus ole lähempänä",
+        "expected": "Särmät ovat tarkalleen yhteiset rajat",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ehdokaslistat: 12 satunnaista ruutua jokaiselta tasolta 0–17, 20 pistettä kussakin",
+        "expected": "Listasta löytyy oikea alue aina ja lähin raja aina, kun raja on alle 0,05 päässä. Enintään 128 ehdokasta.",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: yksi raja tasoilla 1, 8, 13 ja 17 (kuvat)",
+        "expected": "Raja näkyy yhtenäisenä ja yhtä ohuena jokaisella tasolla, eikä konsolissa ole virheitä",
+        "result": "Tasot [1, 8, 13, 17]. Kuvissa yhtenäinen noin 1,5 px:n viiva kaikilla tasoilla, ja planeettanäkymässä heksat kolmioiden tilalla.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI: ajo 37967552042",
+        "expected": "Vihreä",
+        "result": "Punainen: rajojen ylitystesti aikakatkaistiin (80 rullatapahtumaa hitailla frameilla). Deploy ohitettiin.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "CI: ajo 37968877101 (commit fcd3367)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "11 passed (1,3 min), deploy success",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Heksat puhelimella (S23 Ultra) Pagesista",
+        "expected": "Rajat näkyvät, ja peli pysyy sulavana",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-008-border-L1.png",
+      "docs/screenshots/TICKET-TEST-008-border-L8.png",
+      "docs/screenshots/TICKET-TEST-008-border-L13.png",
+      "docs/screenshots/TICKET-TEST-008-border-L17.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Jokainen piste kuuluu lähimmän keskuksen alueeseen samalla tavalla kaikilla tasoilla",
+        "checked": true
+      },
+      {
+        "item": "Rajat ovat ohuita viivoja zoomista riippumatta",
+        "checked": true
+      },
+      {
+        "item": "Naapuruudet vastaavat STORY-001:n ruudukkoa",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}
