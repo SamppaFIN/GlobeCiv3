@@ -19,7 +19,7 @@
     "vitest": "^5.0.3"
   },
   "dependencies": {
-    "three": "^0.184.0",
+    "three": "^0.186.1",
     "zustand": "^5.0.14"
   }
 }
