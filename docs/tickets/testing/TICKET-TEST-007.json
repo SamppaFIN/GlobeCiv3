@@ -1,0 +1,100 @@
+{
+  "id": "TICKET-TEST-007",
+  "story": "STORY-008",
+  "implementation_ticket": "TICKET-IMPL-007",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. CI:n hitaus ohjelmistorenderöinnillä korjattiin testiympäristön asetuksilla.",
+    "files_changed": [
+      "playwright.config.ts",
+      "tests/e2e/camera.e2e.ts",
+      "tests/e2e/surface.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node, ilman WebGL:ää). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa (Chromium, SwiftShader, pikselisuhde 0,5). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "cubeSphere: edestakainen muunnos kuudella tahkolla tasoilla 0, 5, 10 ja 17, lasten kulmat, pallopinta ja tahkojen rajat",
+        "expected": "Kaikki vihreitä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "TileManager: paikallaan oleva kamera neljällä korkeudella, 60 framea",
+        "expected": "Piirretty joukko ei muutu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "TileManager: kamera paikallaan, näyttökoon mittakaava heiluu ±1 % jakokynnysten yli 30 etäisyydellä",
+        "expected": "Ei välkyntää: joukko vakiintuu viimeistään 10 framessa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "TileManager: ruutu ja sen esi-isä eivät ole piirrettyinä yhtä aikaa, ja näkyvillä säteillä ei ole aukkoja (neljä korkeutta, 7×7 näytepistettä)",
+        "expected": "Ei päällekkäisyyksiä eikä aukkoja",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "TileManager: ruutumäärä 30 etäisyydellä R × 6 … R × 2e-5 (1280×800)",
+        "expected": "Enintään 600 ruutua, ja taso 17 saavutetaan",
+        "result": "Ruutuja 5–300, ja taso 17 saavutetaan. 6.0e+0R: taso 0, 5 ruutua; 3.9e+0R: taso 1, 15 ruutua; 2.5e+0R: taso 2, 28 ruutua; 1.6e+0R: taso 3, 55 ruutua; 1.1e+0R: taso 3, 95 ruutua; 6.8e-1R: taso 4, 116 ruutua; 4.4e-1R: taso 4, 86 ruutua; 2.9e-1R: taso 5, 96 ruutua; 1.9e-1R: taso 6, 84 ruutua; 1.2e-1R: taso 6, 65 ruutua; 7.8e-2R: taso 7, 84 ruutua; 5.0e-2R: taso 8, 75 ruutua; 3.2e-2R: taso 8, 82 ruutua; 2.1e-2R: taso 9, 98 ruutua; 1.4e-2R: taso 10, 115 ruutua; 8.8e-3R: taso 11, 135 ruutua; 5.7e-3R: taso 11, 185 ruutua; 3.7e-3R: taso 12, 221 ruutua; 2.4e-3R: taso 13, 244 ruutua; 1.5e-3R: taso 13, 256 ruutua; 1.0e-3R: taso 14, 269 ruutua; 6.5e-4R: taso 15, 273 ruutua; 4.2e-4R: taso 15, 278 ruutua; 2.7e-4R: taso 16, 294 ruutua; 1.8e-4R: taso 16, 290 ruutua; 1.1e-4R: taso 17, 298 ruutua; 7.4e-5R: taso 17, 300 ruutua; 4.8e-5R: taso 17, 278 ruutua; 3.1e-5R: taso 17, 252 ruutua; 2.0e-5R: taso 17, 232 ruutua",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: pääpelin pinta neljällä etäisyydellä",
+        "expected": "Pinta näkyy, tasot nousevat 17:ään asti, ei konsolivirheitä",
+        "result": "orbit: taso 1, 16 ruutua · continent: taso 8, 76 · tile: taso 13, 234 · deepest: taso 17, 206. Ei virheitä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI: ajo 37964524966 (pinta lisätty)",
+        "expected": "Vihreä",
+        "result": "Punainen: pintatesti ja tuplaklikkaustesti ylittivät aikarajat SwiftShaderin hitaiden framejen takia. Deploy ohitettiin. Korjattu testiympäristössä (ks. toteutustiketti).",
+        "outcome": "fail"
+      },
+      {
+        "steps": "CI: ajo 37965920160 (commit 1293e9f)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "10 passed (32,0 s), deploy success. Paikallisesti CI-tilassa 10/10 kahdesti ilman uusintoja.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pinta puhelimella (S23 Ultra) Pagesista",
+        "expected": "Pinta näkyy ja tarkentuu zoomatessa",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-007-orbit.png",
+      "docs/screenshots/TICKET-TEST-007-continent.png",
+      "docs/screenshots/TICKET-TEST-007-tile.png",
+      "docs/screenshots/TICKET-TEST-007-deepest.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Ruutuosoitteet toimivat kaikilla tahkoilla",
+        "checked": true
+      },
+      {
+        "item": "Jako ja yhdistys hystereesillä ilman välkyntää",
+        "checked": true
+      },
+      {
+        "item": "Ruutumäärä on rajattu tasoilla 0–17, ja mittaus on kirjattu",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}

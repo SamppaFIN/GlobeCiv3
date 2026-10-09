@@ -278,15 +278,15 @@ hakemisto.
   "epics": [
     { "id": "EPIC-001", "icon": "🧱", "title": "Perusta kuntoon", "status": "done", "stories": ["STORY-001", "STORY-002", "STORY-003", "STORY-004"] },
     { "id": "EPIC-002", "icon": "🔭", "title": "Saumaton kamera", "status": "in_progress", "stories": ["STORY-005", "STORY-006", "STORY-007"] },
-    { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "todo", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012"] },
+    { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006"],
-  "next": "STORY-008"
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007"],
+  "next": "STORY-009"
 }
 ```
 
@@ -369,6 +369,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | STORY-003 hyväksyttiin, ja EPIC-001 on valmis. Playwrightin savutestit ajetaan CI:ssä ennen julkaisua. Ensimmäinen ajo löysi puuttuvan favicon-linkin (404), joka korjattiin. | Työnkulku: suunnitelma, testi ja hyväksyntä | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-005 hyväksyttiin: oma kamerarigi korvaa OrbitControlsin. Zoom kohti kursoria pätee aina, kun kursori näkee pallon zoomin jälkeen. Ulos zoomatessa pallon reunalla pallo voi kutistua kursorin alta. Järjestys jatkossa: STORY-007, sitten STORY-008. STORY-006 (tarkkuus) todennetaan vasta, kun pintaruudut ovat pääpelissä. | Tarkkuutta ei voi todentaa pääpelissä ilman pintaa | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-007 hyväksyttiin: tuplaklikkaus lentää heksaan, ja overlayn jäänteet on poistettu. CI oli kahdesti punainen, koska lennon kesto riippui ruudunpäivityksestä. Korjattu, ja regressiotesti lisätty (sääntö 5). | Julkaisu pysyi edellisessä vihreässä versiossa koko ajan | Linssi (Samin valtuutuksella) |
+| 2026-10-09 | STORY-008 hyväksyttiin: pääpelissä on kuutiopallon pinta tasoille 0–17, ja ruutuja on 5–300. CI renderöi selaintestit pikselisuhteella 0,5, koska SwiftShader ei jaksa pintaa täydellä resoluutiolla. Järjestys: STORY-009 (maasto), sitten STORY-012 (heksarajat kolmioiden tilalle). | Sami toivoi kolmiopallon tilalle oikeaa pintaa ja heksoja | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 

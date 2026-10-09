@@ -1,0 +1,39 @@
+{
+  "id": "TICKET-IMPL-007",
+  "story": "STORY-008",
+  "plan": "PLAN-007",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/cubeSphere.ts",
+    "src/globe/cubeSphere.test.ts",
+    "src/globe/terrain.ts",
+    "src/globe/tiles.ts",
+    "src/globe/tiles.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/surface.e2e.ts",
+    "tests/e2e/camera.e2e.ts",
+    "playwright.config.ts"
+  ],
+  "change_summary": "Kuutiopallon ruutuosoitteet (cubeSphere.ts testeineen) ja quadtree-LOD (tiles.ts) siirrettiin prototyypistä tuotantoon. Mukana: jako yli 256 px ja yhdistys alle 128 px, horisontti- ja frustum-karsinta, 4 ms:n luontibudjetti, vanhempi piirretään lasten valmistumiseen asti, kamerasuhteelliset verteksit, värimorfi ja yhdistymisen häivytys. TileManager sai lastStats-kentän ja drawnTiles()-metodin testejä varten. Väri tulee väliaikaisesti prototyypin maastofunktiosta (terrain.ts, STORY-009). Pääpeli sai pinnan, kameran lähin etäisyys laskettiin arvosta R × 0,01 arvoon R × 2e-5, ja heksaverkko piilotetaan alle korkeuden R × 0,02. Poikkeamat: pinta hidasti CI:n ohjelmistorenderöintiä niin, että mainin CI oli kerran punainen (deploy ohitettiin). Korjauksena CI renderöi pikselisuhteella 0,5, ja pintatesti rakentaa kaikki ruudut kerralla. Lisäksi tuplaklikkaustestin odotusraja nostettiin, ja rullatesti laskee odotetun kertoimen sivun saamasta deltaY:stä.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: GlobeCamera minDist R × 0,01 → R × 2e-5",
+      "main.ts: tiles (TileManager) ja window.globeTiles",
+      "main.ts: animate() kutsuu tiles.update() ja piilottaa verkon lähellä",
+      "playwright.config.ts: deviceScaleFactor 0,5 CI:ssä"
+    ],
+    "call_sites_found": [
+      "GlobeCamera-optiot: vain main.ts",
+      "Kaksoisklikkaus: rig.raycast, ei muutosta"
+    ],
+    "call_sites_updated": [
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "src/spike-kansion vastaavat tiedostot jäävät ennalleen ja poistetaan myöhemmin (päätös 2026-10-09). Tarkkuuden (STORY-006) mittaus pääpelissä on nyt mahdollinen."
+  },
+  "commit": "1293e9f",
+  "progress": 100
+}
