@@ -172,6 +172,72 @@ Päivitetään `design-brief.md`:
 - Rajoitteet: 44 px kosketuskohteet, OKLCH-tokenit, toimii 390 px:n
   leveydellä, vähennetty liike, ei Civilizationin nimiä eikä ulkoasua
 
+## Design-paketti ja tasonavigointi (2026-10-10)
+
+Claude Design toimitti Kartografi-suunnan paketin kansioon
+`docs/Aloitusnäyttö design directions/design_handoff_globeciv3/` (README,
+tokens.css ja kolme .dc.html-näkymätiedostoa). Paketti on toteutuksen
+ulkoasun ja tekstien lähde. Spritet ja kuvakkeet ovat luonnoksia.
+
+### Napautus sukeltaa alueen sisään (STORY-029)
+
+Kun pelaaja napauttaa karttapalloa syvemmälle, näkymän taso ja näytettävä
+heksatyyppi vaihtuvat sen alueen mukaan, jota napautettiin:
+
+| Näkymän taso | Näkyvät heksat | Napautus valitsee | Toinen napautus vie |
+|---|---|---|---|
+| Planeetta | valtiot | valtion | valtiotasolle |
+| Valtio | valtion 7 lääniä | läänin | läänitasolle |
+| Lääni | läänin 7 kaupunkialuetta | kaupunkialueen | kaupunkialuetasolle |
+| Kaupunkialue | noin 61 heksaruutua | ruudun tai yksikön | — (jatkuva zoom jatkuu) |
+
+- Taso päätellään kameran etäisyydestä. Jokaisella tasolla on kehysetäisyys,
+  jolla alue täyttää noin 70 % näytön kapeammasta mitasta.
+- Valittu alue korostetaan aksenttireunalla (design-paketin näkymät 2a ja 6a).
+- Murupolku ja takaisin-nappi vievät tason ylös. Pelissä zoom-lukko
+  (STORY-021 ja STORY-026) rajaa, mihin asti ylös pääsee.
+
+### Heksamalli pallolla
+
+Paketin malli on tasomainen: kaupunkialue on 61 ruudun heksa (säde 4), ja
+lääni ja valtio ovat 7 + 7 superlaatoitusta. Pallolla tämä toteutetaan
+geodeettisena ruudukkona samalla ikosaedrilla kuin valtiot, taajuudella
+f = 330 = 6 × 55. Silloin jokainen valtion keskus on ruudun keskipiste, ja
+ruutujen koko vaihtelee samassa suhteessa kuin valtioiden. Kaupunkialue on
+niiden ruutujen joukko, joiden keskipiste kuuluu siihen, joten ruutumäärä
+vaihtelee noin 61:n ympärillä.
+
+### Tasomatriisi (paketin näkymä 6)
+
+| Taso | Tutki | Rakenna | Tason oma asia |
+|---|---|---|---|
+| Kaupunki | — | kaupungin rakennukset, yksiköt | kasvu, tuotantojono, työruudut |
+| Kaupunkialue | maastotaidot: kalastus, louhinta | resurssirakennukset ruuduille | työläiset, yksiköiden moodit |
+| Lääni | kartografia, purjehdus, ratsastus | tiet, tori, satama | kauppa ja kauppareitit |
+| Valtio | kirjoitus, filosofia, mystiikka | temppeli, pyhä lehto, linnake | kulttuuri, usko, linja |
+| Planeetta | tähtitiede, merenkulku | maailmanihmeet | diplomatia ja sopimukset |
+
+MVP:ssä jokaisella tasolla on vähintään yksi toiminto (STORY-026). Matriisin
+tutkimukset ja rakennukset sekä detail-näkymät 6a–6f tulevat MVP:n jälkeen
+(STORY-030). Resurssit 12–18 ovat paketin ehdotuksia eivätkä Civ I -lukuja.
+
+### Storyt
+
+| Story | Sisältö | Paketin näkymät |
+|---|---|---|
+| STORY-029 | Tasonavigointi | 2a, 6a, 7a (korostus) |
+| STORY-021 | Aloitusnäyttö, uusi peli, lento ja zoom-lukko | 1a, 2a |
+| STORY-022 | Heksaruudukko, alueet ruutujen joukkoina ja heksareunat | 2b (rajat) |
+| STORY-023 | Ruutujen maasto ja resurssit | 2b, 5c |
+| STORY-024 | Fog of war | 2a, 2b |
+| STORY-025 | Päiväkello, HUD ja tiedustelijat | 2b |
+| STORY-026 | Avautuminen, lääni- ja valtionäkymä | 5a, 6a, 7a |
+| STORY-027 | Löydöt | 4a |
+| STORY-028 | Kaupunki | 8a |
+| STORY-030 | Tasomatriisi (MVP:n jälkeen) | 6a–6f, 5a–5c |
+
+Järjestys: 029 → 022 → 021 → 023 → 024 → 025 → 026, sitten 027 ja 028.
+
 ## Backlog
 
 Uusi EPIC-006 "Pelin kulku". Storyja on jo 20, joten EPIC-004:n

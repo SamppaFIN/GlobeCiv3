@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T19:35:52Z",
+    "generated_at": "2026-10-09T21:31:14Z",
     "generated_by": "init-project v1.0",
     "git_commit": "46a16b0",
     "git_branch": "main",
@@ -120,9 +120,10 @@
       "id": "EPIC-006",
       "title": "Pelin kulku",
       "icon": "🗺️",
-      "description": "Aloitusnäytöstä uuteen peliin, heksaruutukarttaan ja fog of wariin. Autonomiset tiedustelijat kartoittavat maailmaa, ja zoom-tasot aukeavat kartoituksen myötä. Suunnitelma: docs/design/pelin-kulku.md. Grafiikat: design-brief.md (Claude Design) ennen toteutusta.",
+      "description": "Aloitusnäytöstä uuteen peliin, heksaruutukarttaan ja fog of wariin. Napautus sukeltaa alueen sisään taso kerrallaan (STORY-029). Autonomiset tiedustelijat kartoittavat maailmaa, ja zoom-tasot aukeavat kartoituksen myötä. Suunnitelma: docs/design/pelin-kulku.md. Grafiikat: Claude Designin Kartografi-paketti (docs/Aloitusnäyttö design directions/design_handoff_globeciv3).",
       "status": "todo",
       "stories": [
+        "STORY-029",
         "STORY-021",
         "STORY-022",
         "STORY-023",
@@ -130,7 +131,8 @@
         "STORY-025",
         "STORY-026",
         "STORY-027",
-        "STORY-028"
+        "STORY-028",
+        "STORY-030"
       ],
       "progress": 0
     }
@@ -624,14 +626,14 @@
       "narrative": "Pelaajana haluan aloittaa pelin näkymästä, jossa koko planeetta näkyy, ja lentää Uusi peli -napista arvottuun aloituspaikkaan, jotta peli alkaa elämyksellä.",
       "effort": "M",
       "depends_on": [
-        "STORY-019"
+        "STORY-029"
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Aloitusnäytössä näkyy koko planeetta ja Uusi peli -nappi (44 × 44 px tai suurempi). Ulkoasu on Claude Designin mukainen.",
+        "Aloitusnäyttö noudattaa design-paketin näkymää 1a (docs/Aloitusnäyttö design directions/design_handoff_globeciv3/Aloitusnäyttö.dc.html): planeetta tähtitaivaalla, kompassirengas, otsikko \"GlobeCiv\", alaotsikko \"Kartta, joka piirtyy\", koko levyinen ääriviivanappi \"Uusi peli\" (52 px) ja \"Kartoitettu 0 %\". Planeetta pyörii 80 s kierrokseen. Värit ja fontit tulevat tokens.css:stä ja Nocturne-tyyleistä.",
         "Uusi peli arpoo aloituskaupunkialueen deterministisesti siemenestä (maata, ei napa-aluetta), ja sama siemen antaa saman paikan (yksikkötesti)",
-        "Kamera lentää kaupunkialueeseen noin 3 sekunnissa. Vähennetyllä liikkeellä siirtymä on välitön.",
-        "Zoom ulos on lukittu kaupunkialueen tasolle, kunnes avautuminen (STORY-026) sallii enemmän"
+        "Lento noudattaa kuvakäsikirjoitusta 2a, noin 3 s: planeetta (kohteessa aksenttirengas) → valtio (rajat näkyvät, kohdealue korostettu) → kaupunkialue. Vähennetyllä liikkeellä siirtymä on suora leikkaus ja 200 ms:n häivytys.",
+        "Zoom ulos on lukittu kaupunkialueen tasolle, kunnes avautuminen (STORY-026) sallii enemmän. Kehitystila ?free ohittaa aloitusnäytön ja lukon, jotta moottorin testit toimivat ennallaan."
       ],
       "progress": 0,
       "linked": {
@@ -643,18 +645,19 @@
     {
       "id": "STORY-022",
       "epic": "EPIC-006",
-      "title": "Geodeettinen heksaruudukko ja alueet ruutujen joukkoina",
+      "title": "Geodeettinen heksaruudukko, alueet ruutujen joukkoina ja heksareunat",
       "type": "story",
       "narrative": "Pelaajana haluan, että alin karttataso on yhtenäinen heksaruudukko koko planeetalla, jotta kartta toimii kuten strategiapeleissä.",
       "effort": "L",
       "depends_on": [
-        "STORY-019"
+        "STORY-029"
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Ikosaedrin jakoon perustuva ruudukko, noin 61 ruutua kaupunkialuetta kohden (f ≈ 330). Ruutuja on 10f² + 2, ja 12 niistä on viisikulmioita (yksikkötesti).",
-        "Piste → ruutu → keskipiste toimii edestakaisin kaikilla tahkoilla, ja naapureita on 6 (tai 5) (yksikkötesti)",
-        "Valtiot, läänit ja kaupunkialueet ovat ruutujen joukkoja, ja niiden rajat kulkevat ruutujen reunoja pitkin. Sisäkkäisyys on tarkka (yksikkötesti)."
+        "Ruudukko jakaa saman ikosaedrin kuin valtiot taajuudella f = 330 = 6 × 55, joten jokainen valtion keskus on ruudun keskipiste. Ruutuja on 10f² + 2, ja 12 niistä on viisikulmioita (yksikkötesti).",
+        "Piste → ruutu → keskipiste toimii edestakaisin kaikilla tahkoilla ja niiden reunoilla, ja naapureita on 6 (viisikulmiolla 5) (yksikkötesti)",
+        "Kaupunkialue on niiden ruutujen joukko, joiden keskipiste kuuluu siihen, joten sisäkkäisyys on tarkka. Ruutumäärä kaupunkialuetta kohden mitataan ja kirjataan (tavoite noin 61, design-paketin heksamalli).",
+        "Kaupunkialuetasolla piirretään heksareunat (--hex-edge, 0,6 px), ja alueiden rajat kulkevat ruutujen reunoja pitkin. Kaukaa rajat näyttävät samoilta kuin ennen. Intel UHD vähintään 55 fps."
       ],
       "progress": 0,
       "linked": {
@@ -676,7 +679,8 @@
       "status": "todo",
       "acceptance_criteria": [
         "Ruudun maasto (11 tyyppiä) ja erikoisresurssi määräytyvät deterministisesti siemenestä, ja tuotot vastaavat lähdetaulukkoa (Freeciv civ1 terrain.ruleset, kirjattu koodiin)",
-        "Ruutuzoomissa näkyvät heksareunat ja ruudun maasto Claude Designin väreillä, ja resurssit kuvakkeina",
+        "Kaupunkialuetasolla ruudut piirretään tokens.css:n maastoväreillä (--terrain-*, meren syvyysliukuma), ja jokaisella maastolla on pieni merkki, jottei tieto ole pelkän värin varassa",
+        "Resurssit näkyvät kuvakkeina ruutujen keskellä (design-paketin RI-polut, kunnes lopulliset SVG:t valmistuvat)",
         "Suorituskyky Intel UHD:lla on vähintään 55 fps ruutuzoomissa (mittaus kirjataan)"
       ],
       "progress": 0,
@@ -698,9 +702,9 @@
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Ruutukohtainen tila (tuntematon, kartoitettu) on pelitilassa ja tekstuurissa, ja kerran nähty pysyy kartoitettuna",
-        "Kartoittamaton piirretään Claude Designin sumutyylillä kaikilla zoom-tasoilla. Planeettatasolla mantereet aavistuvat.",
-        "Uudessa pelissä vain aloituskaupunkialue on kartoitettu"
+        "Ruutukohtainen tila (tuntematon, kartoitettu) on pelitilassa ja datatekstuurissa, ja kerran nähty pysyy kartoitettuna",
+        "Kartoittamaton piirretään Kartografi-tyylillä kaikilla zoom-tasoilla: --fog (peittävyys 0,86–0,90), mustevarjostus (0,7 px viivat, 7 px välein, 38°) ja aavistus rannikosta. Kartoitetun reunassa on käsin piirretyn oloinen musteviiva (1,6 px).",
+        "Uudessa pelissä laskeutumisruutu ja sen 6 naapuria kartoittuvat ensin, sitten aloituskaupunkialue (kuvakäsikirjoitus 2a)"
       ],
       "progress": 0,
       "linked": {
@@ -721,8 +725,10 @@
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Päivä vaihtuu noin 1,5 sekunnin välein seinäkellon mukaan. Tauko ja nopeudet 1×, 2× ja 4× toimivat (sääntö 5).",
-        "Tiedustelija kulkee A*-reittiä maaston liikkumiskustannuksin kohti lähintä sumun reunaa tai pelaajan lippua ja paljastaa ruudut 2 ruudun säteellä",
+        "Päivä vaihtuu 1,5 s / nopeus seinäkellon mukaan. Tauko ja nopeudet 1×, 2× ja 4× toimivat (sääntö 5).",
+        "Ylä-HUD näkymän 2b mukaan (noin 85 px, läpikuultava ja sumentava): tauko/jatka 44 px, nopeus 1×/2×/4×, \"Päivä N\" ja mittari \"Lääni N / 60 %\", jossa on merkki 60 %:n kohdalla",
+        "Ala-HUD: yksikön nimi ja tila. Tiedustelijalla moodit Tutki/Kerää/Puolusta ja lipputyökalu, uudisasukkaalla \"Perusta kaupunki tähän\" ja \"Vaihda paikka\". Yksikkö valitaan napauttamalla sitä kartalla (44 px osuma-alue).",
+        "Tiedustelija kulkee A*-reittiä maaston liikkumiskustannuksin kohti lähintä sumun reunaa tai pelaajan lippua ja paljastaa ruudut 2 ruudun säteellä. Reitti näkyy pisteviivana.",
         "Uudessa pelissä on 2 tiedustelijaa ja uudisasukas, ja ne näkyvät kuvakkeina ruuduillaan"
       ],
       "progress": 0,
@@ -745,8 +751,9 @@
       "status": "todo",
       "acceptance_criteria": [
         "Lääni aukeaa, kun 60 % sen ruuduista on kartoitettu, ja valtio vastaavasti. Raja on yksi vakio (yksikkötesti).",
-        "Avautuessa HUD ilmoittaa siitä, ja kameran zoom-raja kasvaa seuraavalle tasolle",
-        "Jokaisella avatulla tasolla on omat toimintonsa docs/design/pelin-kulku.md:n taulukon mukaan (vähintään yksi per taso)"
+        "Avautuessa näytetään kortti 5a (\"Uusi taso avautui\", nipistysvihje, Zoomaa ulos / Myöhemmin), ja kameran zoom-raja kasvaa seuraavalle tasolle",
+        "Lääninäkymä 6a: 7 kaupunkialueen sirua nimineen, valitun painotus Tutki/Asuta/Ohita ja \"Lähetä retkikunta\". Valtionäkymä 7a: 7 läänin sirua, valtion linja Laajentuminen/Tutkimus/Puolustus ja tavoite.",
+        "Jokaisella avatulla tasolla on vähintään yksi toiminto, joka muuttaa pelitilaa (tasomatriisi docs/design/pelin-kulku.md:ssä)"
       ],
       "progress": 0,
       "linked": {
@@ -767,7 +774,8 @@
       ],
       "status": "todo",
       "acceptance_criteria": [
-        "Löydöt syntyvät deterministisesti siemenestä tutkituille ruuduille, ja peli pysähtyy kortin ajaksi",
+        "Löydöt syntyvät deterministisesti siemenestä tutkituille ruuduille, ja peli pysähtyy kortin ajaksi (\"Peli pysähtyi · Päivä N\")",
+        "Kortti näkymän 4a mukaan: löytöruudulla aksenttirengas, alapaneelissa otsikko, kuvaus ja kaksi 64 px:n valintaa sekä huomautus \"Valitsematta jäänyt löytö katoaa.\"",
         "Valinta muuttaa pelitilaa (esim. ruokaa tai uusi tiedustelija), ja vaikutus näkyy HUDissa"
       ],
       "progress": 0,
@@ -792,7 +800,7 @@
       "acceptance_criteria": [
         "Uudisasukas perustaa kaupungin pelaajan merkitsemään ruutuun tai sen lähelle maalle",
         "Kaupungin tuotot lasketaan sen ympäröivistä ruuduista lähdetaulukon arvoilla (yksikkötesti)",
-        "Kaupunkikortti näyttää koon, ruoan, tuotannon ja kaupan Claude Designin ulkoasulla"
+        "Kaupunkikortti näkymän 8a mukaan: koko ja kasvupalkki, kolme tuottoruutua (ruoka, tuotanto, kauppa) ja \"Rakentaa … Vaihda\""
       ],
       "progress": 0,
       "linked": {
@@ -800,6 +808,56 @@
         "implementation": null,
         "testing": null
       }
+    },
+    {
+      "id": "STORY-029",
+      "epic": "EPIC-006",
+      "title": "Tasonavigointi: napautus sukeltaa alueen sisään",
+      "type": "story",
+      "narrative": "Pelaajana haluan napauttaa karttapalloa syvemmälle niin, että näkymän taso ja näytettävä heksatyyppi vaihtuvat sen alueen mukaan, jota napautin (planeetta → valtio → lääni → kaupunkialue → ruudut), jotta maailmaa on helppo selata puhelimella.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-019"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Näkymän taso (planeetta, valtio, lääni, kaupunkialue) päätellään kameran etäisyydestä. Jokaisella tasolla on kehysetäisyys, jolla alue täyttää noin 70 % näytön kapeammasta mitasta (yksikkötesti).",
+        "Napautus valitsee alueen nykyisellä tasolla ja korostaa sen aksenttireunalla. Toinen napautus samaan alueeseen tai tuplaklikkaus lentää alueen keskelle seuraavan tason kehykseen noin sekunnissa. Vähennetyllä liikkeellä siirtymä on välitön.",
+        "Valtiotasolla näkyvät valtion läänit, läänitasolla läänin kaupunkialueet ja kaupunkialuetasolla heksaruudut (STORY-022). Ylempien tasojen rajat pysyvät näkyvissä.",
+        "Ylhäällä on murupolku (Planeetta › Valtio › Lääni › Kaupunkialue) ja 44 px:n takaisin-nappi, joka lentää tason ylös. Raahaus ja nipistys toimivat ennallaan, eikä raahaus valitse aluetta.",
+        "E2E: napautus valitsee, toinen napautus lentää seuraavalle tasolle ja takaisin-nappi palaa. Ei konsolivirheitä."
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-030",
+      "epic": "EPIC-006",
+      "title": "Tasomatriisi: tutkimus ja rakentaminen tasoittain",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että jokaisella tasolla tutkitaan ja rakennetaan eri asioita (design-paketin tasomatriisi), jotta jokainen zoom-taso on oma pelinsä.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-026",
+        "STORY-028"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Detail-näkymät 6a–6f (kaupunki, kaupunkialue, lääni, valtio, planeetta) design-paketin yhteisellä rungolla: otsake, kolme välilehteä ja 56 px:n rivit. Lukitut rivit 55 %:n peittävyydellä ja tekstillä \"Vaatii X\".",
+        "Tasomatriisin tutkimukset ja rakennukset (docs/design/pelin-kulku.md) toimivat pelitilan muutoksina",
+        "18 resurssia ja niiden resurssirakennukset (11 briefistä ja 7 ehdotettua lisäystä), 8 yksikköä ja 12 kaupunkirakennusta"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      },
+      "scope": "post-mvp"
     }
   ],
   "plans": [

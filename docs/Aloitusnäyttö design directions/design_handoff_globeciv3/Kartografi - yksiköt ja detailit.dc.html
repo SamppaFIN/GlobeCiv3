@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-c9a05f43-334c-46e1-a549-3ee7886cf64d/styles.css">
+<script src="_ds/nocturne-c9a05f43-334c-46e1-a549-3ee7886cf64d/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#0e0f18}
+a{color:var(--color-accent-300)}a:hover{color:var(--color-accent-200)}
+@keyframes gc-legA{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
+@keyframes gc-legB{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(24deg)}}
+@keyframes gc-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.3px)}}
+@keyframes gc-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-1.5px) rotate(2deg)}}
+@keyframes gc-flag{0%,100%{transform:skewY(0deg) scaleX(1)}50%{transform:skewY(10deg) scaleX(.85)}}
+@keyframes gc-fire{0%,100%{opacity:1;transform:scale(1)}40%{opacity:.7;transform:scale(.8)}70%{opacity:.95;transform:scale(1.1)}}
+@keyframes gc-smoke{0%{opacity:0;transform:translateY(0) scale(.6)}30%{opacity:.5}100%{opacity:0;transform:translateY(-14px) scale(1.4)}}
+@keyframes gc-nod{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(12deg)}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
+</style>
+</helmet>
+
+<section id="t6" style="padding:40px 44px;display:flex;flex-direction:column;gap:20px;border-bottom:1px solid var(--color-divider)">
+  <div style="display:flex;align-items:baseline;gap:10px">
+    <a href="#t6" style="font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-accent-800);color:var(--color-text);border-radius:4px;text-decoration:none">6</a>
+    <span style="font:500 13px/1.2 var(--font-body);color:var(--color-text)">Details-ruudut: kaupunki ja jokainen karttataso</span>
+  </div>
+  <div style="display:grid;grid-template-columns:140px repeat(3, minmax(0, 220px));gap:1px;max-width:820px;font-size:12px;border-radius:var(--radius-md);overflow:hidden;background:var(--color-neutral-800)">
+    <span style="padding:8px 10px;background:var(--color-surface);color:var(--color-neutral-400)">Taso</span><span style="padding:8px 10px;background:var(--color-surface);color:var(--color-neutral-400)">Tutki</span><span style="padding:8px 10px;background:var(--color-surface);color:var(--color-neutral-400)">Rakenna</span><span style="padding:8px 10px;background:var(--color-surface);color:var(--color-neutral-400)">Tason oma asia</span>
+    <span style="padding:8px 10px;background:var(--color-bg)">Kaupunki</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">–</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Kaupungin rakennukset, yksiköt</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Kasvu, tuotantojono, työruudut</span>
+    <span style="padding:8px 10px;background:var(--color-bg)">Kaupunkialue</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Maastotaidot: kalastus, louhinta</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Resurssirakennukset ruuduille</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Työläiset, yksiköiden moodit</span>
+    <span style="padding:8px 10px;background:var(--color-bg)">Lääni</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Kartografia, purjehdus, ratsastus</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Tiet, tori, satama</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Kauppa ja kauppareitit</span>
+    <span style="padding:8px 10px;background:var(--color-bg)">Valtio</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Kirjoitus, filosofia, mystiikka</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Temppeli, pyhä lehto, linnake</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Kulttuuri, usko, linja</span>
+    <span style="padding:8px 10px;background:var(--color-bg)">Planeetta</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Tähtitiede, merenkulku</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Maailmanihmeet</span><span style="padding:8px 10px;background:var(--color-bg);color:var(--color-neutral-300)">Diplomatia ja sopimukset</span>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+
+    <div id="6a" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#6a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">6a</a>Kaupunki · Yleiskuva</div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:var(--color-bg);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:36px 12px 6px">
+          <button class="btn btn-secondary" aria-label="Takaisin karttaan" style="width:44px;height:44px;padding:0;flex:none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg></button>
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-300)">Kaupunki · Kotialue</span><span style="font-size:20px;font-weight:500">Aamuranta</span></div>
+          <span class="tag tag-neutral">Pääkaupunki</span>
+        </div>
+        <div style="height:118px;flex:none">{{ heroCity }}</div>
+        <div class="seg" role="tablist" style="display:flex;margin:0 12px;flex:none">
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6a" checked="{{ true }}">Yleiskuva</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6a">Rakenna</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6a">Ruudut</label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:14px 12px">
+          <div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px">
+            <sc-for list="{{ yields }}" as="y" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:3px;padding:10px;border-radius:var(--radius-md);background:var(--color-surface)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ y.color }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{ y.icon }}"></path></svg>
+                <span style="font-size:18px;font-weight:500;font-variant-numeric:tabular-nums">{{ y.val }}</span>
+                <span style="font-size:12px;color:var(--color-neutral-400)">{{ y.name }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:14px;white-space:nowrap">Koko 3</span>
+            <div style="flex:1;height:4px;border-radius:2px;background:var(--color-neutral-800);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:40%;border-radius:2px;background:oklch(0.82 0.04 80)"></div></div>
+            <span style="font-size:12px;color:var(--color-neutral-400);white-space:nowrap">kasvaa 9 pv</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400)">Tuotantojono</span>
+            <sc-for list="{{ queue }}" as="q" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px">
+                <div style="width:44px;height:44px;flex:none">{{ q.thumb }}</div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
+                  <span style="font-size:14px">{{ q.name }}</span>
+                  <div style="height:3px;border-radius:2px;background:var(--color-neutral-800);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--color-accent-400);width:{{ q.pct }}"></div></div>
+                </div>
+                <span style="font-size:12px;color:var(--color-neutral-300);white-space:nowrap">{{ q.days }}</span>
+              </div>
+            </sc-for>
+            <button class="btn btn-primary" style="min-height:44px">Lisää jonoon</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400)">Rakennettu</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span class="tag tag-neutral">Aitta</span><span class="tag tag-neutral">Paja</span><span class="tag tag-neutral">Muuri</span><span class="tag tag-neutral">Kalasatama</span><span class="tag tag-neutral">Viljapelto</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400)">Asukkaat työssä · 3 / 3</span>
+            <span style="font-size:13px;color:var(--color-neutral-300)">Kalasatama, Viljapelto, Hevoset</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="6b" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#6b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">6b</a>Kaupunki · Rakenna</div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:var(--color-bg);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:36px 12px 10px">
+          <button class="btn btn-secondary" aria-label="Takaisin karttaan" style="width:44px;height:44px;padding:0;flex:none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg></button>
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-300)">Kaupunki · Kotialue</span><span style="font-size:20px;font-weight:500">Aamuranta</span></div>
+          <span style="font-size:12px;color:var(--color-neutral-300);white-space:nowrap">Tuotanto +3 / pv</span>
+        </div>
+        <div class="seg" role="tablist" style="display:flex;margin:0 12px;flex:none">
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6b">Yleiskuva</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6b" checked="{{ true }}">Rakenna</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6b">Ruudut</label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:14px 12px">
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400)">Rakennukset</span>
+          <sc-for list="{{ cityBuild }}" as="b" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px;opacity:{{ b.op }}">
+              <div style="width:44px;height:44px;flex:none">{{ b.thumb }}</div>
+              <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:14px">{{ b.name }}</span><span style="font-size:12px;color:var(--color-neutral-400)">{{ b.eff }}</span></div>
+              <span style="font-size:12px;color:var(--color-neutral-300);text-align:right;white-space:nowrap">{{ b.right }}</span>
+            </div>
+          </sc-for>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:8px">Yksiköt</span>
+          <sc-for list="{{ cityUnits }}" as="b" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px;opacity:{{ b.op }}">
+              <div style="width:44px;height:44px;flex:none">{{ b.thumb }}</div>
+              <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:14px">{{ b.name }}</span><span style="font-size:12px;color:var(--color-neutral-400)">{{ b.eff }}</span></div>
+              <span style="font-size:12px;color:var(--color-neutral-300);text-align:right;white-space:nowrap">{{ b.right }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div id="6c" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#6c" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">6c</a>Kaupunkialue · Rakenna resursseille</div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:var(--color-bg);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:36px 12px 10px">
+          <button class="btn btn-secondary" aria-label="Takaisin karttaan" style="width:44px;height:44px;padding:0;flex:none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg></button>
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-300)">Kaupunkialue</span><span style="font-size:20px;font-weight:500">Kotialue</span></div>
+          <span style="font-size:12px;color:var(--color-neutral-300);white-space:nowrap">Kartoitettu 64 %</span>
+        </div>
+        <div class="seg" role="tablist" style="display:flex;margin:0 12px;flex:none">
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6c" checked="{{ true }}">Rakenna</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6c">Tutki</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6c">Yksiköt</label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:14px 12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400)">Löydetyt resurssit</span><span style="font-size:12px;color:var(--color-neutral-300)">Työläisiä vapaana 2</span></div>
+          <sc-for list="{{ areaRows }}" as="a" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 6px 6px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px;opacity:{{ a.op }}">
+              <div style="width:44px;height:44px;flex:none">{{ a.thumbRes }}</div>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="2" stroke-linecap="round"><path d="M5 12 H19 M13 6 L19 12 L13 18"></path></svg>
+              <div style="width:44px;height:44px;flex:none">{{ a.thumbB }}</div>
+              <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:14px">{{ a.bname }}</span><span style="font-size:12px;color:var(--color-neutral-400)">{{ a.eff }}</span></div>
+              <span style="font-size:12px;color:var(--color-neutral-300);text-align:right;white-space:nowrap">{{ a.right }}</span>
+            </div>
+          </sc-for>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:8px">Tutkitaan tällä tasolla</span>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px">
+            <div style="display:flex;flex-direction:column;gap:5px;flex:1"><span style="font-size:14px">Louhinta</span><div style="height:3px;border-radius:2px;background:var(--color-neutral-800);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:55%;border-radius:2px;background:var(--color-accent-400)"></div></div><span style="font-size:12px;color:var(--color-neutral-400)">Avaa Louhoksen ja Hiilikaivoksen</span></div>
+            <span style="font-size:12px;color:var(--color-neutral-300)">5 pv</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="6d" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#6d" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">6d</a>Lääni · Kauppa</div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:var(--color-bg);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:36px 12px 10px">
+          <button class="btn btn-secondary" aria-label="Takaisin karttaan" style="width:44px;height:44px;padding:0;flex:none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg></button>
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-300)">Lääni</span><span style="font-size:20px;font-weight:500">Kotilääni</span></div>
+          <span style="font-size:12px;color:var(--color-neutral-300);white-space:nowrap">Kauppa +9 / pv</span>
+        </div>
+        <div class="seg" role="tablist" style="display:flex;margin:0 12px;flex:none">
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6d" checked="{{ true }}">Kauppa</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6d">Rakenna</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6d">Tutki</label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:14px 12px">
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400)">Kauppareitit</span>
+          <sc-for list="{{ routes }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-surface);min-height:64px;box-shadow:{{ r.ring }}">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="oklch(0.82 0.04 80)" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="27" r="4"></circle><circle cx="29" cy="9" r="4"></circle><path d="M10 24 Q14 12 26 12" stroke-dasharray="2 3"></path></svg>
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><span style="font-size:14px">{{ r.title }}</span><span style="font-size:12px;color:var(--color-neutral-400)">{{ r.sub }}</span></div>
+              <span style="font-size:13px;color:oklch(0.84 0.11 90);white-space:nowrap">{{ r.val }}</span>
+            </div>
+          </sc-for>
+          <button class="btn btn-primary" style="min-height:44px">Avaa reitti Etelälaaksoon</button>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:8px">Karavaanit</span>
+          <div style="display:flex;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px">
+            <div style="width:44px;height:44px;flex:none">{{ thumbCaravan }}</div>
+            <div style="display:flex;flex-direction:column;gap:1px;flex:1"><span style="font-size:14px">Karavaani 1</span><span style="font-size:12px;color:var(--color-neutral-400)">Matkalla Itärantaan · perillä 3 pv</span></div>
+          </div>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:8px">Läänin tutkimus</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tag tag-accent">Kartografia ✓</span><span class="tag tag-outline">Purjehdus · avaa Veneen</span><span class="tag tag-neutral">Ratsastus · avaa Ratsuväen</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="6e" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#6e" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">6e</a>Valtio · Kulttuuri ja usko</div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:var(--color-bg);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:36px 12px 10px">
+          <button class="btn btn-secondary" aria-label="Takaisin karttaan" style="width:44px;height:44px;padding:0;flex:none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg></button>
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-300)">Valtio</span><span style="font-size:20px;font-weight:500">Kotivaltio</span></div>
+        </div>
+        <div class="seg" role="tablist" style="display:flex;margin:0 12px;flex:none">
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6e">Kulttuuri</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6e" checked="{{ true }}">Usko</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6e">Linja</label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;padding:14px 12px">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface)">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="oklch(0.85 0.12 85)" stroke-width="1.6" stroke-linecap="round"><circle cx="20" cy="20" r="7"></circle><path d="M20 5 V9 M20 31 V35 M5 20 H9 M31 20 H35 M9.4 9.4 L12.2 12.2 M27.8 27.8 L30.6 30.6 M9.4 30.6 L12.2 27.8 M27.8 12.2 L30.6 9.4"></path></svg>
+            <div style="display:flex;flex-direction:column;gap:4px;flex:1"><span style="font-size:15px">Auringon tie</span><span style="font-size:12px;color:var(--color-neutral-400)">Valtion usko · 3 / 7 lääniä seuraa</span>
+              <div style="display:grid;grid-template-columns:repeat(7, 1fr);gap:3px"><span style="height:4px;border-radius:2px;background:oklch(0.85 0.12 85)"></span><span style="height:4px;border-radius:2px;background:oklch(0.85 0.12 85)"></span><span style="height:4px;border-radius:2px;background:oklch(0.85 0.12 85)"></span><span style="height:4px;border-radius:2px;background:var(--color-neutral-800)"></span><span style="height:4px;border-radius:2px;background:var(--color-neutral-800)"></span><span style="height:4px;border-radius:2px;background:var(--color-neutral-800)"></span><span style="height:4px;border-radius:2px;background:var(--color-neutral-800)"></span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);background:var(--color-surface)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-300)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 V9 L12 4 L20 9 V20 M8 20 V13 H16 V20 M4 20 H20"></path></svg>
+            <span style="font-size:13px;flex:1">Kulttuuri +5 / pv</span><span style="font-size:12px;color:var(--color-neutral-400)">rajat laajenevat 12 pv</span>
+          </div>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:4px">Valitse opinkappale · 1 / 2</span>
+          <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;min-height:56px;padding:8px 12px;flex-direction:column;align-items:flex-start;gap:2px;box-shadow:inset 0 0 0 1px var(--color-accent)"><span style="font-size:14px">Pyhiinvaellus</span><span style="font-size:12px;color:var(--color-neutral-400)">+1 kauppa jokaisessa temppelikaupungissa</span></button>
+          <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;min-height:56px;padding:8px 12px;flex-direction:column;align-items:flex-start;gap:2px"><span style="font-size:14px">Sadonkorjuun juhla</span><span style="font-size:12px;color:var(--color-neutral-400)">+1 ruoka kaupungeissa, joissa on aitta</span></button>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:4px">Rakenna valtiossa</span>
+          <sc-for list="{{ stateBuild }}" as="b" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:6px 10px 6px 6px;border-radius:var(--radius-md);background:var(--color-surface);min-height:56px">
+              <div style="width:44px;height:44px;flex:none">{{ b.thumb }}</div>
+              <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:14px">{{ b.name }}</span><span style="font-size:12px;color:var(--color-neutral-400)">{{ b.eff }}</span></div>
+              <span style="font-size:12px;color:var(--color-neutral-300);white-space:nowrap">{{ b.right }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div id="6f" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#6f" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">6f</a>Planeetta · Diplomatia</div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:var(--color-bg);display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px;padding:36px 12px 10px">
+          <button class="btn btn-secondary" aria-label="Takaisin karttaan" style="width:44px;height:44px;padding:0;flex:none"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path></svg></button>
+          <div style="display:flex;flex-direction:column;flex:1;min-width:0"><span style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent-300)">Planeetta</span><span style="font-size:20px;font-weight:500">Maailma</span></div>
+          <span style="font-size:12px;color:var(--color-neutral-300);white-space:nowrap">3 kansaa kohdattu</span>
+        </div>
+        <div class="seg" role="tablist" style="display:flex;margin:0 12px;flex:none">
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6f" checked="{{ true }}">Diplomatia</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6f">Ihmeet</label>
+          <label class="seg-opt" style="flex:1;min-height:44px;justify-content:center"><input type="radio" name="t6f">Tutki</label>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:14px 12px">
+          <sc-for list="{{ civs }}" as="c" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:{{ c.ring }}">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="width:36px;height:36px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--color-bg);box-shadow:0 0 0 1.5px {{ c.color }};font-size:14px;font-weight:500">{{ c.init }}</span>
+                <div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0"><span style="font-size:15px">{{ c.name }}</span><span style="font-size:12px;color:var(--color-neutral-400)">{{ c.where }}</span></div>
+                <span style="display:flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:2px;transform:rotate(45deg);background:{{ c.color }}"></span>{{ c.rel }}</span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                <sc-for list="{{ c.treaties }}" as="t" hint-placeholder-count="2"><span class="tag tag-neutral">{{ t }}</span></sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--color-neutral-400);margin-top:8px">Ehdota Merikansalle</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button class="btn btn-primary" style="min-height:48px">Kauppasopimus</button>
+            <button class="btn btn-secondary" style="min-height:48px">Avoimet rajat</button>
+            <button class="btn btn-secondary" style="min-height:48px">Yhteinen tutkimus</button>
+            <button class="btn btn-secondary" style="min-height:48px">Lähetä lahja</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section id="t5" style="padding:40px 44px;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;align-items:baseline;gap:10px">
+    <a href="#t5" style="font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-accent-800);color:var(--color-text);border-radius:4px;text-decoration:none">5</a>
+    <span style="font:500 13px/1.2 var(--font-body);color:var(--color-text)">Kirjasto: yksiköt, rakennukset ja resurssit</span>
+  </div>
+  <p style="margin:0;max-width:820px;font-size:13px;color:var(--color-neutral-400);text-wrap:pretty">Kaikki ovat isometrisiä, ja valo tulee vasemmalta ylhäältä. Jokainen resurssi on parina: ruutu ja sen kuvake sekä ruudulle rakennettava rakennus. Resurssit 1–11 ovat briefistä, 12–18 ovat ehdotettuja lisäyksiä. Tiedostonimet ovat koodia varten.</p>
+
+  <div id="5a" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#5a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">5a</a>Yksiköt · 8</div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px">
+      <sc-for list="{{ unitCards }}" as="c" hint-placeholder-count="8">
+        <div style="display:flex;flex-direction:column;gap:5px;width:150px">
+          <div style="width:150px;height:130px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);overflow:hidden">{{ c.svg }}</div>
+          <span style="font-size:13px">{{ c.name }}</span>
+          <span style="font-size:12px;color:var(--color-neutral-400);text-wrap:pretty">{{ c.role }}</span>
+          <span style="font:11px ui-monospace,Menlo,monospace;color:var(--color-neutral-500)">{{ c.file }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div id="5b" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#5b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">5b</a>Kaupungin rakennukset · 12</div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px">
+      <sc-for list="{{ cityCards }}" as="c" hint-placeholder-count="12">
+        <div style="display:flex;flex-direction:column;gap:5px;width:150px">
+          <div style="width:150px;height:130px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm);overflow:hidden">{{ c.svg }}</div>
+          <span style="font-size:13px">{{ c.name }}</span>
+          <span style="font-size:12px;color:var(--color-neutral-400);text-wrap:pretty">{{ c.eff }}</span>
+          <span style="font:11px ui-monospace,Menlo,monospace;color:var(--color-neutral-500)">{{ c.file }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div id="5c" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)"><a href="#5c" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">5c</a>Resurssit ja niiden rakennukset · 18</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));gap:14px;max-width:1600px">
+      <sc-for list="{{ resCards }}" as="c" hint-placeholder-count="18">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:var(--radius-md);background:var(--color-surface);box-shadow:var(--shadow-sm)">
+          <div style="height:112px">{{ c.svg }}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+              <span style="font-size:11px;color:var(--color-neutral-500)">{{ c.no }} · {{ c.ter }}</span>
+              <span style="font-size:14px">{{ c.name }}</span>
+              <span style="font-size:12px;color:var(--color-neutral-300)">{{ c.eff }}</span>
+              <span style="font:10.5px ui-monospace,Menlo,monospace;color:var(--color-neutral-500)">{{ c.file }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+              <span style="font-size:11px;color:var(--color-neutral-500)">Rakennus · {{ c.req }}</span>
+              <span style="font-size:14px">{{ c.bname }}</span>
+              <span style="font-size:12px;color:var(--color-neutral-300)">{{ c.beff }}</span>
+              <span style="font:10.5px ui-monospace,Menlo,monospace;color:var(--color-neutral-500)">{{ c.bfile }}</span>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SQ3 = Math.sqrt(3), INK = 'oklch(0.82 0.04 80)';
+const T = { ocean: 'oklch(0.46 0.07 228)', arctic: 'oklch(0.90 0.02 240)', tundra: 'oklch(0.66 0.04 160)', desert: 'oklch(0.80 0.08 82)', forest: 'oklch(0.50 0.09 148)', grassland: 'oklch(0.67 0.12 132)', hills: 'oklch(0.63 0.07 92)', jungle: 'oklch(0.45 0.11 162)', mountains: 'oklch(0.60 0.02 60)', plains: 'oklch(0.75 0.09 105)', swamp: 'oklch(0.48 0.06 122)' };
+const TN = { ocean: 'Valtameri', arctic: 'Arktinen', tundra: 'Tundra', desert: 'Aavikko', forest: 'Metsä', grassland: 'Ruohomaa', hills: 'Kukkulat', jungle: 'Viidakko', mountains: 'Vuoret', plains: 'Tasanko', swamp: 'Suo' };
+const corner = (x, y, s, i) => { const a = (60 * i - 30) * Math.PI / 180; return [x + s * Math.cos(a), y + s * Math.sin(a)]; };
+const hexPts = (x, y, s) => [0, 1, 2, 3, 4, 5].map(i => corner(x, y, s, i).map(n => n.toFixed(1)).join(',')).join(' ');
+const SKIN = 'oklch(0.78 0.06 60)', WOOD = 'oklch(0.55 0.07 60)', DARK = 'oklch(0.32 0.03 60)';
+const UC = { scout: ['oklch(0.58 0.09 150)', 'oklch(0.45 0.08 150)'], settler: ['oklch(0.66 0.07 70)', 'oklch(0.52 0.06 70)'], warrior: ['oklch(0.55 0.13 30)', 'oklch(0.43 0.11 30)'], worker: ['oklch(0.60 0.05 250)', 'oklch(0.48 0.05 250)'], missionary: ['oklch(0.88 0.02 90)', 'oklch(0.74 0.02 90)'], rider: ['oklch(0.52 0.10 265)', 'oklch(0.42 0.09 265)'] };
+const Y = { food: { icon: 'M12 21 V5 M12 9 C9 9 8 7 8 4 C11 4 12 6 12 9 M12 9 C15 9 16 7 16 4 C13 4 12 6 12 9 M12 15 C9 15 8 13 8 10 C11 10 12 12 12 15 M12 15 C15 15 16 13 16 10 C13 10 12 12 12 15', color: 'oklch(0.78 0.12 135)' }, prod: { icon: 'M4 20 L13 11 M10 5 H16 L19 8 L15 12 L10 7 Z', color: 'oklch(0.76 0.10 50)' }, trade: { icon: 'M12 4 A8 8 0 1 0 12 20 A8 8 0 1 0 12 4 M12 7 V17 M9.5 9.5 H14 M9.5 14.5 H14', color: 'oklch(0.84 0.11 90)' } };
+const RI = {
+  fish: 'M3 12 Q10 6 16 12 Q10 18 3 12 Z M16 12 L21 8 V16 Z', seals: 'M4 17 Q6 9 13 9 Q17 9 18 6 Q20 8 19 11 Q18 15 12 16 Q8 17 4 17 Z M3 20 H21',
+  oasis: 'M12 20 Q11 14 12 9 M12 9 Q8 6 5 8 M12 9 Q16 6 19 8 M12 9 Q10 4 7 4 M12 9 Q14 4 17 4 M5 20 Q12 17 19 20', game: 'M12 21 V12 M12 12 L7 5 M9 8 L5 8 M12 12 L17 5 M15 8 L19 8 M9 15 Q12 20 15 15',
+  reindeer: 'M5 19 Q5 13 10 13 H15 Q17 13 17 10 M8 19 V15 M14 19 V15 M17 10 L15 5 M17 10 L21 6 M16 7 L19 3', fertile: 'M12 21 V11 M12 14 C8 14 6 11 6 8 C10 8 12 11 12 14 M12 11 C16 11 18 8 18 5 C14 5 12 8 12 11 M5 21 H19',
+  coal: 'M5 17 L8 11 L13 12 L15 17 Z M12 17 L15 10 L20 12 L19 17 Z M4 20 H20', gems: 'M7 5 H17 L21 10 L12 20 L3 10 Z M3 10 H21 M9 5 L12 10 L15 5 M12 10 V20',
+  gold: 'M4 19 L6 15 H12 L14 19 Z M10 19 L12 15 H18 L20 19 Z M7 15 L9 11 H15 L17 15', horses: 'M7 20 V12 A5 5 0 0 1 17 12 V20 M5 20 H9 M15 20 H19',
+  oil: 'M12 3 Q18 11 18 15 A6 6 0 0 1 6 15 Q6 11 12 3 Z', wheat: Y.food.icon,
+  wood: 'M4 16 H18 A2 2 0 0 1 18 20 H4 A2 2 0 0 1 4 16 Z M6 10 H20 A2 2 0 0 1 20 14 H6 A2 2 0 0 1 6 10 Z', stone: 'M4 20 H20 V15 H4 Z M7 15 V10 H17 V15 M12 20 V15 M10 10 V5 H15 V10',
+  iron: 'M4 8 H20 L17 12 H14 V16 H17 V19 H7 V16 H10 V12 H7 Z', salt: 'M12 4 L19 8 V16 L12 20 L5 16 V8 Z M5 8 L12 12 L19 8 M12 12 V20',
+  spices: 'M8 20 Q4 14 9 9 Q13 5 17 7 Q16 12 12 16 Q10 19 8 20 Z M17 7 Q18 4 20 3', peat: 'M4 20 H20 M5 20 V16 H11 V20 M13 20 V16 H19 V20 M8 16 V12 H16 V16'
+};
+const RES = [
+  ['fish', 'Kala', 'ocean', '+2 ruokaa', 'Kalasatama', '+1 ruoka, +1 kauppa', 'dock-fish', 'Kalastus'],
+  ['seals', 'Hylkeet', 'arctic', '+2 ruokaa', 'Pyyntileiri', '+1 ruoka, +1 tuotanto', 'dock-seals', 'Kalastus'],
+  ['oasis', 'Keidas', 'desert', '+3 ruokaa', 'Kastelukylä', '+1 ruoka, +1 kauppa', 'oasis', 'Kastelu'],
+  ['game', 'Riista', 'forest', '+2 ruokaa', 'Metsästysmaja', '+1 ruoka', 'lodge-game', 'Metsästys'],
+  ['reindeer', 'Poro', 'tundra', '+2 ruokaa', 'Poroaitaus', '+1 ruoka, +1 tuotanto', 'pen-reindeer', 'Karjanhoito'],
+  ['fertile', 'Hedelmällinen maa', 'grassland', '+1 tuotanto', 'Maatila', '+2 ruokaa', 'field-fertile', 'Maanviljely'],
+  ['coal', 'Hiili', 'hills', '+2 tuotantoa', 'Hiilikaivos', '+2 tuotantoa', 'mine-coal', 'Louhinta'],
+  ['gems', 'Jalokivet', 'jungle', '+4 kauppaa', 'Jalokivikaivos', '+2 kauppaa', 'mine-gems', 'Louhinta'],
+  ['gold', 'Kulta', 'mountains', '+6 kauppaa', 'Kultakaivos', '+3 kauppaa', 'mine-gold', 'Louhinta'],
+  ['horses', 'Hevoset', 'plains', '+2 tuotantoa', 'Hevostalli', '+1 tuotanto, avaa ratsuväen', 'pen-horses', 'Ratsastus'],
+  ['oil', 'Öljy', 'swamp', '+4 tuotantoa', 'Öljypumppu', '+2 tuotantoa', 'pump', 'Koneet'],
+  ['wheat', 'Vilja', 'plains', '+1 ruoka', 'Viljapelto', '+2 ruokaa', 'field-wheat', 'Maanviljely'],
+  ['wood', 'Puu', 'forest', '+1 tuotanto', 'Sahamaja', '+2 tuotantoa', 'lodge-wood', 'Metsänhoito'],
+  ['stone', 'Kivi', 'hills', '+1 tuotanto', 'Louhos', '+2 tuotantoa', 'quarry', 'Louhinta'],
+  ['iron', 'Rauta', 'mountains', '+2 tuotantoa', 'Rautakaivos', '+2 tuotantoa, avaa soturit', 'mine-iron', 'Pronssityö'],
+  ['salt', 'Suola', 'desert', '+1 ruoka, +1 kauppa', 'Suolakenttä', '+2 kauppaa', 'saltpan', 'Kauppa'],
+  ['spices', 'Mausteet', 'jungle', '+3 kauppaa', 'Maustetarha', '+2 kauppaa', 'field-spice', 'Maanviljely'],
+  ['peat', 'Turve', 'swamp', '+1 tuotanto', 'Turvepelto', '+1 tuotanto', 'peat', 'Metsänhoito']
+];
+const CITYB = [
+  ['granary', 'Aitta', '+1 ruoka, kasvu nopeutuu', 'building-granary'], ['workshop', 'Paja', '+2 tuotantoa', 'building-workshop'],
+  ['market', 'Tori', '+2 kauppaa, +25 % kauppaa', 'building-market'], ['temple', 'Temppeli', '+2 kulttuuria, levittää uskoa', 'building-temple'],
+  ['wall', 'Muuri', 'Puolustus +50 %', 'building-wall'], ['barracks', 'Kasarmi', 'Uudet yksiköt kokeneempia', 'building-barracks'],
+  ['harbor', 'Satama', 'Veneet, merikauppa', 'building-harbor'], ['library', 'Oppimisto', 'Tutkimus +25 %', 'building-library'],
+  ['camp', 'Leiri', 'Uudisasukkaan aloitusleiri', 'building-camp'], ['city', 'Kaupunki', 'Kaupungin keskus', 'city'],
+  ['capital', 'Pääkaupunki', 'Valtion keskus', 'city-capital'], ['grove', 'Pyhä lehto', '+3 uskoa, valtiotaso', 'building-grove']
+];
+
+function legs(xs, walk, dur, d, h0, w) {
+  const h = React.createElement;
+  return xs.map((lx, i) => h('rect', { key: 'lg' + i, x: lx, y: -h0, width: w || 2.6, height: h0 + 0.2, rx: 1, fill: DARK, style: { transformBox: 'fill-box', transformOrigin: '50% 0', animation: walk ? `${i % 2 ? 'gc-legB' : 'gc-legA'} ${dur}s ease-in-out ${d}s infinite` : 'none' } }));
+}
+function person(kind, walk, d, sc) {
+  const h = React.createElement, [c, c2] = UC[kind], dur = walk ? 0.55 : 2.6, robe = kind === 'missionary';
+  const back = kind === 'settler' ? [h('rect', { key: 'bp', x: -8.5, y: -19, width: 6, height: 10.5, rx: 1.8, fill: 'oklch(0.48 0.06 55)' }), h('rect', { key: 'br', x: -9.5, y: -21.5, width: 8, height: 3.2, rx: 1.6, fill: 'oklch(0.70 0.05 90)' })] : null;
+  let fore = [];
+  if (kind === 'scout') fore = [h('line', { key: 'a', x1: 5.5, y1: -4, x2: 7.2, y2: -27, stroke: WOOD, strokeWidth: 1.4, strokeLinecap: 'round' }), h('path', { key: 'b', d: 'M-4.2 -20.5 A4.2 4.2 0 0 1 4.2 -20.5 L3.4 -18.6 L-3.8 -18.4 Z', fill: c2 })];
+  if (kind === 'warrior') fore = [h('line', { key: 'a', x1: 6, y1: -2, x2: 6, y2: -31, stroke: WOOD, strokeWidth: 1.3 }), h('path', { key: 'b', d: 'M6 -35 L7.8 -30.5 L4.2 -30.5 Z', fill: 'oklch(0.80 0.01 260)' }), h('ellipse', { key: 'c', cx: -4.8, cy: -12, rx: 4.2, ry: 5, fill: 'oklch(0.46 0.05 60)', stroke: INK, strokeWidth: 1 }), h('path', { key: 'd', d: 'M-3.9 -21 A3.9 3.9 0 0 1 3.9 -21 Z', fill: 'oklch(0.70 0.01 260)' })];
+  if (kind === 'worker') fore = [h('line', { key: 'a', x1: -4, y1: -15, x2: 7, y2: -25, stroke: WOOD, strokeWidth: 1.4, strokeLinecap: 'round' }), h('path', { key: 'b', d: 'M3 -28 Q8 -27.5 9.5 -22', fill: 'none', stroke: 'oklch(0.70 0.01 260)', strokeWidth: 1.6, strokeLinecap: 'round' }), h('path', { key: 'c', d: 'M-4 -22.5 H4 L3 -24.5 H-3 Z', fill: 'oklch(0.75 0.08 85)' })];
+  if (kind === 'missionary') fore = [h('line', { key: 'a', x1: 5.5, y1: -2, x2: 6, y2: -26, stroke: WOOD, strokeWidth: 1.3 }), h('circle', { key: 'b', cx: 6, cy: -28.5, r: 2.6, fill: 'oklch(0.85 0.12 85)' }), h('path', { key: 'c', d: 'M-4.3 -20 A4.3 4.3 0 0 1 4.3 -20 L3.6 -17.5 L-3.9 -17.5 Z', fill: c2 })];
+  if (kind === 'settler') fore = [h('line', { key: 'a', x1: 4.5, y1: -10, x2: 6, y2: -6, stroke: 'oklch(0.40 0.02 260)', strokeWidth: 2.2, strokeLinecap: 'round' })];
+  return h('g', { transform: sc ? `scale(${sc})` : undefined }, h('g', { style: { animation: `gc-bob ${walk ? dur / 2 : dur}s ease-in-out ${d}s infinite` } },
+    back, robe ? null : legs([-3.6, 1], walk, dur, d, 7),
+    h('path', { d: robe ? 'M-4.6 -17.5 L0 -17.5 L0 -1 L-6.5 -1 Z' : 'M-4.6 -17.5 L0 -17.5 L0 -6 L-5.6 -6 Z', fill: c }), h('path', { d: robe ? 'M0 -17.5 L4.6 -17.5 L6.5 -1 L0 -1 Z' : 'M0 -17.5 L4.6 -17.5 L5.6 -6 L0 -6 Z', fill: c2 }),
+    robe ? null : h('line', { x1: -5.2, y1: -9.5, x2: 5.2, y2: -9.5, stroke: DARK, strokeWidth: 1.2 }),
+    h('circle', { cx: 0, cy: -20.5, r: 3.6, fill: SKIN }), h('path', { d: 'M0.6 -24 A3.6 3.6 0 0 1 0.6 -17 Z', fill: 'oklch(0.66 0.06 55)' }), fore));
+}
+function horse(walk, d, opts) {
+  const h = React.createElement, c = opts.color || 'oklch(0.50 0.07 55)', c2 = 'oklch(0.40 0.06 55)', dur = walk ? 0.5 : 2.6;
+  return h('g', { style: { animation: `gc-bob ${walk ? dur / 2 : dur}s ease-in-out ${d}s infinite` } },
+    legs([-8, -4.5, 4, 7.5], walk, dur, d, 8, 2.2),
+    h('path', { d: 'M-12 -13 Q-15 -9 -13.5 -5', fill: 'none', stroke: c2, strokeWidth: 2, strokeLinecap: 'round' }),
+    h('ellipse', { cx: 0, cy: -11, rx: 10, ry: 4.4, fill: c }), h('path', { d: 'M-9 -9 Q0 -5.5 9 -9 Q0 -7 -9 -9 Z', fill: c2 }),
+    h('path', { d: 'M5 -13 L9.5 -21.5 L12.5 -20.5 L9.5 -10.5 Z', fill: c }), h('ellipse', { cx: 12.8, cy: -20.2, rx: 3.8, ry: 2, fill: c, transform: 'rotate(18 12.8 -20.2)' }),
+    h('path', { d: 'M6 -14 L9.5 -22', stroke: c2, strokeWidth: 1.6, strokeLinecap: 'round' }),
+    opts.load ? [h('rect', { key: 'l1', x: -7, y: -20, width: 6.5, height: 6, rx: 0.8, fill: 'oklch(0.62 0.07 65)', stroke: DARK, strokeWidth: 0.5 }), h('rect', { key: 'l2', x: -0.5, y: -19, width: 5.5, height: 5, rx: 0.8, fill: 'oklch(0.70 0.06 80)', stroke: DARK, strokeWidth: 0.5 }), h('line', { key: 'l3', x1: -7, y1: -17, x2: 5, y2: -16.5, stroke: DARK, strokeWidth: 0.6 })] : null,
+    opts.rider ? [h('path', { key: 'r1', d: 'M-4 -14 L0 -14 L-0.5 -24 L-3.5 -24 Z', fill: UC.rider[0] }), h('path', { key: 'r2', d: 'M0 -14 L2.5 -14 L1.5 -24 L-0.5 -24 Z', fill: UC.rider[1] }),
+      h('circle', { key: 'r3', cx: -1, cy: -27, r: 3.1, fill: SKIN }), h('path', { key: 'r4', d: 'M-4.1 -27.5 A3.1 3.1 0 0 1 2.1 -27.5 Z', fill: 'oklch(0.70 0.01 260)' }),
+      h('line', { key: 'r5', x1: 1, y1: -12, x2: 9, y2: -38, stroke: WOOD, strokeWidth: 1.2 }), h('path', { key: 'r6', d: 'M9 -38 h5 l-1.5 1.5 l1.5 1.5 h-5', fill: '#b5abfc', style: { transformBox: 'fill-box', transformOrigin: '0 50%', animation: 'gc-flag 1.2s ease-in-out infinite' } })] : null);
+}
+function boat(d) {
+  const h = React.createElement;
+  return h('g', null,
+    h('ellipse', { cx: 0, cy: 1, rx: 17, ry: 3.5, fill: 'none', stroke: 'oklch(0.85 0.03 230)', strokeWidth: 0.8, opacity: 0.5 }),
+    h('g', { style: { transformBox: 'fill-box', transformOrigin: '50% 100%', animation: `gc-float 2.2s ease-in-out ${d}s infinite` } },
+      h('path', { d: 'M-15 -5 L15 -5 L10 2 L-11 2 Z', fill: 'oklch(0.55 0.07 60)' }), h('path', { d: 'M-15 -5 L15 -5 L13.5 -3 L-13.5 -3 Z', fill: 'oklch(0.66 0.07 65)' }), h('path', { d: 'M15 -5 L10 2 L8 2 L12.5 -3 Z', fill: 'oklch(0.44 0.06 60)' }),
+      h('line', { x1: 0, y1: -5, x2: 0, y2: -30, stroke: DARK, strokeWidth: 1.2 }),
+      h('path', { d: 'M1 -29 L1 -7 L13 -8 Z', fill: 'oklch(0.90 0.02 85)' }), h('path', { d: 'M-1 -27 L-1 -8 L-9 -9 Z', fill: 'oklch(0.76 0.02 85)' }),
+      h('path', { d: 'M0 -30 h6 l-1.5 1.5 l1.5 1.5 h-6', fill: '#b5abfc', style: { transformBox: 'fill-box', transformOrigin: '0 50%', animation: 'gc-flag 1.4s ease-in-out infinite' } })));
+}
+function unit(kind, x, y, k, walk, d) {
+  const h = React.createElement, shadow = h('ellipse', { cx: 0, cy: 0.5, rx: kind === 'cavalry' || kind === 'caravan' ? 13 : 7.5, ry: 3, fill: '#000', opacity: kind === 'boat' ? 0 : 0.3 });
+  let body;
+  if (kind === 'cavalry') body = horse(walk, d, { rider: true });
+  else if (kind === 'caravan') body = [h('g', { key: 'h', transform: 'translate(-4 0)' }, horse(walk, d, { load: true, color: 'oklch(0.58 0.05 70)' })), h('g', { key: 'p', transform: 'translate(15 2) scale(0.8)' }, person('worker', walk, d + 0.1))];
+  else if (kind === 'boat') body = boat(d);
+  else body = person(kind, walk, d);
+  return h('g', { transform: `translate(${x} ${y}) scale(${k})` }, shadow, body);
+}
+
+function isoB(kind, x, y, k) {
+  const h = React.createElement, Pn = (u, v, z) => [(u - v) * 0.866, (u + v) * 0.5 - z], P = (u, v, z) => Pn(u, v, z).map(n => n.toFixed(2)).join(',');
+  const poly = (key, pts, fill) => h('polygon', { key, points: pts.map(p => P(...p)).join(' '), fill, stroke: 'oklch(0.25 0.02 60)', strokeWidth: 0.4, strokeLinejoin: 'round' });
+  const W = ['oklch(0.86 0.03 80)', 'oklch(0.70 0.03 80)'], R = ['oklch(0.55 0.11 35)', 'oklch(0.44 0.09 35)'], SL = ['oklch(0.52 0.03 250)', 'oklch(0.42 0.03 250)'], S = ['oklch(0.74 0.01 260)', 'oklch(0.60 0.01 260)', 'oklch(0.82 0.01 260)'], WD = ['oklch(0.64 0.07 60)', 'oklch(0.50 0.06 60)', 'oklch(0.72 0.07 65)'];
+  const house = (key, u, v, w, d, hw, rh, wall, roof) => { wall = wall || W; roof = roof || R; return h('g', { key },
+    poly('r', [[u + w, v, 0], [u + w, v + d, 0], [u + w, v + d, hw], [u + w, v, hw]], wall[1]), poly('f', [[u, v + d, 0], [u + w, v + d, 0], [u + w, v + d, hw], [u, v + d, hw]], wall[0]),
+    poly('b', [[u, v, hw], [u + w, v, hw], [u + w, v + d / 2, hw + rh], [u, v + d / 2, hw + rh]], roof[1]), poly('g', [[u + w, v, hw], [u + w, v + d, hw], [u + w, v + d / 2, hw + rh]], wall[1]),
+    poly('s', [[u, v + d, hw], [u + w, v + d, hw], [u + w, v + d / 2, hw + rh], [u, v + d / 2, hw + rh]], roof[0])); };
+  const box = (key, u, v, w, d, hh, c) => h('g', { key }, poly('r', [[u + w, v, 0], [u + w, v + d, 0], [u + w, v + d, hh], [u + w, v, hh]], c[1]), poly('f', [[u, v + d, 0], [u + w, v + d, 0], [u + w, v + d, hh], [u, v + d, hh]], c[0]), poly('t', [[u, v, hh], [u + w, v, hh], [u + w, v + d, hh], [u, v + d, hh]], c[2]));
+  const flat = (key, u, v, w, d, fill) => poly(key, [[u, v, 0], [u + w, v, 0], [u + w, v + d, 0], [u, v + d, 0]], fill);
+  const cyl = (key, u, v, r, hh, c) => { const [cx, cy] = Pn(u, v, 0); return h('g', { key }, h('path', { d: `M${cx - r} ${cy - hh}V${cy}A${r} ${r / 2} 0 0 0 ${cx + r} ${cy}V${cy - hh}Z`, fill: c[0] }), h('path', { d: `M${cx} ${cy + r / 2}A${r} ${r / 2} 0 0 0 ${cx + r} ${cy}V${cy - hh}H${cx}Z`, fill: c[1] }), h('ellipse', { cx, cy: cy - hh, rx: r, ry: r / 2, fill: c[2] })); };
+  const cone = (key, u, v, r, z, ch, c) => { const [cx, cy] = Pn(u, v, z); return h('g', { key }, h('path', { d: `M${cx - r} ${cy}L${cx} ${cy - ch}L${cx} ${cy + r / 2}Z`, fill: c[0] }), h('path', { d: `M${cx} ${cy + r / 2}L${cx} ${cy - ch}L${cx + r} ${cy}Z`, fill: c[1] })); };
+  const tree = (key, u, v, sc, conifer) => { const [tx, ty] = Pn(u, v, 0); return h('g', { key }, h('line', { x1: tx, y1: ty, x2: tx, y2: ty - 4 * sc, stroke: WOOD, strokeWidth: 1.2 }), conifer ? h('path', { d: `M${tx - 3.5 * sc} ${ty - 3 * sc}L${tx} ${ty - 12 * sc}L${tx + 3.5 * sc} ${ty - 3 * sc}Z`, fill: 'oklch(0.42 0.08 150)' }) : [h('circle', { key: 'a', cx: tx, cy: ty - 7 * sc, r: 4 * sc, fill: 'oklch(0.48 0.10 140)' }), h('circle', { key: 'b', cx: tx - 1.3 * sc, cy: ty - 8.2 * sc, r: 2 * sc, fill: 'oklch(0.58 0.11 135)' })]); };
+  const palm = (key, u, v) => { const [px, py] = Pn(u, v, 0); return h('g', { key, fill: 'none', strokeLinecap: 'round' }, h('path', { d: `M${px} ${py}Q${px - 1} ${py - 7} ${px + 1} ${py - 13}`, stroke: WOOD, strokeWidth: 1.4 }), h('path', { d: `M${px + 1} ${py - 13}q-5 -1 -7 3M${px + 1} ${py - 13}q5 -1 7 3M${px + 1} ${py - 13}q-3 -4 -6 -4M${px + 1} ${py - 13}q3 -4 6 -4`, stroke: 'oklch(0.55 0.12 140)', strokeWidth: 1.6 })); };
+  const animal = (key, u, v, type) => { const [ax, ay] = Pn(u, v, 0), c = type === 'reindeer' ? 'oklch(0.58 0.03 60)' : type === 'seal' ? 'oklch(0.40 0.02 260)' : 'oklch(0.50 0.07 55)';
+    if (type === 'seal') return h('path', { key, d: `M${ax - 4} ${ay}Q${ax - 3} ${ay - 3.5} ${ax + 1} ${ay - 3}Q${ax + 3} ${ay - 3} ${ax + 3.5} ${ay - 5}Q${ax + 4.5} ${ay - 2} ${ax + 3} ${ay}Z`, fill: c });
+    return h('g', { key }, h('path', { d: `M${ax - 3} ${ay}v-2.5M${ax - 1.5} ${ay}v-2.5M${ax + 1.5} ${ay}v-2.5M${ax + 3} ${ay}v-2.5`, stroke: DARK, strokeWidth: 0.8 }), h('ellipse', { cx: ax, cy: ay - 3.5, rx: 3.8, ry: 1.9, fill: c }), h('path', { d: `M${ax + 3} ${ay - 4}l1.5 -3l1.6 0.4`, stroke: c, strokeWidth: 1.6, fill: 'none', strokeLinecap: 'round' }),
+      type === 'reindeer' ? h('path', { d: `M${ax + 4.5} ${ay - 7}l-1 -2.5M${ax + 4.5} ${ay - 7}l1.5 -2.5`, stroke: 'oklch(0.80 0.03 80)', strokeWidth: 0.7, fill: 'none' }) : null); };
+  const fence = (key, a) => { const pts = [[-a, -a], [a, -a], [a, a], [-a, a]]; const rail = z => pts.concat([pts[0]]).map(p => P(p[0], p[1], z)).join(' ');
+    const posts = []; for (let t = -a; t <= a; t += a / 2) [[t, -a], [a, t], [t, a], [-a, t]].forEach(([pu, pv], i) => { const [fx, fy] = Pn(pu, pv, 0); posts.push(h('line', { key: t + '-' + i, x1: fx, y1: fy, x2: fx, y2: fy - 3, stroke: WOOD, strokeWidth: 0.9 })); });
+    return h('g', { key }, posts, h('polyline', { points: rail(1.5), fill: 'none', stroke: WD[2], strokeWidth: 0.7 }), h('polyline', { points: rail(2.8), fill: 'none', stroke: WD[2], strokeWidth: 0.7 })); };
+  const flag = (key, u, v, z) => { const [fx, fy] = Pn(u, v, z); return h('g', { key }, h('line', { x1: fx, y1: fy, x2: fx, y2: fy - 9, stroke: 'oklch(0.35 0.02 60)', strokeWidth: 0.8 }), h('path', { d: `M${fx} ${fy - 9}h6l-1.5 2l1.5 2h-6Z`, fill: '#b5abfc', style: { transformBox: 'fill-box', transformOrigin: '0 50%', animation: 'gc-flag 1.6s ease-in-out infinite' } })); };
+  const smoke = (key, u, v, z, dl) => { const [sx, sy] = Pn(u, v, z); return h('circle', { key, cx: sx, cy: sy, r: 1.8, fill: 'oklch(0.85 0.01 260)', style: { transformBox: 'fill-box', transformOrigin: '50% 50%', animation: `gc-smoke 2.4s ease-out ${dl}s infinite` } }); };
+  const rows = (key, u0, v0, w, d, n, c) => { const out = []; for (let i = 1; i < n; i++) { const vv = v0 + d * i / n, a = Pn(u0, vv, 0), b = Pn(u0 + w, vv, 0); out.push(h('line', { key: i, x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: c, strokeWidth: 1.1 })); } return h('g', { key }, out); };
+  const mound = (key, ore) => { const e = Pn(4, 4, 0); return h('g', { key }, poly('m1', [[-10, -6, 0], [8, -6, 0], [8, 8, 0], [0, 0, 11]], 'oklch(0.56 0.03 70)'), poly('m2', [[-10, 8, 0], [8, 8, 0], [0, 0, 11]], 'oklch(0.66 0.04 75)'),
+    h('path', { d: `M${e[0] - 3} ${e[1]}V${e[1] - 4}A3 3 0 0 1 ${e[0] + 3} ${e[1] - 4}V${e[1]}Z`, fill: 'oklch(0.22 0.02 260)', stroke: WOOD, strokeWidth: 1.2 }),
+    box('ct', 8, 9, 4, 3, 2.5, ['oklch(0.50 0.05 60)', 'oklch(0.40 0.05 60)', ore]), ...[0, 1, 2].map(i => { const [ox, oy] = Pn(8.6 + i * 1.2, 9.8 + (i % 2), 3); return h('circle', { key: 'o' + i, cx: ox, cy: oy - 0.5, r: 1.3, fill: ore }); })); };
+  let parts = [];
+  switch (kind) {
+    case 'camp': { const f = Pn(6, 6, 0); parts = [poly('t1', [[5, -5, 0], [5, 5, 0], [0, 0, 9]], 'oklch(0.64 0.04 85)'), poly('t2', [[-5, 5, 0], [5, 5, 0], [0, 0, 9]], 'oklch(0.80 0.04 85)'), h('ellipse', { key: 'fl', cx: f[0], cy: f[1], rx: 3, ry: 1.4, fill: DARK }), h('path', { key: 'fi', d: `M${f[0] - 1.6} ${f[1]}Q${f[0]} ${f[1] - 6} ${f[0] + 1.6} ${f[1]}Z`, fill: 'oklch(0.78 0.16 65)', style: { transformBox: 'fill-box', transformOrigin: '50% 100%', animation: 'gc-fire 0.9s ease-in-out infinite' } }), smoke('sm', 6, 6, 6, 0)]; break; }
+    case 'city': case 'capital': parts = [house('h1', 0, -9, 6, 6, 5, 4), house('h2', -9, -2, 7, 6, 5, 4)]; if (kind === 'capital') parts.push(box('tw', -2, -3, 4.5, 4.5, 14, S), flag('fg', 0.25, -0.75, 14)); parts.push(house('h3', 2, 1, 8, 6, 6, 4.5), smoke('sm', 9, 3, 12, 0.4)); break;
+    case 'granary': parts = [cyl('c', 0, 0, 6, 9, WD), cone('r', 0, 0, 7, 9, 6, R), house('h', 4, 2, 6, 5, 4, 3)]; break;
+    case 'workshop': parts = [house('h', -6, -5, 11, 8, 6, 4, W, SL), box('ch', 1, -3, 2, 2, 13, S), smoke('s1', 2, -2, 13, 0), smoke('s2', 2, -2, 13, 1.2), box('an', 6, 5, 3, 2, 2.5, ['oklch(0.40 0.01 260)', 'oklch(0.32 0.01 260)', 'oklch(0.50 0.01 260)'])]; break;
+    case 'market': { const st = (key, u, v, c) => h('g', { key }, box('t', u, v, 5, 4, 2.5, WD), poly('a', [[u - 0.5, v + 4.5, 5.5], [u + 5.5, v + 4.5, 5.5], [u + 5.5, v + 1, 7.5], [u - 0.5, v + 1, 7.5]], c), ...[[u, v + 4], [u + 5, v + 4]].map((p, i) => { const [a, b] = Pn(p[0], p[1], 0); return h('line', { key: 'p' + i, x1: a, y1: b, x2: a, y2: b - 5.5, stroke: WOOD, strokeWidth: 0.8 }); })); parts = [st('s1', -8, -8, 'oklch(0.60 0.12 30)'), st('s2', 1, -8, 'oklch(0.70 0.10 90)'), st('s3', -4, 1, 'oklch(0.55 0.10 250)')]; break; }
+    case 'temple': parts = [box('p', -8, -8, 16, 14, 2, S), ...[[-6, 4], [-2, 4], [2, 4], [6, 4], [6, 0], [6, -4]].map((c, i) => { const [a, b] = Pn(c[0], c[1], 2); return h('rect', { key: 'c' + i, x: a - 0.9, y: b - 8, width: 1.8, height: 8, fill: S[2] }); }), poly('rb', [[-7, -7, 10], [7, -7, 10], [7, -1, 14], [-7, -1, 14]], R[1]), poly('rg', [[7, -7, 10], [7, 5, 10], [7, -1, 14]], S[1]), poly('rf', [[-7, 5, 10], [7, 5, 10], [7, -1, 14], [-7, -1, 14]], R[0])]; break;
+    case 'wall': parts = [box('w', -12, -2, 24, 3, 6, S), ...[-11, -6, -1, 4, 9].map(u => box('b' + u, u, -2, 2.5, 3, 8, S)), box('g', -2.5, -3, 5, 5, 10, S)]; break;
+    case 'barracks': parts = [house('h', -9, -4, 16, 7, 5, 3.5, W, SL), flag('f', 7, 3, 9), ...[[-6, 8], [-2, 8]].map((p, i) => { const [a, b] = Pn(p[0], p[1], 0); return h('line', { key: 'sp' + i, x1: a, y1: b, x2: a + 1.5, y2: b - 12, stroke: WOOD, strokeWidth: 0.9 }); })]; break;
+    case 'harbor': parts = [flat('wt', -2, -12, 14, 24, 'oklch(0.46 0.07 228)'), box('pier', -2, -2, 13, 4, 1.2, WD), house('h', -12, -8, 8, 7, 5, 3.5), box('cr', 4, -6, 1.5, 1.5, 14, WD), h('line', { key: 'arm', x1: Pn(4.7, -5.3, 14)[0], y1: Pn(4.7, -5.3, 14)[1], x2: Pn(10, -1, 14)[0], y2: Pn(10, -1, 14)[1], stroke: WOOD, strokeWidth: 1 }), h('g', { key: 'bt', transform: `translate(${Pn(10, 6, 0).join(' ')}) scale(0.45)` }, boat(0))]; break;
+    case 'library': parts = [house('h', -8, -5, 12, 9, 6, 4, W, SL), cyl('t', 5, -2, 3.5, 11, S), h('path', { key: 'd', d: (() => { const [a, b] = Pn(5, -2, 11); return `M${a - 3.5} ${b}A3.5 3.5 0 0 1 ${a + 3.5} ${b}Z`; })(), fill: 'oklch(0.55 0.08 250)' })]; break;
+    case 'grove': parts = [tree('t1', -6, -6, 1.2), tree('t2', 6, -4, 1.1), tree('t3', -5, 6, 1), box('st', -2, -2, 4, 4, 3, S), h('circle', { key: 'sun', cx: Pn(0, 0, 7)[0], cy: Pn(0, 0, 7)[1], r: 2.4, fill: 'oklch(0.85 0.12 85)' }), tree('t4', 7, 7, 1.15)]; break;
+    case 'dock-fish': parts = [box('pier', -12, -1, 16, 4, 1.2, WD), house('h', -12, -9, 7, 6, 4, 3), h('g', { key: 'bt', transform: `translate(${Pn(8, 7, 0).join(' ')}) scale(0.45)` }, boat(0.3)), ...[0, 1, 2].map(i => { const [a, b] = Pn(-2 + i * 3, -4, 0); return h('line', { key: 'r' + i, x1: a, y1: b, x2: a, y2: b - 5, stroke: WOOD, strokeWidth: 0.8 }); })]; break;
+    case 'dock-seals': { const [a, b] = Pn(-4, -4, 0); parts = [h('path', { key: 'ig', d: `M${a - 8} ${b}A8 6 0 0 1 ${a + 8} ${b}Z`, fill: 'oklch(0.94 0.01 240)', stroke: 'oklch(0.75 0.02 240)', strokeWidth: 0.5 }), h('path', { key: 'dr', d: `M${a - 2} ${b}V${b - 3}A2 2 0 0 1 ${a + 2} ${b - 3}V${b}Z`, fill: 'oklch(0.30 0.02 260)' }), box('ic', 5, -6, 4, 4, 3, ['oklch(0.88 0.03 230)', 'oklch(0.78 0.03 230)', 'oklch(0.95 0.01 230)']), animal('s1', 6, 6, 'seal'), animal('s2', 1, 9, 'seal')]; break; }
+    case 'oasis': { const [a, b] = Pn(2, 3, 0); parts = [h('ellipse', { key: 'pl', cx: a, cy: b, rx: 10, ry: 5, fill: 'oklch(0.55 0.08 220)' }), palm('p1', -6, -5), palm('p2', 9, -2), poly('t1', [[-9, 3, 0], [-3, 3, 0], [-6, 0, 6]], 'oklch(0.78 0.05 70)'), palm('p3', 4, 10)]; break; }
+    case 'lodge-game': parts = [house('h', -8, -7, 9, 7, 5, 3.5, WD, SL), ...[[4, 3], [8, 3]].map((p, i) => { const [a, b] = Pn(p[0], p[1], 0); return h('line', { key: 'p' + i, x1: a, y1: b, x2: a, y2: b - 7, stroke: WOOD, strokeWidth: 1 }); }), poly('hide', [[4.3, 3, 6.5], [7.7, 3, 6.5], [7.7, 3, 2], [4.3, 3, 2]], 'oklch(0.58 0.07 55)'), tree('t', -9, 6, 1, true)]; break;
+    case 'lodge-wood': parts = [house('h', -9, -8, 9, 7, 5, 3.5, WD, SL), ...[0, 1, 2].map(i => cyl('l' + i, 5 + i * 0, 1 + i * 2.6, 1.4, 1, WD)), box('lp', 3, 0, 6, 7, 2.6, WD), tree('t1', -9, 6, 1.1, true), tree('t2', 8, -7, 1, true)]; break;
+    case 'peat': parts = [house('h', -10, -8, 7, 6, 4, 3, WD, SL), ...[[2, -4], [6, 1], [1, 4], [-4, 7]].map((p, i) => box('pb' + i, p[0], p[1], 3.5, 3, 2.5 + (i % 2), ['oklch(0.38 0.04 50)', 'oklch(0.30 0.04 50)', 'oklch(0.44 0.05 50)']))]; break;
+    case 'pen-horses': case 'pen-reindeer': parts = [house('sh', -11, -11, 6, 5, 4, 3, WD, SL), fence('f', 6), animal('a1', -1, 1, kind === 'pen-horses' ? 'horse' : 'reindeer'), animal('a2', 3, -2, kind === 'pen-horses' ? 'horse' : 'reindeer')]; break;
+    case 'field-fertile': case 'field-wheat': case 'field-spice': { const c = kind === 'field-wheat' ? ['oklch(0.80 0.12 90)', 'oklch(0.68 0.11 80)'] : kind === 'field-spice' ? ['oklch(0.50 0.09 140)', 'oklch(0.58 0.16 30)'] : ['oklch(0.72 0.13 120)', 'oklch(0.58 0.11 125)'];
+      parts = [flat('fd', -11, -4, 16, 15, c[0]), rows('rw', -11, -4, 16, 15, 6, c[1]), house('bn', 3, -11, 7, 6, 5, 3.5)]; if (kind === 'field-spice') parts.push(...[[-8, 0], [-4, 3], [0, 6], [-8, 7]].map((p, i) => { const [a, b] = Pn(p[0], p[1], 0); return h('circle', { key: 'b' + i, cx: a, cy: b - 1.5, r: 2, fill: c[1] }); })); break; }
+    case 'mine-coal': parts = [mound('m', 'oklch(0.25 0.01 260)')]; break;
+    case 'mine-gems': parts = [mound('m', 'oklch(0.62 0.15 300)')]; break;
+    case 'mine-gold': parts = [mound('m', 'oklch(0.82 0.14 85)')]; break;
+    case 'mine-iron': parts = [mound('m', 'oklch(0.52 0.10 40)')]; break;
+    case 'quarry': parts = [box('q1', -10, -8, 9, 8, 7, S), box('q2', -1, -8, 7, 8, 4.5, S), box('q3', -10, 0, 9, 6, 3, S), box('bl', 5, 4, 3, 3, 3, S), box('bl2', 1, 7, 3, 2.5, 2, S)]; break;
+    case 'pump': { const base = Pn(-2, 0, 0), top = Pn(-2, 0, 16); parts = [cyl('tk', 7, 4, 4.5, 6, ['oklch(0.45 0.02 260)', 'oklch(0.36 0.02 260)', 'oklch(0.55 0.02 260)']),
+      h('path', { key: 'dr', d: `M${base[0] - 6} ${base[1]}L${top[0]} ${top[1]}L${base[0] + 6} ${base[1]}M${base[0] - 4} ${base[1] - 5}H${base[0] + 4}M${base[0] - 2.2} ${base[1] - 10}H${base[0] + 2.2}`, fill: 'none', stroke: 'oklch(0.40 0.02 260)', strokeWidth: 1.1 }),
+      h('g', { key: 'nod', style: { transformBox: 'fill-box', transformOrigin: '50% 50%', animation: 'gc-nod 2.4s ease-in-out infinite' } }, h('line', { x1: top[0] - 8, y1: top[1] + 1, x2: top[0] + 7, y2: top[1] - 1, stroke: DARK, strokeWidth: 2, strokeLinecap: 'round' }))]; break; }
+    case 'saltpan': parts = [...[[-10, -6], [-3, -6], [-10, 1], [-3, 1]].map((p, i) => flat('sp' + i, p[0], p[1], 6, 6, i % 2 ? 'oklch(0.95 0.01 90)' : 'oklch(0.88 0.03 220)')), ...[[4, -2], [5, 3]].map((p, i) => { const [a, b] = Pn(p[0], p[1], 0); return h('path', { key: 'pile' + i, d: `M${a - 3} ${b}L${a} ${b - 3.5}L${a + 3} ${b}Z`, fill: 'oklch(0.96 0.01 90)', stroke: 'oklch(0.70 0.02 90)', strokeWidth: 0.4 }); }), house('h', 6, -10, 6, 5, 4, 3)]; break;
+  }
+  return h('g', { transform: `translate(${x} ${y}) scale(${k})` }, h('ellipse', { cx: 0, cy: 2, rx: 13, ry: 6, fill: '#000', opacity: 0.16 }), parts);
+}
+function hexCard(w, hgt, ter, content, s) {
+  const h = React.createElement, cx = w / 2, cy = hgt / 2 + 2;
+  return h('svg', { width: w, height: hgt, viewBox: `0 0 ${w} ${hgt}`, style: { display: 'block' } }, h('polygon', { points: hexPts(cx, cy, s || Math.min(w, hgt) * 0.4), fill: T[ter] || T.grassland }), content(cx, cy));
+}
+function badge(id, x, y, r) {
+  const h = React.createElement, sc = r / 11;
+  return h('g', null, h('circle', { cx: x, cy: y, r, fill: 'oklch(0.20 0.02 260)', stroke: INK, strokeWidth: 1.2 }), h('path', { d: RI[id], transform: `translate(${x - 12 * sc * 0.75} ${y - 12 * sc * 0.75}) scale(${sc * 0.75})`, fill: 'none', stroke: INK, strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' }));
+}
+function resPair(r) {
+  const h = React.createElement, [id, , ter, , , , spr] = r, s = 44;
+  return h('svg', { width: '100%', height: 112, viewBox: '0 0 240 112', preserveAspectRatio: 'xMidYMid meet', style: { display: 'block' } },
+    h('polygon', { points: hexPts(60, 56, s), fill: T[ter] }), badge(id, 60, 56, 17),
+    h('path', { d: 'M108 56 H128 M122 50 L128 56 L122 62', fill: 'none', stroke: 'oklch(0.60 0.02 260)', strokeWidth: 1.6, strokeLinecap: 'round' }),
+    h('polygon', { points: hexPts(180, 56, s), fill: T[ter] }), isoB(spr, 180, 64, 2));
+}
+const thumbB = (spr, ter) => hexCard(44, 44, ter || 'grassland', (cx, cy) => isoB(spr, cx, cy + 4, 0.95), 21);
+const thumbU = (kind, ter) => hexCard(44, 44, ter || 'grassland', (cx, cy) => unit(kind, cx, cy + 13, kind === 'cavalry' || kind === 'caravan' ? 0.75 : 0.95, false, 0), 21);
+const thumbR = (id, ter) => hexCard(44, 44, ter, (cx, cy) => badge(id, cx, cy, 12), 21);
+
+class Component extends DCLogic {
+  renderVals() {
+    if (this._c) return this._c;
+    const h = React.createElement;
+    const UNITS = [['scout', 'Tiedustelija', 'Kartoittaa sumua itsenäisesti', 'grassland'], ['settler', 'Uudisasukas', 'Perustaa kaupungin', 'grassland'], ['worker', 'Työläinen', 'Rakentaa resurssirakennukset', 'plains'], ['warrior', 'Soturi', 'Puolustaa aluetta', 'hills'],
+      ['cavalry', 'Ratsuväki', 'Nopea, puolustaa laajaa aluetta', 'plains'], ['boat', 'Vene', 'Kartoittaa rannikkoa ja merta', 'ocean'], ['caravan', 'Karavaani', 'Kuljettaa kauppaa läänissä', 'desert'], ['missionary', 'Lähetyssaarnaaja', 'Levittää uskoa valtiossa', 'grassland']];
+    const unitCards = UNITS.map(([k, name, role, ter], i) => ({ name, role, file: 'unit-' + k, svg: hexCard(150, 130, ter, (cx, cy) => unit(k, cx, cy + 22, k === 'cavalry' || k === 'caravan' ? 1.6 : 2, k !== 'boat', i * 0.13), 50) }));
+    const cityCards = CITYB.map(([k, name, eff, file]) => ({ name, eff, file, svg: hexCard(150, 130, k === 'harbor' ? 'grassland' : 'grassland', (cx, cy) => isoB(k, cx, cy + 8, 2.1), 50) }));
+    const resCards = RES.map((r, i) => ({ no: i + 1, name: r[1], ter: TN[r[2]], eff: r[3], bname: r[4], beff: r[5], req: r[7], file: 'resource-' + r[0], bfile: 'building-' + r[6], svg: resPair(r) }));
+    const heroCity = h('svg', { width: 390, height: 118, viewBox: '0 0 390 118' },
+      [[115, 'plains', 'field-wheat'], [195, 'grassland', 'capital'], [275, 'ocean', 'dock-fish'], [155, 'grassland', 'granary'], [235, 'plains', 'pen-horses']].map(([x, t, b], i) => { const y = i < 3 ? 70 : 2; return h('g', { key: i }, h('polygon', { points: hexPts(x, i < 3 ? 70 : 10, 40), fill: T[t], opacity: 0.95 }), isoB(b, x, (i < 3 ? 70 : 10) + 8, 1.7)); }));
+    const R = r => RES.find(x => x[0] === r);
+    const areaRows = [['fish', 'ok', 'Rakennettu'], ['wheat', 'ok', 'Rakennettu'], ['game', 'go', '30 · 6 pv'], ['horses', 'go', '40 · 8 pv'], ['stone', 'lock', 'Vaatii Louhinta'], ['coal', 'lock', 'Vaatii Louhinta']]
+      .map(([id, st, right]) => { const r = R(id); return { thumbRes: thumbR(id, r[2]), thumbB: thumbB(r[6], r[2]), bname: r[4], eff: r[1] + ' · ' + r[5], right, op: st === 'lock' ? 0.55 : 1 }; });
+    this._c = {
+      unitCards, cityCards, resCards, heroCity, areaRows,
+      yields: [{ ...Y.food, val: '+5', name: 'Ruoka' }, { ...Y.prod, val: '+3', name: 'Tuotanto' }, { ...Y.trade, val: '+4', name: 'Kauppa' }],
+      queue: [{ name: 'Tori', pct: '60%', days: '3 pv', thumb: thumbB('market') }, { name: 'Ratsuväki', pct: '0%', days: '8 pv', thumb: thumbU('cavalry', 'plains') }, { name: 'Vene', pct: '0%', days: '6 pv', thumb: thumbU('boat', 'ocean') }],
+      cityBuild: [['granary', 'Aitta', '+1 ruoka, kasvu nopeutuu', 'Rakennettu', 1], ['market', 'Tori', '+2 kauppaa, +25 % kauppaa', 'Jonossa', 1], ['temple', 'Temppeli', '+2 kulttuuria', '50 · 10 pv', 1], ['harbor', 'Satama', 'Veneet, merikauppa', '60 · 12 pv', 1], ['library', 'Oppimisto', 'Tutkimus +25 %', 'Vaatii Kirjoitus', 0.55], ['barracks', 'Kasarmi', 'Kokeneemmat yksiköt', '40 · 8 pv', 1]]
+        .map(([k, name, eff, right, op]) => ({ name, eff, right, op, thumb: thumbB(k) })),
+      cityUnits: [['worker', 'Työläinen', 'Rakentaa resurssirakennukset', '20 · 4 pv', 1, 'plains'], ['cavalry', 'Ratsuväki', 'Vaatii Hevostallin', '45 · 9 pv', 1, 'plains'], ['missionary', 'Lähetyssaarnaaja', 'Vaatii Temppelin', '–', 0.55, 'grassland']]
+        .map(([k, name, eff, right, op, t]) => ({ name, eff, right, op, thumb: thumbU(k, t) })),
+      routes: [{ title: 'Kotialue → Itäranta', sub: 'Kala, suola · karavaani matkalla', val: '+4', ring: 'none' }, { title: 'Kotialue → Länsimetsä', sub: 'Puu · tie valmis', val: '+3', ring: 'none' }, { title: 'Kotialue → Etelälaakso', sub: 'Ehdotus · vilja, hevoset', val: '+3', ring: '0 0 0 1px var(--color-accent)' }],
+      thumbCaravan: thumbU('caravan', 'desert'),
+      stateBuild: [{ name: 'Pyhä lehto', eff: '+3 uskoa koko valtiolle', right: '120 · 20 pv', thumb: thumbB('grove') }, { name: 'Temppeli Itäranta', eff: 'Levittää uskoa lääniin', right: '50 · 10 pv', thumb: thumbB('temple') }, { name: 'Lähetyssaarnaaja', eff: 'Vie uskon Itälääniin', right: '35 · 7 pv', thumb: thumbU('missionary') }],
+      civs: [{ init: 'M', name: 'Merikansa', where: 'Itämeren saaret · kohdattu päivä 61', rel: 'Ystävällinen', color: 'oklch(0.72 0.14 150)', treaties: ['Rauha', 'Kauppasopimus ehdolla'], ring: '0 0 0 1px var(--color-accent)' },
+        { init: 'T', name: 'Tunturiliitto', where: 'Pohjoiset vuoret', rel: 'Neutraali', color: 'oklch(0.80 0.02 260)', treaties: ['Rauha'], ring: 'none' },
+        { init: 'H', name: 'Hiekkaruhtinaat', where: 'Eteläinen aavikko', rel: 'Epäluuloinen', color: 'oklch(0.70 0.15 40)', treaties: ['Ei sopimuksia'], ring: 'none' }]
+    };
+    return this._c;
+  }
+}
+</script>
+</body>
+</html>

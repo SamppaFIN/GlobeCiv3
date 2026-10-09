@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/nocturne-c9a05f43-334c-46e1-a549-3ee7886cf64d/styles.css">
+<script src="_ds/nocturne-c9a05f43-334c-46e1-a549-3ee7886cf64d/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:#0e0f18}
+a{color:var(--color-accent-300)}a:hover{color:var(--color-accent-200)}
+@keyframes gc-spin{from{transform:translateX(0)}to{transform:translateX(-300px)}}
+@keyframes gc-twinkle{0%,100%{opacity:.35}50%{opacity:.9}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
+</style>
+</helmet>
+<section id="t1" style="padding:40px 44px 40px;display:flex;flex-direction:column;gap:20px">
+  <div style="display:flex;align-items:baseline;gap:10px">
+    <a href="#t1" style="font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-accent-800);color:var(--color-text);border-radius:4px;text-decoration:none">1</a>
+    <span style="font:500 13px/1.2 var(--font-body);color:var(--color-text)">Aloitusnäyttö — kaksi suuntaa, mobiili 390 × 844</span>
+  </div>
+  <p style="margin:0;max-width:760px;font-size:13px;color:var(--color-neutral-400);text-wrap:pretty">Molemmat noudattavat Nocturnea (Inter 500, ääriviivanappi, aksentti viivana). Mitään ei ole kartoitettu, joten planeetta on tumma siluetti ja mantereet vain aavistuvat. Planeetta pyörii hitaasti; vähennetyllä liikkeellä se pysähtyy.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)">
+        <a href="#1a" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">1a</a>Kartografi — keskeneräinen kartta, musteviivat ja kompassirengas
+      </div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:radial-gradient(120% 70% at 50% 52%, #1c1f30 0%, var(--color-bg) 55%, #10111b 100%)">
+        <div style="position:absolute;inset:0">{{ starsA }}</div>
+        <div style="position:absolute;left:0;right:0;top:72px;padding:0 28px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:oklch(0.82 0.04 80)">Tuntematon maailma</span>
+          <h1 style="margin:0;font-size:46px;letter-spacing:-.02em;color:var(--color-text)">GlobeCiv</h1>
+          <span style="font-size:15px;color:var(--color-neutral-400)">Kartta, joka piirtyy</span>
+        </div>
+        <div style="position:absolute;left:15px;top:262px;width:360px;height:360px">{{ planetA }}</div>
+        <div style="position:absolute;left:28px;right:28px;bottom:48px;display:flex;flex-direction:column;gap:14px">
+          <button class="btn btn-primary btn-block" style="min-height:52px;font-size:16px;gap:10px;background:color-mix(in srgb, var(--color-bg) 60%, transparent)">
+            Uusi peli
+            <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+          </button>
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--color-neutral-400)">
+            <div style="flex:1;height:2px;border-radius:2px;background:var(--color-neutral-800)"></div>
+            <span>Kartoitettu 0 %</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--color-neutral-400)">
+        <a href="#1b" style="font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:var(--color-neutral-800);color:var(--color-text);border-radius:5px;text-decoration:none">1b</a>Luotain — planeetta heksapisteinä, jotka kartoitus sytyttää
+      </div>
+      <div style="width:390px;height:844px;position:relative;overflow:hidden;border-radius:28px;box-shadow:var(--shadow-md);background:radial-gradient(90% 60% at 80% 30%, #1d2036 0%, var(--color-bg) 50%, #0f1019 100%)">
+        <div style="position:absolute;inset:0">{{ starsB }}</div>
+        <div style="position:absolute;left:-40px;top:70px;width:520px;height:520px">{{ planetB }}</div>
+        <div style="position:absolute;left:28px;right:28px;bottom:48px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-accent-300)">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-400);box-shadow:0 0 8px var(--color-accent)"></span>
+              Signaali heikko · 0 % kartoitettu
+            </span>
+            <h1 style="margin:0;font-size:56px;letter-spacing:-.025em">GlobeCiv</h1>
+            <span style="font-size:15px;color:var(--color-neutral-400)">Kartta, joka piirtyy</span>
+          </div>
+          <button class="btn btn-primary btn-block" style="min-height:52px;font-size:16px;justify-content:space-between;padding:0 18px;background:color-mix(in srgb, var(--color-bg) 60%, transparent)">
+            Uusi peli
+            <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p style="margin:0;font-size:12px;color:var(--color-neutral-500)">Valitse suunta: "jatketaan <a href="#1a">1a</a>:lla" · "<a href="#1b">1b</a>, mutta kompassirengas <a href="#1a">1a</a>:sta" · "näytä työpöytäversio"</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;rotate&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Planeetta&quot;},&quot;rotationSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:80,&quot;min&quot;:20,&quot;max&quot;:200,&quot;step&quot;:10,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Planeetta&quot;}}">
+class Component extends DCLogic {
+  rng(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+  stars(seed, n) {
+    const h = React.createElement, r = this.rng(seed), out = [];
+    for (let i = 0; i < n; i++) {
+      const sz = r() < 0.08 ? 2 : 1, tw = r() < 0.15;
+      out.push(h('div', { key: i, style: { position: 'absolute', left: (r() * 100) + '%', top: (r() * 100) + '%', width: sz, height: sz, borderRadius: '50%', background: '#cfd3e5', opacity: 0.25 + r() * 0.5, animation: tw ? `gc-twinkle ${3 + r() * 4}s ease-in-out ${r() * 4}s infinite` : 'none' } }));
+    }
+    return out;
+  }
+  spin() { return this.props.rotate === false ? 'none' : `gc-spin ${this.props.rotationSeconds ?? 80}s linear infinite`; }
+  planetA() {
+    const h = React.createElement, ink = 'oklch(0.82 0.04 80)';
+    const blobs = [
+      'M40 70 C70 50 110 60 120 90 C130 120 100 140 105 170 C110 200 80 215 60 195 C40 175 50 150 35 130 C20 110 25 85 40 70Z',
+      'M170 40 C200 30 240 45 250 70 C262 95 235 105 215 100 C195 96 180 80 165 65Z',
+      'M180 140 C210 125 260 135 270 165 C280 200 250 240 220 245 C195 250 185 225 190 205 C195 185 170 165 180 140Z',
+      'M95 235 C115 228 140 240 135 258 C130 272 105 270 95 258Z'];
+    const land = [0, 300].flatMap(dx => blobs.map((d, i) => h('g', { key: dx + '-' + i, transform: `translate(${dx} 0)` },
+      h('path', { d, fill: ink, opacity: 0.07, filter: 'url(#gcBlur)' }),
+      h('path', { d, fill: 'none', stroke: ink, strokeWidth: 0.8, strokeDasharray: '2 5', strokeLinecap: 'round', opacity: 0.45 }))));
+    const grat = [];
+    [140, 121, 70].forEach((rx, i) => grat.push(h('ellipse', { key: 'm' + i, cx: 150, cy: 150, rx, ry: 140, fill: 'none', stroke: ink, strokeWidth: 0.5, opacity: 0.16 })));
+    grat.push(h('line', { key: 'm0', x1: 150, y1: 10, x2: 150, y2: 290, stroke: ink, strokeWidth: 0.5, opacity: 0.16 }));
+    [-60, -30, 0, 30, 60].forEach(lat => { const a = lat * Math.PI / 180, y = 150 - 140 * Math.sin(a), w = 140 * Math.cos(a); grat.push(h('line', { key: 'p' + lat, x1: 150 - w, y1: y, x2: 150 + w, y2: y, stroke: ink, strokeWidth: 0.5, opacity: lat === 0 ? 0.28 : 0.14 })); });
+    const ticks = [];
+    for (let d = 0; d < 360; d += 5) {
+      const a = (d - 90) * Math.PI / 180, major = d % 90 === 0, mid = d % 30 === 0;
+      const r1 = 150, r2 = major ? 141 : mid ? 145 : 147.5;
+      ticks.push(h('line', { key: 't' + d, x1: 150 + r1 * Math.cos(a), y1: 150 + r1 * Math.sin(a), x2: 150 + r2 * Math.cos(a), y2: 150 + r2 * Math.sin(a), stroke: major ? ink : '#75798c', strokeWidth: major ? 1 : 0.6 }));
+    }
+    const labels = [['P', 0], ['I', 90], ['E', 180], ['L', 270]].map(([t, d]) => { const a = (d - 90) * Math.PI / 180; return h('text', { key: t, x: 150 + 159 * Math.cos(a), y: 150 + 159 * Math.sin(a) + 3.5, textAnchor: 'middle', fontSize: 10, fontWeight: 500, fill: ink, fontFamily: 'Inter, sans-serif' }, t); });
+    return h('svg', { viewBox: '-20 -20 340 340', width: '100%', height: '100%', overflow: 'visible' },
+      h('defs', null,
+        h('clipPath', { id: 'gcClipA' }, h('circle', { cx: 150, cy: 150, r: 140 })),
+        h('filter', { id: 'gcBlur' }, h('feGaussianBlur', { stdDeviation: 6 })),
+        h('radialGradient', { id: 'gcBodyA', cx: '38%', cy: '34%', r: '75%' }, h('stop', { offset: 0, stopColor: '#2a2d3d' }), h('stop', { offset: 1, stopColor: '#12131c' })),
+        h('radialGradient', { id: 'gcShadeA', cx: '38%', cy: '34%', r: '70%' }, h('stop', { offset: 0.45, stopColor: '#0b0c13', stopOpacity: 0 }), h('stop', { offset: 1, stopColor: '#0b0c13', stopOpacity: 0.85 }))),
+      h('circle', { cx: 150, cy: 150, r: 146, fill: 'none', stroke: '#9184d9', strokeWidth: 6, opacity: 0.08, filter: 'url(#gcBlur)' }),
+      h('circle', { cx: 150, cy: 150, r: 140, fill: 'url(#gcBodyA)' }),
+      h('g', { clipPath: 'url(#gcClipA)' }, h('g', { style: { animation: this.spin() } }, land), grat, h('circle', { cx: 150, cy: 150, r: 140, fill: 'url(#gcShadeA)' })),
+      h('circle', { cx: 150, cy: 150, r: 140, fill: 'none', stroke: ink, strokeWidth: 0.6, opacity: 0.35 }),
+      ticks, labels);
+  }
+  planetB() {
+    const h = React.createElement, T = Math.PI * 2 / 300, dots = [];
+    const f = (x, y) => Math.sin(x * T * 2 + 0.6) + 0.8 * Math.sin(x * T * 3 + y * 0.045) + 0.6 * Math.sin(y * 0.03 + x * T) - 0.35 * Math.abs((y - 150) / 140) * 2;
+    const sx = 7, sy = 6.06;
+    for (let row = 0; row * sy < 300; row++) {
+      const y = 10 + row * sy;
+      for (let col = 0; col * sx < 600; col++) {
+        const x = col * sx + (row % 2 ? sx / 2 : 0), v = f(x, y), landHit = v > 0.55;
+        dots.push(h('circle', { key: row + '-' + col, cx: x, cy: y, r: landHit ? 1.55 : 1.05, fill: landHit ? '#d2cefd' : '#75798c', opacity: landHit ? 0.22 + Math.min(0.3, (v - 0.55) * 0.4) : 0.16 }));
+      }
+    }
+    return h('svg', { viewBox: '0 0 300 300', width: '100%', height: '100%' },
+      h('defs', null,
+        h('clipPath', { id: 'gcClipB' }, h('circle', { cx: 150, cy: 150, r: 138 })),
+        h('filter', { id: 'gcBlurB' }, h('feGaussianBlur', { stdDeviation: 5 })),
+        h('radialGradient', { id: 'gcShadeB', cx: '64%', cy: '36%', r: '72%' }, h('stop', { offset: 0.3, stopColor: '#0b0c13', stopOpacity: 0 }), h('stop', { offset: 1, stopColor: '#0b0c13', stopOpacity: 0.95 }))),
+      h('circle', { cx: 150, cy: 150, r: 141, fill: 'none', stroke: '#9184d9', strokeWidth: 5, opacity: 0.22, filter: 'url(#gcBlurB)' }),
+      h('circle', { cx: 150, cy: 150, r: 138, fill: '#151724' }),
+      h('g', { clipPath: 'url(#gcClipB)' }, h('g', { style: { animation: this.spin() } }, dots), h('circle', { cx: 150, cy: 150, r: 138, fill: 'url(#gcShadeB)' })),
+      h('path', { d: 'M 252 56 A 138 138 0 0 1 270 222', fill: 'none', stroke: '#b5abfc', strokeWidth: 1, opacity: 0.55, strokeLinecap: 'round' }));
+  }
+  renderVals() {
+    if (!this._c) this._c = { starsA: this.stars(7, 90), starsB: this.stars(19, 110) };
+    const key = `${this.props.rotate}-${this.props.rotationSeconds}`;
+    if (this._k !== key) { this._k = key; this._p = { planetA: this.planetA(), planetB: this.planetB() }; }
+    return { ...this._c, ...this._p };
+  }
+}
+</script>
+</body>
+</html>

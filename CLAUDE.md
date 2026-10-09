@@ -281,13 +281,13 @@ hakemisto.
     { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012", "STORY-019"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] },
-    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "todo", "stories": ["STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028"] }
+    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "todo", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030"] }
   ],
-  "stories_total": 28,
+  "stories_total": 30,
   "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010"],
   "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010"],
   "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010"],
-  "next": "Claude Design (design-brief.md), sitten STORY-021"
+  "next": "STORY-029, sitten STORY-022 ja STORY-021"
 }
 ```
 
@@ -379,6 +379,10 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | Yksiköt toimivat autonomisesti, ja jokaisella zoom-tasolla on omat toimintonsa. Aika kulkee reaaliajassa (noin 1,5 s per päivä), ja peliä voi tauottaa ja nopeuttaa. Seuraava taso aukeaa, kun 60 % alueesta on kartoitettu (säädettävä vakio). | Samin valinnat suunnittelukysymyksiin | Sami |
 | 2026-10-09 | Grafiikat ensin: Claude Design tekee ilmeen ja kuvakkeet design-brief.md:n mukaan ennen EPIC-006:n toteutusta. Uusi EPIC-006 (STORY-021–028). Simulaatio-LOD-storyt 013–015 siirtyvät MVP:n jälkeen, ja STORY-020 sulautuu STORY-026:een. | Samin pyyntö. MVP pysyy rajattuna. | Sami |
 | 2026-10-09 | Civ I -luvut (maastot, tuotot ja resurssit) tulevat Freecivin civ1-sääntösarjasta (data/civ1/terrain.ruleset, GPL). Nimet ovat omia, esimerkiksi tundran resurssi on Poro ja ruohomaan Hedelmällinen maa. | Sääntö 4 ja koodaussääntö 5 | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | Claude Designin Kartografi-suunta (aloitusnäytön 1a) on pelin ilme. Design-paketti on kansiossa `docs/Aloitusnäyttö design directions/design_handoff_globeciv3`. Tokenit (tokens.css) siirretään shaderiin ja HUDiin sellaisinaan, ja UI noudattaa Nocturne-tyylejä. Työpöydän 1440 px -näkymät ja lopulliset SVG-kuvakkeet puuttuvat vielä. | Samin valinta | Sami |
+| 2026-10-10 | Tasonavigointi: napautus valitsee alueen ja toinen napautus (tai tuplaklikkaus) sukeltaa sen sisään, jolloin näkymän taso ja näytettävä heksatyyppi vaihtuvat: planeetalla valtiot, valtiossa läänit, läänissä kaupunkialueet ja kaupunkialueessa ruudut. Uusi STORY-029 tehdään ensin, koska aloituslento (STORY-021) ja tasonäkymät (STORY-026) käyttävät samoja tasoja. | Samin pyyntö | Sami |
+| 2026-10-10 | Design-paketin tasomainen heksamalli (kaupunkialue on 61 ruudun heksa, ja lääni ja valtio ovat 7 + 7 superlaatoitusta) toteutetaan pallolla geodeettisena ruudukkona samalla ikosaedrilla kuin valtiot (f = 330 = 6 × 55). Kaupunkialue on niiden ruutujen joukko, joiden keskipiste kuuluu siihen, joten ruutumäärä vaihtelee noin 61:n ympärillä. Pallon pintaa ei voi laatoittaa tarkasti 61 ruudun heksoilla. | Sääntö 1: yksi maailma | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | Tasomatriisin tutkimukset ja rakennukset sekä detail-näkymät 6a–6f siirtyvät MVP:n jälkeen (STORY-030). MVP:ssä jokaisella tasolla on vähintään yksi toiminto (STORY-026). Resurssit 12–18 ovat Claude Designin ehdotuksia, eivät Civ I -lukuja, ja niiden arvot tarkistetaan ennen käyttöä. | MVP pysyy rajattuna. Sääntö 4. | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 
