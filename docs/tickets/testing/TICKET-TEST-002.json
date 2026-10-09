@@ -1,0 +1,83 @@
+{
+  "id": "TICKET-TEST-002",
+  "story": "STORY-002",
+  "implementation_ticket": "TICKET-IMPL-002",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus, ei korjaus: repo, lisenssi ja julkaisuputki.",
+    "files_changed": [
+      "package.json",
+      "package-lock.json",
+      "LICENSE",
+      "README.md",
+      ".github/workflows/deploy.yml",
+      ".github/dependabot.yml"
+    ]
+  },
+  "ai_testing": {
+    "environment": "https://samppafin.github.io/GlobeCiv3/ ja GitHub Actions (SamppaFIN/GlobeCiv3)",
+    "tooling": "npm, git, GitHubin julkinen REST-API, curl ja headless Chrome",
+    "cases": [
+      {
+        "steps": "npm audit fix, sitten npm audit, npm test ja npm run build",
+        "expected": "0 haavoittuvuutta, testit ja build vihreitä",
+        "result": "found 0 vulnerabilities, Tests 4 passed (4), build onnistui samalla bundle-hashilla (index-vTtO_VyQ.js)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "sha256sum LICENSE",
+        "expected": "Sama tiiviste kuin gnu.org:n gpl-3.0.txt-tiedostolla",
+        "result": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986, sama kuin ladatulla tiedostolla",
+        "outcome": "pass"
+      },
+      {
+        "steps": "git ls-files ennen committia",
+        "expected": "Ei node_modules- eikä dist-tiedostoja, ei salaisuuksia",
+        "result": "36 tiedostoa, ei node_modules- eikä dist-tiedostoja. Salaisuushaku ei löytänyt mitään.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "git push ja Actions-ajon 37949390880 jobit API:sta",
+        "expected": "test ja deploy onnistuvat mainin pushissa",
+        "result": "push main 477c19a: test success, deploy success",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Dependabotin PR-ajon 37949599637 jobit API:sta",
+        "expected": "Testit ajetaan, mutta deploy ohitetaan PR:ssä",
+        "result": "pull_request: test success, deploy skipped",
+        "outcome": "pass"
+      },
+      {
+        "steps": "curl tuotantosivulle, sen assets-tiedostoon ja faviconiin",
+        "expected": "Kaikki palauttavat 200, eikä base-polussa ole 404-virheitä",
+        "result": "sivu 200, /GlobeCiv3/assets/index-vTtO_VyQ.js 200 (541 717 tavua), favicon.svg 200",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Avaa tuotantosivu headless-Chromessa, lue konsoli ja ota kuvakaappaus",
+        "expected": "Ei virheitä, konsolissa 3D globe ready, globi näkyy",
+        "result": "Konsolissa vain Hex nodes: 362, edges: 1080 ja 3D globe ready. Kuvakaappauksessa globi ja tähtitausta (TICKET-TEST-002-tuotanto.png).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Avaa tuotantosivu puhelimella",
+        "expected": "Globi näkyy ja pyörii kosketuksella",
+        "result": "Ei ajettu — vaatii fyysisen laitteen. Jää Samin manuaaliseen tarkistukseen.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": ["docs/screenshots/TICKET-TEST-002-tuotanto.png"]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      { "item": "https://samppafin.github.io/GlobeCiv3/ näyttää globin työpöydällä", "checked": false },
+      { "item": "Sama sivu toimii puhelimella", "checked": false },
+      { "item": "Repo, LICENSE ja README näyttävät GitHubissa oikeilta", "checked": false }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

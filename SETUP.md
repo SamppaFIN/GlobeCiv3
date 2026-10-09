@@ -26,7 +26,10 @@ Myös `C:\Projects\CLAUDE.md` ladataan. Sen vastausprotokolla on sama kuin
 tässä projektissa, mutta sen identiteetti (Aavistus) jää tämän projektin
 identiteetin (Linssi) alle.
 
-## B. Repo (STORY-002)
+## B. Repo (STORY-002) — tehty 2026-10-09
+
+Kohdat 5–8 on tehty: repo on julkinen, ensimmäinen commit on 477c19a, ja
+julkaisu toimii osoitteessa https://samppafin.github.io/GlobeCiv3/.
 
 5. Luo GitHubiin **julkinen** ja tyhjä repo `SamppaFIN/GlobeCiv3` ilman
    README-, .gitignore- ja LICENSE-pohjia.

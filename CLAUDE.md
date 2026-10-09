@@ -100,11 +100,11 @@ LICENSE-tiedostoa.
     "frontend": ["TypeScript 6", "Three.js r184", "Svelte 5 (HUD, ei vielä käytössä)", "Zustand 5 (vanilla store)"],
     "backend": [],
     "build": ["Vite 8", "tsc (tyyppitarkistus buildissa)"],
-    "testing": ["Vitest (lisätään STORY-003:ssa)", "Playwright (lisätään STORY-003:ssa)"]
+    "testing": ["Vitest 5 (käytössä)", "Playwright (lisätään STORY-003:ssa)"]
   },
   "database": null,
   "storage": "Ei palvelinta. Tallennus myöhemmin selaimen IndexedDB:hen, kuten GlobeCiv2:n suunnitelmassa.",
-  "repositories": { "app": "github.com/SamppaFIN/GlobeCiv3 (julkinen, ei vielä luotu, kansio ei ole git-repo)" },
+  "repositories": { "app": "github.com/SamppaFIN/GlobeCiv3 (julkinen)" },
   "submodules": [],
   "local_path": "C:\\Projects\\GlobeCiv3",
   "related_projects": {
@@ -113,7 +113,7 @@ LICENSE-tiedostoa.
   },
   "urls": {
     "dev": "http://localhost:3000/GlobeCiv3/",
-    "production": "https://samppafin.github.io/GlobeCiv3/ (suunniteltu)"
+    "production": "https://samppafin.github.io/GlobeCiv3/"
   },
   "branches": { "main": "main", "active": "main" },
   "deploy": "Push main → GitHub Actions: testit → vite build → GitHub Pages (base /GlobeCiv3/). Sama malli kuin GlobeCiv2:ssa.",
@@ -283,9 +283,9 @@ hakemisto.
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001"],
-  "implementation_tickets": ["TICKET-IMPL-001"],
-  "testing_tickets": ["TICKET-TEST-001"],
+  "plans": ["PLAN-001", "PLAN-002"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002"],
   "next": "STORY-002"
 }
 ```
@@ -344,6 +344,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | Kaikki GlobeCiv-projektien koodi on Samin ja tekoälyn tuottamaa alusta asti, eikä siinä ole ulkopuolista koodia. LICENSE-tiedoston tekijä on Sami. | Koodin saa siirtää GlobeCiv2:sta ja globe-civilisationista GPL v3 -projektiin ilman muiden lupaa | Sami |
 | 2026-10-09 | Phaser poistettiin riippuvuuksista (`npm uninstall phaser`). Build ajettiin onnistuneesti ennen ja jälkeen, ja bundle pysyi samankokoisena (542,00 kB). | Mikään tiedosto ei tuonut Phaseria, ja overlayn kanssa sen tarve poistui | Sami |
 | 2026-10-09 | PLAN-001 hyväksyttiin. Vitest asennetaan jo STORY-001:ssä, ja STORY-003 lisää Playwrightin ja CI:n. | Bugikorjaus alkaa testistä, eikä CI:tä voi tehdä ennen repoa (STORY-002) | Sami |
+| 2026-10-09 | PLAN-002 hyväksyttiin. Lisenssitunniste on GPL-3.0-or-later, ja ensimmäinen commit pushattiin suoraan mainiin. | FSF:n vakiomuotoilu. Repo oli tyhjä, eikä haarasuojausta vielä ole. | Sami |
 
 ### Avoimet kysymykset
 
@@ -351,7 +352,9 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 2. ~~**GPL v3 ja siirretty koodi.**~~ Ratkaistu 2026-10-09 (päätöstaulukko).
 3. **Tuntematon tekstuuri.** `earth_texture.png` globe-civilisationista ei ole mukana, ennen kuin sen lähde ja lisenssi on selvitetty. Maasto generoidaan proseduraalisesti.
 4. ~~**"Infinite" ylemmässä CLAUDE.md:ssä.**~~ Ratkaistu 2026-10-09: tekijänä on Sami (päätöstaulukko). Jos "Infinite" halutaan myöhemmin tekijäriville, se on uusi päätös.
-5. **Riippuvuuksien haavoittuvuudet.** `npm audit` raportoi 4 korkean tason löydöstä (2026-10-09): nanoid, postcss ja source-map-js. Ne ovat rakennusketjun läpikulkuriippuvuuksia, eivätkä ne päädy pelin bundleen, mutta ne pitää silti päivittää. `npm audit fix` muuttaa riippuvuuksia, joten sen ajo on Samin katselmoitava (tietoturvasääntö 4). Ehdotus: aja se STORY-002:n yhteydessä Dependabotin kanssa.
+5. ~~**Riippuvuuksien haavoittuvuudet.**~~ Ratkaistu 2026-10-09: `npm audit fix` ajettiin osana PLAN-002:ta, ja tulos on 0 haavoittuvuutta.
+6. **Dependabotin 9 PR:ää.** Ne avautuivat heti ensimmäisen pushin jälkeen, ja kaikkien testit menivät läpi. Mukana on neljä Actionsien pääversiopäivitystä (checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5). Three 0.186 -päivitys jättäisi `@types/three`-paketin versioon 0.184. Mergetäänkö ne, ja missä järjestyksessä?
+7. **Haarasuojaus.** Pushataanko jatkossa suoraan mainiin vai PR:n kautta, jolloin CI:n testit ajetaan ennen mergeä?
 
 ### Ratkenneet kysymykset
 

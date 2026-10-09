@@ -1,0 +1,26 @@
+{
+  "id": "TICKET-IMPL-002",
+  "story": "STORY-002",
+  "plan": "PLAN-002",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "package.json",
+    "package-lock.json",
+    "LICENSE",
+    "README.md",
+    ".github/workflows/deploy.yml",
+    ".github/dependabot.yml"
+  ],
+  "change_summary": "npm audit fix nosti neljä läpikulkuriippuvuutta patch-versioihin (postcss 8.5.29, nanoid 3.3.20, source-map-js 1.2.2 ja devalue 5.9.4), ja auditin tulos on 0 haavoittuvuutta. Bundle pysyi bitilleen samana. LICENSE on gnu.org:n GPL v3 -teksti (sha256 3972dc97…6986), ja package.jsonin license-kenttä on GPL-3.0-or-later. README sisältää kuvauksen, käynnistysohjeet, linkit aiempiin repoihin ja FSF:n GPL-ilmoituksen (Copyright (C) 2026 Sami Räisänen). Workflow ajaa testit ja buildin jokaisessa pushissa ja PR:ssä ja julkaisee GitHub Pagesiin vain mainin pushissa. Dependabot tarkistaa npm-paketit ja Actionsit viikoittain. Paikallinen repo alustettiin main-haaralla, ja ensimmäinen commit pushattiin.",
+  "impact_analysis": {
+    "changed_symbols": [],
+    "call_sites_found": [],
+    "call_sites_updated": [],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Koodia ei muutettu. Dependabot avasi heti pushin jälkeen 9 PR:ää (#1–#9): npm-paketeista svelte 5.57.2, @sveltejs/vite-plugin-svelte 7.3.1, three 0.186.1, vite 8.3.3 ja zustand 5.0.15, sekä Actionsien pääversiot checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5. Kaikkien testiajot menivät läpi, ja niiden deploy-jobi ohitettiin. Yhtäkään ei ole mergetty. Huom: three 0.186 -päivitys jättäisi @types/three-paketin versioon 0.184."
+  },
+  "commit": "477c19a",
+  "progress": 100
+}
