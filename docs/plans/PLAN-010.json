@@ -1,0 +1,52 @@
+{
+  "id": "PLAN-010",
+  "story": "STORY-019",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "regions.ts laajenee kolmeen kerrokseen. Jokainen valtio jaetaan seitsemään lääniin ja jokainen lääni seitsemään kaupunkialueeseen aukko-7-heksajaon mallilla: yksi keskus ja kuusi kehällä etäisyydellä 2/√7 × yläalueen sisäsäde, kierrettynä 19,1°, plus siemenestä deterministinen pieni heilunta. Jos lapsen keskus jäisi yläalueensa ulkopuolelle, sitä vedetään kohti yläalueen keskusta, kunnes se on sisällä. Piste kuuluu lähimpään valtioon, sitten sen valtion lähimpään lääniin ja sitten sen läänin lähimpään kaupunkialueeseen, joten sisäkkäisyys on tarkka. Ruutu saa yhden 128 alkion vec4-taulukon: xyz on keskus ruudun paikallisissa koordinaateissa, ja w = kerros × 256 + yläalueen paikka taulukossa. Valtiot ovat aina mukana, läänit tasolta 2 ja kaupunkialueet tasolta 4 alkaen. Shaderi etsii kerros kerrallaan lähimmän ja laskee etäisyyden lähimpään rajatasoon saman yläalueen sisaruksiin. Läänien ja kaupunkialueiden viivat ovat ohuempia ja himmeämpiä, ja ne häivytetään esiin alueen näyttökoon mukaan.",
+  "alternatives_considered": [
+    {
+      "name": "Erilliset uniform-taulukot kullekin kerrokselle",
+      "pros": "Yksinkertaisempi shaderi",
+      "cons": "128 + 64 + 64 vektoria ylittää WebGL2:n taatun 224 fragmenttiuniformin rajan",
+      "rejected_because": "Uniform-raja"
+    },
+    {
+      "name": "Kaikki keskukset jaettuun tekstuuriin maailmankoordinaateissa",
+      "pros": "Ei ruutukohtaisia listoja",
+      "cons": "float32-vähennys maailmankoordinaateista hukkaa tarkkuuden syvillä tasoilla (rajat siirtyisivät noin 2 px tasolla 17), ja tarvittaisiin double-float-temppu",
+      "rejected_because": "Ruutukohtainen paikallinen lista on jo todettu tarkaksi (STORY-012)"
+    },
+    {
+      "name": "Satunnaiset (Poisson) lääninkeskukset",
+      "pros": "Orgaanisempi muoto",
+      "cons": "Vaihteleva määrä ja koko, ja sisäkkäisyyden takaaminen on vaikeampaa",
+      "rejected_because": "Kiinteä 7/7-rakenne vastaa heksailmettä ja pitää ehdokasmäärät ennustettavina. Heilunta antaa orgaanisuutta."
+    }
+  ],
+  "files_to_change": [
+    "src/globe/regions.ts",
+    "src/globe/regions.test.ts",
+    "src/globe/tiles.ts (taulukko ja shaderi)",
+    "tests/e2e/surface.e2e.ts (kuvat valtio-, lääni- ja kaupunkitasolta)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Hierarkia ja testit: määrät, determinismi, sisäkkäisyys (jokainen keskus yläalueensa sisällä) ja ehdokaslistojen täydellisyys kerroksittain tasoilla 0–17 (enintään 128)",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Ruutujen taulukko ja shaderin kolmen kerroksen rajat häivytyksineen",
+      "verify": "npm run build menee läpi, ja konsolissa ei ole shaderivirheitä. Kuvissa valtio-, lääni- ja kaupunkialuerajat näkyvät oikeilla zoom-tasoilla."
+    },
+    {
+      "step": 3,
+      "action": "E2E, merge ja CI",
+      "verify": "Kaikki vihreitä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

@@ -100,3 +100,21 @@ test('the coastline stays sharp from continent view to level 17', async ({ page 
   expect(levels[levels.length - 1]).toBe(17);
   expect(errors).toEqual([]);
 });
+
+test('provinces and city areas appear inside a state as the camera descends', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const errors = await openGame(page);
+  // Aim at the centre of state 100, where all three levels meet
+  await page.evaluate(() => {
+    const w = window as any;
+    w.globeCamera.target.copy(w.globeNodes[100].position.clone().normalize());
+  });
+  const levels: number[] = [];
+  for (const [name, d] of [['states', 3], ['provinces', 0.8], ['cities', 0.25], ['city', 0.06]] as const) {
+    const s = await settleAt(page, d);
+    levels.push(s.maxLevel);
+    await page.screenshot({ path: testInfo.outputPath(`hierarchy-${name}.png`) });
+  }
+  console.log('[hierarchy-levels] ' + JSON.stringify(levels));
+  expect(errors).toEqual([]);
+});
