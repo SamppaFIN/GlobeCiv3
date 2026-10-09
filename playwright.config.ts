@@ -10,7 +10,8 @@ export default defineConfig({
   testMatch: /.*\.e2e\.ts$/,
   forbidOnly: CI,
   retries: CI ? 1 : 0,
-  reporter: CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // 'github' turns failures into check-run annotations, readable without logs access
+  reporter: CI ? [['list'], ['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}/GlobeCiv3/`,
     screenshot: 'only-on-failure',
