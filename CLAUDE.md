@@ -345,6 +345,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | Phaser poistettiin riippuvuuksista (`npm uninstall phaser`). Build ajettiin onnistuneesti ennen ja jälkeen, ja bundle pysyi samankokoisena (542,00 kB). | Mikään tiedosto ei tuonut Phaseria, ja overlayn kanssa sen tarve poistui | Sami |
 | 2026-10-09 | PLAN-001 hyväksyttiin. Vitest asennetaan jo STORY-001:ssä, ja STORY-003 lisää Playwrightin ja CI:n. | Bugikorjaus alkaa testistä, eikä CI:tä voi tehdä ennen repoa (STORY-002) | Sami |
 | 2026-10-09 | PLAN-002 hyväksyttiin. Lisenssitunniste on GPL-3.0-or-later, ja ensimmäinen commit pushattiin suoraan mainiin. | FSF:n vakiomuotoilu. Repo oli tyhjä, eikä haarasuojausta vielä ole. | Sami |
+| 2026-10-09 | Kehitysvaiheessa Linssi saa mergetä omat työhaaransa mainiin kysymättä. Poikkeus: haara, jonka storyn hyväksymiskriteeri kieltää mergen (STORY-004:n prototyyppi). | Nopeus. CI ajaa testit jokaisessa pushissa, ja Pages-julkaisu tehdään vain, jos testit menevät läpi. | Sami |
 
 ### Avoimet kysymykset
 
@@ -354,7 +355,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 4. ~~**"Infinite" ylemmässä CLAUDE.md:ssä.**~~ Ratkaistu 2026-10-09: tekijänä on Sami (päätöstaulukko). Jos "Infinite" halutaan myöhemmin tekijäriville, se on uusi päätös.
 5. ~~**Riippuvuuksien haavoittuvuudet.**~~ Ratkaistu 2026-10-09: `npm audit fix` ajettiin osana PLAN-002:ta, ja tulos on 0 haavoittuvuutta.
 6. **Dependabotin 9 PR:ää.** Ne avautuivat heti ensimmäisen pushin jälkeen, ja kaikkien testit menivät läpi. Mukana on neljä Actionsien pääversiopäivitystä (checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5). Three 0.186 -päivitys jättäisi `@types/three`-paketin versioon 0.184. Mergetäänkö ne, ja missä järjestyksessä?
-7. **Haarasuojaus.** Pushataanko jatkossa suoraan mainiin vai PR:n kautta, jolloin CI:n testit ajetaan ennen mergeä?
+7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 
 ### Ratkenneet kysymykset
 
