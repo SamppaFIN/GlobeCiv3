@@ -7,7 +7,7 @@
  */
 import * as THREE from 'three';
 import { children, MAX_LEVEL, tileToSphere, type Tile } from './cubeSphere';
-import { MAX_TILE_REGIONS, type Regions } from './regions';
+import { hierarchyAt, MAX_TILE_REGIONS, Regions, type RegionEntry } from './regions';
 import { DEFAULT_SEED, heightRange, octaveSplit } from './terrain';
 
 const SEG = 16;
@@ -34,11 +34,17 @@ export interface TileNode {
 
 const vertexShader = /* glsl */ `
   attribute float baseHeight;
+  attribute vec3 borderHint;
+  attribute vec3 regionSlot;
   varying float vBase;
+  varying vec3 vHint;
+  flat varying vec3 vSlot;
   varying vec3 vLocal;
   varying vec3 vNormal;
   void main() {
     vBase = baseHeight;
+    vHint = borderHint;
+    vSlot = regionSlot;
     vLocal = position;
     vNormal = normal;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
@@ -53,14 +59,17 @@ const vertexShader = /* glsl */ `
 // Terrain per pixel: the vertex carries octaves below the tile level, and the
 // shader adds octaves from that level upward. Each octave lattice coordinate is
 // an integer base plus a small fraction at the tile centre (terrain.ts octaveSplit),
-// so float32 suffices. An octave fades out as its wavelength shrinks from 2 px to
-// 1 px; this depends on the pixel, not the tile level, so parent and child tiles
+// so float32 suffices. An octave fades out as its wavelength shrinks from 3 px to
+// 1.5 px; this depends on the pixel, not the tile level, so parent and child tiles
 // agree. hash3 matches terrain.ts hash() bit for bit.
 const fragmentShader = /* glsl */ `
   #define MAX_REGIONS ${MAX_TILE_REGIONS}
   #define PIXEL_OCTAVES ${PIXEL_OCTAVES}
-  uniform int regionCount;
-  uniform vec3 regionCenters[MAX_REGIONS];
+  uniform int stateCount;
+  // xyz: centre in tile-local coordinates; w: first child slot * 8 + child count
+  uniform vec4 regionData[MAX_REGIONS];
+  // Nominal inradius of a province and a city area in world units
+  uniform vec2 regionRadii;
   uniform vec3 borderColor;
   uniform float borderStrength;
   uniform float radius;
@@ -73,6 +82,10 @@ const fragmentShader = /* glsl */ `
   varying float vBase;
   varying vec3 vLocal;
   varying vec3 vNormal;
+  varying vec3 vHint;
+  flat varying vec3 vSlot;
+  // Largest triangle edge of this tile in world units
+  uniform float hintSlack;
 
   float hash3(ivec3 c, uint seed) {
     uint h = seed ^ (uint(c.x) * 0x27d4eb2du) ^ (uint(c.y) * 0x165667b1u) ^ (uint(c.z) * 0x1b873593u);
@@ -117,8 +130,14 @@ const fragmentShader = /* glsl */ `
     float h = vBase;
     for (int i = 0; i < PIXEL_OCTAVES; i++) {
       vec3 prm = noiseParams[i];
-      float w = clamp(1.0 / (prm.x * px) - 1.0, 0.0, 1.0);
+      // Full weight at a wavelength of 3 px or more, none at 1.5 px
+      float w = clamp(1.0 / (1.5 * prm.x * px) - 1.0, 0.0, 1.0);
       if (w <= 0.0) break;
+      // This and all finer octaves add at most 2 × amplitude. If h is farther than that
+      // from every colour threshold (coast 0, beach 0.03, rock 0.35, snow 0.55), they
+      // cannot change the terrain class, only shade it slightly: stop here.
+      float edge = min(min(abs(h), abs(h - 0.03)), min(abs(h - 0.35), abs(h - 0.55)));
+      if (edge > 2.0 * prm.y) break;
       vec3 q = noiseFrac[i] + local * prm.x;
       vec3 fl = floor(q);
       h += w * prm.y * noiseCell(noiseBase[i] + ivec3(fl), q - fl, uint(prm.z));
@@ -126,28 +145,66 @@ const fragmentShader = /* glsl */ `
     vec3 n = normalize(vNormal);
     vec3 color = mix(terrainColor(h, abs(n.y)), tint, tintAmount);
     color *= 0.3 + 0.7 * max(dot(n, sunDir), 0.0);
-    if (regionCount > 1) {
-      float best = 1e30;
-      int nearest = 0;
-      for (int i = 0; i < MAX_REGIONS; i++) {
-        if (i >= regionCount) break;
-        vec3 d = vLocal - regionCenters[i];
-        float q = dot(d, d);
-        if (q < best) { best = q; nearest = i; }
-      }
-      vec3 own = regionCenters[nearest];
-      float border = 1e30;
-      for (int j = 0; j < MAX_REGIONS; j++) {
-        if (j >= regionCount) break;
-        if (j == nearest) continue;
-        vec3 d = vLocal - regionCenters[j];
-        border = min(border, (dot(d, d) - best) / (2.0 * distance(regionCenters[j], own)));
-      }
-      // Pixel size in world units from the smooth position, not fwidth(border):
-      // border is V-shaped at the line, so its screen derivative vanishes there
+    if (stateCount > 1) {
       float w = max(length(dFdx(vLocal)), length(dFdy(vLocal)));
-      float line = 1.0 - smoothstep(0.5 * w, 1.2 * w, border);
-      color = mix(color, borderColor, borderStrength * line);
+      // Lower levels fade in as their regions grow on screen (20 → 50 px inradius);
+      // while a level is invisible its loops are skipped entirely
+      float provinceFade = smoothstep(20.0, 50.0, regionRadii.x / w);
+      float cityFade = smoothstep(20.0, 50.0, regionRadii.y / w);
+      // Per level (state, province, city area): the nearest region in the current slot
+      // range and the distance to the nearest border plane within that range (siblings),
+      // then descend into the winner's children. Only the states plus at most 7 + 7
+      // entries are visited, and a level is skipped while its lines are invisible.
+      // vHint is the exact border distance at the vertices; border distance changes no
+      // faster than position, so if the interpolated hint minus the triangle size exceeds
+      // the line width, the pixel is far from any border, the whole triangle lies in one
+      // region, and the vertex's region slot is used without looping.
+      float borders[3];
+      borders[0] = 1e30; borders[1] = 1e30; borders[2] = 1e30;
+      int from = 0;
+      int count = stateCount;
+      for (int level = 0; level < 3; level++) {
+        if (count == 0) break;
+        if (level == 1 && provinceFade <= 0.0) break;
+        if (level == 2 && cityFade <= 0.0) break;
+        int slot = int(vSlot[level]);
+        float border = 1e30;
+        if (vHint[level] - hintSlack > 2.0 * w) {
+          borders[level] = border;
+          int code = int(regionData[slot].w);
+          from = code / 8;
+          count = code - from * 8;
+          continue;
+        }
+        float best = 1e30;
+        slot = from;
+        for (int i = 0; i < MAX_REGIONS; i++) {
+          if (i >= count) break;
+          vec3 d = vLocal - regionData[from + i].xyz;
+          float q = dot(d, d);
+          if (q < best) { best = q; slot = from + i; }
+        }
+        vec3 own = regionData[slot].xyz;
+        for (int j = 0; j < MAX_REGIONS; j++) {
+          if (j >= count) break;
+          if (from + j == slot) continue;
+          vec3 c = regionData[from + j].xyz;
+          vec3 d = vLocal - c;
+          border = min(border, (dot(d, d) - best) / (2.0 * distance(c, own)));
+        }
+        borders[level] = border;
+        int code = int(regionData[slot].w);
+        from = code / 8;
+        count = code - from * 8;
+      }
+      // w is the pixel size in world units from the smooth position, not fwidth(border):
+      // border is V-shaped at the line, so its screen derivative vanishes there
+      float stateLine = 1.0 - smoothstep(0.5 * w, 1.2 * w, borders[0]);
+      // Lower levels fade in as their regions grow on screen (12 → 40 px inradius)
+      float provinceLine = (1.0 - smoothstep(0.35 * w, 0.9 * w, borders[1])) * provinceFade;
+      float cityLine = (1.0 - smoothstep(0.3 * w, 0.75 * w, borders[2])) * cityFade;
+      float strength = max(borderStrength * stateLine, max(0.38 * provinceLine, 0.24 * cityLine));
+      color = mix(color, borderColor, strength);
     }
     gl_FragColor = vec4(color, 1.0);
   }
@@ -226,7 +283,12 @@ export class TileManager {
     const pos = new Float32Array(count * 3);
     const nrm = new Float32Array(count * 3);
     const base = new Float32Array(count);
+    const hint = new Float32Array(count * 3).fill(1e9);
+    const slots = new Float32Array(count * 3).fill(0);
     const level = node.tile.level;
+    const entries = this.regions ? this.regions.entriesForTile(node.tile) : [];
+    const localEntries = entries.map(e => ({ ...e, center: e.center.clone().multiplyScalar(R).sub(node.center) }));
+    const p = new THREE.Vector3();
     const d = new THREE.Vector3();
     const c = node.center;
 
@@ -239,6 +301,14 @@ export class TileManager {
         pos[v * 3 + 2] = d.z * R - c.z;
         nrm[v * 3] = d.x; nrm[v * 3 + 1] = d.y; nrm[v * 3 + 2] = d.z;
         base[v] = heightRange(d, 0, level, this.seed);
+        if (localEntries.length) {
+          const hit = hierarchyAt(p.set(d.x * R - c.x, d.y * R - c.y, d.z * R - c.z), localEntries);
+          for (let q = 0; q < 3; q++) {
+            if (hit.slots[q] < 0) break;
+            slots[v * 3 + q] = hit.slots[q];
+            hint[v * 3 + q] = hit.border[q];
+          }
+        }
       }
     }
 
@@ -257,6 +327,10 @@ export class TileManager {
       pos[s * 3 + 2] = pos[g * 3 + 2] - nz * skirtDepth;
       for (let q = 0; q < 3; q++) nrm[s * 3 + q] = nrm[g * 3 + q];
       base[s] = base[g];
+      for (let q = 0; q < 3; q++) {
+        hint[s * 3 + q] = hint[g * 3 + q];
+        slots[s * 3 + q] = slots[g * 3 + q];
+      }
     });
 
     const idx: number[] = [];
@@ -276,6 +350,8 @@ export class TileManager {
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
     geo.setAttribute('baseHeight', new THREE.BufferAttribute(base, 1));
+    geo.setAttribute('borderHint', new THREE.BufferAttribute(hint, 3));
+    geo.setAttribute('regionSlot', new THREE.BufferAttribute(slots, 3));
     geo.setIndex(idx);
 
     const material = new THREE.ShaderMaterial({
@@ -285,7 +361,9 @@ export class TileManager {
         ...this.noiseUniforms(node),
         tintAmount: this.tintAmount,
         tint: { value: new THREE.Color().setHSL(node.tile.level / (MAX_LEVEL + 1), 0.8, 0.5) },
-        ...this.regionUniforms(node),
+        ...this.regionUniforms(entries, localEntries),
+        // Diagonal of a grid cell plus margin: no triangle is larger
+        hintSlack: { value: (node.arc / N) * 1.6 },
         borderColor: this.borderColor,
         borderStrength: this.borderStrength,
       },
@@ -319,12 +397,13 @@ export class TileManager {
   }
 
   /** Candidate region centres in tile-local coordinates (float64 here, small values for the GPU). */
-  private regionUniforms(node: TileNode) {
-    const centers = Array.from({ length: MAX_TILE_REGIONS }, () => new THREE.Vector3());
-    if (!this.regions) return { regionCount: { value: 0 }, regionCenters: { value: centers } };
-    const ids = this.regions.candidatesForTile(node.tile);
-    ids.forEach((id, k) => centers[k].copy(this.regions!.centers[id]).multiplyScalar(this.radius).sub(node.center));
-    return { regionCount: { value: ids.length }, regionCenters: { value: centers } };
+  private regionUniforms(entries: RegionEntry[], localEntries: RegionEntry[]) {
+    const data = new Float32Array(MAX_TILE_REGIONS * 4);
+    const radii = new THREE.Vector2();
+    if (!this.regions) return { stateCount: { value: 0 }, regionData: { value: data }, regionRadii: { value: radii } };
+    localEntries.forEach((e, k) => data.set([e.center.x, e.center.y, e.center.z, e.firstChild * 8 + e.childCount], k * 4));
+    radii.set(this.regions.inradius[1] * this.radius, this.regions.inradius[2] * this.radius);
+    return { stateCount: { value: Regions.stateCount(entries) }, regionData: { value: data }, regionRadii: { value: radii } };
   }
 
   private dispose(node: TileNode): void {
