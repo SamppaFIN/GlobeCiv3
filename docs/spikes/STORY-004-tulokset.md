@@ -1,7 +1,8 @@
 # STORY-004: infinite zoom -prototyypin tulokset
 
-> Mitattu 2026-10-09. Prototyyppi on haarassa `spike/infinite-zoom`, eikä sitä
-> mergetä sellaisenaan (STORY-004:n hyväksymiskriteeri). Suunnitelma: PLAN-003.
+> Mitattu 2026-10-09. Suunnitelma: PLAN-003. Prototyyppi on kansiossa `src/spike` ja
+> sivulla [spike.html](https://samppafin.github.io/GlobeCiv3/spike.html). Pääpeli ei käytä sitä,
+> ja se poistetaan, kun tuotantoversiot korvaavat sen (STORY-008).
 
 ## Yhteenveto
 
@@ -90,16 +91,12 @@ jaettu tasolle 1.
 
 _Odottaa Samin mittausta._
 
-Ohje: kone ja puhelin samassa wifissä. Kun `vite preview --host` on käynnissä
-koneella, avaa puhelimella:
+Ohje: avaa puhelimella alla oleva osoite. Odota noin 50 sekuntia, kunnes HUD:iin
+tulee teksti "BENCH VALMIS", ja ota siitä kuvakaappaus.
 
 ```
-http://192.168.1.208:4173/GlobeCiv3/spike.html?bench
+https://samppafin.github.io/GlobeCiv3/spike.html?bench
 ```
-
-Odota noin 50 sekuntia, kunnes HUD:iin tulee teksti "BENCH VALMIS", ja ota siitä
-kuvakaappaus. Jos sivu ei aukea, Windowsin palomuuri todennäköisesti estää
-Noden: salli se yksityisessä verkossa.
 
 | | |
 |---|---|
@@ -119,8 +116,8 @@ Noden: salli se yksityisessä verkossa.
 
 ## 6. Mitä siirretään tuotantoon
 
-Koodia ei mergetä sellaisenaan. Seuraavat ratkaisut kirjoitetaan uudelleen
-storyjen mukana:
+Prototyypin koodia ei laajenneta. Seuraavat ratkaisut kirjoitetaan uudelleen
+storyjen mukana, ja `src/spike` poistetaan sen jälkeen:
 
 | Ratkaisu | Tiedosto haarassa | Story |
 |---|---|---|
