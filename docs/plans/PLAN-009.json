@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-009",
+  "story": "STORY-009",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "terrain.ts saa siemenen parametriksi: korkeus on f(siemen, piste yksikköpallolla, oktaavit), väri on colorFor(korkeus, |y|), ja pelilogiikan resoluutio on terrainAt(siemen, piste, taso), joka käyttää oktaaveja 0..taso+1. Näyttöä varten ruudun tasolla L oktaavit 0..L−1 lasketaan CPU:lla verteksien kohdalle (float64, attribuutti baseHeight), ja oktaavit L..L+9 lasketaan shaderissa pikseleittäin. Pikselioktaavin paino häivytetään nollaan, kun sen aallonpituus lähestyy pikselin kokoa. Paino riippuu pikselistä eikä ruudun tasosta, joten vanhempi ja lapset laskevat samassa kohdassa samat oktaavit, eikä erillistä värimorfia tarvita. Tarkkuus: jokaiselle pikselioktaaville CPU jakaa ruudun keskipisteen hilakoordinaatin kokonaislukuosaan (ivec3, int32 riittää 2e8:aan asti) ja murto-osaan, ja shaderi lisää vain paikallisen siirtymän. Shaderin hash on bitilleen sama kuin CPU:n (uint-aritmetiikka mod 2^32). Väriraja (rannikko) lasketaan siis pikseleittäin, ja porrastus poistuu.",
+  "alternatives_considered": [
+    {
+      "name": "DataTexture ruutua kohden (64×64 tekseliä CPU:lla)",
+      "pros": "Yksinkertainen shaderi",
+      "cons": "4 096 näytettä × jopa 20 oktaavia on noin 10 ms ruutua kohden pääsäikeessä, ja tarkkuus on silti rajattu tekselikokoon",
+      "rejected_because": "Liian hidas ilman workeria (STORY-010), eikä tarkka zoomatessa"
+    },
+    {
+      "name": "Tiheämpi verteksiverkko (64×64)",
+      "pros": "Ei shaderikohinaa",
+      "cons": "16-kertainen generointi- ja muistikustannus, ja porrastus vain pienenee",
+      "rejected_because": "Sama ongelma pienempänä ja kalliimmin"
+    },
+    {
+      "name": "Kaikki oktaavit shaderissa maailmankoordinaateista",
+      "pros": "Ei CPU-osuutta",
+      "cons": "float32 ei riitä hilakoordinaatteihin (taajuus jopa 2e8), ja karkeat oktaavit laskettaisiin turhaan joka pikselille",
+      "rejected_because": "Tarkkuus ja kustannus"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/terrain.ts",
+    "src/globe/terrain.test.ts (uusi)",
+    "src/globe/tiles.ts (baseHeight, pikselioktaavit, morfi pois)",
+    "src/globe/main.ts (window.globeTerrain testejä varten)",
+    "tests/e2e/surface.e2e.ts (rannikko tasoilla 8, 13 ja 17)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "terrain.ts: siemen, terrainAt ja colorFor sekä shaderin jakolaskennan JS-emulaatio. Testit: determinismi, saumat naapuriruutujen reunoilla, vanhempi ≈ lasten keskiarvo (raja kirjataan), leveysaste ja jaon tarkkuus tasoilla 0–17 float32-emuloituna.",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "tiles.ts: baseHeight-attribuutti, oktaavi-uniformit, shaderin kohina ja väri sekä vanhan colorA/colorB-morfin poisto",
+      "verify": "npm run build menee läpi, ja kaikki TileManager-testit ovat yhä vihreitä"
+    },
+    {
+      "step": 3,
+      "action": "E2E: rannikko tasoilla 8, 13 ja 17. Pinta- ja rajatestit pysyvät vihreinä.",
+      "verify": "Kuvissa rannikko on tarkka eikä porrastu verteksiruudukon mukaan, eikä konsolissa ole virheitä"
+    },
+    {
+      "step": 4,
+      "action": "Merge ja CI. Seuraa CI:n kestoa, koska shaderi raskautuu.",
+      "verify": "CI vihreä"
+    }
+  ],
+  "status": "approved"
+}

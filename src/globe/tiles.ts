@@ -8,12 +8,13 @@
 import * as THREE from 'three';
 import { children, MAX_LEVEL, tileToSphere, type Tile } from './cubeSphere';
 import { MAX_TILE_REGIONS, type Regions } from './regions';
-import { terrainColors } from './terrain';
+import { DEFAULT_SEED, heightRange, octaveSplit } from './terrain';
 
 const SEG = 16;
 export const SPLIT_PX = 256;
 export const MERGE_PX = 128;
-const MERGE_FADE_S = 0.3;
+/** Octaves evaluated per pixel, from the tile level upward (finer ones fade out below a pixel). */
+const PIXEL_OCTAVES = 10;
 const PRUNE_AFTER_FRAMES = 300;
 
 export interface TileNode {
@@ -28,24 +29,18 @@ export interface TileNode {
   kids: TileNode[] | null;
   split: boolean;
   lastSplitFrame: number;
-  mergeHold: number;
   queued: boolean;
 }
 
 const vertexShader = /* glsl */ `
-  attribute vec3 colorA;
-  attribute vec3 colorB;
-  uniform float morph;
-  uniform vec3 sunDir;
-  uniform vec3 tint;
-  uniform float tintAmount;
-  varying vec3 vColor;
+  attribute float baseHeight;
+  varying float vBase;
   varying vec3 vLocal;
+  varying vec3 vNormal;
   void main() {
-    vec3 c = mix(mix(colorA, colorB, morph), tint, tintAmount);
-    float light = 0.3 + 0.7 * max(dot(normal, sunDir), 0.0);
-    vColor = c * light;
+    vBase = baseHeight;
     vLocal = position;
+    vNormal = normal;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -55,16 +50,82 @@ const vertexShader = /* glsl */ `
 // and j is the plane bisecting their centres; the signed distance from p is
 // (|p - cj|² - |p - ci|²) / (2 |cj - ci|), a true distance in world units, so the
 // line width is set from the world size of one pixel and stays ~1.5 px at every zoom.
+// Terrain per pixel: the vertex carries octaves below the tile level, and the
+// shader adds octaves from that level upward. Each octave lattice coordinate is
+// an integer base plus a small fraction at the tile centre (terrain.ts octaveSplit),
+// so float32 suffices. An octave fades out as its wavelength shrinks from 2 px to
+// 1 px; this depends on the pixel, not the tile level, so parent and child tiles
+// agree. hash3 matches terrain.ts hash() bit for bit.
 const fragmentShader = /* glsl */ `
   #define MAX_REGIONS ${MAX_TILE_REGIONS}
+  #define PIXEL_OCTAVES ${PIXEL_OCTAVES}
   uniform int regionCount;
   uniform vec3 regionCenters[MAX_REGIONS];
   uniform vec3 borderColor;
   uniform float borderStrength;
-  varying vec3 vColor;
+  uniform float radius;
+  uniform ivec3 noiseBase[PIXEL_OCTAVES];
+  uniform vec3 noiseFrac[PIXEL_OCTAVES];
+  uniform vec3 noiseParams[PIXEL_OCTAVES]; // frequency, amplitude, seed
+  uniform vec3 sunDir;
+  uniform vec3 tint;
+  uniform float tintAmount;
+  varying float vBase;
   varying vec3 vLocal;
+  varying vec3 vNormal;
+
+  float hash3(ivec3 c, uint seed) {
+    uint h = seed ^ (uint(c.x) * 0x27d4eb2du) ^ (uint(c.y) * 0x165667b1u) ^ (uint(c.z) * 0x1b873593u);
+    h = (h ^ (h >> 15u)) * 0x85ebca6bu;
+    h = (h ^ (h >> 13u)) * 0xc2b2ae35u;
+    h ^= h >> 16u;
+    return float(h) / 4294967295.0 * 2.0 - 1.0;
+  }
+
+  float noiseCell(ivec3 c, vec3 f, uint seed) {
+    vec3 u = f * f * (3.0 - 2.0 * f);
+    float x00 = mix(hash3(c, seed), hash3(c + ivec3(1, 0, 0), seed), u.x);
+    float x10 = mix(hash3(c + ivec3(0, 1, 0), seed), hash3(c + ivec3(1, 1, 0), seed), u.x);
+    float x01 = mix(hash3(c + ivec3(0, 0, 1), seed), hash3(c + ivec3(1, 0, 1), seed), u.x);
+    float x11 = mix(hash3(c + ivec3(0, 1, 1), seed), hash3(c + ivec3(1, 1, 1), seed), u.x);
+    return mix(mix(x00, x10, u.y), mix(x01, x11, u.y), u.z);
+  }
+
+  // Port of terrain.ts colorFor()
+  vec3 terrainColor(float h, float lat) {
+    vec3 c;
+    if (h < 0.0) {
+      float t = min(1.0, -h / 0.5);
+      c = vec3(0.1 - 0.08 * t, 0.35 - 0.27 * t, 0.6 - 0.35 * t);
+    } else if (h < 0.03) {
+      c = vec3(0.76, 0.7, 0.5);
+    } else if (h < 0.35) {
+      float t = (h - 0.03) / 0.32;
+      c = vec3(0.25 - 0.13 * t, 0.5 - 0.15 * t, 0.2 - 0.08 * t);
+    } else if (h < 0.55) {
+      c = vec3(0.45, 0.4, 0.35);
+    } else {
+      c = vec3(0.95, 0.95, 0.97);
+    }
+    if (lat > 0.88) c = mix(c, vec3(0.95, 0.95, 0.97), min(1.0, (lat - 0.88) / 0.05));
+    return c;
+  }
+
   void main() {
-    vec3 color = vColor;
+    vec3 local = vLocal / radius;
+    float px = max(length(dFdx(local)), length(dFdy(local)));
+    float h = vBase;
+    for (int i = 0; i < PIXEL_OCTAVES; i++) {
+      vec3 prm = noiseParams[i];
+      float w = clamp(1.0 / (prm.x * px) - 1.0, 0.0, 1.0);
+      if (w <= 0.0) break;
+      vec3 q = noiseFrac[i] + local * prm.x;
+      vec3 fl = floor(q);
+      h += w * prm.y * noiseCell(noiseBase[i] + ivec3(fl), q - fl, uint(prm.z));
+    }
+    vec3 n = normalize(vNormal);
+    vec3 color = mix(terrainColor(h, abs(n.y)), tint, tintAmount);
+    color *= 0.3 + 0.7 * max(dot(n, sunDir), 0.0);
     if (regionCount > 1) {
       float best = 1e30;
       int nearest = 0;
@@ -92,10 +153,6 @@ const fragmentShader = /* glsl */ `
   }
 `;
 
-function smoothstep(e0: number, e1: number, x: number): number {
-  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
-  return t * t * (3 - 2 * t);
-}
 
 export interface FrameStats {
   drawn: number;
@@ -127,16 +184,18 @@ export class TileManager {
   private readonly camDir = new THREE.Vector3();
   private horizonAngle = 0;
   private pxPerUnit = 0;
-  private dt = 0;
   readonly radius: number;
 
   private readonly regions: Regions | null;
   readonly borderColor = { value: new THREE.Color(0.85, 0.92, 1.0) };
   readonly borderStrength = { value: 0.55 };
 
-  constructor(radius: number, regions: Regions | null = null) {
+  private readonly seed: number;
+
+  constructor(radius: number, regions: Regions | null = null, seed = DEFAULT_SEED) {
     this.radius = radius;
     this.regions = regions;
+    this.seed = seed;
     this.roots = [0, 1, 2, 3, 4, 5].map(face => this.makeNode({ face, level: 0, x: 0, y: 0 }));
     for (const root of this.roots) this.build(root);
   }
@@ -155,7 +214,7 @@ export class TileManager {
     const arc = corners[0].distanceTo(corners[1]) * R;
     return {
       tile, center, dir, bsRadius: bs * 1.1, angRadius: ang * 1.05, arc,
-      mesh: null, material: null, kids: null, split: false, lastSplitFrame: 0, mergeHold: 0, queued: false,
+      mesh: null, material: null, kids: null, split: false, lastSplitFrame: 0, queued: false,
     };
   }
 
@@ -166,8 +225,8 @@ export class TileManager {
     const count = grid + 4 * N;
     const pos = new Float32Array(count * 3);
     const nrm = new Float32Array(count * 3);
-    const colA = new Float32Array(count * 3);
-    const colB = new Float32Array(count * 3);
+    const base = new Float32Array(count);
+    const level = node.tile.level;
     const d = new THREE.Vector3();
     const c = node.center;
 
@@ -179,7 +238,7 @@ export class TileManager {
         pos[v * 3 + 1] = d.y * R - c.y;
         pos[v * 3 + 2] = d.z * R - c.z;
         nrm[v * 3] = d.x; nrm[v * 3 + 1] = d.y; nrm[v * 3 + 2] = d.z;
-        terrainColors(d.x, d.y, d.z, node.tile.level, colA, colB, v * 3);
+        base[v] = heightRange(d, 0, level, this.seed);
       }
     }
 
@@ -196,11 +255,8 @@ export class TileManager {
       pos[s * 3] = pos[g * 3] - nx * skirtDepth;
       pos[s * 3 + 1] = pos[g * 3 + 1] - ny * skirtDepth;
       pos[s * 3 + 2] = pos[g * 3 + 2] - nz * skirtDepth;
-      for (let q = 0; q < 3; q++) {
-        nrm[s * 3 + q] = nrm[g * 3 + q];
-        colA[s * 3 + q] = colA[g * 3 + q];
-        colB[s * 3 + q] = colB[g * 3 + q];
-      }
+      for (let q = 0; q < 3; q++) nrm[s * 3 + q] = nrm[g * 3 + q];
+      base[s] = base[g];
     });
 
     const idx: number[] = [];
@@ -219,14 +275,14 @@ export class TileManager {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
-    geo.setAttribute('colorA', new THREE.BufferAttribute(colA, 3));
-    geo.setAttribute('colorB', new THREE.BufferAttribute(colB, 3));
+    geo.setAttribute('baseHeight', new THREE.BufferAttribute(base, 1));
     geo.setIndex(idx);
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
-        morph: { value: 0 },
         sunDir: this.sunDir,
+        radius: { value: R },
+        ...this.noiseUniforms(node),
         tintAmount: this.tintAmount,
         tint: { value: new THREE.Color().setHSL(node.tile.level / (MAX_LEVEL + 1), 0.8, 0.5) },
         ...this.regionUniforms(node),
@@ -246,6 +302,20 @@ export class TileManager {
     node.mesh = mesh;
     node.material = material;
     this.meshCount++;
+  }
+
+  /** Per-pixel octaves level..level+PIXEL_OCTAVES-1, split at the tile centre for float32 precision. */
+  private noiseUniforms(node: TileNode) {
+    const baseCells = new Int32Array(PIXEL_OCTAVES * 3);
+    const frac = new Float32Array(PIXEL_OCTAVES * 3);
+    const params = new Float32Array(PIXEL_OCTAVES * 3);
+    for (let i = 0; i < PIXEL_OCTAVES; i++) {
+      const o = octaveSplit(node.dir, node.tile.level + i, this.seed);
+      baseCells.set(o.base, i * 3);
+      frac.set(o.frac, i * 3);
+      params.set([o.freq, o.amp, o.seed], i * 3);
+    }
+    return { noiseBase: { value: baseCells }, noiseFrac: { value: frac }, noiseParams: { value: params } };
   }
 
   /** Candidate region centres in tile-local coordinates (float64 here, small values for the GPU). */
@@ -301,10 +371,7 @@ export class TileManager {
       for (const k of node.kids) this.request(k);
     }
 
-    if (node.split) node.mergeHold = 1; // just merged: keep the finer colour and fade it out
     node.split = false;
-    node.mergeHold = Math.max(0, node.mergeHold - this.dt / MERGE_FADE_S);
-    node.material!.uniforms.morph.value = Math.max(smoothstep(MERGE_PX, SPLIT_PX, px), node.mergeHold);
     node.mesh!.visible = true;
     this.drawn.push(node);
   }
@@ -322,9 +389,8 @@ export class TileManager {
     for (const k of node.kids) this.prune(k);
   }
 
-  update(camera: THREE.PerspectiveCamera, viewportHeight: number, dt: number): FrameStats {
+  update(camera: THREE.PerspectiveCamera, viewportHeight: number, _dt: number): FrameStats {
     this.frame++;
-    this.dt = dt;
     camera.updateMatrixWorld();
     this.camPos.setFromMatrixPosition(camera.matrixWorld);
     this.camDir.copy(this.camPos).normalize();

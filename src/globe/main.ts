@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { Regions } from './regions';
+import { terrainHeight } from './terrain';
 import { TileManager } from './tiles';
 
 // ─── Scene setup ──────────────────────────────────
@@ -126,5 +127,6 @@ window.addEventListener('resize', () => {
 (window as any).globeNodes = nodes;
 (window as any).globeCamera = rig;
 (window as any).globeTiles = tiles;
+(window as any).globeTerrain = { terrainHeight };
 
 console.log('[GlobeCiv3] 3D globe ready');
