@@ -1,0 +1,60 @@
+{
+  "id": "PLAN-007",
+  "story": "STORY-008",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Prototyypin kuutiopallo ja LOD kirjoitetaan tuotantomoduuleiksi: src/globe/cubeSphere.ts (ruutuosoitteet, siirretään testeineen) ja src/globe/tiles.ts (TileManager). Ruutu on 16×16 verteksin pallopinta helmoineen, verteksit ovat suhteessa ruudun keskipisteeseen, ja ruutu jaetaan yli 256 px:n ja yhdistetään alle 128 px:n kokoisena horisontti- ja frustum-karsinnalla. Luontiin on aikabudjetti, vanhempaa piirretään, kunnes kaikki neljä lasta ovat valmiita, ja yhdistyessä väri häivytetään. Väri tulee väliaikaisesti prototyypin maastofunktiosta (src/globe/terrain.ts). STORY-009 tekee siitä testatun ja tekselitarkan. Pääpeli saa pinnan, ja kameran lähin etäisyys lasketaan arvoon R × 2e-5. Kolmioverkko ja pisteet piilotetaan, kun korkeus on alle R × 0,02, koska ne ovat 0,015 pinnan yläpuolella. STORY-012 korvaa ne heksarajoilla. LOD-valinta testataan Nodessa ilman WebGL:ää: osoitteet, välkkymättömyys rajalla ja ruutumäärä tasoilla 0–17.",
+  "alternatives_considered": [
+    {
+      "name": "Prototyypin moduulien tuonti src/spike-kansiosta",
+      "pros": "Ei uutta koodia",
+      "cons": "Pääpeli riippuisi poistettavasta prototyypistä",
+      "rejected_because": "Päätös 2026-10-09: ratkaisut kirjoitetaan uudelleen storyjen mukana, ja src/spike poistetaan sen jälkeen"
+    },
+    {
+      "name": "Tasavärinen väliaikainen pinta STORY-009:ään asti",
+      "pros": "Selkeä raja storyjen välillä",
+      "cons": "Tasaisesta pinnasta ei näe, toimiiko tarkentuminen, ja Sami testaa Pagesista",
+      "rejected_because": "Prototyypin maastofunktio on jo mitattu ja toimii. STORY-009 kovettaa sen."
+    },
+    {
+      "name": "Kolmioverkon poisto heti",
+      "pros": "Sami ei pidä kolmioista",
+      "cons": "Heksarakenne katoaisi näkyvistä kokonaan STORY-012:een asti",
+      "rejected_because": "Verkko jää planeettatasolle, piilotetaan lähellä ja korvataan heksarajoilla STORY-012:ssa, joka tehdään seuraavaksi STORY-009:n jälkeen"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/cubeSphere.ts (uusi, prototyypistä)",
+    "src/globe/cubeSphere.test.ts (uusi)",
+    "src/globe/terrain.ts (uusi, väliaikainen väri prototyypistä)",
+    "src/globe/tiles.ts (uusi)",
+    "src/globe/tiles.test.ts (uusi)",
+    "src/globe/main.ts",
+    "tests/e2e/surface.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "cubeSphere.ts ja testit (edestakainen muunnos kuudella tahkolla tasoilla 0, 5, 10 ja 17, lapset, tahkojen rajat)",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "tiles.ts ja Node-testit: paikallaan oleva kamera rajalla (ei välkyntää 60 framessa), pieni edestakainen liike jakokynnyksen yli ja ruutumäärä etäisyyksillä tasoille 0–17",
+      "verify": "Piirretty ruutujoukko pysyy samana paikallaan. Ruutuja on enintään 600 jokaisella tasolla, ja taso 17 saavutetaan. Mittaus kirjataan tikettiin."
+    },
+    {
+      "step": 3,
+      "action": "Kytke pinta main.ts:ään, laske minDist ja piilota verkko lähellä. Paljasta window.globeTiles testejä varten.",
+      "verify": "npm run build menee läpi. E2E: pinta peittää pallon kaukaa, taso 17 saavutetaan läheltä, eikä konsolissa ole virheitä. Kuvat tasoilta noin 1, 8, 13 ja 17."
+    },
+    {
+      "step": 4,
+      "action": "Merge, CI ja tiketit",
+      "verify": "CI vihreä, ja Pages näyttää pinnan"
+    }
+  ],
+  "status": "approved"
+}

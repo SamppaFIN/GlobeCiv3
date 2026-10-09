@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
+import { TileManager } from './tiles';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -36,11 +37,10 @@ const { nodes, edges } = buildHexGrid(RADIUS, DETAIL);
 console.log(`[GlobeCiv3] Hex nodes: ${nodes.length}, edges: ${edges.length}`);
 
 // ─── Camera rig ───────────────────────────────────
-// Starts where the old OrbitControls view was. The minimum distance keeps the
-// camera above the hex grid (about 0.015 above the surface) until surface tiles
-// exist; STORY-008 lowers it toward R × 2e-5.
+// Starts where the old OrbitControls view was. With the tiled surface the camera
+// can descend to quadtree level 17.
 const rig = new GlobeCamera(RADIUS, camera, {
-  minDist: RADIUS * 0.01,
+  minDist: RADIUS * 2e-5,
   maxDist: RADIUS * 6,
   startDist: Math.hypot(0, 3, 12) - RADIUS,
 });
@@ -48,6 +48,10 @@ rig.target.set(0, 3, 12).normalize();
 rig.forward.set(0, 1, 0);
 rig.apply();
 attachInput(renderer.domElement, rig);
+
+// ─── Surface (cube-sphere quadtree) ───────────────
+const tiles = new TileManager(RADIUS);
+scene.add(tiles.group);
 
 // Render hex dots
 const dotsGeo = new THREE.BufferGeometry();
@@ -128,8 +132,12 @@ let lastFrame = performance.now();
 function animate(now = performance.now()) {
   requestAnimationFrame(animate);
   // Real elapsed time, not clamped: a 1 s flight must last 1 s even when frames are slow
-  rig.update((now - lastFrame) / 1000);
+  const dt = (now - lastFrame) / 1000;
   lastFrame = now;
+  rig.update(dt);
+  tiles.update(camera, renderer.domElement.clientHeight, dt);
+  // The hex grid floats ~0.015 above the surface; hide it before the camera reaches it
+  dotsMesh.visible = edgeLines.visible = rig.altitude() > RADIUS * 0.02;
   starCamera.quaternion.copy(camera.quaternion);
   renderer.clear();
   renderer.render(starScene, starCamera);
@@ -150,5 +158,6 @@ window.addEventListener('resize', () => {
 (window as any).globeScene = scene;
 (window as any).globeNodes = nodes;
 (window as any).globeCamera = rig;
+(window as any).globeTiles = tiles;
 
 console.log('[GlobeCiv3] 3D globe ready');
