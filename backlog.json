@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T18:18:10Z",
+    "generated_at": "2026-10-09T19:12:03Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "4f8b467",
+    "git_commit": "46a16b0",
     "git_branch": "main",
     "language": "fi"
   },
@@ -87,7 +87,7 @@
         "STORY-012",
         "STORY-019"
       ],
-      "progress": 50
+      "progress": 67
     },
     {
       "id": "EPIC-004",
@@ -556,18 +556,18 @@
       "depends_on": [
         "STORY-012"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Jokaisella valtiolla on 7 lääniä ja jokaisella läänillä 7 kaupunkialuetta. Sijoittelu on deterministinen siemenestä (yksikkötesti).",
         "Sisäkkäisyys on tarkka: jokainen läänin keskus on oman valtionsa sisällä ja jokainen kaupunkialueen keskus oman lääninsä sisällä, eikä mikään alue ylitä yläalueensa rajaa (yksikkötesti)",
         "Rajat piirretään kolmella tyylillä (valtio, lääni, kaupunkialue). Alemmat häivytetään esiin, kun alue on ruudulla tarpeeksi suuri.",
         "Ruudun ehdokaslistat löytävät oikean valtion, läänin ja kaupunkialueen sekä niiden rajat kaikilla tasoilla, joilla rajat piirretään (yksikkötesti)"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-010",
+        "implementation": "TICKET-IMPL-010",
+        "testing": "TICKET-TEST-010"
       }
     },
     {
@@ -1161,6 +1161,58 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-010",
+      "story": "STORY-019",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "regions.ts laajenee kolmeen kerrokseen. Jokainen valtio jaetaan seitsemään lääniin ja jokainen lääni seitsemään kaupunkialueeseen aukko-7-heksajaon mallilla: yksi keskus ja kuusi kehällä etäisyydellä 2/√7 × yläalueen sisäsäde, kierrettynä 19,1°, plus siemenestä deterministinen pieni heilunta. Jos lapsen keskus jäisi yläalueensa ulkopuolelle, sitä vedetään kohti yläalueen keskusta, kunnes se on sisällä. Piste kuuluu lähimpään valtioon, sitten sen valtion lähimpään lääniin ja sitten sen läänin lähimpään kaupunkialueeseen, joten sisäkkäisyys on tarkka. Ruutu saa yhden 128 alkion vec4-taulukon: xyz on keskus ruudun paikallisissa koordinaateissa, ja w = kerros × 256 + yläalueen paikka taulukossa. Valtiot ovat aina mukana, läänit tasolta 2 ja kaupunkialueet tasolta 4 alkaen. Shaderi etsii kerros kerrallaan lähimmän ja laskee etäisyyden lähimpään rajatasoon saman yläalueen sisaruksiin. Läänien ja kaupunkialueiden viivat ovat ohuempia ja himmeämpiä, ja ne häivytetään esiin alueen näyttökoon mukaan.",
+      "alternatives_considered": [
+        {
+          "name": "Erilliset uniform-taulukot kullekin kerrokselle",
+          "pros": "Yksinkertaisempi shaderi",
+          "cons": "128 + 64 + 64 vektoria ylittää WebGL2:n taatun 224 fragmenttiuniformin rajan",
+          "rejected_because": "Uniform-raja"
+        },
+        {
+          "name": "Kaikki keskukset jaettuun tekstuuriin maailmankoordinaateissa",
+          "pros": "Ei ruutukohtaisia listoja",
+          "cons": "float32-vähennys maailmankoordinaateista hukkaa tarkkuuden syvillä tasoilla (rajat siirtyisivät noin 2 px tasolla 17), ja tarvittaisiin double-float-temppu",
+          "rejected_because": "Ruutukohtainen paikallinen lista on jo todettu tarkaksi (STORY-012)"
+        },
+        {
+          "name": "Satunnaiset (Poisson) lääninkeskukset",
+          "pros": "Orgaanisempi muoto",
+          "cons": "Vaihteleva määrä ja koko, ja sisäkkäisyyden takaaminen on vaikeampaa",
+          "rejected_because": "Kiinteä 7/7-rakenne vastaa heksailmettä ja pitää ehdokasmäärät ennustettavina. Heilunta antaa orgaanisuutta."
+        }
+      ],
+      "files_to_change": [
+        "src/globe/regions.ts",
+        "src/globe/regions.test.ts",
+        "src/globe/tiles.ts (taulukko ja shaderi)",
+        "tests/e2e/surface.e2e.ts (kuvat valtio-, lääni- ja kaupunkitasolta)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Hierarkia ja testit: määrät, determinismi, sisäkkäisyys (jokainen keskus yläalueensa sisällä) ja ehdokaslistojen täydellisyys kerroksittain tasoilla 0–17 (enintään 128)",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 2,
+          "action": "Ruutujen taulukko ja shaderin kolmen kerroksen rajat häivytyksineen",
+          "verify": "npm run build menee läpi, ja konsolissa ei ole shaderivirheitä. Kuvissa valtio-, lääni- ja kaupunkialuerajat näkyvät oikeilla zoom-tasoilla."
+        },
+        {
+          "step": 3,
+          "action": "E2E, merge ja CI",
+          "verify": "Kaikki vihreitä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -1476,6 +1528,40 @@
         "notes": "CI:n E2E-kesto kasvoi noin 1,3 minuutista 4,6 minuuttiin raskaamman shaderin takia (SwiftShader). Tasovärikuvassa yksi ruutujen raja voi näkyä hyvin heikkona juovana hiekalla. Sitä ei voitu vahvistaa suurennoksesta, ja se kirjataan havainnoksi. Pikselikohtainen kohina lisää GPU-kuormaa: pikseliä kohden noin 7–8 aktiivista oktaavia × 8 hashia."
       },
       "commit": "4f8b467",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-010",
+      "story": "STORY-019",
+      "plan": "PLAN-010",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/regions.ts",
+        "src/globe/regions.test.ts",
+        "src/globe/tiles.ts",
+        "tests/e2e/surface.e2e.ts"
+      ],
+      "change_summary": "Aluehierarkia: jokaisella 362 valtiolla on 7 lääniä ja jokaisella läänillä 7 kaupunkialuetta aukko-7-heksajaon mallilla (keskus ja kuusi kehällä 2/√7 × yläalueen sisäsäde, 19,1° kierto) ja siemenestä deterministisellä heilunnalla. Lapsi vedetään yläalueen sisään, jos se jäisi ulos. Piste kuuluu ensin valtioon, sitten sen lääniin ja sitten sen kaupunkialueeseen, joten sisäkkäisyys on tarkka. Ruudun ehdokaslista sisältää ensin valtiot ja sitten kunkin yläalueen lapset peräkkäin, ja yläalue tietää lastensa paikat. Shaderi piirtää kolme rajatasoa omilla viivoillaan ja kulkee kerros kerrallaan vain nykyistä aluetta: valtiot ja enintään 7 + 7. Suorituskykykorjaukset ennen mergeä: (1) jokaisella verteksillä on tarkka rajaetäisyys ja aluetunnus kullakin kerroksella, joten kaukana rajoista olevat pikselit ohittavat silmukat. (2) Maaston oktaavisilmukka lopettaa, kun loput oktaavit eivät voi muuttaa väriluokkaa. (3) Alemmat rajat häivytetään esiin 20–50 px:n sisäsäteellä, ja ne ohitetaan näkymättöminä. (4) Hienoin oktaavi häivytetään 3 px:n aallonpituudella.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Regions: centers on nyt kerroksittainen [valtiot, läänit, kaupunkialueet]; uudet stateOf, provinceOf, cityOf, entriesForTile ja inradius",
+          "hierarchyAt (CPU-emulaatio) korvaa yksitasoisen laskennan; nearestAndBorder käyttää sitä",
+          "tiles.ts: regionData vec4[128] (keskus ja lapsialue), stateCount, regionRadii, hintSlack; attribuutit borderHint ja regionSlot"
+        ],
+        "call_sites_found": [
+          "Regions.centers: tiles.ts, regions.test.ts, main.ts (vain regionOf)",
+          "regionOf: main.ts (tuplaklikkaus)"
+        ],
+        "call_sites_updated": [
+          "tiles.ts",
+          "regions.test.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Ensimmäinen versio oli liian raskas: Intel UHD:lla 24–38 fps, ja CI-tilassa 8/13 testiä aikakatkaistiin (15,9 min). Optimointien jälkeen 56–61 fps kaikilla etäisyyksillä 3R … 2e-5R, CI-tila 4,5 min, ja GitHubin CI 2,3 min. Yksi aluetesti muutettiin tekemään yksi expect särmää kohden, koska 390 000 expect-kutsua ylitti 5 s:n aikarajan. Tarkistettava asia ei muuttunut."
+      },
+      "commit": "46a16b0",
       "progress": 100
     }
   ],
@@ -2287,6 +2373,103 @@
           },
           {
             "item": "Ilmasto tulee leveysasteesta",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-010",
+      "story": "STORY-019",
+      "implementation_ticket": "TICKET-IMPL-010",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen shaderi kävi läpi kaikki ehdokkaat kolmella kerroksella kahdesti (noin 600 kierrosta pikseliä kohden). Korjattiin aluekohtaisilla väleillä ja verteksivihjeillä.",
+        "files_changed": [
+          "src/globe/regions.ts",
+          "src/globe/tiles.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Määrät: 362 × 7 lääniä ja 362 × 49 kaupunkialuetta",
+            "expected": "Oikeat määrät",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Determinismi: sama siemen → samat keskukset, eri siemen → yli 17 000 kaupunkikeskusta eri paikassa",
+            "expected": "Vihreä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Sisäkkäisyys: jokainen läänin keskus omassa valtiossaan ja jokainen kaupunkikeskus omassa läänissään, ja 2 000 satunnaista pistettä oikein sisäkkäin",
+            "expected": "Ei poikkeuksia",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ruutujen ehdokaslistat: 6 ruutua × 15 pistettä jokaisella tasolla 0–17",
+            "expected": "Oikea valtio, lääni ja kaupunkialue ja niiden rajat niillä tasoilla, joilla ne piirretään. Enintään 128 alkiota.",
+            "result": "pass. Enimmillään 124 alkiota.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valtio 100 etäisyyksiltä 3R, 0,8R, 0,25R ja 0,06R (tasot 2, 4, 5 ja 7)",
+            "expected": "Valtiorajat, sitten läänit ja sitten kaupunkialueet tulevat esiin. Ei konsolivirheitä.",
+            "result": "Kuvissa läänit näkyvät 0,8R:stä ja kaupunkialueet 0,25R:stä alkaen, tarkasti sisäkkäin. Ei virheitä.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Suorituskyky: Intel UHD, 1280×800, etäisyydet 3R … 2e-5R",
+            "expected": "Lähellä 60 fps:ää",
+            "result": "3R 60,4 · 1,47R 58,0 · 0,8R 56,0 · 0,25R 60,8 · 0,06R 60,8 · 0,01R 60,4 · 2e-5R 60,4 fps (ennen optimointeja 24–38)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo 37978017059 (commit 46a16b0)",
+            "expected": "Vihreä ja julkaisu",
+            "result": "13 passed (2,3 min), deploy success",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Läänit ja kaupunkialueet puhelimella (S23 Ultra) Pagesista",
+            "expected": "Rajat tulevat esiin zoomatessa, ja peli on sulava",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-010-hierarchy-states.png",
+          "docs/screenshots/TICKET-TEST-010-hierarchy-provinces.png",
+          "docs/screenshots/TICKET-TEST-010-hierarchy-cities.png",
+          "docs/screenshots/TICKET-TEST-010-hierarchy-city.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "7 lääniä per valtio ja 7 kaupunkialuetta per lääni, deterministisesti",
+            "checked": true
+          },
+          {
+            "item": "Tarkka sisäkkäisyys",
+            "checked": true
+          },
+          {
+            "item": "Kolme rajatyyliä, ja alemmat häivytetään esiin",
+            "checked": true
+          },
+          {
+            "item": "Ehdokaslistat ovat täydellisiä kaikilla tasoilla",
             "checked": true
           }
         ],

@@ -1,0 +1,97 @@
+{
+  "id": "TICKET-TEST-010",
+  "story": "STORY-019",
+  "implementation_ticket": "TICKET-IMPL-010",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen shaderi kävi läpi kaikki ehdokkaat kolmella kerroksella kahdesti (noin 600 kierrosta pikseliä kohden). Korjattiin aluekohtaisilla väleillä ja verteksivihjeillä.",
+    "files_changed": [
+      "src/globe/regions.ts",
+      "src/globe/tiles.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Määrät: 362 × 7 lääniä ja 362 × 49 kaupunkialuetta",
+        "expected": "Oikeat määrät",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Determinismi: sama siemen → samat keskukset, eri siemen → yli 17 000 kaupunkikeskusta eri paikassa",
+        "expected": "Vihreä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sisäkkäisyys: jokainen läänin keskus omassa valtiossaan ja jokainen kaupunkikeskus omassa läänissään, ja 2 000 satunnaista pistettä oikein sisäkkäin",
+        "expected": "Ei poikkeuksia",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ruutujen ehdokaslistat: 6 ruutua × 15 pistettä jokaisella tasolla 0–17",
+        "expected": "Oikea valtio, lääni ja kaupunkialue ja niiden rajat niillä tasoilla, joilla ne piirretään. Enintään 128 alkiota.",
+        "result": "pass. Enimmillään 124 alkiota.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valtio 100 etäisyyksiltä 3R, 0,8R, 0,25R ja 0,06R (tasot 2, 4, 5 ja 7)",
+        "expected": "Valtiorajat, sitten läänit ja sitten kaupunkialueet tulevat esiin. Ei konsolivirheitä.",
+        "result": "Kuvissa läänit näkyvät 0,8R:stä ja kaupunkialueet 0,25R:stä alkaen, tarkasti sisäkkäin. Ei virheitä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky: Intel UHD, 1280×800, etäisyydet 3R … 2e-5R",
+        "expected": "Lähellä 60 fps:ää",
+        "result": "3R 60,4 · 1,47R 58,0 · 0,8R 56,0 · 0,25R 60,8 · 0,06R 60,8 · 0,01R 60,4 · 2e-5R 60,4 fps (ennen optimointeja 24–38)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo 37978017059 (commit 46a16b0)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "13 passed (2,3 min), deploy success",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Läänit ja kaupunkialueet puhelimella (S23 Ultra) Pagesista",
+        "expected": "Rajat tulevat esiin zoomatessa, ja peli on sulava",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-010-hierarchy-states.png",
+      "docs/screenshots/TICKET-TEST-010-hierarchy-provinces.png",
+      "docs/screenshots/TICKET-TEST-010-hierarchy-cities.png",
+      "docs/screenshots/TICKET-TEST-010-hierarchy-city.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "7 lääniä per valtio ja 7 kaupunkialuetta per lääni, deterministisesti",
+        "checked": true
+      },
+      {
+        "item": "Tarkka sisäkkäisyys",
+        "checked": true
+      },
+      {
+        "item": "Kolme rajatyyliä, ja alemmat häivytetään esiin",
+        "checked": true
+      },
+      {
+        "item": "Ehdokaslistat ovat täydellisiä kaikilla tasoilla",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}

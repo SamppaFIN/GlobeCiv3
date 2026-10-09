@@ -283,10 +283,10 @@ hakemisto.
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] }
   ],
   "stories_total": 20,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009"],
-  "next": "STORY-019"
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010"],
+  "next": "STORY-006"
 }
 ```
 
@@ -373,6 +373,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | STORY-012 tehtiin ennen STORY-009:ää ja hyväksyttiin. Heksarajat piirretään pinnan shaderissa pikseleittäin ruudun paikallisissa koordinaateissa, ja kolmioverkko poistettiin. CI ajaa E2E:n yhdellä workerilla. | Sami nosti kolmiot esiin, eivätkä rajat riipu maastosta | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-009 hyväksyttiin: maasto on f(siemen, piste, taso), ja hienot oktaavit lasketaan pikseleittäin shaderissa. Rannikot ovat tarkkoja kaikilla tasoilla, ja värimorfi poistui. | Porrastuneet rannikot olivat suurin visuaalinen puute | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | Aluehierarkia: 362 valtiota, joista kussakin 7 lääniä, ja kussakin läänissä 7 kaupunkialuetta. Alueet ovat tarkasti sisäkkäisiä, ja jokaisella kerroksella on omat toimintonsa. Pelaaja valloittaa valtion lääni kerrallaan, ja vallattu valtio avaa naapurinsa. Uudet STORY-019 (läänit ja kaupunkialueet) ja STORY-020 (kerroskohtaiset toiminnot), ja STORY-016 muutettiin. Suunnitelma: docs/design/aluehierarkia.md. | Samin visio. Määrät (7 ja 7) ovat Linssin ehdotus. | Sami |
+| 2026-10-09 | STORY-019 hyväksyttiin: läänit ja kaupunkialueet ovat moottorissa. Pikselishaderin kustannus pidetään kurissa aluekohtaisilla väleillä, verteksien rajavihjeillä ja oktaavien varhaisella lopetuksella. Intel UHD 56–61 fps, kun tavoite on 60. | Mittaus ennen ja jälkeen kirjattu tikettiin TICKET-TEST-010 | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 
@@ -384,7 +385,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 6. ~~**Dependabotin 9 PR:ää.**~~ Ratkaistu 2026-10-09: mergetty yhtenä päivityksenä (päätöstaulukko).
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
-9. **Rajashaderin kustannus keskitason puhelimella.** Rajat maksavat pikseliä kohden 2 × ruudun ehdokasalueiden määrän (aloitusnäkymässä noin 16–26). S23 Ultralla ei ongelmaa. Mitataan, jos keskitason laite tulee käyttöön tai FPS putoaa. Keinoja: pienempi marginaali, aluetunnisteiden tekstuuri tai rajojen piirto vain lähellä.
+9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä.
 
 ### Ratkenneet kysymykset
 

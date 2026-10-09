@@ -1,0 +1,34 @@
+{
+  "id": "TICKET-IMPL-010",
+  "story": "STORY-019",
+  "plan": "PLAN-010",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/regions.ts",
+    "src/globe/regions.test.ts",
+    "src/globe/tiles.ts",
+    "tests/e2e/surface.e2e.ts"
+  ],
+  "change_summary": "Aluehierarkia: jokaisella 362 valtiolla on 7 lääniä ja jokaisella läänillä 7 kaupunkialuetta aukko-7-heksajaon mallilla (keskus ja kuusi kehällä 2/√7 × yläalueen sisäsäde, 19,1° kierto) ja siemenestä deterministisellä heilunnalla. Lapsi vedetään yläalueen sisään, jos se jäisi ulos. Piste kuuluu ensin valtioon, sitten sen lääniin ja sitten sen kaupunkialueeseen, joten sisäkkäisyys on tarkka. Ruudun ehdokaslista sisältää ensin valtiot ja sitten kunkin yläalueen lapset peräkkäin, ja yläalue tietää lastensa paikat. Shaderi piirtää kolme rajatasoa omilla viivoillaan ja kulkee kerros kerrallaan vain nykyistä aluetta: valtiot ja enintään 7 + 7. Suorituskykykorjaukset ennen mergeä: (1) jokaisella verteksillä on tarkka rajaetäisyys ja aluetunnus kullakin kerroksella, joten kaukana rajoista olevat pikselit ohittavat silmukat. (2) Maaston oktaavisilmukka lopettaa, kun loput oktaavit eivät voi muuttaa väriluokkaa. (3) Alemmat rajat häivytetään esiin 20–50 px:n sisäsäteellä, ja ne ohitetaan näkymättöminä. (4) Hienoin oktaavi häivytetään 3 px:n aallonpituudella.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Regions: centers on nyt kerroksittainen [valtiot, läänit, kaupunkialueet]; uudet stateOf, provinceOf, cityOf, entriesForTile ja inradius",
+      "hierarchyAt (CPU-emulaatio) korvaa yksitasoisen laskennan; nearestAndBorder käyttää sitä",
+      "tiles.ts: regionData vec4[128] (keskus ja lapsialue), stateCount, regionRadii, hintSlack; attribuutit borderHint ja regionSlot"
+    ],
+    "call_sites_found": [
+      "Regions.centers: tiles.ts, regions.test.ts, main.ts (vain regionOf)",
+      "regionOf: main.ts (tuplaklikkaus)"
+    ],
+    "call_sites_updated": [
+      "tiles.ts",
+      "regions.test.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Ensimmäinen versio oli liian raskas: Intel UHD:lla 24–38 fps, ja CI-tilassa 8/13 testiä aikakatkaistiin (15,9 min). Optimointien jälkeen 56–61 fps kaikilla etäisyyksillä 3R … 2e-5R, CI-tila 4,5 min, ja GitHubin CI 2,3 min. Yksi aluetesti muutettiin tekemään yksi expect särmää kohden, koska 390 000 expect-kutsua ylitti 5 s:n aikarajan. Tarkistettava asia ei muuttunut."
+  },
+  "commit": "46a16b0",
+  "progress": 100
+}
