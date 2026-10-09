@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T15:45:47Z",
+    "generated_at": "2026-10-09T15:52:16Z",
     "generated_by": "init-project v1.0",
     "git_commit": "e5329c1",
     "git_branch": "main",
@@ -19,7 +19,7 @@
     "stack": {
       "frontend": [
         "TypeScript 6",
-        "Three.js r184",
+        "Three.js r186",
         "Svelte 5",
         "Zustand 5"
       ],
