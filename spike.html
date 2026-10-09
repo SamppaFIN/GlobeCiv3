@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>GlobeCiv3 — infinite zoom -prototyyppi</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #05060c; color: #dfe6f0;
+        font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+      #app canvas { display: block; touch-action: none; }
+      #hud { position: fixed; top: 8px; left: 8px; padding: 8px 10px; background: rgba(5, 6, 12, 0.78);
+        border-radius: 6px; white-space: pre; pointer-events: none; max-width: calc(100vw - 32px); overflow: hidden; }
+      #controls { position: fixed; right: 8px; bottom: 8px; display: flex; gap: 8px; }
+      #controls button { min-width: 44px; min-height: 44px; padding: 0 14px; background: rgba(40, 70, 120, 0.9);
+        color: #fff; border: 0; border-radius: 6px; font: inherit; cursor: pointer; }
+      #controls button:focus-visible { outline: 2px solid #8cb4ff; outline-offset: 2px; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud"></div>
+    <div id="controls">
+      <button id="bench" type="button">Bench (B)</button>
+      <button id="tint" type="button">Tasovärit (L)</button>
+    </div>
+    <script type="module" src="/src/spike/main.ts"></script>
+  </body>
+</html>
