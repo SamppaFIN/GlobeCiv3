@@ -86,6 +86,16 @@ const fragmentShader = /* glsl */ `
   flat varying vec3 vSlot;
   // Largest triangle edge of this tile in world units
   uniform float hintSlack;
+  // Selected region (accent outline and glow) and the region the camera is inside
+  // (the world outside it is dimmed). Level -1 means none. Centres are tile-local and
+  // computed exactly like the candidate list, so a match is an exact float32 equality.
+  uniform int focusLevel;
+  uniform vec3 focusLocal;
+  uniform int contextLevel;
+  uniform vec3 contextLocal;
+  uniform vec3 accentColor;
+  // Narrower side of the drawing buffer in device pixels
+  uniform float narrowPx;
 
   float hash3(ivec3 c, uint seed) {
     uint h = seed ^ (uint(c.x) * 0x27d4eb2du) ^ (uint(c.y) * 0x165667b1u) ^ (uint(c.z) * 0x1b873593u);
@@ -147,10 +157,12 @@ const fragmentShader = /* glsl */ `
     color *= 0.3 + 0.7 * max(dot(n, sunDir), 0.0);
     if (stateCount > 1) {
       float w = max(length(dFdx(vLocal)), length(dFdy(vLocal)));
-      // Lower levels fade in as their regions grow on screen (20 → 50 px inradius);
-      // while a level is invisible its loops are skipped entirely
-      float provinceFade = smoothstep(20.0, 50.0, regionRadii.x / w);
-      float cityFade = smoothstep(20.0, 50.0, regionRadii.y / w);
+      // Lower levels fade in as their inradius grows from 6 % to 11 % of the narrower
+      // screen side. At a view level's framing distance (levels.ts) its children
+      // measure about 11.5 % and its grandchildren 4.3 %, so each level shows exactly
+      // the level below it. While a level is invisible its loops are skipped entirely.
+      float provinceFade = smoothstep(0.06, 0.11, regionRadii.x / w / narrowPx);
+      float cityFade = smoothstep(0.06, 0.11, regionRadii.y / w / narrowPx);
       // Per level (state, province, city area): the nearest region in the current slot
       // range and the distance to the nearest border plane within that range (siblings),
       // then descend into the winner's children. Only the states plus at most 7 + 7
@@ -161,6 +173,8 @@ const fragmentShader = /* glsl */ `
       // region, and the vertex's region slot is used without looping.
       float borders[3];
       borders[0] = 1e30; borders[1] = 1e30; borders[2] = 1e30;
+      int slots[3];
+      slots[0] = -1; slots[1] = -1; slots[2] = -1;
       int from = 0;
       int count = stateCount;
       for (int level = 0; level < 3; level++) {
@@ -170,7 +184,9 @@ const fragmentShader = /* glsl */ `
         int slot = int(vSlot[level]);
         float border = 1e30;
         if (vHint[level] - hintSlack > 2.0 * w) {
-          borders[level] = border;
+          // Far from any border: the hint approximates the distance well enough for the glow
+          borders[level] = vHint[level];
+          slots[level] = slot;
           int code = int(regionData[slot].w);
           from = code / 8;
           count = code - from * 8;
@@ -193,6 +209,7 @@ const fragmentShader = /* glsl */ `
           border = min(border, (dot(d, d) - best) / (2.0 * distance(c, own)));
         }
         borders[level] = border;
+        slots[level] = slot;
         int code = int(regionData[slot].w);
         from = code / 8;
         count = code - from * 8;
@@ -200,11 +217,27 @@ const fragmentShader = /* glsl */ `
       // w is the pixel size in world units from the smooth position, not fwidth(border):
       // border is V-shaped at the line, so its screen derivative vanishes there
       float stateLine = 1.0 - smoothstep(0.5 * w, 1.2 * w, borders[0]);
-      // Lower levels fade in as their regions grow on screen (12 → 40 px inradius)
       float provinceLine = (1.0 - smoothstep(0.35 * w, 0.9 * w, borders[1])) * provinceFade;
       float cityLine = (1.0 - smoothstep(0.3 * w, 0.75 * w, borders[2])) * cityFade;
       float strength = max(borderStrength * stateLine, max(0.38 * provinceLine, 0.24 * cityLine));
       color = mix(color, borderColor, strength);
+      if (contextLevel >= 0) {
+        int cs = slots[contextLevel];
+        if (cs < 0 || distance(regionData[cs].xyz, contextLocal) > 1e-4) {
+          color = mix(color, vec3(dot(color, vec3(0.3, 0.59, 0.11))), 0.5) * 0.5;
+        }
+      }
+      if (focusLevel >= 0) {
+        int fs = slots[focusLevel];
+        if (fs >= 0 && distance(regionData[fs].xyz, focusLocal) < 1e-4) {
+          // Distance to the selected region's outline: its borders at its own and every upper level
+          float d = borders[0];
+          for (int l = 1; l < 3; l++) if (l <= focusLevel) d = min(d, borders[l]);
+          float ring = 1.0 - smoothstep(1.5 * w, 3.0 * w, d);
+          float glow = 0.3 * (1.0 - smoothstep(0.0, 24.0 * w, d));
+          color = mix(color, accentColor, max(0.95 * ring, glow));
+        }
+      }
     }
     gl_FragColor = vec4(color, 1.0);
   }
@@ -246,6 +279,15 @@ export class TileManager {
   private readonly regions: Regions | null;
   readonly borderColor = { value: new THREE.Color(0.85, 0.92, 1.0) };
   readonly borderStrength = { value: 0.55 };
+  /** Selection and context as region level (-1: none) plus unit-sphere centre. */
+  readonly focusLevel = { value: -1 };
+  readonly contextLevel = { value: -1 };
+  /** --c-accent #9184d9 as raw sRGB (the shader output is not colour-managed). */
+  readonly accentColor = { value: new THREE.Vector3(0x91, 0x84, 0xd9).divideScalar(255) };
+  /** Narrower side of the drawing buffer in device pixels (the shader measures in those). */
+  readonly narrowPx = { value: 800 };
+  private readonly focusCenter = new THREE.Vector3();
+  private readonly contextCenter = new THREE.Vector3();
 
   private readonly seed: number;
 
@@ -366,6 +408,12 @@ export class TileManager {
         hintSlack: { value: (node.arc / N) * 1.6 },
         borderColor: this.borderColor,
         borderStrength: this.borderStrength,
+        focusLevel: this.focusLevel,
+        focusLocal: { value: new THREE.Vector3() },
+        contextLevel: this.contextLevel,
+        contextLocal: { value: new THREE.Vector3() },
+        accentColor: this.accentColor,
+        narrowPx: this.narrowPx,
       },
       vertexShader,
       fragmentShader,
@@ -498,11 +546,31 @@ export class TileManager {
 
     if (this.frame % 60 === 0) for (const root of this.roots) this.prune(root);
 
+    for (const n of this.drawn) this.updateHighlight(n);
     this.prevDrawn = this.drawn;
     let maxLevel = 0;
     for (const n of this.drawn) maxLevel = Math.max(maxLevel, n.tile.level);
     this.lastStats = { drawn: this.drawn.length, created, genMs, maxLevel, queue: this.queue.length, meshes: this.meshCount };
     return this.lastStats;
+  }
+
+  /**
+   * Highlight a selected region and dim everything outside the context region.
+   * Centres are unit vectors from Regions.centers; null clears.
+   */
+  setHighlight(focus: { level: number; center: THREE.Vector3 } | null, context: { level: number; center: THREE.Vector3 } | null): void {
+    this.focusLevel.value = focus ? focus.level : -1;
+    if (focus) this.focusCenter.copy(focus.center);
+    this.contextLevel.value = context ? context.level : -1;
+    if (context) this.contextCenter.copy(context.center);
+  }
+
+  /** Same float64 arithmetic as the candidate list (centre × R − tile centre), so float32 values match. */
+  private updateHighlight(node: TileNode): void {
+    const u = node.material!.uniforms;
+    const R = this.radius;
+    if (this.focusLevel.value >= 0) u.focusLocal.value.copy(this.focusCenter).multiplyScalar(R).sub(node.center);
+    if (this.contextLevel.value >= 0) u.contextLocal.value.copy(this.contextCenter).multiplyScalar(R).sub(node.center);
   }
 
   /** Tiles drawn in the last update. */

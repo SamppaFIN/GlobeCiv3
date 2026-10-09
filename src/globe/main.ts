@@ -5,9 +5,11 @@
 import * as THREE from 'three';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
+import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
 import { Regions } from './regions';
 import { terrainHeight } from './terrain';
 import { TileManager } from './tiles';
+import { createLevelBar } from '../ui/levelBar';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -46,7 +48,7 @@ const regions = new Regions(nodes);
 // can descend to quadtree level 17.
 const rig = new GlobeCamera(RADIUS, camera, {
   minDist: RADIUS * 2e-5,
-  maxDist: RADIUS * 6,
+  maxDist: RADIUS * 8,
   startDist: Math.hypot(0, 3, 12) - RADIUS,
 });
 rig.target.set(0, 3, 12).normalize();
@@ -57,6 +59,11 @@ attachInput(renderer.domElement, rig);
 // ─── Surface (cube-sphere quadtree) ───────────────
 const tiles = new TileManager(RADIUS, regions);
 scene.add(tiles.group);
+const setNarrowPx = () => {
+  const size = renderer.getDrawingBufferSize(new THREE.Vector2());
+  tiles.narrowPx.value = Math.min(size.x, size.y);
+};
+setNarrowPx();
 
 // ─── Stars ────────────────────────────────────────
 // Own scene and camera: the globe camera's far plane ends at the horizon
@@ -74,28 +81,73 @@ starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3))
 const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
 starScene.add(new THREE.Points(starsGeo, starsMat));
 
-// ─── Double-click flies to a hex ──────────────────
-let lastClickTime = 0;
-renderer.domElement.addEventListener('click', (event: MouseEvent) => {
-  const now = Date.now();
-  const isDouble = now - lastClickTime < 400;
-  lastClickTime = now;
-  if (!isDouble) return;
+// ─── View levels: a tap selects a region, a second tap dives into it ─
+// The level follows from the camera distance, so wheel, pinch and taps agree.
+// A double-click is two taps: select, then dive.
+let frames = frameDistances(RADIUS, regions.inradius, camera.fov, camera.aspect);
+let viewLevel: ViewLevel = levelForDist(rig.dist, frames);
+let selection: RegionRef | null = null;
+let path: RegionRef[] = [];
+let flight: FlightTarget | null = null;
 
+function fly(to: FlightTarget) {
+  selection = null;
+  flight = to;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  rig.flyTo(to.point, to.dist, reduceMotion ? 0 : 1);
+}
+
+function onTap(clientX: number, clientY: number) {
   const rect = renderer.domElement.getBoundingClientRect();
-  const mouse = new THREE.Vector2(
-    ((event.clientX - rect.left) / rect.width) * 2 - 1,
-    -((event.clientY - rect.top) / rect.height) * 2 + 1,
-  );
-  // Ray against the sphere itself: works at every zoom level, unlike a points threshold
-  const hit = rig.raycast(mouse);
-  if (hit) {
-    const bestIdx = regions.regionOf(hit);
-    console.log(`[GlobeCiv3] Double-clicked hex #${bestIdx} (${nodes[bestIdx]?.neighbors.length ?? 0} neighbors)`);
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    rig.flyTo(nodes[bestIdx].position, Math.min(rig.dist, RADIUS * 0.25), reduceMotion ? 0 : 1);
-  }
+  const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+  // Ray against the sphere itself: works at every zoom level
+  const hit = rig.raycast(ndc);
+  const ref = hit ? regionAt(regions, hit, viewLevel) : null;
+  if (ref && sameRegion(ref, selection)) fly(diveTarget(regions, ref, frames));
+  else selection = ref;
+}
+
+// A tap is one pointer that goes down and up within 8 px and 500 ms; drags and pinches are not taps
+const presses = new Map<number, { x: number; y: number; t: number }>();
+let pinched = false;
+renderer.domElement.addEventListener('pointerdown', e => {
+  presses.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+  if (presses.size > 1) pinched = true;
 });
+const release = (e: PointerEvent, tap: boolean) => {
+  const press = presses.get(e.pointerId);
+  presses.delete(e.pointerId);
+  const wasPinch = pinched;
+  if (presses.size === 0) pinched = false;
+  if (!tap || !press || wasPinch) return;
+  if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > 8 || performance.now() - press.t > 500) return;
+  onTap(e.clientX, e.clientY);
+};
+renderer.domElement.addEventListener('pointerup', e => release(e, true));
+renderer.domElement.addEventListener('pointercancel', e => release(e, false));
+
+const levelBar = createLevelBar(document.getElementById('hud')!, () => {
+  const to = backTarget(regions, flight ? flight.point : rig.target, viewLevel, frames);
+  if (to) fly(to);
+});
+
+/** Level, breadcrumb, selection and context for this frame. */
+function updateLevel() {
+  if (!rig.flying) flight = null;
+  viewLevel = levelForDist(rig.dist, frames);
+  if (selection && selection.level !== viewLevel) selection = null;
+  // During a flight the breadcrumb and context follow the destination, never deeper
+  // than the destination level, so they do not flicker across regions on the way
+  const anchor = flight ? flight.point : rig.target;
+  const depth = flight ? Math.min(viewLevel, flight.level) : viewLevel;
+  path = regionPath(regions, anchor, depth);
+  const context = path.length ? path[path.length - 1] : null;
+  tiles.setHighlight(
+    selection ? { level: selection.level, center: regionCenter(regions, selection) } : null,
+    context ? { level: context.level, center: regionCenter(regions, context) } : null,
+  );
+  levelBar.update({ level: viewLevel, path, selection });
+}
 
 // ─── Animation loop ───────────────────────────────
 let lastFrame = performance.now();
@@ -105,6 +157,7 @@ function animate(now = performance.now()) {
   const dt = (now - lastFrame) / 1000;
   lastFrame = now;
   rig.update(dt);
+  updateLevel();
   tiles.update(camera, renderer.domElement.clientHeight, dt);
   starCamera.quaternion.copy(camera.quaternion);
   renderer.clear();
@@ -119,7 +172,9 @@ window.addEventListener('resize', () => {
   camera.aspect = starCamera.aspect = window.innerWidth / window.innerHeight;
   starCamera.updateProjectionMatrix();
   rig.apply();
+  frames = frameDistances(RADIUS, regions.inradius, camera.fov, camera.aspect);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  setNarrowPx();
 });
 
 // ─── Export globals ───────────────────────────────
@@ -128,5 +183,11 @@ window.addEventListener('resize', () => {
 (window as any).globeCamera = rig;
 (window as any).globeTiles = tiles;
 (window as any).globeTerrain = { terrainHeight };
+(window as any).globeRegions = regions;
+(window as any).globeLevels = {
+  get state() {
+    return { level: viewLevel, path, selection, frames, flying: rig.flying };
+  },
+};
 
 console.log('[GlobeCiv3] 3D globe ready');
