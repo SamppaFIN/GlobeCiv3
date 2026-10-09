@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-006",
+  "story": "STORY-007",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "GlobeCamera saa lentotilan: flyTo(piste, etäisyys, kesto) interpoloi kohdepisteen isoympyrää pitkin (slerp), etäisyyden logaritmisesti ja suunnan rinnakkaissiirtona. Kesto on 1 s smoothstep-pehmennyksellä, ja update(dt) etenee framettain. Rulla, raahaus ja pinch keskeyttävät lennon. Kun prefers-reduced-motion on päällä, kesto on 0 ja siirtymä välitön. Tuplaklikkaus etsii lähimmän heksan pallon säteenleikkauksella (rig.raycast) eikä enää pisteiden raycastilla, jonka 0,3 yksikön kynnys ei toimi läheltä. Kohde-etäisyys on alueen näkymä (R × 0,25) tai nykyinen, jos ollaan jo lähempänä. Overlayn jäänteet poistetaan, koska lentäminen korvaa ne: openHexSimulation-kutsu, #sim-overlay, #sim-close ja closeSimulation.",
+  "alternatives_considered": [
+    {
+      "name": "Tween-kirjasto (esim. @tweenjs/tween.js)",
+      "pros": "Valmiit pehmennyskäyrät",
+      "cons": "Uusi riippuvuus kolmen rivin interpolaatioon. Isoympyrä ja logaritminen etäisyys pitäisi silti laskea itse.",
+      "rejected_because": "Yksinkertaisuus ensin"
+    },
+    {
+      "name": "Lineaarinen interpolaatio kohdepisteelle",
+      "pros": "Yksinkertaisempi",
+      "cons": "Kulkee pallon sisäkautta ja vaatii normalisoinnin, mikä tekee nopeudesta epätasaisen. Pitkillä matkoilla (yli 90°) reitti vääristyy.",
+      "rejected_because": "Kriteeri vaatii isoympyrän"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/camera.ts",
+    "src/globe/camera.test.ts",
+    "src/globe/main.ts",
+    "src/main.ts (closeSimulation pois)",
+    "index.html (overlay-elementit ja -tyylit pois)",
+    "tests/e2e/camera.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "flyTo, update, cancelFlight ja flying camera.ts:ään yksikkötesteineen",
+      "verify": "Lento päättyy 1 s:ssa tarkasti kohteeseen, kulkee isoympyrän tasossa monotonisesti, keskeytys pysäyttää sen, ja kesto 0 on välitön"
+    },
+    {
+      "step": 2,
+      "action": "Kytke tuplaklikkaus, update(dt) animaatiosilmukkaan, keskeytys syötteeseen ja reduced motion. Poista overlayn jäänteet.",
+      "verify": "npm run build menee läpi, eikä sim-overlay tai openHexSimulation esiinny koodissa (grep)"
+    },
+    {
+      "step": 3,
+      "action": "E2E: tuplaklikkaus lentää (ei perillä 0,3 s:ssa, perillä 1,3 s:ssa), reduced motion on välitön, rulla keskeyttää, eikä overlay-elementtiä ole",
+      "verify": "npm run test:e2e vihreä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

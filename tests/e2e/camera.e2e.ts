@@ -93,3 +93,68 @@ test.describe('touch', () => {
     expect(gap(before, after)).toBeLessThan(1e-6);
   });
 });
+
+/** Unit vector of the hex node nearest to the surface point under a client pixel. */
+function nearestHex(page: Page, x: number, y: number): Promise<[number, number, number]> {
+  return page.evaluate(([cx, cy]) => {
+    const w = window as any;
+    const ndc = { x: (cx / innerWidth) * 2 - 1, y: -((cy / innerHeight) * 2 - 1) };
+    const p = w.globeCamera.raycast(ndc).normalize();
+    let best = null;
+    let bestD = Infinity;
+    for (const n of w.globeNodes) {
+      const v = n.position.clone().normalize();
+      const d = v.distanceToSquared(p);
+      if (d < bestD) { bestD = d; best = v; }
+    }
+    return [best.x, best.y, best.z];
+  }, [x, y] as const);
+}
+
+function flightState(page: Page): Promise<{ flying: boolean; target: [number, number, number] }> {
+  return page.evaluate(() => {
+    const rig = (window as any).globeCamera;
+    const t = rig.target.clone().normalize();
+    return { flying: rig.flying, target: [t.x, t.y, t.z] };
+  });
+}
+
+const angle = (a: number[], b: number[]) => Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
+
+test('double-click flies to the nearest hex in about a second, without an overlay', async ({ page }) => {
+  await openGame(page);
+  const dest = await nearestHex(page, 760, 330);
+  await page.mouse.dblclick(760, 330);
+  await page.waitForTimeout(300);
+  const mid = await flightState(page);
+  expect(mid.flying).toBe(true);
+  expect(angle(mid.target, dest)).toBeGreaterThan(1e-3);
+  await page.waitForTimeout(1000);
+  const end = await flightState(page);
+  expect(end.flying).toBe(false);
+  expect(angle(end.target, dest)).toBeLessThan(1e-6);
+  expect(await page.locator('#sim-overlay, #sim-close').count()).toBe(0);
+});
+
+test('with reduced motion the double-click jumps at once', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openGame(page);
+  const dest = await nearestHex(page, 760, 330);
+  await page.mouse.dblclick(760, 330);
+  await nextFrame(page);
+  const now = await flightState(page);
+  expect(now.flying).toBe(false);
+  expect(angle(now.target, dest)).toBeLessThan(1e-6);
+});
+
+test('the mouse wheel interrupts a flight', async ({ page }) => {
+  await openGame(page);
+  const dest = await nearestHex(page, 760, 330);
+  await page.mouse.dblclick(760, 330);
+  await page.waitForTimeout(200);
+  await page.mouse.wheel(0, -100);
+  await nextFrame(page);
+  expect((await flightState(page)).flying).toBe(false);
+  await page.waitForTimeout(1100);
+  expect(angle((await flightState(page)).target, dest)).toBeGreaterThan(1e-3);
+});

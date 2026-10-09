@@ -19,6 +19,17 @@ export function wheelFactor(deltaY: number, deltaMode: number): number {
   return Math.exp(px * WHEEL_ZOOM_RATE);
 }
 
+interface Flight {
+  from: THREE.Vector3;
+  rotation: THREE.Quaternion;
+  fromDist: number;
+  toDist: number;
+  t: number;
+  duration: number;
+}
+
+const smoothstep = (x: number) => x * x * (3 - 2 * x);
+
 export interface GlobeCameraOptions {
   minDist: number;
   maxDist: number;
@@ -36,6 +47,7 @@ export class GlobeCamera {
 
   private readonly raycaster = new THREE.Raycaster();
   private readonly q = new THREE.Quaternion();
+  private flight: Flight | null = null;
 
   constructor(R: number, camera: THREE.PerspectiveCamera, opts: GlobeCameraOptions) {
     this.R = R;
@@ -122,6 +134,52 @@ export class GlobeCamera {
     if (grabbed) this.grab(toMid, grabbed);
   }
 
+  get flying(): boolean {
+    return this.flight !== null;
+  }
+
+  /**
+   * Fly to a surface point along the great circle, interpolating the distance on a
+   * log scale. A duration of 0 jumps there at once (prefers-reduced-motion).
+   */
+  flyTo(point: THREE.Vector3, dist: number, durationS = 1): void {
+    const to = point.clone().normalize();
+    const toDist = Math.min(this.maxDist, Math.max(this.minDist, dist));
+    const rotation = new THREE.Quaternion().setFromUnitVectors(this.target.clone().normalize(), to);
+    if (durationS <= 0) {
+      this.rotateRig(rotation);
+      this.dist = toDist;
+      this.flight = null;
+      this.apply();
+      return;
+    }
+    this.flight = { from: this.target.clone().normalize(), rotation, fromDist: this.dist, toDist, t: 0, duration: durationS };
+  }
+
+  cancelFlight(): void {
+    this.flight = null;
+  }
+
+  /** Advance an active flight by dt seconds. */
+  update(dt: number): void {
+    const f = this.flight;
+    if (!f) return;
+    f.t = Math.min(f.duration, f.t + dt);
+    const u = smoothstep(f.t / f.duration);
+    // Rotate from the current target to its place on the great circle at u
+    const next = f.from.clone().applyQuaternion(new THREE.Quaternion().slerp(f.rotation, u));
+    this.rotateRig(this.q.setFromUnitVectors(this.target.clone().normalize(), next));
+    this.dist = Math.exp(Math.log(f.fromDist) + (Math.log(f.toDist) - Math.log(f.fromDist)) * u);
+    this.apply();
+    if (f.t >= f.duration) this.flight = null;
+  }
+
+  /** Rotate target and forward together, which parallel-transports the heading. */
+  private rotateRig(q: THREE.Quaternion): void {
+    this.target.applyQuaternion(q);
+    this.forward.applyQuaternion(q);
+  }
+
   /** Pixel distance between where a world point projects and the given NDC. */
   screenErrorPx(point: THREE.Vector3, ndc: THREE.Vector2, width: number, height: number): number {
     const p = point.clone().project(this.camera);
@@ -151,9 +209,11 @@ export function attachInput(el: HTMLElement, rig: GlobeCamera): () => void {
 
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
+    rig.cancelFlight();
     rig.zoomAt(toNdc(e.clientX, e.clientY), wheelFactor(e.deltaY, e.deltaMode));
   };
   const onDown = (e: PointerEvent) => {
+    rig.cancelFlight();
     try { el.setPointerCapture(e.pointerId); } catch { /* synthetic or already released pointer */ }
     pointers.set(e.pointerId, { ndc: toNdc(e.clientX, e.clientY), x: e.clientX, y: e.clientY });
     if (pointers.size === 1) grabbed = rig.raycast(pointers.get(e.pointerId)!.ndc);
