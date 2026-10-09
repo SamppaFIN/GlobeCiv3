@@ -1,0 +1,59 @@
+{
+  "id": "PLAN-004",
+  "story": "STORY-003",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Vitest on jo käytössä (STORY-001). Lisätään @playwright/test ja kaksi savutestiä tiedostoon tests/e2e/smoke.e2e.ts: pääpeli käynnistyy ilman konsolivirheitä ja ilmoittaa \"3D globe ready\", ja prototyyppisivu spike.html saavuttaa tilan window.__ready. Molemmista otetaan kuvakaappaus. Pääte .e2e.ts pitää testit erillään Vitestin hakukuviosta. Playwright käynnistää tuotantobuildin vite preview -palvelimella portissa 4175, jottei se törmää Samin kehityspalvelimeen (3000). Paikallisesti käytetään asennettua Chromea (channel: chrome), eikä selainta ladata. CI:ssä asennetaan Playwrightin Chromium, ja WebGL ajetaan SwiftShaderilla (--use-angle=swiftshader --enable-unsafe-swiftshader). E2E ajetaan samassa test-jobissa kuin yksikkötestit, joten deploy-job (needs: test) ei käynnisty, jos jokin testi on punainen.",
+  "alternatives_considered": [
+    {
+      "name": "Oma CDP-skripti (scripts/bench.mjs) testiajurina",
+      "pros": "Ei uutta riippuvuutta",
+      "cons": "Ei raportointia, uudelleenyrityksiä eikä assertioita. Testien ylläpito käsin.",
+      "rejected_because": "CLAUDE.md nimeää Playwrightin testityökaluksi, ja bench.mjs jää suorituskykymittaukseen"
+    },
+    {
+      "name": "Erillinen e2e-job CI:ssä",
+      "pros": "Yksikkötestit ja E2E näkyvät erikseen",
+      "cons": "Kaksi npm install -ajoa ja deploy-jobin needs-lista pitää päivittää",
+      "rejected_because": "Yksi job on yksinkertaisempi, ja vaiheiden nimet näyttävät, kumpi kaatui"
+    },
+    {
+      "name": "Suorituskykymittaus CI:hin jo nyt",
+      "pros": "Regressiot näkyisivät automaattisesti",
+      "cons": "GitHubin ajokoneissa ei ole näytönohjainta. SwiftShaderilla mitattu FPS ei kerro mitään.",
+      "rejected_because": "Ei kuulu STORY-003:n hyväksymiskriteereihin. Mittaus pysyy käsin ajettavana (scripts/bench.mjs)."
+    }
+  ],
+  "files_to_change": [
+    "package.json (@playwright/test, skripti test:e2e)",
+    "package-lock.json",
+    "playwright.config.ts (uusi)",
+    "tests/e2e/smoke.e2e.ts (uusi)",
+    ".gitignore (test-results, playwright-report)",
+    ".github/workflows/deploy.yml (Playwrightin asennus ja E2E-ajo)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Asenna @playwright/test, kirjoita playwright.config.ts ja smoke.e2e.ts sekä skripti \"test:e2e\": \"npm run build && playwright test\"",
+      "verify": "npm run test:e2e menee läpi paikallisesti Chromella, ja kuvakaappaukset syntyvät test-results-kansioon"
+    },
+    {
+      "step": 2,
+      "action": "Varmista, että testi todella tunnistaa virheen: aja se kerran tilapäisellä rikkovalla muutoksella (globin kaatuminen) ja palauta muutos",
+      "verify": "Testi on punainen rikotulla koodilla ja vihreä palautuksen jälkeen. Rikkova muutos ei päädy committiin."
+    },
+    {
+      "step": 3,
+      "action": "Lisää CI:hin Playwrightin Chromiumin asennus ja npm run test:e2e test-jobiin ennen Pages-artefaktia",
+      "verify": "Mainin Actions-ajossa E2E-vaihe on vihreä, ja deploy-job tarvitsee edelleen test-jobin (needs: test)"
+    },
+    {
+      "step": 4,
+      "action": "Kirjaa toteutus- ja testitiketti ja merkitse STORY-003 valmiiksi",
+      "verify": "backlog.json ja CLAUDE.md:n indeksi ovat ajan tasalla, ja EPIC-001 on 100 %"
+    }
+  ],
+  "status": "approved"
+}
