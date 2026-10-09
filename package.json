@@ -11,15 +11,15 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^7.1.2",
-    "@types/three": "^0.184.1",
-    "svelte": "^5.56.3",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/three": "^0.186.0",
+    "svelte": "^5.57.2",
     "typescript": "~6.0.2",
-    "vite": "^8.0.12",
+    "vite": "^8.3.3",
     "vitest": "^5.0.3"
   },
   "dependencies": {
-    "three": "^0.184.0",
-    "zustand": "^5.0.14"
+    "three": "^0.186.1",
+    "zustand": "^5.0.15"
   }
 }

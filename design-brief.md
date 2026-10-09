@@ -7,7 +7,7 @@
 ## Context
 
 - **Project:** GlobeCiv3 — Selaimessa toimiva sivilisaatiosimulaatio heksaplaneetalla, jossa zoomataan saumattomasti planeetasta yksittäiseen kansalaiseen.
-- **Target user:** Strategiapelien pelaaja, joka haluaa seurata autonomisen sivilisaation kasvua ja asettaa sille prioriteetteja käskemättä jokaista yksikköä (Civilization-rakenne, Majesty-henki).
+- **Target user:** Strategiapelien pelaaja, joka rakentaa sivilisaatiota kaupunki kerrallaan ja haluaa nähdä sen planeetasta yksittäiseen kaupunkiin asti.
 - **Primary device:** Työpöytä hiirellä. Puhelin kosketuksella on toinen pääalusta (pinch-zoom ja napautus).
 - **Tone:** Rauhallinen ja tähtitaivaallinen planeettatasolla, lämmin ja maanläheinen pinnalla. Käyttöliittymä on hillitty ja läpikuultava, eikä se kilpaile maailman kanssa.
 
@@ -17,7 +17,7 @@ Kaikki näkymät ovat HUD-kerroksia saman koko ruudun 3D-maailman päällä. Tas
 
 1. **Planeettataso:** imperiumin yhteenveto (alueet, väestö, valloitus-%), aluevärien selite ja zoom-tason ilmaisin.
 2. **Aluetaso:** valitun alueen tilastot ja tooltip, joka näyttää alueen tunnuksen, tilan, väestön, ruoan ja valloitus-%:n.
-3. **Kaupunki- ja kansalaistaso:** kansalaismoodit (tutki, sodi, etsi ruokaa) ja valitun kansalaisen kortti.
+3. **Kaupunki- ja yksikkötaso:** kaupungin väestö, ruoka, tuotanto ja kauppa sekä valitun yksikön kortti. Mekaniikat ovat aluksi Civilization I:n perusmekaniikat, mutta nimet ja ulkoasu ovat omia.
 4. **Zoom-ilmaisin:** pystysuora "linssi", joka näyttää nykyisen tason (planeetta, manner, alue, ruutu, kaupunki, kansalainen) ja jonka napautus lentää tasolle.
 5. **Aloitusnäyttö:** siemenen syöttö ja Aloita-nappi.
 
