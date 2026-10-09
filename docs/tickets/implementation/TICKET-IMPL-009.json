@@ -1,0 +1,34 @@
+{
+  "id": "TICKET-IMPL-009",
+  "story": "STORY-009",
+  "plan": "PLAN-009",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/terrain.ts",
+    "src/globe/terrain.test.ts",
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "tests/e2e/surface.e2e.ts"
+  ],
+  "change_summary": "terrain.ts kirjoitettiin uudelleen: f(siemen, piste, oktaavit) eksplisiittisellä siemenellä, terrainAt (pelilogiikan resoluutio tasolla), colorFor(korkeus, |y|), octaveSplit ja sen float32-emulaatio splitNoise. Ruudun shaderi laskee maaston pikseleittäin. Oktaavit tason alapuolelta tulevat verteksiattribuuttina (float64 CPU:lla), ja oktaavit tasosta ylöspäin lasketaan shaderissa kokonaislukuhilan ja pienen murto-osan avulla. Kunkin oktaavin paino häivytetään aallonpituuden pienentyessä 2 px:stä 1 px:iin. Paino riippuu pikselistä, joten vanha värimorfi ja yhdistymishäivytys poistuivat. Shaderin hash3 on bitilleen sama kuin CPU:n hash. Rannikot eivät enää porrastu.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "terrain.ts: terrainColors poistettu; uudet terrainAt, heightRange, octaveSplit, splitNoise, colorFor, hash, noiseInCell",
+      "TileManager(radius, regions?, seed?)",
+      "tiles.ts: colorA/colorB → baseHeight, morph ja mergeHold poistettu, PIXEL_OCTAVES = 10",
+      "window.globeTerrain (testejä varten)"
+    ],
+    "call_sites_found": [
+      "terrainColors: vain tiles.ts (src/spike käyttää omaa noise.ts:ää)"
+    ],
+    "call_sites_updated": [
+      "tiles.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "CI:n E2E-kesto kasvoi noin 1,3 minuutista 4,6 minuuttiin raskaamman shaderin takia (SwiftShader). Tasovärikuvassa yksi ruutujen raja voi näkyä hyvin heikkona juovana hiekalla. Sitä ei voitu vahvistaa suurennoksesta, ja se kirjataan havainnoksi. Pikselikohtainen kohina lisää GPU-kuormaa: pikseliä kohden noin 7–8 aktiivista oktaavia × 8 hashia."
+  },
+  "commit": "4f8b467",
+  "progress": 100
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T17:52:24Z",
+    "generated_at": "2026-10-09T18:16:17Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "fcd3367",
+    "git_commit": "4f8b467",
     "git_branch": "main",
     "language": "fi"
   },
@@ -86,7 +86,7 @@
         "STORY-011",
         "STORY-012"
       ],
-      "progress": 40
+      "progress": 60
     },
     {
       "id": "EPIC-004",
@@ -315,18 +315,18 @@
       "depends_on": [
         "STORY-008"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Maasto lasketaan funktiosta f(seed, piste pallolla, taso). Sama siemen tuottaa saman tuloksen (yksikkötesti).",
         "Naapuriruutujen reunatekselit vastaavat toisiaan (yksikkötesti satunnaisilla reunoilla kiinteällä siemenellä)",
         "Karkean tason tekselin väri on lähellä sen lasten keskiarvoa, ja raja-arvo kirjataan testiin",
         "Leveysaste vaikuttaa ilmastoon pisteen y-koordinaatin kautta, ei kartan rivinumeron kautta"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-009",
+        "implementation": "TICKET-IMPL-009",
+        "testing": "TICKET-TEST-009"
       }
     },
     {
@@ -1051,6 +1051,64 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-009",
+      "story": "STORY-009",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "terrain.ts saa siemenen parametriksi: korkeus on f(siemen, piste yksikköpallolla, oktaavit), väri on colorFor(korkeus, |y|), ja pelilogiikan resoluutio on terrainAt(siemen, piste, taso), joka käyttää oktaaveja 0..taso+1. Näyttöä varten ruudun tasolla L oktaavit 0..L−1 lasketaan CPU:lla verteksien kohdalle (float64, attribuutti baseHeight), ja oktaavit L..L+9 lasketaan shaderissa pikseleittäin. Pikselioktaavin paino häivytetään nollaan, kun sen aallonpituus lähestyy pikselin kokoa. Paino riippuu pikselistä eikä ruudun tasosta, joten vanhempi ja lapset laskevat samassa kohdassa samat oktaavit, eikä erillistä värimorfia tarvita. Tarkkuus: jokaiselle pikselioktaaville CPU jakaa ruudun keskipisteen hilakoordinaatin kokonaislukuosaan (ivec3, int32 riittää 2e8:aan asti) ja murto-osaan, ja shaderi lisää vain paikallisen siirtymän. Shaderin hash on bitilleen sama kuin CPU:n (uint-aritmetiikka mod 2^32). Väriraja (rannikko) lasketaan siis pikseleittäin, ja porrastus poistuu.",
+      "alternatives_considered": [
+        {
+          "name": "DataTexture ruutua kohden (64×64 tekseliä CPU:lla)",
+          "pros": "Yksinkertainen shaderi",
+          "cons": "4 096 näytettä × jopa 20 oktaavia on noin 10 ms ruutua kohden pääsäikeessä, ja tarkkuus on silti rajattu tekselikokoon",
+          "rejected_because": "Liian hidas ilman workeria (STORY-010), eikä tarkka zoomatessa"
+        },
+        {
+          "name": "Tiheämpi verteksiverkko (64×64)",
+          "pros": "Ei shaderikohinaa",
+          "cons": "16-kertainen generointi- ja muistikustannus, ja porrastus vain pienenee",
+          "rejected_because": "Sama ongelma pienempänä ja kalliimmin"
+        },
+        {
+          "name": "Kaikki oktaavit shaderissa maailmankoordinaateista",
+          "pros": "Ei CPU-osuutta",
+          "cons": "float32 ei riitä hilakoordinaatteihin (taajuus jopa 2e8), ja karkeat oktaavit laskettaisiin turhaan joka pikselille",
+          "rejected_because": "Tarkkuus ja kustannus"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/terrain.ts",
+        "src/globe/terrain.test.ts (uusi)",
+        "src/globe/tiles.ts (baseHeight, pikselioktaavit, morfi pois)",
+        "src/globe/main.ts (window.globeTerrain testejä varten)",
+        "tests/e2e/surface.e2e.ts (rannikko tasoilla 8, 13 ja 17)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "terrain.ts: siemen, terrainAt ja colorFor sekä shaderin jakolaskennan JS-emulaatio. Testit: determinismi, saumat naapuriruutujen reunoilla, vanhempi ≈ lasten keskiarvo (raja kirjataan), leveysaste ja jaon tarkkuus tasoilla 0–17 float32-emuloituna.",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 2,
+          "action": "tiles.ts: baseHeight-attribuutti, oktaavi-uniformit, shaderin kohina ja väri sekä vanhan colorA/colorB-morfin poisto",
+          "verify": "npm run build menee läpi, ja kaikki TileManager-testit ovat yhä vihreitä"
+        },
+        {
+          "step": 3,
+          "action": "E2E: rannikko tasoilla 8, 13 ja 17. Pinta- ja rajatestit pysyvät vihreinä.",
+          "verify": "Kuvissa rannikko on tarkka eikä porrastu verteksiruudukon mukaan, eikä konsolissa ole virheitä"
+        },
+        {
+          "step": 4,
+          "action": "Merge ja CI. Seuraa CI:n kestoa, koska shaderi raskautuu.",
+          "verify": "CI vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -1332,6 +1390,40 @@
         "notes": "Shaderin kustannus pikseliä kohden on 2 × ehdokkaiden määrä: aloitusnäkymässä noin 16–26, ja vain kaukaa 50–125, kun pallo on ruudulla pieni. Mainin CI oli kerran punainen (ajo 37967552042, deploy ohitettiin). Korjaus on ajossa 37968877101."
       },
       "commit": "fcd3367",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-009",
+      "story": "STORY-009",
+      "plan": "PLAN-009",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/terrain.ts",
+        "src/globe/terrain.test.ts",
+        "src/globe/tiles.ts",
+        "src/globe/main.ts",
+        "tests/e2e/surface.e2e.ts"
+      ],
+      "change_summary": "terrain.ts kirjoitettiin uudelleen: f(siemen, piste, oktaavit) eksplisiittisellä siemenellä, terrainAt (pelilogiikan resoluutio tasolla), colorFor(korkeus, |y|), octaveSplit ja sen float32-emulaatio splitNoise. Ruudun shaderi laskee maaston pikseleittäin. Oktaavit tason alapuolelta tulevat verteksiattribuuttina (float64 CPU:lla), ja oktaavit tasosta ylöspäin lasketaan shaderissa kokonaislukuhilan ja pienen murto-osan avulla. Kunkin oktaavin paino häivytetään aallonpituuden pienentyessä 2 px:stä 1 px:iin. Paino riippuu pikselistä, joten vanha värimorfi ja yhdistymishäivytys poistuivat. Shaderin hash3 on bitilleen sama kuin CPU:n hash. Rannikot eivät enää porrastu.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "terrain.ts: terrainColors poistettu; uudet terrainAt, heightRange, octaveSplit, splitNoise, colorFor, hash, noiseInCell",
+          "TileManager(radius, regions?, seed?)",
+          "tiles.ts: colorA/colorB → baseHeight, morph ja mergeHold poistettu, PIXEL_OCTAVES = 10",
+          "window.globeTerrain (testejä varten)"
+        ],
+        "call_sites_found": [
+          "terrainColors: vain tiles.ts (src/spike käyttää omaa noise.ts:ää)"
+        ],
+        "call_sites_updated": [
+          "tiles.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "CI:n E2E-kesto kasvoi noin 1,3 minuutista 4,6 minuuttiin raskaamman shaderin takia (SwiftShader). Tasovärikuvassa yksi ruutujen raja voi näkyä hyvin heikkona juovana hiekalla. Sitä ei voitu vahvistaa suurennoksesta, ja se kirjataan havainnoksi. Pikselikohtainen kohina lisää GPU-kuormaa: pikseliä kohden noin 7–8 aktiivista oktaavia × 8 hashia."
+      },
+      "commit": "4f8b467",
       "progress": 100
     }
   ],
@@ -2047,6 +2139,102 @@
           },
           {
             "item": "Naapuruudet vastaavat STORY-001:n ruudukkoa",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-009",
+      "story": "STORY-009",
+      "implementation_ticket": "TICKET-IMPL-009",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Väliaikainen verteksiväri (STORY-008) porrasti rannikot 16 × 16 -verkon mukaan.",
+        "files_changed": [
+          "src/globe/terrain.ts",
+          "src/globe/tiles.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Determinismi: sama siemen, piste ja taso → sama tulos. Säde ei vaikuta. Eri siemenet → eri korkeudet 50/50 pisteessä.",
+            "expected": "Vihreä",
+            "result": "pass. Säteen tarkistus vertaa 12 desimaalin tarkkuudella, koska p × 5 normalisoituu viimeisessä bitissä eri tavalla.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Saumat: naapuriruutujen yhteisen reunan pisteet tasoilla 0, 3, … 15 (10 paria, 9 pistettä)",
+            "expected": "Sama piste ja sama maasto",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Karkea vs. hienompi taso: 16 × 16 näytettä satunnaisella ruudulla jokaisella tasolla 0–17",
+            "expected": "Keskimääräinen korkeusero alle 25 % lisätyn oktaavin amplitudista (raja kirjattu testiin)",
+            "result": "Suurin suhde 0,095 (taso 14). Kaikki tasot 0,004–0,095.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Leveysaste: sama korkeus eri |y|:llä, sekä sama |y| eri tahkoilla",
+            "expected": "Ilmasto riippuu |y|:stä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Oktaavijaon tarkkuus float32-emuloituna: tasot 0–17, oktaavit L … L+9, 10 pistettä",
+            "expected": "Virhe alle 1e-3",
+            "result": "Suurin virhe 3,72e-5",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: rannikko tasoilla 8, 13 ja 17 (puolitushaulla löydetty)",
+            "expected": "Rannikko on tarkka eikä porrastu, eikä konsolissa ole virheitä (shaderi kääntyy)",
+            "result": "Tasot [8, 13, 17]. Kuvissa luonnollinen ja tarkka rantaviiva kaikilla tasoilla, ei virheitä.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo 37971212576 (commit 4f8b467)",
+            "expected": "Vihreä ja julkaisu",
+            "result": "12 passed (4,6 min), deploy success",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Rannikko puhelimella (S23 Ultra) Pagesista",
+            "expected": "Tarkka rannikko ja sulava zoom",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-009-coast-L8.png",
+          "docs/screenshots/TICKET-TEST-009-coast-L13.png",
+          "docs/screenshots/TICKET-TEST-009-coast-L17.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Maasto on deterministinen f(siemen, piste, taso)",
+            "checked": true
+          },
+          {
+            "item": "Naapuriruutujen reunat täsmäävät",
+            "checked": true
+          },
+          {
+            "item": "Karkea taso on lähellä lasten keskiarvoa, ja raja on kirjattu",
+            "checked": true
+          },
+          {
+            "item": "Ilmasto tulee leveysasteesta",
             "checked": true
           }
         ],

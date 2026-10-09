@@ -1,0 +1,96 @@
+{
+  "id": "TICKET-TEST-009",
+  "story": "STORY-009",
+  "implementation_ticket": "TICKET-IMPL-009",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Väliaikainen verteksiväri (STORY-008) porrasti rannikot 16 × 16 -verkon mukaan.",
+    "files_changed": [
+      "src/globe/terrain.ts",
+      "src/globe/tiles.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Determinismi: sama siemen, piste ja taso → sama tulos. Säde ei vaikuta. Eri siemenet → eri korkeudet 50/50 pisteessä.",
+        "expected": "Vihreä",
+        "result": "pass. Säteen tarkistus vertaa 12 desimaalin tarkkuudella, koska p × 5 normalisoituu viimeisessä bitissä eri tavalla.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Saumat: naapuriruutujen yhteisen reunan pisteet tasoilla 0, 3, … 15 (10 paria, 9 pistettä)",
+        "expected": "Sama piste ja sama maasto",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Karkea vs. hienompi taso: 16 × 16 näytettä satunnaisella ruudulla jokaisella tasolla 0–17",
+        "expected": "Keskimääräinen korkeusero alle 25 % lisätyn oktaavin amplitudista (raja kirjattu testiin)",
+        "result": "Suurin suhde 0,095 (taso 14). Kaikki tasot 0,004–0,095.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Leveysaste: sama korkeus eri |y|:llä, sekä sama |y| eri tahkoilla",
+        "expected": "Ilmasto riippuu |y|:stä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Oktaavijaon tarkkuus float32-emuloituna: tasot 0–17, oktaavit L … L+9, 10 pistettä",
+        "expected": "Virhe alle 1e-3",
+        "result": "Suurin virhe 3,72e-5",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rannikko tasoilla 8, 13 ja 17 (puolitushaulla löydetty)",
+        "expected": "Rannikko on tarkka eikä porrastu, eikä konsolissa ole virheitä (shaderi kääntyy)",
+        "result": "Tasot [8, 13, 17]. Kuvissa luonnollinen ja tarkka rantaviiva kaikilla tasoilla, ei virheitä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo 37971212576 (commit 4f8b467)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "12 passed (4,6 min), deploy success",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Rannikko puhelimella (S23 Ultra) Pagesista",
+        "expected": "Tarkka rannikko ja sulava zoom",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-009-coast-L8.png",
+      "docs/screenshots/TICKET-TEST-009-coast-L13.png",
+      "docs/screenshots/TICKET-TEST-009-coast-L17.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Maasto on deterministinen f(siemen, piste, taso)",
+        "checked": true
+      },
+      {
+        "item": "Naapuriruutujen reunat täsmäävät",
+        "checked": true
+      },
+      {
+        "item": "Karkea taso on lähellä lasten keskiarvoa, ja raja on kirjattu",
+        "checked": true
+      },
+      {
+        "item": "Ilmasto tulee leveysasteesta",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}

@@ -283,9 +283,9 @@ hakemisto.
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008"],
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009"],
   "next": "STORY-009"
 }
 ```
@@ -371,6 +371,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | STORY-007 hyväksyttiin: tuplaklikkaus lentää heksaan, ja overlayn jäänteet on poistettu. CI oli kahdesti punainen, koska lennon kesto riippui ruudunpäivityksestä. Korjattu, ja regressiotesti lisätty (sääntö 5). | Julkaisu pysyi edellisessä vihreässä versiossa koko ajan | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-008 hyväksyttiin: pääpelissä on kuutiopallon pinta tasoille 0–17, ja ruutuja on 5–300. CI renderöi selaintestit pikselisuhteella 0,5, koska SwiftShader ei jaksa pintaa täydellä resoluutiolla. Järjestys: STORY-009 (maasto), sitten STORY-012 (heksarajat kolmioiden tilalle). | Sami toivoi kolmiopallon tilalle oikeaa pintaa ja heksoja | Linssi (Samin valtuutuksella) |
 | 2026-10-09 | STORY-012 tehtiin ennen STORY-009:ää ja hyväksyttiin. Heksarajat piirretään pinnan shaderissa pikseleittäin ruudun paikallisissa koordinaateissa, ja kolmioverkko poistettiin. CI ajaa E2E:n yhdellä workerilla. | Sami nosti kolmiot esiin, eivätkä rajat riipu maastosta | Linssi (Samin valtuutuksella) |
+| 2026-10-09 | STORY-009 hyväksyttiin: maasto on f(siemen, piste, taso), ja hienot oktaavit lasketaan pikseleittäin shaderissa. Rannikot ovat tarkkoja kaikilla tasoilla, ja värimorfi poistui. | Porrastuneet rannikot olivat suurin visuaalinen puute | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 
