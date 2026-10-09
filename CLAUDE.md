@@ -283,10 +283,10 @@ hakemisto.
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001", "PLAN-002"],
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003"],
   "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002"],
   "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002"],
-  "next": "STORY-002"
+  "next": "STORY-004"
 }
 ```
 

@@ -1,0 +1,91 @@
+{
+  "id": "PLAN-003",
+  "story": "STORY-004",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Erillinen prototyyppisivu spike.html haarassa spike/infinite-zoom. Kuutiopallon kuusi tahkoa jaetaan quadtreeksi tasoille 0–17. Jokainen ruutu on 16×16 ruudukon pallopinta helmoineen. Verteksit tallennetaan suhteessa ruudun keskipisteeseen, ja ruudun sijainti on float64:nä JavaScriptissä, joten Three.js laskee model-view-matriisin kamerasuhteellisesti. LOD valitaan ruudun näyttökoon mukaan (jako yli 256 px, yhdistys alle 128 px) horisontti- ja frustum-karsinnalla, ja uusia ruutuja luodaan rajattu määrä framea kohden. Vanhempaa piirretään, kunnes kaikki neljä lasta ovat valmiina, joten aukkoja ei synny. Väri tulee kaistarajatusta 3D-kohinasta. Ruudun ylin oktaavi häivytetään shaderissa näyttökoon mukaan (CDLOD-tyylinen värimorfi), jolloin vanhempi ja lapset ovat vaihtohetkellä identtiset. Kamera on oma ohjain: logaritminen zoom kohti kursoria, raahaus, pinch, automaattinen kallistus sekä near ja far korkeuden mukaan. Mittaus-HUD ja ?bench-tila lentävät kiinteän reitin tasolta 0 tasolle 17 ja takaisin ja raportoivat FPS:n, ruutumäärät, generointiajat ja laskennallisen värinän pikseleinä. Työpöytä mitataan headless-Chromella koneen omalla näytönohjaimella, ja puhelin mitataan Samin laitteella lähiverkon kautta.",
+  "alternatives_considered": [
+    {
+      "name": "Valmis globe-moottori (CesiumJS)",
+      "pros": "Planeettatason LOD, tarkkuus ja kamera ovat valmiina",
+      "cons": "Oma renderöijä Three.js:n rinnalla, mikä rikkoo päätöksen yhdestä renderöijästä. Raskas, ja on tehty geodatalle eikä proseduraaliselle pelimaailmalle.",
+      "rejected_because": "Ristiriidassa osion 12 säännön 1 kanssa"
+    },
+    {
+      "name": "3DTilesRendererJS (Three.js-laajennos)",
+      "pros": "Three.js-yhteensopiva tiilisuoratoisto",
+      "cons": "Lukee valmiita 3D Tiles -tiedostoja palvelimelta. Meidän maailma generoidaan funktiona selaimessa.",
+      "rejected_because": "Väärä ongelma: tarvitsemme generoinnin, emme suoratoistoa"
+    },
+    {
+      "name": "Ristiinhäivytys läpinäkyvyydellä",
+      "pros": "Toimii mille tahansa sisällölle, myös kuville ja malleille",
+      "cons": "Vanhempi ja lapset ovat samassa tasossa, mikä aiheuttaa z-fightingia, ja läpinäkyvät ruudut vaativat lajittelua",
+      "rejected_because": "Värimorfi antaa saman tuloksen ilman läpinäkyvyyttä. Läpinäkyvyyttä tarvitaan vasta, kun esitystapa vaihtuu (STORY-011)."
+    },
+    {
+      "name": "logarithmicDepthBuffer dynaamisen near- ja far-tason sijaan",
+      "pros": "Yksi asetus, ei laskentaa",
+      "cons": "Kirjoittaa syvyyden fragmenttishaderissa, mikä estää early-z:n ja maksaa erityisesti mobiilissa",
+      "rejected_because": "Dynaaminen near ja far riittää laskelman mukaan (suhde alle 1 000 syvimmällä tasolla). Prototyyppi mittaa z-fightingin."
+    },
+    {
+      "name": "Generointi Web Workerissa jo nyt",
+      "pros": "Pääsäie ei tee raskasta työtä",
+      "cons": "Lisää viestinnän ja peruutuslogiikan prototyyppiin",
+      "rejected_because": "Prototyyppi mittaa ensin, paljonko generointi maksaa pääsäikeessä. Worker on STORY-010:n työtä, jos mittaus vaatii."
+    }
+  ],
+  "files_to_change": [
+    "spike.html (uusi)",
+    "src/spike/cubeSphere.ts (uusi: ruutuosoite ↔ pallopiste)",
+    "src/spike/cubeSphere.test.ts (uusi)",
+    "src/spike/noise.ts (uusi: deterministinen 3D-kohina)",
+    "src/spike/tiles.ts (uusi: ruutumeshit, LOD-valinta, välimuisti)",
+    "src/spike/camera.ts (uusi: kameraohjain)",
+    "src/spike/metrics.ts (uusi: HUD, bench ja värinälaskenta)",
+    "src/spike/main.ts (uusi)",
+    "scripts/bench.mjs (uusi: headless-Chrome-mittaus CDP:llä, ei uusia riippuvuuksia)",
+    "vite.config.ts (spike.html buildin syötteeksi)",
+    "docs/spikes/STORY-004-tulokset.md (uusi: mittaustulokset ja suositus)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Luo haara spike/infinite-zoom. Kirjoita cubeSphere.ts: ruutuosoite (tahko, taso, x, y) → pallopiste tangenttikorjatulla kuutiokuvauksella, sekä käänteismuunnos. Kirjoita sille yksikkötestit ensin.",
+      "verify": "Edestakainen muunnos palauttaa saman ruudun kaikilla kuudella tahkolla tasoilla 0, 5, 10 ja 17. Neljän lapsen kulmat jakavat vanhemman kulmat. npm test on vihreä."
+    },
+    {
+      "step": 2,
+      "action": "Ruutumesh (16×16 ja helmat), kaistarajattu kohinaväri kahtena attribuuttina, värimorfishaderi ja LOD-valinta karsintoineen ja luontibudjetteineen",
+      "verify": "Ylhäältä katsottuna näkyy kokonainen pallo ilman aukkoja, ja ruutumäärä pysyy alle 300:n (HUD)"
+    },
+    {
+      "step": 3,
+      "action": "Kameraohjain: logaritminen zoom kohti kursoria, raahaus, pinch, automaattinen kallistus ja dynaaminen near ja far. Tähdet omana passinaan.",
+      "verify": "Kursorin alla oleva piste pysyy paikallaan zoomatessa (mitattu siirtymä pikseleinä). Tasolle 17 pääsee ilman, että pinta leikkautuu."
+    },
+    {
+      "step": 4,
+      "action": "Mittaus: HUD (FPS, 1 %:n alin FPS, ruudut, luonnit, generointiaika, taso, korkeus, near ja far) ja ?bench-reitti. Värinä lasketaan vertaamalla float64-projektiota float32-putken projektioon sekä kamerasuhteellisella että naiivilla tavalla.",
+      "verify": "?bench tulostaa konsoliin [bench]-JSONin, jossa on luvut tasoittain. Värinä on kamerasuhteellisesti alle 0,5 px tasolla 17, ja naiivi tapa näyttää eron."
+    },
+    {
+      "step": 5,
+      "action": "Aja bench headless-Chromella koneen näytönohjaimella scripts/bench.mjs:llä. Ota kuvakaappaukset tasoilta 0, 8, 12 ja 17.",
+      "verify": "Tulokset ja kuvat ovat docs/spikes/STORY-004-tulokset.md:ssä, ja laite ja selain on kirjattu (WebGL-renderer-merkkijono)"
+    },
+    {
+      "step": 6,
+      "action": "Sami avaa sivun puhelimella lähiverkon kautta (npm run dev -- --host, ?bench) ja kertoo HUD:n tulokset",
+      "verify": "Puhelimen malli ja tulokset on kirjattu ja verrattu tavoitteeseen 30 fps"
+    },
+    {
+      "step": 7,
+      "action": "Kirjoita suositus: vahvistuuko päätös luopua Phaser-overlaysta. Päätös kumoutuu vain, jos tyhjä maailma ei yllä tavoitteeseen ja syy on yhden renderöijän mallissa, ei säädettävissä budjeteissa.",
+      "verify": "Suositus on CLAUDE.md:n osiossa 13, ja Sami tekee päätöksen. Haara pushataan, mutta sitä ei mergetä."
+    }
+  ],
+  "status": "approved"
+}

@@ -2,7 +2,7 @@
   "id": "TICKET-TEST-002",
   "story": "STORY-002",
   "implementation_ticket": "TICKET-IMPL-002",
-  "status": "in_progress",
+  "status": "done",
   "fix_summary": {
     "problem_and_root_cause": "Uusi ominaisuus, ei korjaus: repo, lisenssi ja julkaisuputki.",
     "files_changed": [
@@ -63,21 +63,32 @@
       {
         "steps": "Avaa tuotantosivu puhelimella",
         "expected": "Globi näkyy ja pyörii kosketuksella",
-        "result": "Ei ajettu — vaatii fyysisen laitteen. Jää Samin manuaaliseen tarkistukseen.",
+        "result": "Ei ajettu — vaatii fyysisen laitteen. Jää Samin manuaaliseen tarkistukseen. Sami tarkisti puhelimella 2026-10-09: toimii (kirjattu hyväksynnässä).",
         "outcome": "not_run"
       }
     ],
     "console_findings": [],
-    "screenshots": ["docs/screenshots/TICKET-TEST-002-tuotanto.png"]
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-002-tuotanto.png"
+    ]
   },
   "human_acceptance": {
     "checked_items": [
-      { "item": "https://samppafin.github.io/GlobeCiv3/ näyttää globin työpöydällä", "checked": false },
-      { "item": "Sama sivu toimii puhelimella", "checked": false },
-      { "item": "Repo, LICENSE ja README näyttävät GitHubissa oikeilta", "checked": false }
+      {
+        "item": "https://samppafin.github.io/GlobeCiv3/ näyttää globin työpöydällä",
+        "checked": true
+      },
+      {
+        "item": "Sama sivu toimii puhelimella",
+        "checked": true
+      },
+      {
+        "item": "Repo, LICENSE ja README näyttävät GitHubissa oikeilta",
+        "checked": true
+      }
     ],
-    "decision": null,
-    "signed_by": null,
-    "date": null
+    "decision": "accepted",
+    "signed_by": "Sami",
+    "date": "2026-10-09"
   }
 }
