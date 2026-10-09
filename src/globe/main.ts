@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
+import { Regions } from './regions';
 import { TileManager } from './tiles';
 
 // ─── Scene setup ──────────────────────────────────
@@ -36,6 +37,9 @@ const { nodes, edges } = buildHexGrid(RADIUS, DETAIL);
 
 console.log(`[GlobeCiv3] Hex nodes: ${nodes.length}, edges: ${edges.length}`);
 
+// Each hex node is the centre of a region; borders are drawn per pixel on the surface
+const regions = new Regions(nodes);
+
 // ─── Camera rig ───────────────────────────────────
 // Starts where the old OrbitControls view was. With the tiled surface the camera
 // can descend to quadtree level 17.
@@ -50,37 +54,8 @@ rig.apply();
 attachInput(renderer.domElement, rig);
 
 // ─── Surface (cube-sphere quadtree) ───────────────
-const tiles = new TileManager(RADIUS);
+const tiles = new TileManager(RADIUS, regions);
 scene.add(tiles.group);
-
-// Render hex dots
-const dotsGeo = new THREE.BufferGeometry();
-const positions: number[] = [];
-const colors: number[] = [];
-for (const node of nodes) {
-  const p = node.position.clone().normalize().multiplyScalar(RADIUS * 1.002);
-  positions.push(p.x, p.y, p.z);
-  // Color: light blue dots
-  colors.push(0.3, 0.5, 0.8);
-}
-dotsGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-dotsGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-const dotsMat = new THREE.PointsMaterial({ size: 0.04, vertexColors: true, depthTest: true });
-const dotsMesh = new THREE.Points(dotsGeo, dotsMat);
-scene.add(dotsMesh);
-
-// Wireframe for edges
-const edgeGeo = new THREE.BufferGeometry();
-const edgePositions: number[] = [];
-for (const [i1, i2] of edges) {
-  const p1 = nodes[i1].position.clone().normalize().multiplyScalar(RADIUS * 1.003);
-  const p2 = nodes[i2].position.clone().normalize().multiplyScalar(RADIUS * 1.003);
-  edgePositions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
-}
-edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
-const edgeMat = new THREE.LineBasicMaterial({ color: 0x334466, transparent: true, opacity: 0.4 });
-const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
-scene.add(edgeLines);
 
 // ─── Stars ────────────────────────────────────────
 // Own scene and camera: the globe camera's far plane ends at the horizon
@@ -114,13 +89,7 @@ renderer.domElement.addEventListener('click', (event: MouseEvent) => {
   // Ray against the sphere itself: works at every zoom level, unlike a points threshold
   const hit = rig.raycast(mouse);
   if (hit) {
-    const point = hit.normalize();
-    // Find closest node
-    let bestIdx = -1, bestDist = Infinity;
-    for (let i = 0; i < nodes.length; i++) {
-      const d = point.distanceToSquared(nodes[i].position.clone().normalize());
-      if (d < bestDist) { bestDist = d; bestIdx = i; }
-    }
+    const bestIdx = regions.regionOf(hit);
     console.log(`[GlobeCiv3] Double-clicked hex #${bestIdx} (${nodes[bestIdx]?.neighbors.length ?? 0} neighbors)`);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     rig.flyTo(nodes[bestIdx].position, Math.min(rig.dist, RADIUS * 0.25), reduceMotion ? 0 : 1);
@@ -136,8 +105,6 @@ function animate(now = performance.now()) {
   lastFrame = now;
   rig.update(dt);
   tiles.update(camera, renderer.domElement.clientHeight, dt);
-  // The hex grid floats ~0.015 above the surface; hide it before the camera reaches it
-  dotsMesh.visible = edgeLines.visible = rig.altitude() > RADIUS * 0.02;
   starCamera.quaternion.copy(camera.quaternion);
   renderer.clear();
   renderer.render(starScene, starCamera);

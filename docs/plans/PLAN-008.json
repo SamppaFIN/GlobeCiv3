@@ -1,0 +1,53 @@
+{
+  "id": "PLAN-008",
+  "story": "STORY-012",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Uusi moduuli src/globe/regions.ts: 362 heksakeskusta (STORY-001:n ruudukko), regionOf(piste) eli lähin keskus, ja candidatesForTile(ruutu), joka palauttaa enintään 128 keskusta, joiden alue voi ulottua ruudulle tai sen naapurialueen rajalle. Ehto on kulma ruudun keskipisteeseen alle ruudun kulmasäde + 0,3 rad. Ruudun materiaali saa ehdokkaat ruudun omissa koordinaateissa (float64 → pieni float32). Fragmenttishaderi etsii lähimmän keskuksen ja laskee etäisyyden lähimpään rajatasoon kaavalla (|p − cj|² − |p − c1|²) / (2 |cj − c1|). Molempien keskusten säde on R, joten rajataso kulkee origon kautta, ja raja on pallolla tarkalleen isoympyrän kaari. fwidth() pitää viivan noin 1,5 px:n levyisenä zoomista riippumatta. Tarkkuus säilyy syvimmilläkin tasoilla, koska laskenta tehdään ruudun paikallisissa koordinaateissa. Kolmioverkko ja pisteet poistetaan pääpelistä. Tuplaklikkaus käyttää regionOf-funktiota. Järjestyksen muutos: STORY-012 tehdään ennen STORY-009:ää, koska Sami nosti kolmiot esiin, ja rajat eivät riipu maastosta.",
+  "alternatives_considered": [
+    {
+      "name": "Rajat erillisinä viivoina (heksojen duaalisärmät isoympyrää pitkin)",
+      "pros": "Yksinkertainen geometria",
+      "cons": "Viivat ovat jänteitä pinnan alla, tai ne nostetaan pinnan yläpuolelle. Lähellä pintaa kamera menee niiden alle, tai ne z-fightaavat pinnan kanssa. Paksuus on aina 1 px.",
+      "rejected_because": "Ei pysy oikein kaikilla 17 tasolla"
+    },
+    {
+      "name": "Kaikki 362 keskusta jokaiselle pikselille",
+      "pros": "Ei ruutukohtaista ehdokaslistaa",
+      "cons": "362 × 2 silmukkakierrosta pikseliä kohden on liikaa mobiilissa, ja maailmankoordinaateissa float32-tarkkuus loppuu syvillä tasoilla",
+      "rejected_because": "Suorituskyky ja tarkkuus"
+    },
+    {
+      "name": "Rajaetäisyys verteksiattribuuttina CPU:lla",
+      "pros": "Kevyt shaderi",
+      "cons": "Interpolointi 16 × 16 -verkossa rikkoo rajat karkeilla tasoilla, joissa yksi kolmio on lähes heksan kokoinen",
+      "rejected_because": "Planeettanäkymä, jossa rajat näkyvät eniten, olisi epätarkin"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/regions.ts (uusi)",
+    "src/globe/regions.test.ts (uusi)",
+    "src/globe/tiles.ts (shaderi ja ehdokkaat)",
+    "src/globe/main.ts (verkko pois, regions mukaan)",
+    "tests/e2e/surface.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "regions.ts testeineen: regionOf, naapuruudet vastaavat STORY-001:n särmiä, ja ehdokaslistat ovat täydellisiä tasoilla 0–17 (lähin alue ja lähin raja löytyvät listasta)",
+      "verify": "npm test vihreä. Ehdokkaita on enintään 128."
+    },
+    {
+      "step": 2,
+      "action": "Shaderiin rajat (fwidth), materiaalille ehdokkaat ja pääpelistä kolmioverkko pois",
+      "verify": "npm run build menee läpi. Kuvissa rajat ovat heksoja ja yhtä ohuita planeetta-, manner- ja ruututasolla."
+    },
+    {
+      "step": 3,
+      "action": "E2E-kuvat ja CI",
+      "verify": "Kaikki testit vihreitä paikallisesti ja CI:ssä, eikä konsolissa ole virheitä"
+    }
+  ],
+  "status": "approved"
+}
