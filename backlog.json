@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T15:36:25Z",
+    "generated_at": "2026-10-09T15:45:47Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "64d900b",
+    "git_commit": "e5329c1",
     "git_branch": "main",
     "language": "fi"
   },
@@ -58,7 +58,7 @@
         "STORY-003",
         "STORY-004"
       ],
-      "progress": 70
+      "progress": 75
     },
     {
       "id": "EPIC-002",
@@ -195,7 +195,7 @@
       "depends_on": [
         "STORY-001"
       ],
-      "status": "in_progress",
+      "status": "done",
       "acceptance_criteria": [
         "Kuutiopallo-quadtree, jonka ruudut ovat tasavärisiä, zoomautuu jatkuvasti tasolta 0 tasolle 17 ilman leikkauksia",
         "Mittaustulokset kirjataan: FPS, näkyvien ruutujen määrä, ruudun generointiaika ja värinä syvimmällä tasolla. Laite ja selain kirjataan.",
@@ -203,7 +203,7 @@
         "Prototyyppi on eristetty kansioon src/spike ja erilliselle sivulle spike.html, joka julkaistaan Pagesiin puhelintestausta varten. Pääpeli ei käytä sitä, ja se poistetaan, kun tuotantoversiot korvaavat sen (STORY-008). Muutettu 2026-10-09 Samin pyynnöstä.",
         "Mittaus tehdään työpöydällä ja kiinteällä testipuhelimella, ja tulokset verrataan tavoitteeseen 60 fps / 30 fps. Testipuhelin nimetään."
       ],
-      "progress": 80,
+      "progress": 100,
       "linked": {
         "plan": "PLAN-003",
         "implementation": "TICKET-IMPL-003",
@@ -509,7 +509,8 @@
       "acceptance_criteria": [
         "HUD (Svelte) näyttää tason nimen sekä planeetan, alueen tai kansalaisen tiedot tason mukaan ilman uutta ikkunaa",
         "Kosketuskohteet ovat vähintään 44 × 44 px, ja HUD toimii 390 px leveydellä",
-        "Tila ei välity pelkällä värillä, vaan jokaisella värillä on myös teksti tai ikoni"
+        "Tila ei välity pelkällä värillä, vaan jokaisella värillä on myös teksti tai ikoni",
+        "HUD tarkistetaan oikealla testipuhelimella (S23 Ultra), ei pelkällä emuloinnilla. STORY-004:ssä nappi mahtui 412 px:n emulointiin mutta leikkautui puhelimessa leveämmän fontin takia."
       ],
       "progress": 0,
       "linked": {
@@ -841,7 +842,7 @@
       "story": "STORY-004",
       "plan": "PLAN-003",
       "implemented_by_model": "Opus 5.5",
-      "status": "review",
+      "status": "done",
       "files_changed": [
         "spike.html",
         "src/spike/cubeSphere.ts",
@@ -1053,7 +1054,7 @@
       "id": "TICKET-TEST-003",
       "story": "STORY-004",
       "implementation_ticket": "TICKET-IMPL-003",
-      "status": "in_progress",
+      "status": "done",
       "fix_summary": {
         "problem_and_root_cause": "Spike, ei korjaus. Tavoitteena oli todistaa yhden renderöijän infinite zoom mittauksella.",
         "files_changed": [
@@ -1112,14 +1113,14 @@
           {
             "steps": "Zoomaa rantaviivaa hiirellä sisään ja ulos tasovärit päällä ja ilman",
             "expected": "Tasojen vaihto ei näy poppauksena kumpaankaan suuntaan",
-            "result": "Ei ajettu — liikkumattomista kuvista poppausta ei voi arvioida. Samin manuaalinen tarkistus.",
-            "outcome": "not_run"
+            "result": "Sami zoomasi rantaviivaa puhelimella sisään ja ulos 2026-10-09: tasojen vaihto ei näkynyt hyppynä eikä välähdyksenä.",
+            "outcome": "pass"
           },
           {
             "steps": "Bench puhelimella: https://samppafin.github.io/GlobeCiv3/spike.html?bench",
             "expected": "30 fps tai enemmän, ja taso 17 saavutetaan",
-            "result": "Ei ajettu — vaatii Samin puhelimen",
-            "outcome": "not_run"
+            "result": "Sami mittasi Samsung Galaxy S23 Ultralla (Adreno 740): FPS keskiarvo 60, 1 %:n alin 59,5, pahin frame 25,1 ms. Syvin taso 17, ruutuja enintään 242, generointi 1,18 ms/ruutu, värinä 0,035 px (naiivi 3 964 px), zoom kohti kursoria 0 px. Varaus: lippulaivamalli, ei keskitason puhelin. Havainto: Tasovärit-nappi leikkautuu oikeasta reunasta.",
+            "outcome": "pass"
           }
         ],
         "console_findings": [],
@@ -1128,27 +1129,28 @@
           "docs/spikes/STORY-004-manner.png",
           "docs/spikes/STORY-004-ruutu.png",
           "docs/spikes/STORY-004-syvin.png",
-          "docs/spikes/STORY-004-syvin-tasovarit.png"
+          "docs/spikes/STORY-004-syvin-tasovarit.png",
+          "docs/spikes/STORY-004-puhelin-S23U.jpg"
         ]
       },
       "human_acceptance": {
         "checked_items": [
           {
             "item": "Zoom rantaviivalla tuntuu saumattomalta sisään ja ulos",
-            "checked": false
+            "checked": true
           },
           {
             "item": "Puhelimen bench-tulos on kirjattu (malli, FPS, syvin taso)",
-            "checked": false
+            "checked": true
           },
           {
             "item": "Suositus Phaser-päätöksestä on luettu ja hyväksytty",
-            "checked": false
+            "checked": true
           }
         ],
-        "decision": null,
-        "signed_by": null,
-        "date": null
+        "decision": "accepted",
+        "signed_by": "Sami",
+        "date": "2026-10-09"
       }
     }
   ]

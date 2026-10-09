@@ -2,7 +2,7 @@
   "id": "TICKET-TEST-003",
   "story": "STORY-004",
   "implementation_ticket": "TICKET-IMPL-003",
-  "status": "in_progress",
+  "status": "done",
   "fix_summary": {
     "problem_and_root_cause": "Spike, ei korjaus. Tavoitteena oli todistaa yhden renderöijän infinite zoom mittauksella.",
     "files_changed": [
@@ -61,14 +61,14 @@
       {
         "steps": "Zoomaa rantaviivaa hiirellä sisään ja ulos tasovärit päällä ja ilman",
         "expected": "Tasojen vaihto ei näy poppauksena kumpaankaan suuntaan",
-        "result": "Ei ajettu — liikkumattomista kuvista poppausta ei voi arvioida. Samin manuaalinen tarkistus.",
-        "outcome": "not_run"
+        "result": "Sami zoomasi rantaviivaa puhelimella sisään ja ulos 2026-10-09: tasojen vaihto ei näkynyt hyppynä eikä välähdyksenä.",
+        "outcome": "pass"
       },
       {
         "steps": "Bench puhelimella: https://samppafin.github.io/GlobeCiv3/spike.html?bench",
         "expected": "30 fps tai enemmän, ja taso 17 saavutetaan",
-        "result": "Ei ajettu — vaatii Samin puhelimen",
-        "outcome": "not_run"
+        "result": "Sami mittasi Samsung Galaxy S23 Ultralla (Adreno 740): FPS keskiarvo 60, 1 %:n alin 59,5, pahin frame 25,1 ms. Syvin taso 17, ruutuja enintään 242, generointi 1,18 ms/ruutu, värinä 0,035 px (naiivi 3 964 px), zoom kohti kursoria 0 px. Varaus: lippulaivamalli, ei keskitason puhelin. Havainto: Tasovärit-nappi leikkautuu oikeasta reunasta.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
@@ -77,26 +77,27 @@
       "docs/spikes/STORY-004-manner.png",
       "docs/spikes/STORY-004-ruutu.png",
       "docs/spikes/STORY-004-syvin.png",
-      "docs/spikes/STORY-004-syvin-tasovarit.png"
+      "docs/spikes/STORY-004-syvin-tasovarit.png",
+      "docs/spikes/STORY-004-puhelin-S23U.jpg"
     ]
   },
   "human_acceptance": {
     "checked_items": [
       {
         "item": "Zoom rantaviivalla tuntuu saumattomalta sisään ja ulos",
-        "checked": false
+        "checked": true
       },
       {
         "item": "Puhelimen bench-tulos on kirjattu (malli, FPS, syvin taso)",
-        "checked": false
+        "checked": true
       },
       {
         "item": "Suositus Phaser-päätöksestä on luettu ja hyväksytty",
-        "checked": false
+        "checked": true
       }
     ],
-    "decision": null,
-    "signed_by": null,
-    "date": null
+    "decision": "accepted",
+    "signed_by": "Sami",
+    "date": "2026-10-09"
   }
 }

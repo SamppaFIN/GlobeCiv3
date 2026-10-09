@@ -190,7 +190,7 @@ tiivistys, ei ainoa paikka.
   "users": "Alle 100 pelaajaa. Yksinpeli selaimessa, ei palvelinta.",
   "data_volume": "Maailma generoidaan siemenestä pyydettäessä. Tallennetaan vain pelaajan muuttama tila (arvio: kymmeniä–satoja kilotavuja per peli, mitattava).",
   "availability": "GitHub Pagesin varassa, ei päivystystä.",
-  "performance_target": "60 fps työpöydällä ja 30 fps keskitason puhelimessa kaikilla zoom-tasoilla. Testipuhelin nimetään ja luvut vahvistetaan STORY-004:n mittauksella.",
+  "performance_target": "60 fps työpöydällä ja 30 fps testipuhelimella (Samsung Galaxy S23 Ultra) kaikilla zoom-tasoilla. STORY-004:n tyhjä maailma ylsi molemmissa 60 fps:ään.",
   "outlook_12m": "Pysyy yksinpelinä. Moninpeli on GlobeCiv2:n suunnitelmissa vaiheessa 3, ja se vaatisi palvelimen."
 }
 ```
@@ -286,7 +286,7 @@ hakemisto.
   "plans": ["PLAN-001", "PLAN-002", "PLAN-003"],
   "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003"],
   "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003"],
-  "next": "STORY-004"
+  "next": "STORY-003"
 }
 ```
 
@@ -347,17 +347,19 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | PLAN-002 hyväksyttiin. Lisenssitunniste on GPL-3.0-or-later, ja ensimmäinen commit pushattiin suoraan mainiin. | FSF:n vakiomuotoilu. Repo oli tyhjä, eikä haarasuojausta vielä ole. | Sami |
 | 2026-10-09 | Kehitysvaiheessa Linssi saa mergetä omat työhaaransa mainiin kysymättä. Poikkeus: haara, jonka storyn hyväksymiskriteeri kieltää mergen (STORY-004:n prototyyppi). | Nopeus. CI ajaa testit jokaisessa pushissa, ja Pages-julkaisu tehdään vain, jos testit menevät läpi. | Sami |
 | 2026-10-09 | STORY-004:n prototyyppi mergetään mainiin ja julkaistaan Pagesiin sivuna spike.html. Tämä kumoaa yllä olevan poikkeuksen ja muuttaa STORY-004:n kriteeriä. Koodi pysyy kansiossa src/spike, pääpeli ei käytä sitä, ja se poistetaan, kun tuotantoversiot korvaavat sen (STORY-008). | Sami testaa puhelimella Pagesista, mikä on helpompaa kuin lähiverkko | Sami |
+| 2026-10-09 | STORY-004 hyväksyttiin. Mittaus vahvistaa päätöksen luopua Phaser-overlaysta: tasot 1–17 pysyvät 60 fps:ssä sekä Intel UHD:lla että Samsung S23 Ultralla, värinä on 0,035 px ja zoom kohti kursoria 0 px. Sami ei nähnyt puhelimella hyppyjä tasojen vaihdossa. | [Tulokset](docs/spikes/STORY-004-tulokset.md) | Sami |
+| 2026-10-09 | Testipuhelin on Samin Samsung Galaxy S23 Ultra, ja suorituskykytavoite on 30 fps sillä. Keskitason puhelin mitataan, jos sellainen tulee käyttöön. | S23 Ultra on lippulaivamalli, mutta Sami katsoi sen riittäväksi | Sami |
 
 ### Avoimet kysymykset
 
-1. **Testipuhelin.** Mikä laite on 30 fps -tavoitteen mittauslaite? Nimetään STORY-004:ssä.
+1. ~~**Testipuhelin.**~~ Ratkaistu 2026-10-09: Samsung Galaxy S23 Ultra (päätöstaulukko).
 2. ~~**GPL v3 ja siirretty koodi.**~~ Ratkaistu 2026-10-09 (päätöstaulukko).
 3. **Tuntematon tekstuuri.** `earth_texture.png` globe-civilisationista ei ole mukana, ennen kuin sen lähde ja lisenssi on selvitetty. Maasto generoidaan proseduraalisesti.
 4. ~~**"Infinite" ylemmässä CLAUDE.md:ssä.**~~ Ratkaistu 2026-10-09: tekijänä on Sami (päätöstaulukko). Jos "Infinite" halutaan myöhemmin tekijäriville, se on uusi päätös.
 5. ~~**Riippuvuuksien haavoittuvuudet.**~~ Ratkaistu 2026-10-09: `npm audit fix` ajettiin osana PLAN-002:ta, ja tulos on 0 haavoittuvuutta.
 6. **Dependabotin 9 PR:ää.** Ne avautuivat heti ensimmäisen pushin jälkeen, ja kaikkien testit menivät läpi. Mukana on neljä Actionsien pääversiopäivitystä (checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5). Three 0.186 -päivitys jättäisi `@types/three`-paketin versioon 0.184. Mergetäänkö ne, ja missä järjestyksessä?
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
-8. **STORY-004:n lopullinen vahvistus.** Työpöytämittaus vahvistaa päätöksen luopua Phaser-overlaysta: 60 fps tasoilla 1–17 Intel UHD:lla, värinä 0,036 px ja zoom kohti kursoria 0 px ([tulokset](docs/spikes/STORY-004-tulokset.md)). Odottaa Samin puhelinmittausta osoitteessa https://samppafin.github.io/GlobeCiv3/spike.html?bench (30 fps -tavoite) ja zoomin tarkistusta liikkeessä.
+8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
 
 ### Ratkenneet kysymykset
 

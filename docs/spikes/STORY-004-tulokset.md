@@ -6,10 +6,12 @@
 
 ## Yhteenveto
 
-Yhden renderöijän infinite zoom toimii työpöydällä tasolta 1 tasolle 17.
-Mittauksessa ei ollut leikkauksia eikä värinää, eikä kuvissa näy aukkoja tai
-z-fightingia, ja ruudunpäivitys pysyy 60 fps:ssä integroidulla näytönohjaimella. **Työpöydän tulos vahvistaa päätöksen luopua
-Phaser-overlaysta.** Puhelinmittaus puuttuu vielä (kohta 4).
+Yhden renderöijän infinite zoom toimii tasolta 1 tasolle 17 sekä työpöydällä
+että puhelimella. Mittauksessa ei ollut leikkauksia eikä värinää, eikä kuvissa
+näy aukkoja tai z-fightingia, ja ruudunpäivitys pysyy 60 fps:ssä integroidulla
+näytönohjaimella. **Työpöydän ja puhelimen tulokset vahvistavat
+päätöksen luopua Phaser-overlaysta.** Samsung S23 Ultra pysyy myös 60 fps:ssä
+tasolla 17 (kohta 4).
 
 ## 1. Mittausympäristö (työpöytä)
 
@@ -89,22 +91,34 @@ jaettu tasolle 1.
 
 ## 4. Puhelinmittaus
 
-_Odottaa Samin mittausta._
+Sami mittasi omalla puhelimellaan Pagesiin julkaistulla sivulla
+(https://samppafin.github.io/GlobeCiv3/spike.html?bench). Kuvakaappaus:
+[STORY-004-puhelin-S23U.jpg](STORY-004-puhelin-S23U.jpg).
 
-Ohje: avaa puhelimella alla oleva osoite. Odota noin 50 sekuntia, kunnes HUD:iin
-tulee teksti "BENCH VALMIS", ja ota siitä kuvakaappaus.
+| Mittari | Samsung Galaxy S23 Ultra | Työpöytä (Intel UHD) |
+|---|---|---|
+| Näytönohjain | Adreno 740 (ANGLE, OpenGL ES 3.2) | Intel UHD Graphics (D3D11) |
+| FPS, keskiarvo | 60 | 59,9 |
+| FPS, 1 %:n alin | 59,5 | 59,5 |
+| Pahin frame | 25,1 ms | 33,4 ms |
+| Syvin taso | 17 | 17 |
+| Piirrettyjä ruutuja enintään | 242 | 482 |
+| Generointi | 1,18 ms/ruutu | 0,9 ms/ruutu |
+| Värinä tasolla 17 | 0,035 px (naiivi 3 964 px) | 0,036 px (naiivi 4 092 px) |
+| Zoom kohti kursoria | 0 px | 0 px |
 
-```
-https://samppafin.github.io/GlobeCiv3/spike.html?bench
-```
+Puhelin ylittää 30 fps -tavoitteen selvästi ja pysyy 60 fps:n tahdistusrajalla.
+Puhelimessa ruutuja oli enintään 242, kun työpöydällä niitä oli 482. Todennäköinen
+syy on kapeampi pystynäkymä, joka näkee vähemmän horisonttia, mutta sitä ei mitattu.
 
-| | |
-|---|---|
-| Puhelin | _odottaa_ |
-| FPS ka / 1 % alin | _odottaa_ |
-| Syvin taso | _odottaa_ |
-| Generointi ms/ruutu | _odottaa_ |
-| Värinä | _odottaa_ |
+**Varaus:** S23 Ultra on lippulaivamalli (Snapdragon 8 Gen 2), ja tavoite
+koski keskitason puhelinta. Keskitason laitetta ei ole mitattu. Sami päätti
+2026-10-09, että S23 Ultra riittää projektin testipuhelimeksi.
+
+**Havainto:** `Tasovärit (L)` -nappi leikkautuu puhelimen oikeasta reunasta,
+vaikka 412 px:n emuloinnissa napit mahtuivat. Puhelimen fontti on leveämpi kuin
+emuloinnissa. Tuotannon HUD:n (STORY-017) asettelu ei siis saa olettaa
+tekstin leveyttä, ja se on tarkistettava oikealla laitteella.
 
 ## 5. Mitä prototyyppi ei kata
 
@@ -130,10 +144,11 @@ storyjen mukana, ja `src/spike` poistetaan sen jälkeen:
 
 ## 7. Suositus
 
-Päätös luopua Phaser-overlaysta (CLAUDE.md, osio 13) vahvistuu työpöydän
-mittauksella. Tyhjä maailma yltää 60 fps:ään tasolta 1 tasolle 17 integroidulla
-näytönohjaimella, ja tarkkuus ja zoom toimivat syvimmällä tasolla. Lopullinen
-vahvistus odottaa puhelimen 30 fps -mittausta. Jos puhelin jää alle tavoitteen,
+Päätös luopua Phaser-overlaysta (CLAUDE.md, osio 13) vahvistuu, ja Sami hyväksyi
+STORY-004:n 2026-10-09. Puhelimella tasojen vaihto ei näkynyt hyppynä. Tyhjä maailma
+pysyy 60 fps:ssä tasolta 1 tasolle 17 sekä integroidulla työpöytänäytönohjaimella
+että Samsung S23 Ultralla, ja tarkkuus ja zoom kohti kursoria toimivat
+syvimmällä tasolla. Keskitason puhelinta ei ole mitattu. Jos se jää alle 30 fps:n,
 ensimmäiset säädöt ovat generoinnin siirto workeriin, pienempi luontibudjetti ja
 korkeampi jakokynnys. Nämä ovat budjettisäätöjä, eivätkä ne kyseenalaista yhden
 renderöijän mallia.
