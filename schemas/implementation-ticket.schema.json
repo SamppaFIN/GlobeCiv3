@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "implementation-ticket.schema.json",
+  "title": "Implementation ticket",
+  "description": "The record of what was actually built, including the impact analysis that guards against regressions.",
+  "type": "object",
+  "required": ["id", "story", "status"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^TICKET-IMPL-[0-9]{3}$" },
+    "story": { "type": "string", "pattern": "^STORY-[0-9]{3}$" },
+    "plan": { "type": ["string", "null"], "pattern": "^PLAN-[0-9]{3}$" },
+    "implemented_by_model": { "type": "string" },
+    "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "review", "done"] },
+    "files_changed": { "type": "array", "items": { "type": "string" } },
+    "change_summary": { "type": "string", "description": "What changed and why, in prose. Not a diff dump." },
+    "impact_analysis": {
+      "type": "object",
+      "description": "Required before commit. Every renamed or removed symbol must have its call sites listed.",
+      "properties": {
+        "changed_symbols": { "type": "array", "items": { "type": "string" } },
+        "call_sites_found": { "type": "array", "items": { "type": "string" } },
+        "call_sites_updated": { "type": "array", "items": { "type": "string" } },
+        "compile_errors_before": { "type": ["integer", "null"] },
+        "compile_errors_after": { "type": ["integer", "null"] },
+        "notes": { "type": "string" }
+      }
+    },
+    "commit": { "type": ["string", "null"] },
+    "progress": { "type": "integer", "minimum": 0, "maximum": 100 }
+  }
+}

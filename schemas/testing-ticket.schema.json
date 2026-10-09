@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "testing-ticket.schema.json",
+  "title": "Testing ticket",
+  "description": "Three-part record: what was fixed, what the AI tested, and what the human accepted. An empty result field is never a pass.",
+  "type": "object",
+  "required": ["id", "story", "status", "ai_testing", "human_acceptance"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^TICKET-TEST-[0-9]{3}$" },
+    "story": { "type": "string", "pattern": "^STORY-[0-9]{3}$" },
+    "implementation_ticket": { "type": ["string", "null"], "pattern": "^TICKET-IMPL-[0-9]{3}$" },
+    "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "done"] },
+    "fix_summary": {
+      "type": "object",
+      "properties": {
+        "problem_and_root_cause": { "type": "string" },
+        "files_changed": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ai_testing": {
+      "type": "object",
+      "required": ["cases"],
+      "properties": {
+        "environment": { "type": "string", "examples": ["http://localhost:3010"] },
+        "tooling": { "type": "string", "examples": ["Playwright MCP", "vitest", "manual"] },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["steps", "expected", "result"],
+            "properties": {
+              "steps": { "type": "string" },
+              "expected": { "type": "string" },
+              "result": { "type": "string", "description": "What actually happened. If not run, say so explicitly." },
+              "outcome": { "type": "string", "enum": ["pass", "fail", "not_run"] }
+            }
+          }
+        },
+        "console_findings": { "type": "array", "items": { "type": "string" } },
+        "screenshots": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "human_acceptance": {
+      "type": "object",
+      "properties": {
+        "checked_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "checked": { "type": "boolean" }
+            }
+          }
+        },
+        "decision": { "type": ["string", "null"], "enum": ["accepted", "needs_more_work", "rejected", null] },
+        "signed_by": { "type": ["string", "null"] },
+        "date": { "type": ["string", "null"], "format": "date" }
+      }
+    }
+  }
+}

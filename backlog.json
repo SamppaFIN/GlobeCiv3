@@ -1,0 +1,733 @@
+{
+  "_meta": {
+    "schema_version": "1.1",
+    "generated_at": "2026-10-09T15:04:41Z",
+    "generated_by": "init-project v1.0",
+    "git_commit": null,
+    "git_branch": null,
+    "language": "fi"
+  },
+  "project": {
+    "name": "GlobeCiv3",
+    "description": "Selaimessa toimiva sivilisaatiosimulaatio heksaplaneetalla, jossa zoomataan saumattomasti planeetasta yksittäiseen kansalaiseen.",
+    "version": "0.0.0",
+    "status": "in_development",
+    "license": {
+      "id": "GPL-3.0",
+      "note": "Riippuvuuksien on oltava GPL v3 -yhteensopivia (MIT, BSD, Apache 2.0, GPL v3). Lähdekoodi on julkinen, ja LICENSE-tiedosto on repon juuressa."
+    },
+    "stack": {
+      "frontend": [
+        "TypeScript 6",
+        "Three.js r184",
+        "Svelte 5",
+        "Zustand 5"
+      ],
+      "build": [
+        "Vite 8",
+        "tsc"
+      ],
+      "testing": [
+        "Vitest",
+        "Playwright"
+      ]
+    },
+    "repositories": {
+      "app": "github.com/SamppaFIN/GlobeCiv3 (julkinen, ei vielä luotu)"
+    },
+    "urls": {
+      "dev": "http://localhost:3000/GlobeCiv3/"
+    },
+    "branches": {
+      "main": "main",
+      "active": "main"
+    },
+    "has_ui": true
+  },
+  "epics": [
+    {
+      "id": "EPIC-001",
+      "title": "Perusta kuntoon",
+      "icon": "🧱",
+      "description": "Globi käynnistyy, repo ja julkaisuputki ovat olemassa, testit ajetaan CI:ssä, ja infinite zoomin toteutettavuus on todistettu prototyypillä.",
+      "status": "in_progress",
+      "stories": [
+        "STORY-001",
+        "STORY-002",
+        "STORY-003",
+        "STORY-004"
+      ],
+      "progress": 25
+    },
+    {
+      "id": "EPIC-002",
+      "title": "Saumaton kamera",
+      "icon": "🔭",
+      "description": "Pelaaja zoomaa jatkuvasti planeetalta pinnalle ilman leikkauksia, värinää tai syvyysvirheitä.",
+      "status": "todo",
+      "stories": [
+        "STORY-005",
+        "STORY-006",
+        "STORY-007"
+      ],
+      "progress": 0
+    },
+    {
+      "id": "EPIC-003",
+      "title": "Hierarkkinen maailma",
+      "icon": "🌍",
+      "description": "Maailma on yksi jatkuva pinta, joka tarkentuu ruutu kerrallaan zoomatessa. Tasot ja naapuriruudut ovat yhteneviä, ja 362 heksaa näkyvät alueina.",
+      "status": "todo",
+      "stories": [
+        "STORY-008",
+        "STORY-009",
+        "STORY-010",
+        "STORY-011",
+        "STORY-012"
+      ],
+      "progress": 0
+    },
+    {
+      "id": "EPIC-004",
+      "title": "Simulaatio-LOD",
+      "icon": "⚙️",
+      "description": "Koko planeetta elää tilastotasolla, ja kansalaiset materialisoituvat agenteiksi siellä, minne kamera laskeutuu. Tila säilyy tasojen välillä.",
+      "status": "todo",
+      "stories": [
+        "STORY-013",
+        "STORY-014",
+        "STORY-015",
+        "STORY-016"
+      ],
+      "progress": 0
+    },
+    {
+      "id": "EPIC-005",
+      "title": "Pelaajan näkymä",
+      "icon": "🎮",
+      "description": "HUD kertoo, missä pelaaja on ja mitä siellä tapahtuu, nykyiseen zoom-tasoon sopivalla tarkkuudella.",
+      "status": "todo",
+      "stories": [
+        "STORY-017",
+        "STORY-018"
+      ],
+      "progress": 0
+    }
+  ],
+  "stories": [
+    {
+      "id": "STORY-001",
+      "epic": "EPIC-001",
+      "title": "Globi käynnistyy selaimessa",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä heksaplaneetan, kun avaan pelin, jotta peli ylipäätään toimii.",
+      "effort": "S",
+      "depends_on": [],
+      "status": "done",
+      "acceptance_criteria": [
+        "Sivu renderöi pallon, heksasolmut ja särmät, eikä konsolissa ole virheitä (nykyään `geo.index` on null ja rivi `geo.index!.count` kaatuu)",
+        "Ruudukossa on 362 solmua ja 1 080 särmää. 12 solmulla on 5 naapuria ja 350 solmulla 6 naapuria (yksikkötesti).",
+        "Naapurilaskenta ei käy koko solmulistaa läpi jokaiselle särmälle",
+        "Väärä kommentti \"~10k vertices\" korjataan vastaamaan todellista määrää"
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-001",
+        "implementation": "TICKET-IMPL-001",
+        "testing": "TICKET-TEST-001"
+      }
+    },
+    {
+      "id": "STORY-002",
+      "epic": "EPIC-001",
+      "title": "Repo ja julkaisuputki",
+      "type": "chore",
+      "narrative": "Kehittäjänä haluan, että push mainiin julkaisee pelin GitHub Pagesiin, jotta jokainen muutos on heti kokeiltavissa myös puhelimella.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-001"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Kansio on git-repo, ja se on pushattu GitHubiin. `.gitignore` sulkee pois kansiot node_modules ja dist.",
+        "GitHub Actions ajaa testit ja buildin ja julkaisee osoitteeseen https://samppafin.github.io/GlobeCiv3/",
+        "Julkaistu sivu latautuu ilman 404-virheitä assets-poluissa (base /GlobeCiv3/)",
+        "Dependabot on päällä npm-paketeille ja Actionseille",
+        "Repon juuressa on GPL v3 -lisenssiteksti tiedostossa LICENSE",
+        "npm audit -löydökset (nanoid, postcss, source-map-js) on käsitelty tai kirjattu CLAUDE.md:n osioon 13 hyväksyttynä riskinä"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-003",
+      "epic": "EPIC-001",
+      "title": "Testiympäristö",
+      "type": "chore",
+      "narrative": "Kehittäjänä haluan yksikkö- ja selaintestit, jotta näen regressiot ennen kuin ne päätyvät julkaisuun.",
+      "effort": "S",
+      "depends_on": [],
+      "status": "todo",
+      "acceptance_criteria": [
+        "`npm test` ajaa Vitestin, ja vähintään yksi oikea testi menee läpi",
+        "`npm run test:e2e` avaa pelin Playwrightilla, tarkistaa ettei konsolissa ole virheitä ja tallentaa kuvakaappauksen",
+        "CI ajaa molemmat, ja punainen testi estää julkaisun"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-004",
+      "epic": "EPIC-001",
+      "title": "Spike: infinite zoom -prototyyppi",
+      "type": "spike",
+      "narrative": "Kehittäjänä haluan todistaa yhden renderöijän infinite zoomin tyhjällä maailmalla, jotta päätös luopua Phaser-overlaysta perustuu mittaukseen.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-001"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Kuutiopallo-quadtree, jonka ruudut ovat tasavärisiä, zoomautuu jatkuvasti tasolta 0 tasolle 17 ilman leikkauksia",
+        "Mittaustulokset kirjataan: FPS, näkyvien ruutujen määrä, ruudun generointiaika ja värinä syvimmällä tasolla. Laite ja selain kirjataan.",
+        "Mittaus joko vahvistaa päätöksen luopua Phaser-overlaysta (osio 13, 2026-10-09) tai kumoaa sen. Jos se kumoaa päätöksen, asia viedään Samille uutena päätöksenä.",
+        "Prototyypin koodi on omassa haarassaan, eikä sitä mergetä sellaisenaan",
+        "Mittaus tehdään työpöydällä ja kiinteällä testipuhelimella, ja tulokset verrataan tavoitteeseen 60 fps / 30 fps. Testipuhelin nimetään."
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-005",
+      "epic": "EPIC-002",
+      "title": "Logaritminen zoom kohti kursoria",
+      "type": "story",
+      "narrative": "Pelaajana haluan zoomata hiiren rullalla tai nipistämällä juuri siihen kohtaan, jota osoitan, jotta pääsen planeetalta pinnalle yhdellä liikkeellä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-004"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Jokainen rullan pykälä muuttaa korkeutta samalla kertoimella korkeudesta riippumatta",
+        "Kursorin alla oleva pallon piste pysyy kursorin alla zoomin aikana",
+        "Pinch toimii kosketusnäytöllä samalla tavalla",
+        "Kamera kallistuu jatkuvasti kohti horisonttia korkeuden laskiessa",
+        "OrbitControlsin 6–30 yksikön raja poistuu, ja tilalle tulee oma ohjain"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-006",
+      "epic": "EPIC-002",
+      "title": "Tarkkuus syvimmillä tasoilla",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että pinta pysyy terävänä ja paikallaan syvälle zoomatessa, jotta maailma tuntuu kiinteältä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-005"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Near ja far päivittyvät korkeuden mukaan, eikä z-fightingia näy millään tasolla",
+        "Syvimmällä tasolla paikallaan olevan kameran kuvassa ei näy värinää (kuvakaappausvertailu kahdesta peräkkäisestä framesta)",
+        "Tähtitausta piirretään omana passinaan, eikä se leikkaudu",
+        "Tarkkuusratkaisu on testattu kaikilla 17 tasolla, vaikka MVP:n sisältö päättyy tasolle noin 12"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-007",
+      "epic": "EPIC-002",
+      "title": "Tuplaklikkaus lentää alueelle",
+      "type": "story",
+      "narrative": "Pelaajana haluan tuplaklikata aluetta ja lentää sinne, jotta pääsen nopeasti kiinnostavaan kohtaan menettämättä sijaintiani planeetalla.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-005"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Tuplaklikkaus interpoloi korkeuden ja isoympyrän noin sekunnissa, eikä overlay-ikkunaa avata",
+        "Kun prefers-reduced-motion on päällä, siirtymä on välitön",
+        "Rulla tai raahaus keskeyttää lennon"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-008",
+      "epic": "EPIC-003",
+      "title": "Quadtree ja LOD näyttökoon mukaan",
+      "type": "story",
+      "narrative": "Kehittäjänä haluan, että ruudut jakautuvat ja yhdistyvät niiden näyttökoon mukaan, jotta framen kustannus pysyy vakiona zoom-syvyydestä riippumatta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-004"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Ruutuosoite (tahko, taso, x, y) muuntuu pisteeksi pallolla ja takaisin (yksikkötesti kaikilla kuudella tahkolla)",
+        "Ruutu jaetaan, kun se on yli 256 px leveä, ja yhdistetään, kun se on alle 128 px. Rajalla paikallaan oleva kamera ei aiheuta välkyntää.",
+        "Näkyvien ruutujen määrä pysyy samassa suuruusluokassa tasoilla 0–17 (mittaus kirjataan)"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-009",
+      "epic": "EPIC-003",
+      "title": "Deterministinen maasto pallolla",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että maasto on sama joka kerta ja jatkuu saumattomasti ruudusta toiseen, jotta maailma tuntuu yhdeltä planeetalta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-008"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Maasto lasketaan funktiosta f(seed, piste pallolla, taso). Sama siemen tuottaa saman tuloksen (yksikkötesti).",
+        "Naapuriruutujen reunatekselit vastaavat toisiaan (yksikkötesti satunnaisilla reunoilla kiinteällä siemenellä)",
+        "Karkean tason tekselin väri on lähellä sen lasten keskiarvoa, ja raja-arvo kirjataan testiin",
+        "Leveysaste vaikuttaa ilmastoon pisteen y-koordinaatin kautta, ei kartan rivinumeron kautta"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-010",
+      "epic": "EPIC-003",
+      "title": "Ruutujen generointi workerissa",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että zoomaus pysyy sulavana, vaikka uusia ruutuja generoidaan, jotta peli ei nyi.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-009"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Ruutudata generoidaan Web Workerissa, ja pääsäie vain lataa tekstuurin",
+        "LRU-välimuistin koko on rajattu, ja muistinkäyttö ei kasva jatkuvasti edestakaisin zoomatessa (mittaus kirjataan)",
+        "Vanhentuneet pyynnöt perutaan, kun kamera on jo siirtynyt"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-011",
+      "epic": "EPIC-003",
+      "title": "Tasot häivytetään toisiinsa",
+      "type": "story",
+      "narrative": "Pelaajana haluan, ettei zoomatessa mikään ponnahda esiin, jotta zoom tuntuu tarkentumiselta eikä latautumiselta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-009"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Lapsiruudut häivytetään vanhemman päälle, eikä niiden ilmestymistä voi erottaa kovana vaihtona (kuvakaappaussarja)",
+        "Eri tasoilla olevien naapuriruutujen väliin ei jää rakoja",
+        "Kun prefers-reduced-motion on päällä, häivytys lyhenee, mutta rakoja ei silti synny"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-012",
+      "epic": "EPIC-003",
+      "title": "362 heksaa alueina",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä heksa-alueiden rajat jokaisella zoom-tasolla, jotta tiedän, minkä alueen sisällä olen.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-001",
+        "STORY-009"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Jokainen solu kuuluu lähimmän heksakeskuksen alueeseen, ja jako on sama kaikilla tasoilla (yksikkötesti)",
+        "Rajat piirretään viivoina, jotka pysyvät ohuina näytöllä zoomista riippumatta",
+        "Aluegraafin naapuruudet vastaavat STORY-001:n ruudukkoa"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-013",
+      "epic": "EPIC-004",
+      "title": "Simulaatiotila instanssikohtaiseksi",
+      "type": "chore",
+      "narrative": "Kehittäjänä haluan, että simulaation tila on olio eikä globaali store, jotta samaan aikaan voi olla käynnissä useita alueita.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-003"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "GlobeCiv2:n renderöijästä riippumaton logiikka (SimLoop, järjestelmät ja entiteetit) on kopioitu ilman Phaser-importteja (Phaser on poistettu riippuvuuksista), ja lähdecommit on kirjattu",
+        "Kaksi simulaatioinstanssia voi ajaa rinnakkain ilman, että ne vaikuttavat toisiinsa (yksikkötesti)",
+        "Sama siemen ja sama määrä tikkejä tuottavat saman tilan (yksikkötesti)"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-014",
+      "epic": "EPIC-004",
+      "title": "Makrosimulaatio kaikille alueille",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että koko planeetta elää myös silloin, kun en katso sitä, jotta maailma tuntuu todelliselta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-012",
+        "STORY-013"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Kaikki 362 aluetta tikittävät tilastomallilla (väestö, ruoka, sotavoima ja valloitus-%)",
+        "Makrotikki ei pudota FPS:ää mitattavasti (mittaus ennen ja jälkeen kirjataan)",
+        "Alueiden värit planeettatasolla seuraavat makrotilaa"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-015",
+      "epic": "EPIC-004",
+      "title": "Kansalaiset materialisoituvat kamerakuplaan",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä yksittäiset kansalaiset, kun zoomaan alueelle, ja nähdä heidän tekojensa vaikuttavan alueeseen, kun zoomaan pois.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-014",
+        "STORY-011"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Kun kamera laskeutuu kansalaistasolle, agentit luodaan makrotilastojen mukaan deterministisellä siemenellä",
+        "Väestö säilyy täsmälleen materialisoinnissa ja tiivistyksessä (yksikkötesti, invariantti)",
+        "Mikrosimulaation omistusmuutokset näkyvät makrotilassa, kun kamera poistuu",
+        "Kuplassa on kerrallaan enintään N aluetta, ja N:n arvo perustuu STORY-004:n mittaukseen",
+        "MVP:n syvin toteutettu taso on noin 12 (kaupunki). Kansalaiset näkyvät pisteinä tai pieninä hahmoina, ja kasvot jäävät MVP:n jälkeen."
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-016",
+      "epic": "EPIC-004",
+      "title": "Valloitus leviää naapurialueisiin",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että vallattu alue avaa naapurinsa asutettaviksi, jotta imperiumi kasvaa planeetan yli.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-014"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Kun alueen valloitus-% saavuttaa 100, sen lukitut naapurit muuttuvat saataville. Meri- ja vuoriruutuja ei lasketa.",
+        "Uudelle alueelle syntyy kolme siirtolaista: tutkija, soturi ja ruoankerääjä",
+        "Muutos näkyy planeettatason väreissä seuraavan makrotikin jälkeen"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-017",
+      "epic": "EPIC-005",
+      "title": "Tasotietoinen HUD",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että HUD näyttää aina nykyiseen zoom-tasoon sopivat tiedot, jotta tiedän, mitä katson.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-014"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "HUD (Svelte) näyttää tason nimen sekä planeetan, alueen tai kansalaisen tiedot tason mukaan ilman uutta ikkunaa",
+        "Kosketuskohteet ovat vähintään 44 × 44 px, ja HUD toimii 390 px leveydellä",
+        "Tila ei välity pelkällä värillä, vaan jokaisella värillä on myös teksti tai ikoni"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-018",
+      "epic": "EPIC-005",
+      "title": "Alueen tooltip",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä alueen tilan viemällä osoittimen sen päälle, jotta voin vertailla alueita zoomaamatta.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-012",
+        "STORY-014"
+      ],
+      "status": "todo",
+      "acceptance_criteria": [
+        "Hover tai napautus näyttää alueen tunnuksen, tilan suomeksi, väestön, ruoan ja valloitus-%:n",
+        "Tooltip on luettavissa myös näppäimistöllä valitulle alueelle"
+      ],
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "PLAN-001",
+      "story": "STORY-001",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "Ruudukon rakennus siirretään puhtaaseen moduuliin src/globe/hexGrid.ts (buildHexGrid(radius, detail) → nodes ja edges), jotta sen voi yksikkötestata ilman DOMia. Funktio tallentaa jokaiselle puskurivertexille sen solmun indeksin jo duplikaattien poistossa ja käy kolmiot läpi position-puskurista, joten se toimii indeksoimattomalla geometrialla eikä hae solmuja findIndexillä. Särmät kerätään Setiin kuten nyt. main.ts käyttää funktiota, eikä renderöintikoodi muutu. Vitest asennetaan jo tässä storyssa, koska bugikorjaus alkaa testistä. STORY-003 lisää Playwrightin ja CI:n.",
+      "alternatives_considered": [
+        {
+          "name": "Minimikorjaus paikallaan: geo.index!.count → posAttr.count",
+          "pros": "Pienin mahdollinen diff, muutama rivi",
+          "cons": "main.ts koskee DOMiin heti importissa, joten korjausta ei voi yksikkötestata. Naapurilaskenta jäisi neliölliseksi (findIndex jokaiselle särmälle).",
+          "rejected_because": "STORY-001:n hyväksymiskriteerit vaativat yksikkötestin ja ei-neliöllisen naapurilaskennan"
+        },
+        {
+          "name": "BufferGeometryUtils.mergeVertices indeksoidun geometrian tekemiseen",
+          "pros": "Valmis Three.js-funktio, vähemmän omaa koodia",
+          "cons": "mergeVertices yhdistää vain vertexit, joiden kaikki attribuutit ovat samat. UV-sauman vertexit eivät yhdisty, ellei uv-attribuuttia poisteta ensin. Toleranssi käyttäytyy eri tavalla kuin nykyinen pyöristys.",
+          "rejected_because": "Piilotettu ansa UV-saumassa, ja testi tarvittaisiin silti"
+        },
+        {
+          "name": "Koko STORY-003 ensin (Vitest, Playwright ja CI)",
+          "pros": "Testiympäristö kerralla valmiiksi",
+          "cons": "Kasvattaa S-kokoisen bugikorjauksen moninkertaiseksi, ja CI vaatii repon, jota ei vielä ole (STORY-002)",
+          "rejected_because": "Vain Vitest tarvitaan vian toistamiseen. Selaintarkistus tehdään nyt käsin headless-Chromella."
+        }
+      ],
+      "files_to_change": [
+        "src/globe/hexGrid.ts (uusi)",
+        "src/globe/hexGrid.test.ts (uusi)",
+        "src/globe/main.ts",
+        "package.json",
+        "package-lock.json"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Asenna vitest devDependencyksi ja lisää skripti \"test\": \"vitest run\"",
+          "verify": "npm ls vitest näyttää version 5.x, ja npm test käynnistää Vitestin"
+        },
+        {
+          "step": 2,
+          "action": "Kirjoita hexGrid.test.ts ja siirrä nykyinen ruudukkokoodi sellaisenaan buildHexGrid-funktioon",
+          "verify": "Testi on punainen samalla virheellä kuin selaimessa: Cannot read properties of null (reading 'count')"
+        },
+        {
+          "step": 3,
+          "action": "Korjaa buildHexGrid: vertex→solmu-taulukko, kolmiosilmukka position-puskurista ja Set-pohjaiset särmät",
+          "verify": "Testi on vihreä: 362 solmua, 1 080 särmää, 12 solmulla 5 naapuria, 350 solmulla 6 naapuria ja naapuruus on symmetrinen"
+        },
+        {
+          "step": 4,
+          "action": "Vaihda main.ts käyttämään buildHexGrid-funktiota ja korjaa kommentti \"~10k vertices\"",
+          "verify": "npm run build menee läpi ilman tsc-virheitä (noUnusedLocals ja noUnusedParameters ovat päällä)"
+        },
+        {
+          "step": 5,
+          "action": "Tarkista build selaimessa: vite preview ja headless-Chrome",
+          "verify": "Konsolissa ei ole virheitä, siinä on rivit \"Hex nodes: 362, edges: 1080\" ja \"3D globe ready\", ja kuvakaappauksessa näkyvät pallo, solmut ja särmät"
+        }
+      ],
+      "status": "approved"
+    }
+  ],
+  "implementation_tickets": [
+    {
+      "id": "TICKET-IMPL-001",
+      "story": "STORY-001",
+      "plan": "PLAN-001",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/hexGrid.ts",
+        "src/globe/hexGrid.test.ts",
+        "src/globe/main.ts",
+        "package.json",
+        "package-lock.json"
+      ],
+      "change_summary": "Ruudukon rakennus siirrettiin puhtaaseen funktioon buildHexGrid (src/globe/hexGrid.ts). Funktio tallentaa jokaiselle puskurivertexille sen solmun indeksin duplikaattien poiston yhteydessä ja käy kolmiot läpi position-puskurista, joten indeksoimaton IcosahedronGeometry ei enää kaada sitä, eikä solmuja haeta findIndexillä. Särmät palautetaan indeksipareina. Tämä korjasi toisen vian, joka olisi paljastunut ensimmäisen jälkeen: main.ts:n silmukka `for (const [key] of edgeSet)` hajotti merkkijonon, jolloin avaimesta \"12_34\" saatiin vain \"1\", ja nodes[undefined].position olisi kaatunut. Poikkeama PLAN-001:stä: suunnitelman mukaan särmät olisivat jääneet Setiin, mutta indeksiparit poistavat tämän virheluokan kokonaan. main.ts käyttää nyt funktiota, ja kommentti \"~10k vertices\" on korjattu. Vitest 5.0.3 asennettiin, ja npm test ajaa sen.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "main.ts: moduulitason geo, posAttr, nodeMap ja edgeSet poistettu",
+          "main.ts: nodes tulee nyt buildHexGrid-funktiosta, rakenne sama ({ position, index, neighbors })",
+          "main.ts: uusi edges ([number, number][])",
+          "uusi export: buildHexGrid ja HexNode (src/globe/hexGrid.ts)"
+        ],
+        "call_sites_found": [
+          "src/globe/main.ts: pisteiden piirto (nodes), särmien piirto (edges), tuplaklikkauksen lähin solmu (nodes), window.globeNodes = nodes"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts: särmien piirtosilmukka käyttää edges-pareja",
+          "src/globe/main.ts: konsolirivi käyttää edges.length"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Vika oli ajonaikainen, joten tsc oli vihreä jo ennen korjausta. window.globeNodes säilyttää saman rakenteen, eikä repossa ole muita sen lukijoita. window.openHexSimulation on edelleen määrittelemätön, ja kutsu on valinnainen (?.), joten tuplaklikkaus vain kirjaa solmun konsoliin. Overlay korvautuu STORY-007:n fly-tolla. Bundle pieneni 542,00 kB:sta 541,71 kB:iin."
+      },
+      "commit": null,
+      "progress": 100
+    }
+  ],
+  "testing_tickets": [
+    {
+      "id": "TICKET-TEST-001",
+      "story": "STORY-001",
+      "implementation_ticket": "TICKET-IMPL-001",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Three.js r184:n IcosahedronGeometry on indeksoimaton, joten geo.index oli null, ja src/globe/main.ts kaatui riviin geo.index!.count ennen kuin renderöintisilmukka käynnistyi. Selaimessa näkyi musta ruutu ja virhe Uncaught TypeError: Cannot read properties of null (reading 'count'). Build meni silti läpi, koska non-null-assertio ohitti tyyppitarkistuksen. Ensimmäisen vian takana oli toinen: särmäsilmukka hajotti merkkijonoavaimen ja olisi kaatunut kohtaan nodes[undefined].position.",
+        "files_changed": [
+          "src/globe/hexGrid.ts",
+          "src/globe/hexGrid.test.ts",
+          "src/globe/main.ts",
+          "package.json",
+          "package-lock.json"
+        ]
+      },
+      "ai_testing": {
+        "environment": "vite preview, http://localhost:4173/GlobeCiv3/ (tuotantobuild). Headless Chrome, SwiftShader-WebGL, 1280×800.",
+        "tooling": "Vitest 5.0.3 ja headless Chrome (--enable-logging, --screenshot). Playwright lisätään STORY-003:ssa.",
+        "cases": [
+          {
+            "steps": "Ennen korjausta: avaa nykyinen build headless-Chromessa ja lue konsoli",
+            "expected": "Vika toistuu",
+            "result": "Konsolissa Uncaught TypeError: Cannot read properties of null (reading 'count'). Kuvakaappaus on täysin musta (TICKET-TEST-001-ennen.png).",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ennen korjausta: npm test, kun nykyinen koodi on siirretty sellaisenaan buildHexGrid-funktioon",
+            "expected": "Testit ovat punaisia samalla virheellä kuin selaimessa",
+            "result": "4/4 testiä punaisia: TypeError: Cannot read properties of null (reading 'count')",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Korjauksen jälkeen: npm test",
+            "expected": "362 solmua ja 1 080 särmää, 12 solmulla 5 naapuria ja 350 solmulla 6, särmät ovat kelvollisia indeksipareja ja vastaavat naapurilistoja, ja solmut ovat pallon pinnalla",
+            "result": "Test Files 1 passed (1), Tests 4 passed (4)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "npm run build (tsc ja vite build)",
+            "expected": "Ei TypeScript-virheitä, noUnusedLocals mukaan lukien",
+            "result": "Build onnistui, ja bundle on 541,71 kB",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Korjauksen jälkeen: avaa build headless-Chromessa, lue konsoli ja ota kuvakaappaus noin 4 sekunnin virtuaaliajan jälkeen",
+            "expected": "Ei virheitä. Konsolissa Hex nodes: 362, edges: 1080 ja 3D globe ready. Pallo, solmut ja särmät näkyvät.",
+            "result": "Konsolissa vain nämä kaksi riviä, ei virheitä. Kuvakaappauksessa näkyvät ruudukkopallo, solmupisteet ja tähtitausta (TICKET-TEST-001-jalkeen.png).",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pyöritä ja zoomaa globia hiirellä, ja tuplaklikkaa solmua oikeassa selaimessa",
+            "expected": "OrbitControls toimii, ja tuplaklikkaus kirjaa konsoliin Double-clicked hex #N",
+            "result": "Ei ajettu — headless-ajo ei kata hiirivuorovaikutusta. Jää Samin manuaaliseen tarkistukseen.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [
+          "Ennen: Uncaught TypeError: Cannot read properties of null (reading 'count')",
+          "Jälkeen: ei virheitä eikä varoituksia sovelluksesta"
+        ],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-001-ennen.png",
+          "docs/screenshots/TICKET-TEST-001-jalkeen.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Globi näkyy ja pyörii (npm run dev)",
+            "checked": true
+          },
+          {
+            "item": "Konsolissa ei ole virheitä",
+            "checked": true
+          },
+          {
+            "item": "Hiirellä pyöritys ja zoom toimivat, ja tuplaklikkaus kirjaa solmun konsoliin",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Sami",
+        "date": "2026-10-09"
+      }
+    }
+  ]
+}

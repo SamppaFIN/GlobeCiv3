@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "story.schema.json",
+  "title": "User story",
+  "description": "An atomic, independently valuable slice with explicit acceptance criteria. 2-5 stories per epic.",
+  "type": "object",
+  "required": ["id", "epic", "title", "status", "acceptance_criteria"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^STORY-[0-9]{3}$" },
+    "epic": { "type": "string", "pattern": "^EPIC-[0-9]{3}$" },
+    "title": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": ["story", "chore", "spike"],
+      "default": "story",
+      "description": "story = user-visible value, chore = technical groundwork, spike = time-boxed experiment whose result is knowledge."
+    },
+    "narrative": {
+      "type": "string",
+      "description": "As a <role> I want <capability> so that <benefit>. Written in the project language."
+    },
+    "effort": {
+      "type": "string",
+      "enum": ["S", "M", "L"],
+      "description": "S = hours, M = one day, L = 2-3 days. Anything bigger should be split."
+    },
+    "depends_on": { "type": "array", "items": { "type": "string" } },
+    "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "review", "done"] },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Observable, checkable outcomes. Not implementation steps."
+    },
+    "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "linked": {
+      "type": "object",
+      "description": "Filled in as the story moves through plan -> implementation -> testing.",
+      "properties": {
+        "plan": { "type": ["string", "null"] },
+        "implementation": { "type": ["string", "null"] },
+        "testing": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

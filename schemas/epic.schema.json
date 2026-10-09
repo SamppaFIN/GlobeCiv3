@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "epic.schema.json",
+  "title": "Epic",
+  "description": "A coarse-grained slice of the MVP. Aim for 4-5 epics total; more than that is over-planning.",
+  "type": "object",
+  "required": ["id", "title", "description", "status"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^EPIC-[0-9]{3}$", "examples": ["EPIC-001"] },
+    "title": { "type": "string", "description": "Short name, in the project language." },
+    "icon": { "type": "string", "description": "Optional emoji for scannability." },
+    "description": { "type": "string", "description": "One or two sentences on the outcome this epic delivers." },
+    "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "done"] },
+    "stories": { "type": "array", "items": { "type": "string", "pattern": "^STORY-[0-9]{3}$" } },
+    "progress": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Derived from child stories; do not hand-edit if stories exist." }
+  }
+}

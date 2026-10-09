@@ -1,0 +1,85 @@
+{
+  "id": "TICKET-TEST-001",
+  "story": "STORY-001",
+  "implementation_ticket": "TICKET-IMPL-001",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Three.js r184:n IcosahedronGeometry on indeksoimaton, joten geo.index oli null, ja src/globe/main.ts kaatui riviin geo.index!.count ennen kuin renderöintisilmukka käynnistyi. Selaimessa näkyi musta ruutu ja virhe Uncaught TypeError: Cannot read properties of null (reading 'count'). Build meni silti läpi, koska non-null-assertio ohitti tyyppitarkistuksen. Ensimmäisen vian takana oli toinen: särmäsilmukka hajotti merkkijonoavaimen ja olisi kaatunut kohtaan nodes[undefined].position.",
+    "files_changed": [
+      "src/globe/hexGrid.ts",
+      "src/globe/hexGrid.test.ts",
+      "src/globe/main.ts",
+      "package.json",
+      "package-lock.json"
+    ]
+  },
+  "ai_testing": {
+    "environment": "vite preview, http://localhost:4173/GlobeCiv3/ (tuotantobuild). Headless Chrome, SwiftShader-WebGL, 1280×800.",
+    "tooling": "Vitest 5.0.3 ja headless Chrome (--enable-logging, --screenshot). Playwright lisätään STORY-003:ssa.",
+    "cases": [
+      {
+        "steps": "Ennen korjausta: avaa nykyinen build headless-Chromessa ja lue konsoli",
+        "expected": "Vika toistuu",
+        "result": "Konsolissa Uncaught TypeError: Cannot read properties of null (reading 'count'). Kuvakaappaus on täysin musta (TICKET-TEST-001-ennen.png).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ennen korjausta: npm test, kun nykyinen koodi on siirretty sellaisenaan buildHexGrid-funktioon",
+        "expected": "Testit ovat punaisia samalla virheellä kuin selaimessa",
+        "result": "4/4 testiä punaisia: TypeError: Cannot read properties of null (reading 'count')",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Korjauksen jälkeen: npm test",
+        "expected": "362 solmua ja 1 080 särmää, 12 solmulla 5 naapuria ja 350 solmulla 6, särmät ovat kelvollisia indeksipareja ja vastaavat naapurilistoja, ja solmut ovat pallon pinnalla",
+        "result": "Test Files 1 passed (1), Tests 4 passed (4)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm run build (tsc ja vite build)",
+        "expected": "Ei TypeScript-virheitä, noUnusedLocals mukaan lukien",
+        "result": "Build onnistui, ja bundle on 541,71 kB",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Korjauksen jälkeen: avaa build headless-Chromessa, lue konsoli ja ota kuvakaappaus noin 4 sekunnin virtuaaliajan jälkeen",
+        "expected": "Ei virheitä. Konsolissa Hex nodes: 362, edges: 1080 ja 3D globe ready. Pallo, solmut ja särmät näkyvät.",
+        "result": "Konsolissa vain nämä kaksi riviä, ei virheitä. Kuvakaappauksessa näkyvät ruudukkopallo, solmupisteet ja tähtitausta (TICKET-TEST-001-jalkeen.png).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pyöritä ja zoomaa globia hiirellä, ja tuplaklikkaa solmua oikeassa selaimessa",
+        "expected": "OrbitControls toimii, ja tuplaklikkaus kirjaa konsoliin Double-clicked hex #N",
+        "result": "Ei ajettu — headless-ajo ei kata hiirivuorovaikutusta. Jää Samin manuaaliseen tarkistukseen.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [
+      "Ennen: Uncaught TypeError: Cannot read properties of null (reading 'count')",
+      "Jälkeen: ei virheitä eikä varoituksia sovelluksesta"
+    ],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-001-ennen.png",
+      "docs/screenshots/TICKET-TEST-001-jalkeen.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Globi näkyy ja pyörii (npm run dev)",
+        "checked": true
+      },
+      {
+        "item": "Konsolissa ei ole virheitä",
+        "checked": true
+      },
+      {
+        "item": "Hiirellä pyöritys ja zoom toimivat, ja tuplaklikkaus kirjaa solmun konsoliin",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Sami",
+    "date": "2026-10-09"
+  }
+}

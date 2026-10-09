@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "backlog.schema.json",
+  "title": "Backlog bundle",
+  "description": "The complete ticket tree as a single file. This is what gets uploaded to Claude Project knowledge. The per-entity files under docs/ are the version-controlled source; this bundle is generated from them.",
+  "type": "object",
+  "required": ["_meta", "project", "epics", "stories"],
+  "properties": {
+    "_meta": { "$ref": "#/$defs/meta" },
+    "project": { "$ref": "#/$defs/project" },
+    "epics": { "type": "array", "items": { "$ref": "epic.schema.json" } },
+    "stories": { "type": "array", "items": { "$ref": "story.schema.json" } },
+    "plans": { "type": "array", "items": { "$ref": "plan.schema.json" } },
+    "implementation_tickets": { "type": "array", "items": { "$ref": "implementation-ticket.schema.json" } },
+    "testing_tickets": { "type": "array", "items": { "$ref": "testing-ticket.schema.json" } }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "description": "Staleness marker. Claude must check this before trusting status fields.",
+      "required": ["schema_version", "generated_at", "language"],
+      "properties": {
+        "schema_version": { "type": "string", "enum": ["1.0", "1.1"], "description": "1.1 adds the blocked status and the story type field; 1.0 files stay valid." },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "generated_by": { "type": "string", "examples": ["init-project v1.0", "sync-project v1.0"] },
+        "git_commit": { "type": ["string", "null"], "description": "Short SHA of HEAD at generation time. Null when generated outside a repo (claude.ai path)." },
+        "git_branch": { "type": ["string", "null"] },
+        "language": { "type": "string", "enum": ["fi", "en"], "description": "Language of the human-readable content. Field names are always English." }
+      }
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "description", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string", "description": "One sentence." },
+        "version": { "type": "string", "examples": ["0.1.0-MVP"] },
+        "status": { "type": "string", "enum": ["planning", "in_development", "demo_ready", "production"] },
+        "license": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string", "enum": ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause", "proprietary", "none"] },
+            "note": { "type": "string", "description": "One sentence on what this means for this project in practice." }
+          }
+        },
+        "stack": {
+          "type": "object",
+          "properties": {
+            "frontend": { "type": "array", "items": { "type": "string" } },
+            "backend": { "type": "array", "items": { "type": "string" } },
+            "build": { "type": "array", "items": { "type": "string" } },
+            "testing": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "repositories": { "type": "object", "additionalProperties": { "type": "string" } },
+        "urls": {
+          "type": "object",
+          "properties": {
+            "dev": { "type": "string" },
+            "api": { "type": "string" },
+            "staging": { "type": "string" }
+          }
+        },
+        "branches": {
+          "type": "object",
+          "properties": { "main": { "type": "string" }, "active": { "type": "string" } }
+        },
+        "has_ui": { "type": "boolean", "description": "Drives whether a design-brief is generated and Claude Design is suggested." }
+      }
+    }
+  }
+}

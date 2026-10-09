@@ -1,0 +1,35 @@
+{
+  "id": "TICKET-IMPL-001",
+  "story": "STORY-001",
+  "plan": "PLAN-001",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/hexGrid.ts",
+    "src/globe/hexGrid.test.ts",
+    "src/globe/main.ts",
+    "package.json",
+    "package-lock.json"
+  ],
+  "change_summary": "Ruudukon rakennus siirrettiin puhtaaseen funktioon buildHexGrid (src/globe/hexGrid.ts). Funktio tallentaa jokaiselle puskurivertexille sen solmun indeksin duplikaattien poiston yhteydessä ja käy kolmiot läpi position-puskurista, joten indeksoimaton IcosahedronGeometry ei enää kaada sitä, eikä solmuja haeta findIndexillä. Särmät palautetaan indeksipareina. Tämä korjasi toisen vian, joka olisi paljastunut ensimmäisen jälkeen: main.ts:n silmukka `for (const [key] of edgeSet)` hajotti merkkijonon, jolloin avaimesta \"12_34\" saatiin vain \"1\", ja nodes[undefined].position olisi kaatunut. Poikkeama PLAN-001:stä: suunnitelman mukaan särmät olisivat jääneet Setiin, mutta indeksiparit poistavat tämän virheluokan kokonaan. main.ts käyttää nyt funktiota, ja kommentti \"~10k vertices\" on korjattu. Vitest 5.0.3 asennettiin, ja npm test ajaa sen.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: moduulitason geo, posAttr, nodeMap ja edgeSet poistettu",
+      "main.ts: nodes tulee nyt buildHexGrid-funktiosta, rakenne sama ({ position, index, neighbors })",
+      "main.ts: uusi edges ([number, number][])",
+      "uusi export: buildHexGrid ja HexNode (src/globe/hexGrid.ts)"
+    ],
+    "call_sites_found": [
+      "src/globe/main.ts: pisteiden piirto (nodes), särmien piirto (edges), tuplaklikkauksen lähin solmu (nodes), window.globeNodes = nodes"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts: särmien piirtosilmukka käyttää edges-pareja",
+      "src/globe/main.ts: konsolirivi käyttää edges.length"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Vika oli ajonaikainen, joten tsc oli vihreä jo ennen korjausta. window.globeNodes säilyttää saman rakenteen, eikä repossa ole muita sen lukijoita. window.openHexSimulation on edelleen määrittelemätön, ja kutsu on valinnainen (?.), joten tuplaklikkaus vain kirjaa solmun konsoliin. Overlay korvautuu STORY-007:n fly-tolla. Bundle pieneni 542,00 kB:sta 541,71 kB:iin."
+  },
+  "commit": null,
+  "progress": 100
+}

@@ -1,0 +1,76 @@
+{
+  "id": "PLAN-002",
+  "story": "STORY-002",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Paikallinen git-repo main-haaralla, GPL v3:n virallinen teksti LICENSE-tiedostoon (gnu.org, sha256 kirjattu) ja lyhyt README tekijänoikeusilmoituksella. GitHub Actions -workflow ajaa jokaisessa pushissa ja PR:ssä npm ci, npm test ja npm run build, ja vain mainin pushissa julkaisee dist-kansion GitHub Pagesiin. Action-versiot ovat samat kuin GlobeCiv2:ssa, jossa julkaisu toimii jo. Node on 22, koska Vite 8 vaatii vähintään 20.19 tai 22.12. Dependabot tarkistaa npm-paketit ja Actionsit viikoittain. npm audit fix ajetaan ennen ensimmäistä committia. Sami luo tyhjän julkisen repon, ja minä lisään remoten ja pushaan.",
+  "alternatives_considered": [
+    {
+      "name": "Erillinen testi-workflow ja deploy-workflow",
+      "pros": "Selkeä erottelu, PR:t eivät koske Pages-oikeuksiin",
+      "cons": "Kaksi tiedostoa ja kaksi npm ci -ajoa. Deploy ei automaattisesti odota testejä ilman workflow_run-kytkentää.",
+      "rejected_because": "Yksi workflow, jossa deploy-job tarvitsee test-jobin (needs) ja ajetaan vain mainissa, on yksinkertaisempi ja takaa järjestyksen testit → build → Pages"
+    },
+    {
+      "name": "Julkaisu gh-pages-haaraan (peaceiris/actions-gh-pages)",
+      "pros": "Toimii myös vanhalla Pages-asetuksella",
+      "cons": "Kolmannen osapuolen action ja ylimääräinen haara repossa",
+      "rejected_because": "GitHubin omat actions/deploy-pages toimivat jo GlobeCiv2:ssa"
+    },
+    {
+      "name": "Lisenssitunniste GPL-3.0-only",
+      "pros": "Sitoo koodin täsmälleen versioon 3",
+      "cons": "Estää yhdistämisen tuleviin GPL-versioihin. FSF:n suosittelema ilmoitus on \"or later\".",
+      "rejected_because": "Valitaan GPL-3.0-or-later, joka on FSF:n vakiomuotoilu. Sami voi vaihtaa sen hyväksynnässä."
+    },
+    {
+      "name": "npm audit fix vasta Dependabotin PR:nä",
+      "pros": "Muutos näkyy erillisenä PR:nä",
+      "cons": "Ensimmäinen julkinen commit sisältäisi tunnetusti haavoittuvan lukitustiedoston",
+      "rejected_because": "Korjaus on pelkkiä patch-versioita (postcss 8.5.15 → 8.5.29, nanoid 3.3.12 → 3.3.20, source-map-js 1.2.1 → 1.2.2, devalue 5.8.1 → 5.9.4), ja testit ja build ajetaan sen jälkeen"
+    }
+  ],
+  "files_to_change": [
+    "package.json (\"license\": \"GPL-3.0-or-later\")",
+    "package-lock.json (npm audit fix)",
+    "LICENSE (uusi, GPL v3 -teksti gnu.org:sta)",
+    "README.md (uusi)",
+    ".github/workflows/deploy.yml (uusi)",
+    ".github/dependabot.yml (uusi)",
+    "backlog.json (_meta.git_commit ja git_branch)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Aja npm audit fix",
+      "verify": "npm audit raportoi 0 haavoittuvuutta, ja npm test sekä npm run build ovat vihreitä"
+    },
+    {
+      "step": 2,
+      "action": "Lisää LICENSE (GPL v3 -teksti), README.md (kuvaus, käynnistysohjeet ja ilmoitus \"Copyright (C) 2026 Sami Räisänen\", GPL-3.0-or-later) ja package.jsoniin license-kenttä",
+      "verify": "LICENSE-tiedoston sha256 on 3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986, eli sama kuin gnu.org:n tiedostolla"
+    },
+    {
+      "step": 3,
+      "action": "Lisää .github/workflows/deploy.yml (test-job aina, deploy-job vain mainin pushissa, needs: test) ja .github/dependabot.yml (npm ja github-actions viikoittain)",
+      "verify": "Workflow ajaa samat komennot kuin paikallinen tarkistus: npm ci, npm test ja npm run build. YAML jäsentyy virheettä."
+    },
+    {
+      "step": 4,
+      "action": "git init -b main ja ensimmäinen commit",
+      "verify": "git status on puhdas, eikä commitissa ole node_modules- tai dist-kansiota (git ls-files)"
+    },
+    {
+      "step": 5,
+      "action": "Sami luo tyhjän julkisen repon SamppaFIN/GlobeCiv3 ja valitsee Settings → Pages → Source: GitHub Actions. Sen jälkeen lisään remoten ja pushaan mainin.",
+      "verify": "git ls-remote näyttää mainin saman commitin, ja Actions-ajo on vihreä"
+    },
+    {
+      "step": 6,
+      "action": "Tarkista julkaisu ja päivitä backlog.json:n _meta.git_commit ja git_branch",
+      "verify": "https://samppafin.github.io/GlobeCiv3/ ja sen assets-tiedosto palauttavat 200, ja headless-Chromen konsolissa on 3D globe ready ilman virheitä"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,0 +1,63 @@
+{
+  "id": "PLAN-001",
+  "story": "STORY-001",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Ruudukon rakennus siirretään puhtaaseen moduuliin src/globe/hexGrid.ts (buildHexGrid(radius, detail) → nodes ja edges), jotta sen voi yksikkötestata ilman DOMia. Funktio tallentaa jokaiselle puskurivertexille sen solmun indeksin jo duplikaattien poistossa ja käy kolmiot läpi position-puskurista, joten se toimii indeksoimattomalla geometrialla eikä hae solmuja findIndexillä. Särmät kerätään Setiin kuten nyt. main.ts käyttää funktiota, eikä renderöintikoodi muutu. Vitest asennetaan jo tässä storyssa, koska bugikorjaus alkaa testistä. STORY-003 lisää Playwrightin ja CI:n.",
+  "alternatives_considered": [
+    {
+      "name": "Minimikorjaus paikallaan: geo.index!.count → posAttr.count",
+      "pros": "Pienin mahdollinen diff, muutama rivi",
+      "cons": "main.ts koskee DOMiin heti importissa, joten korjausta ei voi yksikkötestata. Naapurilaskenta jäisi neliölliseksi (findIndex jokaiselle särmälle).",
+      "rejected_because": "STORY-001:n hyväksymiskriteerit vaativat yksikkötestin ja ei-neliöllisen naapurilaskennan"
+    },
+    {
+      "name": "BufferGeometryUtils.mergeVertices indeksoidun geometrian tekemiseen",
+      "pros": "Valmis Three.js-funktio, vähemmän omaa koodia",
+      "cons": "mergeVertices yhdistää vain vertexit, joiden kaikki attribuutit ovat samat. UV-sauman vertexit eivät yhdisty, ellei uv-attribuuttia poisteta ensin. Toleranssi käyttäytyy eri tavalla kuin nykyinen pyöristys.",
+      "rejected_because": "Piilotettu ansa UV-saumassa, ja testi tarvittaisiin silti"
+    },
+    {
+      "name": "Koko STORY-003 ensin (Vitest, Playwright ja CI)",
+      "pros": "Testiympäristö kerralla valmiiksi",
+      "cons": "Kasvattaa S-kokoisen bugikorjauksen moninkertaiseksi, ja CI vaatii repon, jota ei vielä ole (STORY-002)",
+      "rejected_because": "Vain Vitest tarvitaan vian toistamiseen. Selaintarkistus tehdään nyt käsin headless-Chromella."
+    }
+  ],
+  "files_to_change": [
+    "src/globe/hexGrid.ts (uusi)",
+    "src/globe/hexGrid.test.ts (uusi)",
+    "src/globe/main.ts",
+    "package.json",
+    "package-lock.json"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Asenna vitest devDependencyksi ja lisää skripti \"test\": \"vitest run\"",
+      "verify": "npm ls vitest näyttää version 5.x, ja npm test käynnistää Vitestin"
+    },
+    {
+      "step": 2,
+      "action": "Kirjoita hexGrid.test.ts ja siirrä nykyinen ruudukkokoodi sellaisenaan buildHexGrid-funktioon",
+      "verify": "Testi on punainen samalla virheellä kuin selaimessa: Cannot read properties of null (reading 'count')"
+    },
+    {
+      "step": 3,
+      "action": "Korjaa buildHexGrid: vertex→solmu-taulukko, kolmiosilmukka position-puskurista ja Set-pohjaiset särmät",
+      "verify": "Testi on vihreä: 362 solmua, 1 080 särmää, 12 solmulla 5 naapuria, 350 solmulla 6 naapuria ja naapuruus on symmetrinen"
+    },
+    {
+      "step": 4,
+      "action": "Vaihda main.ts käyttämään buildHexGrid-funktiota ja korjaa kommentti \"~10k vertices\"",
+      "verify": "npm run build menee läpi ilman tsc-virheitä (noUnusedLocals ja noUnusedParameters ovat päällä)"
+    },
+    {
+      "step": 5,
+      "action": "Tarkista build selaimessa: vite preview ja headless-Chrome",
+      "verify": "Konsolissa ei ole virheitä, siinä on rivit \"Hex nodes: 362, edges: 1080\" ja \"3D globe ready\", ja kuvakaappauksessa näkyvät pallo, solmut ja särmät"
+    }
+  ],
+  "status": "approved"
+}
