@@ -64,10 +64,10 @@
       "requirement": "Ei oteta GlobeCiv3:een ennen kuin lähde ja lisenssi on selvitetty. Maasto generoidaan proseduraalisesti."
     },
     {
-      "name": "public/favicon.svg ja public/icons.svg",
-      "source": "Viten projektipohja",
-      "license": "MIT (Vite)",
-      "requirement": "Korvataan omilla ennen julkaisua"
+      "name": "public/favicon.svg (oma pallo-ikoni, STORY-003) ja public/icons.svg (Viten pohjan jäänne, ei käytössä)",
+      "source": "Oma ja Viten projektipohja",
+      "license": "Oma: GPL-3.0-or-later. icons.svg: MIT (Vite)",
+      "requirement": "icons.svg poistetaan tai korvataan ennen kuin peli jaetaan muille"
     }
   ],
   "deliverables_owner": "Sami omistaa koodin, pelisuunnittelun ja dokumentaation."
@@ -100,7 +100,7 @@ LICENSE-tiedostoa.
     "frontend": ["TypeScript 6", "Three.js r186", "Svelte 5 (HUD, ei vielä käytössä)", "Zustand 5 (vanilla store)"],
     "backend": [],
     "build": ["Vite 8", "tsc (tyyppitarkistus buildissa)"],
-    "testing": ["Vitest 5 (käytössä)", "Playwright (lisätään STORY-003:ssa)"]
+    "testing": ["Vitest 5", "Playwright 1.64 (savutestit, CI)"]
   },
   "database": null,
   "storage": "Ei palvelinta. Tallennus myöhemmin selaimen IndexedDB:hen, kuten GlobeCiv2:n suunnitelmassa.",
@@ -276,17 +276,17 @@ hakemisto.
 {
   "source": "backlog.json",
   "epics": [
-    { "id": "EPIC-001", "icon": "🧱", "title": "Perusta kuntoon", "status": "in_progress", "stories": ["STORY-001", "STORY-002", "STORY-003", "STORY-004"] },
+    { "id": "EPIC-001", "icon": "🧱", "title": "Perusta kuntoon", "status": "done", "stories": ["STORY-001", "STORY-002", "STORY-003", "STORY-004"] },
     { "id": "EPIC-002", "icon": "🔭", "title": "Saumaton kamera", "status": "todo", "stories": ["STORY-005", "STORY-006", "STORY-007"] },
     { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "todo", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018"] }
   ],
   "stories_total": 18,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003"],
-  "next": "STORY-003"
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004"],
+  "next": "STORY-005"
 }
 ```
 
@@ -359,6 +359,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | Kehitysvaiheessa Linssillä on täydet oikeudet: se tekee tekniset ja prosessipäätökset, hyväksyy omat suunnitelmansa, merkitsee storyt valmiiksi (hyväksyjänä "Linssi (Samin valtuutuksella)") ja mergeää mainiin. Päätökset kirjataan tähän taulukkoon, ja Sami voi avata minkä tahansa storyn tai päätöksen uudelleen. Puhelintestit tekee Sami. | Nopeus. Sami seuraa tuloksia Pagesista. | Sami |
 | 2026-10-09 | Dependabotin 9 PR:ää (#1–#9) yhdistettiin yhdeksi päivitykseksi: three 0.186.1 (ja @types/three 0.186.0), zustand 5.0.15, svelte 5.57.2, vite 8.3.3, @sveltejs/vite-plugin-svelte 7.3.1, checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5. Testit, build ja työpöydän bench pysyivät ennallaan (60 fps, taso 17, värinä 0,036 px). | Erillisinä PR:inä lukitustiedosto olisi mennyt ristiin. Actionsien rikkovat muutokset (Node 24 ja piilotiedostojen pois jättäminen) eivät koske projektia. | Sami |
 | 2026-10-09 | Pelimekaniikkoina käytetään aluksi Civilization I:n perusmekaniikkoja. Omat pelimekaniikat ja säännöt suunnitellaan erikseen, kun perusmoottori (EPIC-001–003) on valmis. STORY-013 ja STORY-016 muutettiin tämän mukaisiksi. | Moottori tarvitsee toimivan pelin testattavaksi ennen omaa sääntösuunnittelua | Sami |
+| 2026-10-09 | STORY-003 hyväksyttiin, ja EPIC-001 on valmis. Playwrightin savutestit ajetaan CI:ssä ennen julkaisua. Ensimmäinen ajo löysi puuttuvan favicon-linkin (404), joka korjattiin. | Työnkulku: suunnitelma, testi ja hyväksyntä | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 

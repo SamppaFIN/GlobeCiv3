@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T15:53:06Z",
+    "generated_at": "2026-10-09T16:05:56Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "e5329c1",
+    "git_commit": "978fdf8",
     "git_branch": "main",
     "language": "fi"
   },
@@ -28,8 +28,8 @@
         "tsc"
       ],
       "testing": [
-        "Vitest",
-        "Playwright"
+        "Vitest 5",
+        "Playwright 1.64"
       ]
     },
     "repositories": {
@@ -51,14 +51,14 @@
       "title": "Perusta kuntoon",
       "icon": "🧱",
       "description": "Globi käynnistyy, repo ja julkaisuputki ovat olemassa, testit ajetaan CI:ssä, ja infinite zoomin toteutettavuus on todistettu prototyypillä.",
-      "status": "in_progress",
+      "status": "done",
       "stories": [
         "STORY-001",
         "STORY-002",
         "STORY-003",
         "STORY-004"
       ],
-      "progress": 75
+      "progress": 100
     },
     {
       "id": "EPIC-002",
@@ -172,17 +172,17 @@
       "narrative": "Kehittäjänä haluan yksikkö- ja selaintestit, jotta näen regressiot ennen kuin ne päätyvät julkaisuun.",
       "effort": "S",
       "depends_on": [],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "`npm test` ajaa Vitestin, ja vähintään yksi oikea testi menee läpi",
         "`npm run test:e2e` avaa pelin Playwrightilla, tarkistaa ettei konsolissa ole virheitä ja tallentaa kuvakaappauksen",
         "CI ajaa molemmat, ja punainen testi estää julkaisun"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-004",
+        "implementation": "TICKET-IMPL-004",
+        "testing": "TICKET-TEST-004"
       }
     },
     {
@@ -773,6 +773,65 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-004",
+      "story": "STORY-003",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "Vitest on jo käytössä (STORY-001). Lisätään @playwright/test ja kaksi savutestiä tiedostoon tests/e2e/smoke.e2e.ts: pääpeli käynnistyy ilman konsolivirheitä ja ilmoittaa \"3D globe ready\", ja prototyyppisivu spike.html saavuttaa tilan window.__ready. Molemmista otetaan kuvakaappaus. Pääte .e2e.ts pitää testit erillään Vitestin hakukuviosta. Playwright käynnistää tuotantobuildin vite preview -palvelimella portissa 4175, jottei se törmää Samin kehityspalvelimeen (3000). Paikallisesti käytetään asennettua Chromea (channel: chrome), eikä selainta ladata. CI:ssä asennetaan Playwrightin Chromium, ja WebGL ajetaan SwiftShaderilla (--use-angle=swiftshader --enable-unsafe-swiftshader). E2E ajetaan samassa test-jobissa kuin yksikkötestit, joten deploy-job (needs: test) ei käynnisty, jos jokin testi on punainen.",
+      "alternatives_considered": [
+        {
+          "name": "Oma CDP-skripti (scripts/bench.mjs) testiajurina",
+          "pros": "Ei uutta riippuvuutta",
+          "cons": "Ei raportointia, uudelleenyrityksiä eikä assertioita. Testien ylläpito käsin.",
+          "rejected_because": "CLAUDE.md nimeää Playwrightin testityökaluksi, ja bench.mjs jää suorituskykymittaukseen"
+        },
+        {
+          "name": "Erillinen e2e-job CI:ssä",
+          "pros": "Yksikkötestit ja E2E näkyvät erikseen",
+          "cons": "Kaksi npm install -ajoa ja deploy-jobin needs-lista pitää päivittää",
+          "rejected_because": "Yksi job on yksinkertaisempi, ja vaiheiden nimet näyttävät, kumpi kaatui"
+        },
+        {
+          "name": "Suorituskykymittaus CI:hin jo nyt",
+          "pros": "Regressiot näkyisivät automaattisesti",
+          "cons": "GitHubin ajokoneissa ei ole näytönohjainta. SwiftShaderilla mitattu FPS ei kerro mitään.",
+          "rejected_because": "Ei kuulu STORY-003:n hyväksymiskriteereihin. Mittaus pysyy käsin ajettavana (scripts/bench.mjs)."
+        }
+      ],
+      "files_to_change": [
+        "package.json (@playwright/test, skripti test:e2e)",
+        "package-lock.json",
+        "playwright.config.ts (uusi)",
+        "tests/e2e/smoke.e2e.ts (uusi)",
+        ".gitignore (test-results, playwright-report)",
+        ".github/workflows/deploy.yml (Playwrightin asennus ja E2E-ajo)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Asenna @playwright/test, kirjoita playwright.config.ts ja smoke.e2e.ts sekä skripti \"test:e2e\": \"npm run build && playwright test\"",
+          "verify": "npm run test:e2e menee läpi paikallisesti Chromella, ja kuvakaappaukset syntyvät test-results-kansioon"
+        },
+        {
+          "step": 2,
+          "action": "Varmista, että testi todella tunnistaa virheen: aja se kerran tilapäisellä rikkovalla muutoksella (globin kaatuminen) ja palauta muutos",
+          "verify": "Testi on punainen rikotulla koodilla ja vihreä palautuksen jälkeen. Rikkova muutos ei päädy committiin."
+        },
+        {
+          "step": 3,
+          "action": "Lisää CI:hin Playwrightin Chromiumin asennus ja npm run test:e2e test-jobiin ennen Pages-artefaktia",
+          "verify": "Mainin Actions-ajossa E2E-vaihe on vihreä, ja deploy-job tarvitsee edelleen test-jobin (needs: test)"
+        },
+        {
+          "step": 4,
+          "action": "Kirjaa toteutus- ja testitiketti ja merkitse STORY-003 valmiiksi",
+          "verify": "backlog.json ja CLAUDE.md:n indeksi ovat ajan tasalla, ja EPIC-001 on 100 %"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -867,6 +926,40 @@
         "notes": "Kaikki uusi koodi on src/spike-kansiossa ja sivulla spike.html. Pääpelin koodia ei muutettu, eikä pääpeli tuo spike-moduuleja. vite.config.ts:n muutos lisää spike.html:n buildiin, jotta se julkaistaan Pagesiin puhelintestausta varten (Samin päätös 2026-10-09)."
       },
       "commit": "8234129",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-004",
+      "story": "STORY-003",
+      "plan": "PLAN-004",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "package.json",
+        "package-lock.json",
+        "playwright.config.ts",
+        "tests/e2e/smoke.e2e.ts",
+        ".gitignore",
+        ".github/workflows/deploy.yml",
+        "index.html",
+        "spike.html",
+        "public/favicon.svg"
+      ],
+      "change_summary": "@playwright/test 1.64.0 (Apache-2.0) ja kaksi savutestiä: pääpeli saavuttaa tilan \"3D globe ready\", ja zoom-prototyyppi asettuu tasolle 6 tai syvemmälle. Molemmissa tarkistetaan, ettei konsolissa ole virheitä eikä epäonnistuneita pyyntöjä, ja molemmista otetaan kuvakaappaus. Pääte .e2e.ts pitää testit erillään Vitestistä. Playwright käynnistää tuotantobuildin portissa 4175. Paikallisesti käytetään asennettua Chromea, ja CI:ssä Playwrightin Chromiumia SwiftShader-WebGL:llä. CI:n test-job ajaa yksikkötestit ja E2E:n ennen Pages-artefaktia, ja epäonnistuneen ajon tulokset ladataan artefaktiksi. Poikkeama PLAN-004:stä: uusi testi löysi oikean vian. Kumpikaan sivu ei linkittänyt faviconia, joten selain haki base-polun ulkopuolelta /favicon.ico:n ja sai 404:n, myös Pagesissa. Molempiin sivuihin lisättiin favicon-linkki, ja Viten pohjan logo korvattiin omalla pallo-ikonilla.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "package.json: skripti test:e2e",
+          ".github/workflows/deploy.yml: npm run build korvattu Playwrightin asennuksella ja npm run test:e2e:llä (joka rakentaa distin)"
+        ],
+        "call_sites_found": [
+          "deploy.yml: upload-pages-artifact lukee dist-kansion, jonka test:e2e nyt rakentaa"
+        ],
+        "call_sites_updated": [],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Paikallinen npm run test:e2e vaatii asennetun Chromen. public/icons.svg on käyttämätön Viten pohjan jäänne, eikä sitä poistettu."
+      },
+      "commit": "978fdf8",
       "progress": 100
     }
   ],
@@ -1150,6 +1243,85 @@
         ],
         "decision": "accepted",
         "signed_by": "Sami",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-004",
+      "story": "STORY-003",
+      "implementation_ticket": "TICKET-IMPL-004",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi testiympäristö. Sivutuotteena korjattiin puuttuva favicon-linkki, joka aiheutti /favicon.ico-pyynnön base-polun ulkopuolelle ja 404:n.",
+        "files_changed": [
+          "index.html",
+          "spike.html",
+          "public/favicon.svg"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Paikallisesti: Chrome (Intel UHD) ja vite preview :4175. CI: GitHub Actions ubuntu-latest, Playwrightin Chromium ja SwiftShader.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "npm test",
+            "expected": "Vitest ajaa vain yksikkötestit, ei .e2e.ts-tiedostoja",
+            "result": "Test Files 2 passed, Tests 8 passed",
+            "outcome": "pass"
+          },
+          {
+            "steps": "npm run test:e2e ennen favicon-korjausta",
+            "expected": "Testi tunnistaa konsolivirheen",
+            "result": "2 failed: console.error 404 osoitteessa http://localhost:4175/favicon.ico. Vika oli oikea, ja sama 404 tapahtui Pagesissa.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "npm run test:e2e favicon-korjauksen jälkeen",
+            "expected": "Molemmat testit vihreitä, ja kuvakaappaukset syntyvät",
+            "result": "2 passed (10,1 s). Tiedostot globe.png ja spike.png syntyivät test-results-kansioon.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Tilapäinen rikkova muutos: hexGrid.ts palautettiin käyttämään geo.index!.count-riviä, ja npm run test:e2e ajettiin. Tiedosto palautettiin sen jälkeen gitistä.",
+            "expected": "Pääpelin testi on punainen, ja palautuksen jälkeen kaikki on vihreää",
+            "result": "1 failed (pääpeli), 1 passed (prototyyppi). Palautuksen jälkeen 2 passed, eikä muutos jäänyt tiedostoon.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Mainin Actions-ajo 37956290280 (commit 978fdf8)",
+            "expected": "E2E ajetaan CI:ssä ennen julkaisua, ja julkaisu tarvitsee test-jobin",
+            "result": "Playwrightin asennus 33 s, npm run test:e2e 10 s (success), upload-artifact ohitettu, deploy success. deploy-job: needs test.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "curl https://samppafin.github.io/GlobeCiv3/favicon.svg ja sivun favicon-linkki",
+            "expected": "200, ja linkki osoittaa base-polkuun",
+            "result": "200 image/svg+xml, linkki /GlobeCiv3/favicon.svg",
+            "outcome": "pass"
+          }
+        ],
+        "console_findings": [
+          "Ennen korjausta: 404 /favicon.ico (pääpeli ja prototyyppi)"
+        ],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "npm test ajaa Vitestin, ja testejä on",
+            "checked": true
+          },
+          {
+            "item": "npm run test:e2e avaa pelin, tarkistaa konsolin ja ottaa kuvakaappauksen",
+            "checked": true
+          },
+          {
+            "item": "CI ajaa molemmat, ja punainen testi estää julkaisun",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-09"
       }
     }

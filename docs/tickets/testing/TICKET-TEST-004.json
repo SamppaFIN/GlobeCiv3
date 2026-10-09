@@ -1,0 +1,64 @@
+{
+  "id": "TICKET-TEST-004",
+  "story": "STORY-003",
+  "implementation_ticket": "TICKET-IMPL-004",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi testiympäristö. Sivutuotteena korjattiin puuttuva favicon-linkki, joka aiheutti /favicon.ico-pyynnön base-polun ulkopuolelle ja 404:n.",
+    "files_changed": ["index.html", "spike.html", "public/favicon.svg"]
+  },
+  "ai_testing": {
+    "environment": "Paikallisesti: Chrome (Intel UHD) ja vite preview :4175. CI: GitHub Actions ubuntu-latest, Playwrightin Chromium ja SwiftShader.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "npm test",
+        "expected": "Vitest ajaa vain yksikkötestit, ei .e2e.ts-tiedostoja",
+        "result": "Test Files 2 passed, Tests 8 passed",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm run test:e2e ennen favicon-korjausta",
+        "expected": "Testi tunnistaa konsolivirheen",
+        "result": "2 failed: console.error 404 osoitteessa http://localhost:4175/favicon.ico. Vika oli oikea, ja sama 404 tapahtui Pagesissa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm run test:e2e favicon-korjauksen jälkeen",
+        "expected": "Molemmat testit vihreitä, ja kuvakaappaukset syntyvät",
+        "result": "2 passed (10,1 s). Tiedostot globe.png ja spike.png syntyivät test-results-kansioon.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Tilapäinen rikkova muutos: hexGrid.ts palautettiin käyttämään geo.index!.count-riviä, ja npm run test:e2e ajettiin. Tiedosto palautettiin sen jälkeen gitistä.",
+        "expected": "Pääpelin testi on punainen, ja palautuksen jälkeen kaikki on vihreää",
+        "result": "1 failed (pääpeli), 1 passed (prototyyppi). Palautuksen jälkeen 2 passed, eikä muutos jäänyt tiedostoon.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Mainin Actions-ajo 37956290280 (commit 978fdf8)",
+        "expected": "E2E ajetaan CI:ssä ennen julkaisua, ja julkaisu tarvitsee test-jobin",
+        "result": "Playwrightin asennus 33 s, npm run test:e2e 10 s (success), upload-artifact ohitettu, deploy success. deploy-job: needs test.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "curl https://samppafin.github.io/GlobeCiv3/favicon.svg ja sivun favicon-linkki",
+        "expected": "200, ja linkki osoittaa base-polkuun",
+        "result": "200 image/svg+xml, linkki /GlobeCiv3/favicon.svg",
+        "outcome": "pass"
+      }
+    ],
+    "console_findings": ["Ennen korjausta: 404 /favicon.ico (pääpeli ja prototyyppi)"],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      { "item": "npm test ajaa Vitestin, ja testejä on", "checked": true },
+      { "item": "npm run test:e2e avaa pelin, tarkistaa konsolin ja ottaa kuvakaappauksen", "checked": true },
+      { "item": "CI ajaa molemmat, ja punainen testi estää julkaisun", "checked": true }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}

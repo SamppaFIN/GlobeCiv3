@@ -1,0 +1,32 @@
+{
+  "id": "TICKET-IMPL-004",
+  "story": "STORY-003",
+  "plan": "PLAN-004",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "package.json",
+    "package-lock.json",
+    "playwright.config.ts",
+    "tests/e2e/smoke.e2e.ts",
+    ".gitignore",
+    ".github/workflows/deploy.yml",
+    "index.html",
+    "spike.html",
+    "public/favicon.svg"
+  ],
+  "change_summary": "@playwright/test 1.64.0 (Apache-2.0) ja kaksi savutestiä: pääpeli saavuttaa tilan \"3D globe ready\", ja zoom-prototyyppi asettuu tasolle 6 tai syvemmälle. Molemmissa tarkistetaan, ettei konsolissa ole virheitä eikä epäonnistuneita pyyntöjä, ja molemmista otetaan kuvakaappaus. Pääte .e2e.ts pitää testit erillään Vitestistä. Playwright käynnistää tuotantobuildin portissa 4175. Paikallisesti käytetään asennettua Chromea, ja CI:ssä Playwrightin Chromiumia SwiftShader-WebGL:llä. CI:n test-job ajaa yksikkötestit ja E2E:n ennen Pages-artefaktia, ja epäonnistuneen ajon tulokset ladataan artefaktiksi. Poikkeama PLAN-004:stä: uusi testi löysi oikean vian. Kumpikaan sivu ei linkittänyt faviconia, joten selain haki base-polun ulkopuolelta /favicon.ico:n ja sai 404:n, myös Pagesissa. Molempiin sivuihin lisättiin favicon-linkki, ja Viten pohjan logo korvattiin omalla pallo-ikonilla.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "package.json: skripti test:e2e",
+      ".github/workflows/deploy.yml: npm run build korvattu Playwrightin asennuksella ja npm run test:e2e:llä (joka rakentaa distin)"
+    ],
+    "call_sites_found": ["deploy.yml: upload-pages-artifact lukee dist-kansion, jonka test:e2e nyt rakentaa"],
+    "call_sites_updated": [],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Paikallinen npm run test:e2e vaatii asennetun Chromen. public/icons.svg on käyttämätön Viten pohjan jäänne, eikä sitä poistettu."
+  },
+  "commit": "978fdf8",
+  "progress": 100
+}
