@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T15:18:48Z",
+    "generated_at": "2026-10-09T15:33:13Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "fea7f30",
+    "git_commit": "64d900b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -58,7 +58,7 @@
         "STORY-003",
         "STORY-004"
       ],
-      "progress": 53
+      "progress": 70
     },
     {
       "id": "EPIC-002",
@@ -203,11 +203,11 @@
         "Prototyypin koodi on omassa haarassaan, eikä sitä mergetä sellaisenaan",
         "Mittaus tehdään työpöydällä ja kiinteällä testipuhelimella, ja tulokset verrataan tavoitteeseen 60 fps / 30 fps. Testipuhelin nimetään."
       ],
-      "progress": 10,
+      "progress": 80,
       "linked": {
         "plan": "PLAN-003",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-003",
+        "testing": "TICKET-TEST-003"
       }
     },
     {
@@ -835,6 +835,38 @@
       },
       "commit": "477c19a",
       "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-003",
+      "story": "STORY-004",
+      "plan": "PLAN-003",
+      "implemented_by_model": "Opus 5.5",
+      "status": "review",
+      "files_changed": [
+        "spike.html",
+        "src/spike/cubeSphere.ts",
+        "src/spike/cubeSphere.test.ts",
+        "src/spike/noise.ts",
+        "src/spike/tiles.ts",
+        "src/spike/camera.ts",
+        "src/spike/metrics.ts",
+        "src/spike/main.ts",
+        "scripts/bench.mjs",
+        "vite.config.ts"
+      ],
+      "change_summary": "Prototyyppi haarassa spike/infinite-zoom (commit 8234129). Kuutiopallon quadtree tasoille 0–17 tangenttikorjatulla kuvauksella. Ruudut ovat 16×16-verteksin pallopintoja helmoineen, ja verteksit ovat suhteessa ruudun keskipisteeseen (kamerasuhteellinen renderöinti Three.js:n float64-matriiseilla). LOD valitaan näyttökoon mukaan (jako yli 256 px, yhdistys alle 128 px), ja mukana on horisontti- ja frustum-karsinta, 4 ms:n luontibudjetti framea kohden ja käyttämättömien alipuiden karsinta. Väri tulee kaistarajatusta 3D-kohinasta kahtena attribuuttina, joiden välillä shader morfaa. Kameraohjain kiertää kamerarigiä pallon ympäri niin, että kursorin alla oleva piste pysyy paikallaan. Mukana on myös pinch, automaattinen kallistus sekä dynaaminen near ja far. Mittaus-HUD, ?bench-lento ja CDP-pohjainen scripts/bench.mjs ilman uusia riippuvuuksia. Poikkeamat PLAN-003:sta: bench-lennon kohde etsitään rantaviivalta puolitushaulla, koska tasaisella merellä saumoja ei näkisi. Yhdistymiselle (zoom ulos) lisättiin 0,3 s:n häivytys, koska hystereesin kanssa pelkkä näyttökokoon perustuva morfi ei ole jatkuva molempiin suuntiin.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "vite.config.ts: build.rolldownOptions.input (main ja spike)"
+        ],
+        "call_sites_found": [],
+        "call_sites_updated": [],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kaikki uusi koodi on src/spike-kansiossa ja vain tässä haarassa. Pääpelin koodia ei muutettu. vite.config.ts:n muutos lisää spike.html:n buildiin, eikä sitä viedä mainiin."
+      },
+      "commit": "8234129",
+      "progress": 100
     }
   ],
   "testing_tickets": [
@@ -1015,6 +1047,108 @@
         "decision": "accepted",
         "signed_by": "Sami",
         "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-003",
+      "story": "STORY-004",
+      "implementation_ticket": "TICKET-IMPL-003",
+      "status": "in_progress",
+      "fix_summary": {
+        "problem_and_root_cause": "Spike, ei korjaus. Tavoitteena oli todistaa yhden renderöijän infinite zoom mittauksella.",
+        "files_changed": [
+          "src/spike/*",
+          "spike.html",
+          "scripts/bench.mjs",
+          "vite.config.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "vite preview (tuotantobuild), http://localhost:4173/GlobeCiv3/spike.html. Headless Chrome 154, Intel UHD Graphics (ANGLE D3D11), 1280×800.",
+        "tooling": "Vitest 5.0.3 ja node scripts/bench.mjs (Chrome DevTools Protocol)",
+        "cases": [
+          {
+            "steps": "npm test: ruutuosoitteiden edestakainen muunnos kaikilla tahkoilla tasoilla 0, 5, 10 ja 17, lasten kulmat, pallopinta ja tahkojen rajat",
+            "expected": "Kaikki testit vihreitä",
+            "result": "Test Files 2 passed, Tests 8 passed. Yksi aiempi ajo kaatui selittämättä (\"no tests\"), eikä vikaa saatu toistettua neljällä uudella ajolla.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "npm run build (tsc ja vite build, main ja spike)",
+            "expected": "Ei TypeScript-virheitä",
+            "result": "Build onnistui",
+            "outcome": "pass"
+          },
+          {
+            "steps": "spike.html?dist=4 ja ?dist=4&tint=1 headless-Chromessa",
+            "expected": "Kokonainen pallo ilman aukkoja, alle 300 ruutua",
+            "result": "Pallo on kokonainen, ja ruutuja on 11–14 tasolla 1",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Bench-lento työpöydällä (scripts/bench.mjs)",
+            "expected": "Taso 17 saavutetaan, työpöytätavoite 60 fps",
+            "result": "Keskiarvo 59,9 fps ja 1 %:n alin 59,5 fps. Syvin taso 17. Ruutuja enintään 482, generointi 0,9 ms/ruutu.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Värinä tasolla 17: float64-projektio verrattuna float32-putkeen",
+            "expected": "Kamerasuhteellisesti alle 0,5 px",
+            "result": "Kamerasuhteellisesti 0,036 px, naiivisti 4 092 px",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Zoom kohti kursoria: viisi askelta kolmessa kursorikohdassa kahdella korkeudella, joista toinen on kallistettu",
+            "expected": "Kursorin alla oleva piste pysyy paikallaan",
+            "result": "Suurin virhe 0 px",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kuvat tasoilta 1, 8, 13 ja 17 rantaviivalta, sekä tasovärit tasolla 17",
+            "expected": "Ei aukkoja eikä z-fightingia, rantaviiva tarkentuu",
+            "result": "Ei aukkoja eikä z-fightingia kuvissa. Rantaviiva tarkentuu joka tasolla, mutta porrastuu verteksiruudukon mukaan. Konsolissa ei virheitä eikä varoituksia.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Zoomaa rantaviivaa hiirellä sisään ja ulos tasovärit päällä ja ilman",
+            "expected": "Tasojen vaihto ei näy poppauksena kumpaankaan suuntaan",
+            "result": "Ei ajettu — liikkumattomista kuvista poppausta ei voi arvioida. Samin manuaalinen tarkistus.",
+            "outcome": "not_run"
+          },
+          {
+            "steps": "Bench puhelimella: http://192.168.1.208:4173/GlobeCiv3/spike.html?bench",
+            "expected": "30 fps tai enemmän, ja taso 17 saavutetaan",
+            "result": "Ei ajettu — vaatii Samin puhelimen",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/spikes/STORY-004-etaalta.png",
+          "docs/spikes/STORY-004-manner.png",
+          "docs/spikes/STORY-004-ruutu.png",
+          "docs/spikes/STORY-004-syvin.png",
+          "docs/spikes/STORY-004-syvin-tasovarit.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Zoom rantaviivalla tuntuu saumattomalta sisään ja ulos",
+            "checked": false
+          },
+          {
+            "item": "Puhelimen bench-tulos on kirjattu (malli, FPS, syvin taso)",
+            "checked": false
+          },
+          {
+            "item": "Suositus Phaser-päätöksestä on luettu ja hyväksytty",
+            "checked": false
+          }
+        ],
+        "decision": null,
+        "signed_by": null,
+        "date": null
       }
     }
   ]

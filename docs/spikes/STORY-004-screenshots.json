@@ -1,0 +1,42 @@
+[
+  {
+    "file": "STORY-004-etaalta.png",
+    "query": "dist=5",
+    "ready": {
+      "level": 1,
+      "drawn": 8
+    }
+  },
+  {
+    "file": "STORY-004-manner.png",
+    "query": "dist=0.04",
+    "ready": {
+      "level": 8,
+      "drawn": 85
+    }
+  },
+  {
+    "file": "STORY-004-ruutu.png",
+    "query": "dist=0.0025",
+    "ready": {
+      "level": 13,
+      "drawn": 234
+    }
+  },
+  {
+    "file": "STORY-004-syvin.png",
+    "query": "dist=0.00002",
+    "ready": {
+      "level": 17,
+      "drawn": 252
+    }
+  },
+  {
+    "file": "STORY-004-syvin-tasovarit.png",
+    "query": "dist=0.00002&tint=1",
+    "ready": {
+      "level": 17,
+      "drawn": 252
+    }
+  }
+]

@@ -1,0 +1,88 @@
+{
+  "id": "TICKET-TEST-003",
+  "story": "STORY-004",
+  "implementation_ticket": "TICKET-IMPL-003",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Spike, ei korjaus. Tavoitteena oli todistaa yhden renderöijän infinite zoom mittauksella.",
+    "files_changed": ["src/spike/*", "spike.html", "scripts/bench.mjs", "vite.config.ts"]
+  },
+  "ai_testing": {
+    "environment": "vite preview (tuotantobuild), http://localhost:4173/GlobeCiv3/spike.html. Headless Chrome 154, Intel UHD Graphics (ANGLE D3D11), 1280×800.",
+    "tooling": "Vitest 5.0.3 ja node scripts/bench.mjs (Chrome DevTools Protocol)",
+    "cases": [
+      {
+        "steps": "npm test: ruutuosoitteiden edestakainen muunnos kaikilla tahkoilla tasoilla 0, 5, 10 ja 17, lasten kulmat, pallopinta ja tahkojen rajat",
+        "expected": "Kaikki testit vihreitä",
+        "result": "Test Files 2 passed, Tests 8 passed. Yksi aiempi ajo kaatui selittämättä (\"no tests\"), eikä vikaa saatu toistettua neljällä uudella ajolla.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm run build (tsc ja vite build, main ja spike)",
+        "expected": "Ei TypeScript-virheitä",
+        "result": "Build onnistui",
+        "outcome": "pass"
+      },
+      {
+        "steps": "spike.html?dist=4 ja ?dist=4&tint=1 headless-Chromessa",
+        "expected": "Kokonainen pallo ilman aukkoja, alle 300 ruutua",
+        "result": "Pallo on kokonainen, ja ruutuja on 11–14 tasolla 1",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Bench-lento työpöydällä (scripts/bench.mjs)",
+        "expected": "Taso 17 saavutetaan, työpöytätavoite 60 fps",
+        "result": "Keskiarvo 59,9 fps ja 1 %:n alin 59,5 fps. Syvin taso 17. Ruutuja enintään 482, generointi 0,9 ms/ruutu.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Värinä tasolla 17: float64-projektio verrattuna float32-putkeen",
+        "expected": "Kamerasuhteellisesti alle 0,5 px",
+        "result": "Kamerasuhteellisesti 0,036 px, naiivisti 4 092 px",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Zoom kohti kursoria: viisi askelta kolmessa kursorikohdassa kahdella korkeudella, joista toinen on kallistettu",
+        "expected": "Kursorin alla oleva piste pysyy paikallaan",
+        "result": "Suurin virhe 0 px",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvat tasoilta 1, 8, 13 ja 17 rantaviivalta, sekä tasovärit tasolla 17",
+        "expected": "Ei aukkoja eikä z-fightingia, rantaviiva tarkentuu",
+        "result": "Ei aukkoja eikä z-fightingia kuvissa. Rantaviiva tarkentuu joka tasolla, mutta porrastuu verteksiruudukon mukaan. Konsolissa ei virheitä eikä varoituksia.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Zoomaa rantaviivaa hiirellä sisään ja ulos tasovärit päällä ja ilman",
+        "expected": "Tasojen vaihto ei näy poppauksena kumpaankaan suuntaan",
+        "result": "Ei ajettu — liikkumattomista kuvista poppausta ei voi arvioida. Samin manuaalinen tarkistus.",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Bench puhelimella: http://192.168.1.208:4173/GlobeCiv3/spike.html?bench",
+        "expected": "30 fps tai enemmän, ja taso 17 saavutetaan",
+        "result": "Ei ajettu — vaatii Samin puhelimen",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/spikes/STORY-004-etaalta.png",
+      "docs/spikes/STORY-004-manner.png",
+      "docs/spikes/STORY-004-ruutu.png",
+      "docs/spikes/STORY-004-syvin.png",
+      "docs/spikes/STORY-004-syvin-tasovarit.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      { "item": "Zoom rantaviivalla tuntuu saumattomalta sisään ja ulos", "checked": false },
+      { "item": "Puhelimen bench-tulos on kirjattu (malli, FPS, syvin taso)", "checked": false },
+      { "item": "Suositus Phaser-päätöksestä on luettu ja hyväksytty", "checked": false }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

@@ -284,8 +284,8 @@ hakemisto.
   ],
   "stories_total": 18,
   "plans": ["PLAN-001", "PLAN-002", "PLAN-003"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003"],
   "next": "STORY-004"
 }
 ```
@@ -356,6 +356,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 5. ~~**Riippuvuuksien haavoittuvuudet.**~~ Ratkaistu 2026-10-09: `npm audit fix` ajettiin osana PLAN-002:ta, ja tulos on 0 haavoittuvuutta.
 6. **Dependabotin 9 PR:ää.** Ne avautuivat heti ensimmäisen pushin jälkeen, ja kaikkien testit menivät läpi. Mukana on neljä Actionsien pääversiopäivitystä (checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5). Three 0.186 -päivitys jättäisi `@types/three`-paketin versioon 0.184. Mergetäänkö ne, ja missä järjestyksessä?
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
+8. **STORY-004:n lopullinen vahvistus.** Työpöytämittaus vahvistaa päätöksen luopua Phaser-overlaysta: 60 fps tasoilla 1–17 Intel UHD:lla, värinä 0,036 px ja zoom kohti kursoria 0 px ([tulokset](docs/spikes/STORY-004-tulokset.md)). Odottaa Samin puhelinmittausta (30 fps -tavoite) ja zoomin tarkistusta liikkeessä.
 
 ### Ratkenneet kysymykset
 
