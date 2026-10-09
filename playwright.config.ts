@@ -22,6 +22,9 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 800 },
+        // SwiftShader draws 1280×800 at ~15 fps locally and slower on CI runners.
+        // Half the device pixel ratio keeps CSS coordinates but renders a quarter of the pixels.
+        deviceScaleFactor: CI ? 0.5 : 1,
         // Locally: installed Chrome with the real GPU. CI runners have no GPU,
         // so WebGL runs on SwiftShader, which Chrome only allows when asked explicitly.
         channel: CI ? undefined : 'chrome',

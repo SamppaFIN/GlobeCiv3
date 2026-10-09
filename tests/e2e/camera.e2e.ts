@@ -33,6 +33,17 @@ const gap = (a: RigState, b: RigState) => Math.hypot(a.point![0] - b.point![0], 
 
 test('mouse wheel zooms toward the cursor by the same factor at every altitude', async ({ page }) => {
   await openGame(page);
+  // The browser scales wheel deltas with the device pixel ratio, so take the delta the page received
+  await page.evaluate(() => {
+    const w = window as any;
+    w.__wheel = [];
+    addEventListener('wheel', e => w.__wheel.push([e.deltaY, e.deltaMode]), { capture: true, passive: true });
+  });
+  const lastWheelFactor = () => page.evaluate(() => {
+    const [dy, mode] = (window as any).__wheel.at(-1);
+    const px = mode === 1 ? dy * 33 : mode === 2 ? dy * 800 : dy;
+    return Math.exp(px * 0.002);
+  });
   const [x, y] = [800, 350];
   await page.mouse.move(x, y);
 
@@ -42,7 +53,7 @@ test('mouse wheel zooms toward the cursor by the same factor at every altitude',
     await page.mouse.wheel(0, -100);
     await nextFrame(page);
     const after = await rigState(page, x, y);
-    expect(after.dist / before.dist).toBeCloseTo(Math.exp(-0.2), 6);
+    expect(after.dist / before.dist).toBeCloseTo(await lastWheelFactor(), 6);
     expect(gap(before, after)).toBeLessThan(1e-6);
     // Descend a few notches before the next measurement
     for (let i = 0; i < 6; i++) await page.mouse.wheel(0, -100);
@@ -129,8 +140,9 @@ test('double-click flies to the nearest hex in about a second, without an overla
   const mid = await flightState(page);
   expect(mid.flying).toBe(true);
   expect(angle(mid.target, dest)).toBeGreaterThan(1e-3);
-  // Duration is checked separately with slow frames; here wait for the arrival itself
-  await page.waitForFunction(() => !(window as any).globeCamera.flying, null, { timeout: 3_000 });
+  // Duration is checked separately with slow frames; here wait for the arrival itself.
+  // The flight ends on the first frame after 1 s, which on the CI software renderer can be late.
+  await page.waitForFunction(() => !(window as any).globeCamera.flying, null, { timeout: 15_000 });
   const end = await flightState(page);
   expect(angle(end.target, dest)).toBeLessThan(1e-6);
   expect(await page.locator('#sim-overlay, #sim-close').count()).toBe(0);

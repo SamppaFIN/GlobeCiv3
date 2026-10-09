@@ -15,6 +15,9 @@ async function settleAt(page: Page, distR: number) {
   await page.evaluate(d => {
     const w = window as any;
     w.__stable = 0; // count settled frames from this move on
+    // Correctness, not the per-frame build budget: on a GPU-less CI runner a frame
+    // can take seconds, so build every requested tile in the same frame
+    w.globeTiles.budgetMs = 1e9;
     const rig = w.globeCamera;
     rig.dist = d * rig.R;
     rig.apply();
@@ -29,6 +32,7 @@ async function settleAt(page: Page, distR: number) {
 }
 
 test('the globe has a tiled surface from orbit down to quadtree level 17', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
   const errors = await openGame(page);
   const levels: Record<string, { drawn: number; maxLevel: number }> = {};
   for (const [name, d] of [['orbit', 4], ['continent', 0.04], ['tile', 0.0025], ['deepest', 2e-5]] as const) {
