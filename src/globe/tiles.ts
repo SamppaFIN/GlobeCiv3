@@ -7,6 +7,7 @@
  */
 import * as THREE from 'three';
 import { children, MAX_LEVEL, tileToSphere, type Tile } from './cubeSphere';
+import { MAX_TILE_REGIONS, type Regions } from './regions';
 import { terrainColors } from './terrain';
 
 const SEG = 16;
@@ -39,17 +40,56 @@ const vertexShader = /* glsl */ `
   uniform vec3 tint;
   uniform float tintAmount;
   varying vec3 vColor;
+  varying vec3 vLocal;
   void main() {
     vec3 c = mix(mix(colorA, colorB, morph), tint, tintAmount);
     float light = 0.3 + 0.7 * max(dot(normal, sunDir), 0.0);
     vColor = c * light;
+    vLocal = position;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
 
+// Region borders per pixel. Positions and candidate centres are in tile-local
+// coordinates, so precision holds at every level. The border between regions i
+// and j is the plane bisecting their centres; the signed distance from p is
+// (|p - cj|² - |p - ci|²) / (2 |cj - ci|), a true distance in world units, so the
+// line width is set from the world size of one pixel and stays ~1.5 px at every zoom.
 const fragmentShader = /* glsl */ `
+  #define MAX_REGIONS ${MAX_TILE_REGIONS}
+  uniform int regionCount;
+  uniform vec3 regionCenters[MAX_REGIONS];
+  uniform vec3 borderColor;
+  uniform float borderStrength;
   varying vec3 vColor;
-  void main() { gl_FragColor = vec4(vColor, 1.0); }
+  varying vec3 vLocal;
+  void main() {
+    vec3 color = vColor;
+    if (regionCount > 1) {
+      float best = 1e30;
+      int nearest = 0;
+      for (int i = 0; i < MAX_REGIONS; i++) {
+        if (i >= regionCount) break;
+        vec3 d = vLocal - regionCenters[i];
+        float q = dot(d, d);
+        if (q < best) { best = q; nearest = i; }
+      }
+      vec3 own = regionCenters[nearest];
+      float border = 1e30;
+      for (int j = 0; j < MAX_REGIONS; j++) {
+        if (j >= regionCount) break;
+        if (j == nearest) continue;
+        vec3 d = vLocal - regionCenters[j];
+        border = min(border, (dot(d, d) - best) / (2.0 * distance(regionCenters[j], own)));
+      }
+      // Pixel size in world units from the smooth position, not fwidth(border):
+      // border is V-shaped at the line, so its screen derivative vanishes there
+      float w = max(length(dFdx(vLocal)), length(dFdy(vLocal)));
+      float line = 1.0 - smoothstep(0.5 * w, 1.2 * w, border);
+      color = mix(color, borderColor, borderStrength * line);
+    }
+    gl_FragColor = vec4(color, 1.0);
+  }
 `;
 
 function smoothstep(e0: number, e1: number, x: number): number {
@@ -90,8 +130,13 @@ export class TileManager {
   private dt = 0;
   readonly radius: number;
 
-  constructor(radius: number) {
+  private readonly regions: Regions | null;
+  readonly borderColor = { value: new THREE.Color(0.85, 0.92, 1.0) };
+  readonly borderStrength = { value: 0.55 };
+
+  constructor(radius: number, regions: Regions | null = null) {
     this.radius = radius;
+    this.regions = regions;
     this.roots = [0, 1, 2, 3, 4, 5].map(face => this.makeNode({ face, level: 0, x: 0, y: 0 }));
     for (const root of this.roots) this.build(root);
   }
@@ -184,6 +229,9 @@ export class TileManager {
         sunDir: this.sunDir,
         tintAmount: this.tintAmount,
         tint: { value: new THREE.Color().setHSL(node.tile.level / (MAX_LEVEL + 1), 0.8, 0.5) },
+        ...this.regionUniforms(node),
+        borderColor: this.borderColor,
+        borderStrength: this.borderStrength,
       },
       vertexShader,
       fragmentShader,
@@ -198,6 +246,15 @@ export class TileManager {
     node.mesh = mesh;
     node.material = material;
     this.meshCount++;
+  }
+
+  /** Candidate region centres in tile-local coordinates (float64 here, small values for the GPU). */
+  private regionUniforms(node: TileNode) {
+    const centers = Array.from({ length: MAX_TILE_REGIONS }, () => new THREE.Vector3());
+    if (!this.regions) return { regionCount: { value: 0 }, regionCenters: { value: centers } };
+    const ids = this.regions.candidatesForTile(node.tile);
+    ids.forEach((id, k) => centers[k].copy(this.regions!.centers[id]).multiplyScalar(this.radius).sub(node.center));
+    return { regionCount: { value: ids.length }, regionCenters: { value: centers } };
   }
 
   private dispose(node: TileNode): void {

@@ -46,3 +46,25 @@ test('the globe has a tiled surface from orbit down to quadtree level 17', async
   for (const s of Object.values(levels)) expect(s.drawn).toBeLessThanOrEqual(600);
   expect(errors).toEqual([]);
 });
+
+test('region borders are drawn from orbit to level 17', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const errors = await openGame(page);
+  // Look straight at the border between hex 100 and its first neighbour
+  await page.evaluate(() => {
+    const w = window as any;
+    const n = w.globeNodes[100];
+    const a = n.position.clone().normalize();
+    const b = w.globeNodes[n.neighbors[0]].position.clone().normalize();
+    w.globeCamera.target.copy(a.add(b).normalize());
+  });
+  const levels: number[] = [];
+  for (const d of [4, 0.04, 0.0025, 2e-5]) {
+    const s = await settleAt(page, d);
+    levels.push(s.maxLevel);
+    await page.screenshot({ path: testInfo.outputPath(`border-L${s.maxLevel}.png`) });
+  }
+  console.log('[border-levels] ' + JSON.stringify(levels));
+  expect(levels[levels.length - 1]).toBe(17);
+  expect(errors).toEqual([]);
+});
