@@ -346,6 +346,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-09 | PLAN-001 hyväksyttiin. Vitest asennetaan jo STORY-001:ssä, ja STORY-003 lisää Playwrightin ja CI:n. | Bugikorjaus alkaa testistä, eikä CI:tä voi tehdä ennen repoa (STORY-002) | Sami |
 | 2026-10-09 | PLAN-002 hyväksyttiin. Lisenssitunniste on GPL-3.0-or-later, ja ensimmäinen commit pushattiin suoraan mainiin. | FSF:n vakiomuotoilu. Repo oli tyhjä, eikä haarasuojausta vielä ole. | Sami |
 | 2026-10-09 | Kehitysvaiheessa Linssi saa mergetä omat työhaaransa mainiin kysymättä. Poikkeus: haara, jonka storyn hyväksymiskriteeri kieltää mergen (STORY-004:n prototyyppi). | Nopeus. CI ajaa testit jokaisessa pushissa, ja Pages-julkaisu tehdään vain, jos testit menevät läpi. | Sami |
+| 2026-10-09 | STORY-004:n prototyyppi mergetään mainiin ja julkaistaan Pagesiin sivuna spike.html. Tämä kumoaa yllä olevan poikkeuksen ja muuttaa STORY-004:n kriteeriä. Koodi pysyy kansiossa src/spike, pääpeli ei käytä sitä, ja se poistetaan, kun tuotantoversiot korvaavat sen (STORY-008). | Sami testaa puhelimella Pagesista, mikä on helpompaa kuin lähiverkko | Sami |
 
 ### Avoimet kysymykset
 
@@ -356,7 +357,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 5. ~~**Riippuvuuksien haavoittuvuudet.**~~ Ratkaistu 2026-10-09: `npm audit fix` ajettiin osana PLAN-002:ta, ja tulos on 0 haavoittuvuutta.
 6. **Dependabotin 9 PR:ää.** Ne avautuivat heti ensimmäisen pushin jälkeen, ja kaikkien testit menivät läpi. Mukana on neljä Actionsien pääversiopäivitystä (checkout v7, setup-node v6, upload-pages-artifact v5 ja deploy-pages v5). Three 0.186 -päivitys jättäisi `@types/three`-paketin versioon 0.184. Mergetäänkö ne, ja missä järjestyksessä?
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
-8. **STORY-004:n lopullinen vahvistus.** Työpöytämittaus vahvistaa päätöksen luopua Phaser-overlaysta: 60 fps tasoilla 1–17 Intel UHD:lla, värinä 0,036 px ja zoom kohti kursoria 0 px ([tulokset](docs/spikes/STORY-004-tulokset.md)). Odottaa Samin puhelinmittausta (30 fps -tavoite) ja zoomin tarkistusta liikkeessä.
+8. **STORY-004:n lopullinen vahvistus.** Työpöytämittaus vahvistaa päätöksen luopua Phaser-overlaysta: 60 fps tasoilla 1–17 Intel UHD:lla, värinä 0,036 px ja zoom kohti kursoria 0 px ([tulokset](docs/spikes/STORY-004-tulokset.md)). Odottaa Samin puhelinmittausta osoitteessa https://samppafin.github.io/GlobeCiv3/spike.html?bench (30 fps -tavoite) ja zoomin tarkistusta liikkeessä.
 
 ### Ratkenneet kysymykset
 

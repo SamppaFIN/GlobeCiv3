@@ -18,12 +18,14 @@
   ],
   "change_summary": "Prototyyppi haarassa spike/infinite-zoom (commit 8234129). Kuutiopallon quadtree tasoille 0–17 tangenttikorjatulla kuvauksella. Ruudut ovat 16×16-verteksin pallopintoja helmoineen, ja verteksit ovat suhteessa ruudun keskipisteeseen (kamerasuhteellinen renderöinti Three.js:n float64-matriiseilla). LOD valitaan näyttökoon mukaan (jako yli 256 px, yhdistys alle 128 px), ja mukana on horisontti- ja frustum-karsinta, 4 ms:n luontibudjetti framea kohden ja käyttämättömien alipuiden karsinta. Väri tulee kaistarajatusta 3D-kohinasta kahtena attribuuttina, joiden välillä shader morfaa. Kameraohjain kiertää kamerarigiä pallon ympäri niin, että kursorin alla oleva piste pysyy paikallaan. Mukana on myös pinch, automaattinen kallistus sekä dynaaminen near ja far. Mittaus-HUD, ?bench-lento ja CDP-pohjainen scripts/bench.mjs ilman uusia riippuvuuksia. Poikkeamat PLAN-003:sta: bench-lennon kohde etsitään rantaviivalta puolitushaulla, koska tasaisella merellä saumoja ei näkisi. Yhdistymiselle (zoom ulos) lisättiin 0,3 s:n häivytys, koska hystereesin kanssa pelkkä näyttökokoon perustuva morfi ei ole jatkuva molempiin suuntiin.",
   "impact_analysis": {
-    "changed_symbols": ["vite.config.ts: build.rolldownOptions.input (main ja spike)"],
+    "changed_symbols": [
+      "vite.config.ts: build.rolldownOptions.input (main ja spike)"
+    ],
     "call_sites_found": [],
     "call_sites_updated": [],
     "compile_errors_before": 0,
     "compile_errors_after": 0,
-    "notes": "Kaikki uusi koodi on src/spike-kansiossa ja vain tässä haarassa. Pääpelin koodia ei muutettu. vite.config.ts:n muutos lisää spike.html:n buildiin, eikä sitä viedä mainiin."
+    "notes": "Kaikki uusi koodi on src/spike-kansiossa ja sivulla spike.html. Pääpelin koodia ei muutettu, eikä pääpeli tuo spike-moduuleja. vite.config.ts:n muutos lisää spike.html:n buildiin, jotta se julkaistaan Pagesiin puhelintestausta varten (Samin päätös 2026-10-09)."
   },
   "commit": "8234129",
   "progress": 100

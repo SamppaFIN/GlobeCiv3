@@ -5,7 +5,12 @@
   "status": "in_progress",
   "fix_summary": {
     "problem_and_root_cause": "Spike, ei korjaus. Tavoitteena oli todistaa yhden renderöijän infinite zoom mittauksella.",
-    "files_changed": ["src/spike/*", "spike.html", "scripts/bench.mjs", "vite.config.ts"]
+    "files_changed": [
+      "src/spike/*",
+      "spike.html",
+      "scripts/bench.mjs",
+      "vite.config.ts"
+    ]
   },
   "ai_testing": {
     "environment": "vite preview (tuotantobuild), http://localhost:4173/GlobeCiv3/spike.html. Headless Chrome 154, Intel UHD Graphics (ANGLE D3D11), 1280×800.",
@@ -60,7 +65,7 @@
         "outcome": "not_run"
       },
       {
-        "steps": "Bench puhelimella: http://192.168.1.208:4173/GlobeCiv3/spike.html?bench",
+        "steps": "Bench puhelimella: https://samppafin.github.io/GlobeCiv3/spike.html?bench",
         "expected": "30 fps tai enemmän, ja taso 17 saavutetaan",
         "result": "Ei ajettu — vaatii Samin puhelimen",
         "outcome": "not_run"
@@ -77,9 +82,18 @@
   },
   "human_acceptance": {
     "checked_items": [
-      { "item": "Zoom rantaviivalla tuntuu saumattomalta sisään ja ulos", "checked": false },
-      { "item": "Puhelimen bench-tulos on kirjattu (malli, FPS, syvin taso)", "checked": false },
-      { "item": "Suositus Phaser-päätöksestä on luettu ja hyväksytty", "checked": false }
+      {
+        "item": "Zoom rantaviivalla tuntuu saumattomalta sisään ja ulos",
+        "checked": false
+      },
+      {
+        "item": "Puhelimen bench-tulos on kirjattu (malli, FPS, syvin taso)",
+        "checked": false
+      },
+      {
+        "item": "Suositus Phaser-päätöksestä on luettu ja hyväksytty",
+        "checked": false
+      }
     ],
     "decision": null,
     "signed_by": null,

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T15:33:13Z",
+    "generated_at": "2026-10-09T15:36:25Z",
     "generated_by": "init-project v1.0",
     "git_commit": "64d900b",
     "git_branch": "main",
@@ -200,7 +200,7 @@
         "Kuutiopallo-quadtree, jonka ruudut ovat tasavärisiä, zoomautuu jatkuvasti tasolta 0 tasolle 17 ilman leikkauksia",
         "Mittaustulokset kirjataan: FPS, näkyvien ruutujen määrä, ruudun generointiaika ja värinä syvimmällä tasolla. Laite ja selain kirjataan.",
         "Mittaus joko vahvistaa päätöksen luopua Phaser-overlaysta (osio 13, 2026-10-09) tai kumoaa sen. Jos se kumoaa päätöksen, asia viedään Samille uutena päätöksenä.",
-        "Prototyypin koodi on omassa haarassaan, eikä sitä mergetä sellaisenaan",
+        "Prototyyppi on eristetty kansioon src/spike ja erilliselle sivulle spike.html, joka julkaistaan Pagesiin puhelintestausta varten. Pääpeli ei käytä sitä, ja se poistetaan, kun tuotantoversiot korvaavat sen (STORY-008). Muutettu 2026-10-09 Samin pyynnöstä.",
         "Mittaus tehdään työpöydällä ja kiinteällä testipuhelimella, ja tulokset verrataan tavoitteeseen 60 fps / 30 fps. Testipuhelin nimetään."
       ],
       "progress": 80,
@@ -863,7 +863,7 @@
         "call_sites_updated": [],
         "compile_errors_before": 0,
         "compile_errors_after": 0,
-        "notes": "Kaikki uusi koodi on src/spike-kansiossa ja vain tässä haarassa. Pääpelin koodia ei muutettu. vite.config.ts:n muutos lisää spike.html:n buildiin, eikä sitä viedä mainiin."
+        "notes": "Kaikki uusi koodi on src/spike-kansiossa ja sivulla spike.html. Pääpelin koodia ei muutettu, eikä pääpeli tuo spike-moduuleja. vite.config.ts:n muutos lisää spike.html:n buildiin, jotta se julkaistaan Pagesiin puhelintestausta varten (Samin päätös 2026-10-09)."
       },
       "commit": "8234129",
       "progress": 100
@@ -1116,7 +1116,7 @@
             "outcome": "not_run"
           },
           {
-            "steps": "Bench puhelimella: http://192.168.1.208:4173/GlobeCiv3/spike.html?bench",
+            "steps": "Bench puhelimella: https://samppafin.github.io/GlobeCiv3/spike.html?bench",
             "expected": "30 fps tai enemmän, ja taso 17 saavutetaan",
             "result": "Ei ajettu — vaatii Samin puhelimen",
             "outcome": "not_run"
