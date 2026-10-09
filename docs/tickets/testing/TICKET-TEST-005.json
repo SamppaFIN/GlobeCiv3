@@ -1,0 +1,88 @@
+{
+  "id": "TICKET-TEST-005",
+  "story": "STORY-005",
+  "implementation_ticket": "TICKET-IMPL-005",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Sivutuotteena korjattiin canvasin touch-action, joka olisi estänyt pinchin, ja tähtien leikkautuminen dynaamiseen far-tasoon.",
+    "files_changed": [
+      "index.html",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node) ja Playwright: paikallisesti Chrome ja Intel UHD, CI:ssä Chromium ja SwiftShader",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0, CDP Input.dispatchTouchEvent",
+    "cases": [
+      {
+        "steps": "Yksikkötesti: rullan kerroin neljällä korkeudella (3R … 1e-4R)",
+        "expected": "Etäisyys kerrotaan samalla kertoimella korkeudesta riippumatta",
+        "result": "Kerroin exp(-0,2) 10 desimaalin tarkkuudella",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkötesti: zoom sisään neljällä korkeudella ja neljällä kursorikohdalla, mukana kallistetut näkymät",
+        "expected": "Piste pysyy kursorin alla",
+        "result": "Virhe alle 0,01 px kaikissa tapauksissa, joissa kursori osui palloon (vähintään 13)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkötesti: zoom ulos",
+        "expected": "Piste pysyy kursorin alla aina, kun kursori näkee pallon vielä zoomin jälkeen",
+        "result": "pass (vähintään 12 tapausta). Pallon reunalla pallo voi kutistua kursorin alta, mikä on geometrinen raja eikä virhe.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkötestit: pinch, rajat, kallistuksen jatkuvuus (2 000 askelta) sekä near ja far",
+        "expected": "Kerroin seuraa sormien etäisyyttä ja keskipiste pysyy. Kallistus on monotoninen ja ilman hyppyjä. Near on enintään korkeus, ja far ulottuu horisonttiin.",
+        "result": "Kaikki vihreitä, 17/17 yksikkötestiä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: oikea hiiren rulla kolmella korkeudella",
+        "expected": "Kerroin exp(-0,2), ja kursorin alla oleva piste pysyy",
+        "result": "pass paikallisesti ja CI:ssä (ajo 37957986356)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kahden sormen pinch CDP-kosketustapahtumilla (100 → 200 px)",
+        "expected": "Etäisyys puolittuu, ja keskipisteen alla oleva piste pysyy",
+        "result": "pass paikallisesti ja CI:ssä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: zoom pohjaan ja ulos asti",
+        "expected": "Keskipisteetäisyys alle 6 ja yli 30 (vanhat OrbitControls-rajat), ja kallistus kasvaa lähellä pintaa",
+        "result": "pass. Kuvissa tähdet näkyvät sekä läheltä että kaukaa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pinch oikealla puhelimella (S23 Ultra) Pagesista",
+        "expected": "Nipistys zoomaa peliä eikä sivua",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Zoom kohti kursoria, sama kerroin joka korkeudella",
+        "checked": true
+      },
+      {
+        "item": "Pinch toimii kosketuksella",
+        "checked": true
+      },
+      {
+        "item": "Kallistus on jatkuva, ja OrbitControlsin rajat on poistettu",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-09"
+  }
+}

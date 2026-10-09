@@ -1,0 +1,37 @@
+{
+  "id": "TICKET-IMPL-005",
+  "story": "STORY-005",
+  "plan": "PLAN-005",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/camera.ts",
+    "src/globe/camera.test.ts",
+    "src/globe/main.ts",
+    "index.html",
+    "tests/e2e/camera.e2e.ts"
+  ],
+  "change_summary": "Uusi tuotantomoduuli src/globe/camera.ts kirjoitettiin prototyypin pohjalta. GlobeCamera-rigi zoomaa logaritmisesti kohti kursoria \"tartu palloon\" -periaatteella: rigiä kierretään pallon keskipisteen ympäri niin, että kursorin alla ollut piste palaa kursorin alle. Mukana ovat myös raahaus, pinch erillisenä testattavana metodina, jatkuva kallistus 0°–60° korkeuden mukaan sekä dynaaminen near ja far. Rullan kerroin on exp(0,002 × deltaY pikseleinä). main.ts korvaa OrbitControlsin rigillä vanhasta aloitusnäkymästä, ja tähdet piirretään omassa passissaan, koska far-taso päättyy horisonttiin. Canvasin touch-action vaihdettiin manipulation → none, jotta selain ei ota nipistystä itselleen. Lähin etäisyys on R × 0,01, koska pääpelissä ei vielä ole pintaa ja heksaverkko on noin 0,015 pinnan yläpuolella (STORY-008 laskee rajaa). Pallon automaattinen pyöriminen (autoRotate) poistui. Poikkeama suunnitelmaan: zoom ulos ei voi pitää pistettä kursorin alla pallon reunalla, koska pallo kutistuu kursorin alta. Testi ja kriteerin tulkinta tarkennettiin tämän mukaan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: controls (OrbitControls) poistettu ja korvattu rigillä",
+      "main.ts: scene.background → renderer.setClearColor, renderer.autoClear = false",
+      "main.ts: tähdet starScene- ja starCamera-olioihin",
+      "window.globeCamera (uusi, testejä varten)"
+    ],
+    "call_sites_found": [
+      "main.ts: animate() kutsui controls.update()",
+      "main.ts: resize-käsittelijä",
+      "main.ts: tuplaklikkauksen raycaster käyttää kameraa"
+    ],
+    "call_sites_updated": [
+      "animate(): tähtipassi, clearDepth, scene-passi",
+      "resize: starCamera.aspect ja rig.apply()"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Tuplaklikkaus toimii ennallaan (raycast kameran kautta). Läheltä katsottuna pääpeli näyttää lähes tyhjältä, koska pintaa ei vielä ole."
+  },
+  "commit": "5fa783f",
+  "progress": 100
+}

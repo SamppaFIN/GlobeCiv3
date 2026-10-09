@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T16:05:56Z",
+    "generated_at": "2026-10-09T16:20:02Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "978fdf8",
+    "git_commit": "e440640",
     "git_branch": "main",
     "language": "fi"
   },
@@ -65,13 +65,13 @@
       "title": "Saumaton kamera",
       "icon": "🔭",
       "description": "Pelaaja zoomaa jatkuvasti planeetalta pinnalle ilman leikkauksia, värinää tai syvyysvirheitä.",
-      "status": "todo",
+      "status": "in_progress",
       "stories": [
         "STORY-005",
         "STORY-006",
         "STORY-007"
       ],
-      "progress": 0
+      "progress": 33
     },
     {
       "id": "EPIC-003",
@@ -220,7 +220,7 @@
       "depends_on": [
         "STORY-004"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Jokainen rullan pykälä muuttaa korkeutta samalla kertoimella korkeudesta riippumatta",
         "Kursorin alla oleva pallon piste pysyy kursorin alla zoomin aikana",
@@ -228,11 +228,11 @@
         "Kamera kallistuu jatkuvasti kohti horisonttia korkeuden laskiessa",
         "OrbitControlsin 6–30 yksikön raja poistuu, ja tilalle tulee oma ohjain"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-005",
+        "implementation": "TICKET-IMPL-005",
+        "testing": "TICKET-TEST-005"
       }
     },
     {
@@ -832,6 +832,64 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-005",
+      "story": "STORY-005",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-09",
+      "approach": "Prototyypin kameraohjain kirjoitetaan tuotantomoduuliksi src/globe/camera.ts: GlobeCamera (rigi: kohdepiste, suunta, etäisyys), logaritminen zoom kohti kursoria \"tartu palloon\" -periaatteella, pinch erillisenä testattavana metodina, korkeuteen sidottu jatkuva kallistus ja dynaaminen near ja far. Syötteenkäsittely kytketään pointer-tapahtumiin. Pääpeli (src/globe/main.ts) vaihtaa OrbitControlsin tähän. Tähdet siirretään omaan sceneensä ja kameraansa, koska dynaaminen far-taso leikkaisi ne muuten. Canvasin touch-action vaihdetaan arvoon none, jotta selain ei vie nipistystä itselleen. Pääpelissä ei vielä ole pintaa, ja heksaverkko on 0,015 yksikköä pallon yläpuolella, joten lähin etäisyys on toistaiseksi R × 0,01. STORY-008 laskee sen arvoon R × 2e-5. Prototyypin tiedostoihin ei kosketa (CLAUDE.md, osio 13).",
+      "alternatives_considered": [
+        {
+          "name": "OrbitControlsin rajojen laajentaminen (minDistance ja maxDistance)",
+          "pros": "Pienin muutos",
+          "cons": "OrbitControls zoomaa kohti pallon keskipistettä eikä kursoria, eikä se kallistu korkeuden mukaan",
+          "rejected_because": "Ei täytä kriteerejä 2 ja 4"
+        },
+        {
+          "name": "Prototyypin camera.ts:n tuonti sellaisenaan",
+          "pros": "Ei uutta koodia",
+          "cons": "Pääpeli riippuisi prototyypistä, joka poistetaan STORY-008:n jälkeen. Pinch-logiikka on syötekäsittelijän sisällä, jossa sitä ei voi yksikkötestata.",
+          "rejected_because": "Päätös 2026-10-09: prototyypin ratkaisut kirjoitetaan uudelleen storyjen mukana"
+        },
+        {
+          "name": "Vaimennettu (inertiaalinen) zoom",
+          "pros": "Pehmeämpi tuntuma kuin OrbitControlsin dampingilla",
+          "cons": "Kursorin alla pysymisen todentaminen vaikeutuu, ja inertia tuo lisää tilaa",
+          "rejected_because": "Ei kuulu kriteereihin. Voidaan lisätä myöhemmin rigin päälle."
+        }
+      ],
+      "files_to_change": [
+        "src/globe/camera.ts (uusi)",
+        "src/globe/camera.test.ts (uusi)",
+        "src/globe/main.ts",
+        "index.html (touch-action)",
+        "tests/e2e/camera.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Kirjoita camera.ts ja yksikkötestit: rullan kerroin, zoom kohti kursoria eri korkeuksilla ja kallistettuna, pinch, rajat ja kallistuksen jatkuvuus",
+          "verify": "npm test vihreä. Kursorivirhe alle 0,01 px 1280×800-näkymässä, ja kerroin on sama korkeudesta riippumatta."
+        },
+        {
+          "step": 2,
+          "action": "Vaihda main.ts:n OrbitControls GlobeCameraan, siirrä tähdet omaan passiinsa ja vaihda canvasin touch-action arvoon none. Paljasta window.globeCamera testejä varten, samaan tapaan kuin olemassa oleva window.globeScene.",
+          "verify": "npm run build menee läpi, eikä OrbitControlsia tuoda enää mistään (grep). Tähdet näkyvät kaikilla etäisyyksillä (kuvakaappaus)."
+        },
+        {
+          "step": 3,
+          "action": "E2E: rulla oikealla hiirellä, pinch CDP:n kosketustapahtumilla ja vanhojen rajojen ylitys (alle 6 ja yli 30 yksikköä keskipisteestä)",
+          "verify": "npm run test:e2e vihreä paikallisesti ja CI:ssä"
+        },
+        {
+          "step": 4,
+          "action": "Merge mainiin, tiketit, ja pinchin tarkistus Samin puhelimella Pagesista (ei estä hyväksyntää)",
+          "verify": "CI vihreä, ja backlog ja CLAUDE.md ovat ajan tasalla"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -960,6 +1018,43 @@
         "notes": "Paikallinen npm run test:e2e vaatii asennetun Chromen. public/icons.svg on käyttämätön Viten pohjan jäänne, eikä sitä poistettu."
       },
       "commit": "978fdf8",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-005",
+      "story": "STORY-005",
+      "plan": "PLAN-005",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/camera.ts",
+        "src/globe/camera.test.ts",
+        "src/globe/main.ts",
+        "index.html",
+        "tests/e2e/camera.e2e.ts"
+      ],
+      "change_summary": "Uusi tuotantomoduuli src/globe/camera.ts kirjoitettiin prototyypin pohjalta. GlobeCamera-rigi zoomaa logaritmisesti kohti kursoria \"tartu palloon\" -periaatteella: rigiä kierretään pallon keskipisteen ympäri niin, että kursorin alla ollut piste palaa kursorin alle. Mukana ovat myös raahaus, pinch erillisenä testattavana metodina, jatkuva kallistus 0°–60° korkeuden mukaan sekä dynaaminen near ja far. Rullan kerroin on exp(0,002 × deltaY pikseleinä). main.ts korvaa OrbitControlsin rigillä vanhasta aloitusnäkymästä, ja tähdet piirretään omassa passissaan, koska far-taso päättyy horisonttiin. Canvasin touch-action vaihdettiin manipulation → none, jotta selain ei ota nipistystä itselleen. Lähin etäisyys on R × 0,01, koska pääpelissä ei vielä ole pintaa ja heksaverkko on noin 0,015 pinnan yläpuolella (STORY-008 laskee rajaa). Pallon automaattinen pyöriminen (autoRotate) poistui. Poikkeama suunnitelmaan: zoom ulos ei voi pitää pistettä kursorin alla pallon reunalla, koska pallo kutistuu kursorin alta. Testi ja kriteerin tulkinta tarkennettiin tämän mukaan.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "main.ts: controls (OrbitControls) poistettu ja korvattu rigillä",
+          "main.ts: scene.background → renderer.setClearColor, renderer.autoClear = false",
+          "main.ts: tähdet starScene- ja starCamera-olioihin",
+          "window.globeCamera (uusi, testejä varten)"
+        ],
+        "call_sites_found": [
+          "main.ts: animate() kutsui controls.update()",
+          "main.ts: resize-käsittelijä",
+          "main.ts: tuplaklikkauksen raycaster käyttää kameraa"
+        ],
+        "call_sites_updated": [
+          "animate(): tähtipassi, clearDepth, scene-passi",
+          "resize: starCamera.aspect ja rig.apply()"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Tuplaklikkaus toimii ennallaan (raycast kameran kautta). Läheltä katsottuna pääpeli näyttää lähes tyhjältä, koska pintaa ei vielä ole."
+      },
+      "commit": "5fa783f",
       "progress": 100
     }
   ],
@@ -1317,6 +1412,94 @@
           },
           {
             "item": "CI ajaa molemmat, ja punainen testi estää julkaisun",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-005",
+      "story": "STORY-005",
+      "implementation_ticket": "TICKET-IMPL-005",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Sivutuotteena korjattiin canvasin touch-action, joka olisi estänyt pinchin, ja tähtien leikkautuminen dynaamiseen far-tasoon.",
+        "files_changed": [
+          "index.html",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node) ja Playwright: paikallisesti Chrome ja Intel UHD, CI:ssä Chromium ja SwiftShader",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0, CDP Input.dispatchTouchEvent",
+        "cases": [
+          {
+            "steps": "Yksikkötesti: rullan kerroin neljällä korkeudella (3R … 1e-4R)",
+            "expected": "Etäisyys kerrotaan samalla kertoimella korkeudesta riippumatta",
+            "result": "Kerroin exp(-0,2) 10 desimaalin tarkkuudella",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkötesti: zoom sisään neljällä korkeudella ja neljällä kursorikohdalla, mukana kallistetut näkymät",
+            "expected": "Piste pysyy kursorin alla",
+            "result": "Virhe alle 0,01 px kaikissa tapauksissa, joissa kursori osui palloon (vähintään 13)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkötesti: zoom ulos",
+            "expected": "Piste pysyy kursorin alla aina, kun kursori näkee pallon vielä zoomin jälkeen",
+            "result": "pass (vähintään 12 tapausta). Pallon reunalla pallo voi kutistua kursorin alta, mikä on geometrinen raja eikä virhe.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkötestit: pinch, rajat, kallistuksen jatkuvuus (2 000 askelta) sekä near ja far",
+            "expected": "Kerroin seuraa sormien etäisyyttä ja keskipiste pysyy. Kallistus on monotoninen ja ilman hyppyjä. Near on enintään korkeus, ja far ulottuu horisonttiin.",
+            "result": "Kaikki vihreitä, 17/17 yksikkötestiä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: oikea hiiren rulla kolmella korkeudella",
+            "expected": "Kerroin exp(-0,2), ja kursorin alla oleva piste pysyy",
+            "result": "pass paikallisesti ja CI:ssä (ajo 37957986356)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kahden sormen pinch CDP-kosketustapahtumilla (100 → 200 px)",
+            "expected": "Etäisyys puolittuu, ja keskipisteen alla oleva piste pysyy",
+            "result": "pass paikallisesti ja CI:ssä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: zoom pohjaan ja ulos asti",
+            "expected": "Keskipisteetäisyys alle 6 ja yli 30 (vanhat OrbitControls-rajat), ja kallistus kasvaa lähellä pintaa",
+            "result": "pass. Kuvissa tähdet näkyvät sekä läheltä että kaukaa.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pinch oikealla puhelimella (S23 Ultra) Pagesista",
+            "expected": "Nipistys zoomaa peliä eikä sivua",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Zoom kohti kursoria, sama kerroin joka korkeudella",
+            "checked": true
+          },
+          {
+            "item": "Pinch toimii kosketuksella",
+            "checked": true
+          },
+          {
+            "item": "Kallistus on jatkuva, ja OrbitControlsin rajat on poistettu",
             "checked": true
           }
         ],
