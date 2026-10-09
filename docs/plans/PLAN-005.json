@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-005",
+  "story": "STORY-005",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-09",
+  "approach": "Prototyypin kameraohjain kirjoitetaan tuotantomoduuliksi src/globe/camera.ts: GlobeCamera (rigi: kohdepiste, suunta, etäisyys), logaritminen zoom kohti kursoria \"tartu palloon\" -periaatteella, pinch erillisenä testattavana metodina, korkeuteen sidottu jatkuva kallistus ja dynaaminen near ja far. Syötteenkäsittely kytketään pointer-tapahtumiin. Pääpeli (src/globe/main.ts) vaihtaa OrbitControlsin tähän. Tähdet siirretään omaan sceneensä ja kameraansa, koska dynaaminen far-taso leikkaisi ne muuten. Canvasin touch-action vaihdetaan arvoon none, jotta selain ei vie nipistystä itselleen. Pääpelissä ei vielä ole pintaa, ja heksaverkko on 0,015 yksikköä pallon yläpuolella, joten lähin etäisyys on toistaiseksi R × 0,01. STORY-008 laskee sen arvoon R × 2e-5. Prototyypin tiedostoihin ei kosketa (CLAUDE.md, osio 13).",
+  "alternatives_considered": [
+    {
+      "name": "OrbitControlsin rajojen laajentaminen (minDistance ja maxDistance)",
+      "pros": "Pienin muutos",
+      "cons": "OrbitControls zoomaa kohti pallon keskipistettä eikä kursoria, eikä se kallistu korkeuden mukaan",
+      "rejected_because": "Ei täytä kriteerejä 2 ja 4"
+    },
+    {
+      "name": "Prototyypin camera.ts:n tuonti sellaisenaan",
+      "pros": "Ei uutta koodia",
+      "cons": "Pääpeli riippuisi prototyypistä, joka poistetaan STORY-008:n jälkeen. Pinch-logiikka on syötekäsittelijän sisällä, jossa sitä ei voi yksikkötestata.",
+      "rejected_because": "Päätös 2026-10-09: prototyypin ratkaisut kirjoitetaan uudelleen storyjen mukana"
+    },
+    {
+      "name": "Vaimennettu (inertiaalinen) zoom",
+      "pros": "Pehmeämpi tuntuma kuin OrbitControlsin dampingilla",
+      "cons": "Kursorin alla pysymisen todentaminen vaikeutuu, ja inertia tuo lisää tilaa",
+      "rejected_because": "Ei kuulu kriteereihin. Voidaan lisätä myöhemmin rigin päälle."
+    }
+  ],
+  "files_to_change": [
+    "src/globe/camera.ts (uusi)",
+    "src/globe/camera.test.ts (uusi)",
+    "src/globe/main.ts",
+    "index.html (touch-action)",
+    "tests/e2e/camera.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Kirjoita camera.ts ja yksikkötestit: rullan kerroin, zoom kohti kursoria eri korkeuksilla ja kallistettuna, pinch, rajat ja kallistuksen jatkuvuus",
+      "verify": "npm test vihreä. Kursorivirhe alle 0,01 px 1280×800-näkymässä, ja kerroin on sama korkeudesta riippumatta."
+    },
+    {
+      "step": 2,
+      "action": "Vaihda main.ts:n OrbitControls GlobeCameraan, siirrä tähdet omaan passiinsa ja vaihda canvasin touch-action arvoon none. Paljasta window.globeCamera testejä varten, samaan tapaan kuin olemassa oleva window.globeScene.",
+      "verify": "npm run build menee läpi, eikä OrbitControlsia tuoda enää mistään (grep). Tähdet näkyvät kaikilla etäisyyksillä (kuvakaappaus)."
+    },
+    {
+      "step": 3,
+      "action": "E2E: rulla oikealla hiirellä, pinch CDP:n kosketustapahtumilla ja vanhojen rajojen ylitys (alle 6 ja yli 30 yksikköä keskipisteestä)",
+      "verify": "npm run test:e2e vihreä paikallisesti ja CI:ssä"
+    },
+    {
+      "step": 4,
+      "action": "Merge mainiin, tiketit, ja pinchin tarkistus Samin puhelimella Pagesista (ei estä hyväksyntää)",
+      "verify": "CI vihreä, ja backlog ja CLAUDE.md ovat ajan tasalla"
+    }
+  ],
+  "status": "approved"
+}

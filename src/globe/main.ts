@@ -3,20 +3,21 @@
  * Minimal working version for T-GC3-001.
  */
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0a0a14);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 3, 12);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Background is the clear colour so the separate star pass shows through
+renderer.setClearColor(0x0a0a14);
+renderer.autoClear = false;
 container.appendChild(renderer.domElement);
 
 // ─── Lights ───────────────────────────────────────
@@ -26,15 +27,6 @@ const sun = new THREE.DirectionalLight(0xffffff, 3);
 sun.position.set(10, 5, 10);
 scene.add(sun);
 
-// ─── Controls ─────────────────────────────────────
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.minDistance = 6;
-controls.maxDistance = 30;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.3;
-
 // ─── Globe + Hex Grid ─────────────────────────────
 const RADIUS = 5;
 const DETAIL = 5; // 362 nodes: 12 pentagons, 350 hexagons
@@ -42,6 +34,20 @@ const DETAIL = 5; // 362 nodes: 12 pentagons, 350 hexagons
 const { nodes, edges } = buildHexGrid(RADIUS, DETAIL);
 
 console.log(`[GlobeCiv3] Hex nodes: ${nodes.length}, edges: ${edges.length}`);
+
+// ─── Camera rig ───────────────────────────────────
+// Starts where the old OrbitControls view was. The minimum distance keeps the
+// camera above the hex grid (about 0.015 above the surface) until surface tiles
+// exist; STORY-008 lowers it toward R × 2e-5.
+const rig = new GlobeCamera(RADIUS, camera, {
+  minDist: RADIUS * 0.01,
+  maxDist: RADIUS * 6,
+  startDist: Math.hypot(0, 3, 12) - RADIUS,
+});
+rig.target.set(0, 3, 12).normalize();
+rig.forward.set(0, 1, 0);
+rig.apply();
+attachInput(renderer.domElement, rig);
 
 // Render hex dots
 const dotsGeo = new THREE.BufferGeometry();
@@ -73,6 +79,9 @@ const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
 scene.add(edgeLines);
 
 // ─── Stars ────────────────────────────────────────
+// Own scene and camera: the globe camera's far plane ends at the horizon
+const starScene = new THREE.Scene();
+const starCamera = new THREE.PerspectiveCamera(45, camera.aspect, 1, 200);
 const starsGeo = new THREE.BufferGeometry();
 const starsPos: number[] = [];
 for (let i = 0; i < 2000; i++) {
@@ -83,7 +92,7 @@ for (let i = 0; i < 2000; i++) {
 }
 starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3));
 const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
-scene.add(new THREE.Points(starsGeo, starsMat));
+starScene.add(new THREE.Points(starsGeo, starsMat));
 
 // ─── Raycaster for hex clicking ───────────────────
 const raycaster = new THREE.Raycaster();
@@ -119,20 +128,25 @@ renderer.domElement.addEventListener('click', (event: MouseEvent) => {
 // ─── Animation loop ───────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
-  controls.update();
+  starCamera.quaternion.copy(camera.quaternion);
+  renderer.clear();
+  renderer.render(starScene, starCamera);
+  renderer.clearDepth();
   renderer.render(scene, camera);
 }
 animate();
 
 // ─── Resize handler ───────────────────────────────
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  camera.aspect = starCamera.aspect = window.innerWidth / window.innerHeight;
+  starCamera.updateProjectionMatrix();
+  rig.apply();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // ─── Export globals ───────────────────────────────
 (window as any).globeScene = scene;
 (window as any).globeNodes = nodes;
+(window as any).globeCamera = rig;
 
 console.log('[GlobeCiv3] 3D globe ready');
