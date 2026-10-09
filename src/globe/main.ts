@@ -127,7 +127,8 @@ renderer.domElement.addEventListener('click', (event: MouseEvent) => {
 let lastFrame = performance.now();
 function animate(now = performance.now()) {
   requestAnimationFrame(animate);
-  rig.update(Math.min((now - lastFrame) / 1000, 0.1));
+  // Real elapsed time, not clamped: a 1 s flight must last 1 s even when frames are slow
+  rig.update((now - lastFrame) / 1000);
   lastFrame = now;
   starCamera.quaternion.copy(camera.quaternion);
   renderer.clear();

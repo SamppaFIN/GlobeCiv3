@@ -129,9 +129,9 @@ test('double-click flies to the nearest hex in about a second, without an overla
   const mid = await flightState(page);
   expect(mid.flying).toBe(true);
   expect(angle(mid.target, dest)).toBeGreaterThan(1e-3);
-  await page.waitForTimeout(1000);
+  // Duration is checked separately with slow frames; here wait for the arrival itself
+  await page.waitForFunction(() => !(window as any).globeCamera.flying, null, { timeout: 3_000 });
   const end = await flightState(page);
-  expect(end.flying).toBe(false);
   expect(angle(end.target, dest)).toBeLessThan(1e-6);
   expect(await page.locator('#sim-overlay, #sim-close').count()).toBe(0);
 });
@@ -157,4 +157,35 @@ test('the mouse wheel interrupts a flight', async ({ page }) => {
   expect((await flightState(page)).flying).toBe(false);
   await page.waitForTimeout(1100);
   expect(angle((await flightState(page)).target, dest)).toBeGreaterThan(1e-3);
+});
+
+test('a flight lasts about a second of wall time even when frames are slow', async ({ page }) => {
+  await openGame(page);
+  await page.evaluate(() => {
+    const w = window as any;
+    // Make every frame take ~150 ms, longer than any per-frame time step clamp
+    const burn = () => { const t = performance.now(); while (performance.now() - t < 150) { /* busy */ } requestAnimationFrame(burn); };
+    requestAnimationFrame(burn);
+    // Time the flight from the game's own update calls
+    const rig = w.globeCamera;
+    const update = rig.update.bind(rig);
+    w.__flight = { calls: [] as number[], clickAt: 0 };
+    document.addEventListener('dblclick', () => { w.__flight.clickAt = performance.now(); });
+    rig.update = (dt: number) => {
+      const flying = rig.flying;
+      update(dt);
+      if (flying) w.__flight.calls.push(performance.now());
+      if (flying && !rig.flying) w.__flight.done = true;
+    };
+  });
+  await page.mouse.dblclick(760, 330);
+  await page.waitForFunction(() => (window as any).__flight.done === true, null, { timeout: 10_000 });
+  const { calls, clickAt } = await page.evaluate(() => (window as any).__flight);
+  const elapsed = calls[calls.length - 1] - clickAt;
+  const maxGap = Math.max(...calls.slice(1).map((t, i) => t - calls[i]));
+  expect(maxGap).toBeGreaterThan(100);
+  // The first step also counts the frame before the click, and the flight ends on
+  // the first frame after one second, so allow one frame either way
+  expect(elapsed).toBeGreaterThan(1000 - maxGap - 50);
+  expect(elapsed).toBeLessThanOrEqual(1000 + maxGap + 50);
 });
