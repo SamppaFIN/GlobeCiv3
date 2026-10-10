@@ -63,9 +63,14 @@ test('Uusi peli flies to the start city in about 3 s and locks zooming out at th
     const w = window as any;
     w.__intro = {};
     document.querySelector('.start-new')!.addEventListener('click', () => { w.__intro.clickAt = performance.now(); });
-    const watch = () => {
-      if (w.globeGame.state.screen === 'playing') w.__intro.landedAt = performance.now();
-      else requestAnimationFrame(watch);
+    const watch = (t: number) => {
+      if (w.__intro.prev) w.__intro.maxGap = Math.max(w.__intro.maxGap ?? 0, t - w.__intro.prev);
+      w.__intro.prev = t;
+      if (w.globeGame.state.screen === 'playing') {
+        w.__intro.landedAt = performance.now();
+        // A discovery (STORY-027) would stop the game and turn the camera; this test is about the start
+        w.globeDebug.setDiscoveries(false);
+      } else requestAnimationFrame(watch);
     };
     requestAnimationFrame(watch);
   });
@@ -74,10 +79,11 @@ test('Uusi peli flies to the start city in about 3 s and locks zooming out at th
   await page.waitForFunction(() => (window as any).globeLevels.state.level >= 1, null, { timeout: 20_000, polling: 'raf' });
   await page.screenshot({ path: testInfo.outputPath('intro-state.png') });
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 30_000 });
-  const { clickAt, landedAt } = await page.evaluate(() => (window as any).__intro);
-  // 1 s turn and 2 s descent of wall time; landing is seen on the first frame after that
+  const { clickAt, landedAt, maxGap } = await page.evaluate(() => (window as any).__intro);
+  // 1 s turn and 2 s descent of wall time. The descent starts on the first frame after the
+  // turn and the landing shows on the first frame after the descent: two frame gaps at most
   expect(landedAt - clickAt).toBeGreaterThan(2900);
-  expect(landedAt - clickAt).toBeLessThan(4500);
+  expect(landedAt - clickAt, `frame gaps up to ${Math.round(maxGap)} ms`).toBeLessThan(3100 + 2 * maxGap);
 
   const game = await gameState(page);
   expect(game.seed).toBe(42);
