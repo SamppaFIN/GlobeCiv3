@@ -135,6 +135,7 @@ function flightState(page: Page): Promise<{ flying: boolean; target: [number, nu
 const angle = (a: number[], b: number[]) => Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]));
 
 test('double-click flies to the nearest hex in about a second, without an overlay', async ({ page }) => {
+  test.setTimeout(90_000);
   await openGame(page);
   const dest = await nearestHex(page, 760, 330);
   await page.mouse.dblclick(760, 330);
@@ -143,8 +144,9 @@ test('double-click flies to the nearest hex in about a second, without an overla
   expect(mid.flying).toBe(true);
   expect(angle(mid.target, dest)).toBeGreaterThan(1e-3);
   // Duration is checked separately with slow frames; here wait for the arrival itself.
-  // The flight ends on the first frame after 1 s, which on the CI software renderer can be late.
-  await page.waitForFunction(() => !(window as any).globeCamera.flying, null, { timeout: 15_000 });
+  // The flight ends on the first frame after 1 s, which on the CI software renderer can be late:
+  // since the tile terrain and fog shaders (STORY-023, STORY-024) a frame there can take seconds.
+  await page.waitForFunction(() => !(window as any).globeCamera.flying, null, { timeout: 45_000 });
   const end = await flightState(page);
   expect(angle(end.target, dest)).toBeLessThan(1e-6);
   expect(await page.locator('#sim-overlay, #sim-close').count()).toBe(0);
