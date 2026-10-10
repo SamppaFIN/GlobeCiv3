@@ -23,6 +23,8 @@ test('main game renders the hex globe without console errors', async ({ page }, 
   await page.goto('./');
   await ready;
   await expect(page.locator('#globe-container canvas')).toBeVisible();
+  // The game starts on the start screen (STORY-021)
+  await expect(page.getByRole('button', { name: 'Uusi peli' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('globe.png') });
   expect(errors).toEqual([]);
 });

@@ -39,6 +39,7 @@
 .btn-secondary { border-color: var(--color-divider); }
 .btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
 .btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-block { width: 100%; margin-top: var(--space-2); }
 
 .tag {
   display: inline-flex; align-items: center; font-size: 11px;
