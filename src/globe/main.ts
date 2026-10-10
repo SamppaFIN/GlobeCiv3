@@ -207,6 +207,61 @@ const spinInverse = new THREE.Quaternion();
 const lockDist = (level = 3) => Math.sqrt(frames[level - 1] * frames[level]) * 0.97;
 
 const startScreen = screen === 'start' ? createStartScreen(hud, newGame) : null;
+/** Radius of the start screen's planet in CSS pixels (frameStartPlanet). */
+let startRadiusPx = 1;
+
+/** Orbit the start screen's camera by q; the stars counter-turn as with the slow spin. */
+function orbitStart(q: THREE.Quaternion) {
+  rig.target.applyQuaternion(q);
+  rig.forward.applyQuaternion(q);
+  rig.apply();
+  spinInverse.multiply(q.clone().invert());
+}
+
+/** Turn the start screen's planet by dx, dy CSS pixels like a trackball (arrow keys, drags off the planet). */
+function turnStartPlanet(dx: number, dy: number) {
+  if (screen !== 'start') return;
+  const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+  // Orbiting the camera the other way moves the surface with the pointer
+  orbitStart(new THREE.Quaternion().setFromAxisAngle(up, -dx / startRadiusPx)
+    .multiply(new THREE.Quaternion().setFromAxisAngle(right, -dy / startRadiusPx)));
+}
+
+/** NDC of a CSS pixel position. */
+const ndcAt = (x: number, y: number) => new THREE.Vector2((x / window.innerWidth) * 2 - 1, 1 - (y / window.innerHeight) * 2);
+
+// A drag on the start screen turns the planet (not one that starts on a button), and so
+// do the arrow keys; the slow spin goes on after
+if (startScreen) {
+  const el = startScreen.element;
+  let last: [number, number] | null = null;
+  /** The surface point under the pointer when the drag started, kept under the pointer. */
+  let grabbed: THREE.Vector3 | null = null;
+  el.addEventListener('pointerdown', e => {
+    if ((e.target as Element).closest('button')) return;
+    last = [e.clientX, e.clientY];
+    grabbed = rig.raycast(ndcAt(e.clientX, e.clientY))?.normalize() ?? null;
+    try { el.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
+  });
+  el.addEventListener('pointermove', e => {
+    if (!last || screen !== 'start') return;
+    const under = grabbed && rig.raycast(ndcAt(e.clientX, e.clientY));
+    // Orbit so that the ray through the pointer meets the grabbed point again
+    if (grabbed && under) orbitStart(new THREE.Quaternion().setFromUnitVectors(under.normalize(), grabbed));
+    else turnStartPlanet(e.clientX - last[0], e.clientY - last[1]);
+    last = [e.clientX, e.clientY];
+  });
+  for (const type of ['pointerup', 'pointercancel'] as const) el.addEventListener(type, () => { last = grabbed = null; });
+  window.addEventListener('keydown', e => {
+    const step = startRadiusPx * 0.15;
+    const turn = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (turn && screen === 'start') {
+      e.preventDefault();
+      turnStartPlanet(turn[0], turn[1]);
+    }
+  });
+}
 levelBar.setVisible(screen === 'free');
 
 // ─── Fog of war (STORY-024) ───────────────────────
@@ -249,6 +304,7 @@ function frameStartPlanet() {
   rig.dist = RADIUS / Math.sin(half) - RADIUS;
   rig.apply();
   startScreen.placeRing(w / 2, h / 2, r);
+  startRadiusPx = r;
 }
 
 function newGame() {
