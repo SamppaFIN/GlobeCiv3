@@ -68,7 +68,7 @@ describe('units', () => {
     const world = makeWorld();
     const units = new Units(START_TILE, world);
     expect(units.units.map(u => u.kind)).toEqual(['settler', 'scout', 'scout']);
-    expect(units.settler.tile).toBe(START_TILE);
+    expect(units.settler!.tile).toBe(START_TILE);
     for (const u of units.units.filter(x => x.kind === 'scout')) {
       expect(neighbors(START_TILE)).toContain(u.tile);
       expect(world.map.share(tilesInRings(u.tile, 2))).toBe(1);
@@ -116,15 +116,18 @@ describe('units', () => {
     expect(unitStatus(units, defender, world, () => 'Ruohomaa')).toBe('Puolustaa · leiri');
   });
 
-  it('walk the settler to the chosen city site', () => {
+  it('walk the settler to the chosen city site, where it founds the city', () => {
     const world = makeWorld();
     const units = new Units(START_TILE, world);
     units.nextSite();
     const site = units.currentSite()!;
-    expect(unitStatus(units, units.settler, world, () => 'Ruohomaa')).toMatch(/^Kaupungin paikka: ruohomaa, \d+ pv$/);
+    expect(unitStatus(units, units.settler!, world, () => 'Ruohomaa')).toMatch(/^Kaupungin paikka: ruohomaa, \d+ pv$/);
     units.found(world);
-    for (let d = 0; d < 20; d++) units.day(world);
-    expect(units.settler.tile).toBe(site);
+    const founded: number[] = [];
+    for (let d = 0; d < 20; d++) founded.push(...units.day(world));
+    // STORY-028: at its site the settler becomes the city
+    expect(founded).toEqual([site]);
+    expect(units.settler).toBeUndefined();
     expect(units.camp).toBe(site);
   });
 
@@ -133,5 +136,38 @@ describe('units', () => {
     expect(directionName(START_TILE, north)).toBe('pohjoista');
     const south = pointToTile(START.clone().add(new THREE.Vector3(0, -0.05, 0)).normalize());
     expect(directionName(START_TILE, south)).toBe('etelää');
+  });
+});
+
+describe('cities and units (STORY-028)', () => {
+  it('the player marks a city site on land, or on the land nearest to a sea tile', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    const land = tilesInRings(START_TILE, 3).find(id => id !== units.currentSite() && Number.isFinite(world.cost(id)))!;
+    expect(units.setSite(land, world)).toBe(true);
+    expect(units.currentSite()).toBe(land);
+    const sea = pointToTile(new THREE.Vector3(0.46, 0.3, 0.84).normalize());
+    expect(world.cost(sea)).toBe(Infinity);
+    expect(units.setSite(sea, world)).toBe(true);
+    const site = units.currentSite()!;
+    expect(Number.isFinite(world.cost(site))).toBe(true);
+    expect(tileCenter(site).angleTo(tileCenter(sea))).toBeLessThan(0.05);
+  });
+
+  it('cities add soldiers that stay put, and settlers that get new sites', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    units.found(world);
+    for (let d = 0; d < 20 && units.settler; d++) units.day(world);
+    expect(units.settler).toBeUndefined();
+    expect(units.sites).toEqual([]);
+    const soldier = units.spawn('warrior', START_TILE, world);
+    expect([soldier.name, soldier.mode]).toEqual(['Soturi 1', 'defend']);
+    for (let d = 0; d < 10; d++) units.day(world);
+    expect(soldier.tile).toBe(START_TILE);
+    const settler = units.spawn('settler', START_TILE, world);
+    expect(units.settler).toBe(settler);
+    expect(units.sites.length).toBeGreaterThan(0);
+    expect(new Set(units.units.map(u => u.id)).size).toBe(units.units.length);
   });
 });

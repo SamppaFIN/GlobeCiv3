@@ -6,7 +6,7 @@
  * status; a scout's mode and the flag tool, or the settler's city site actions.
  */
 import { SPEEDS, type Speed } from '../game/clock';
-import { MODE_NAMES, type Mode } from '../game/units';
+import { MODE_NAMES, type Mode, type UnitKind } from '../game/units';
 
 // Phosphor icons (MIT): play, pause, flag
 const PLAY = '<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg>';
@@ -23,7 +23,8 @@ export interface GameHudState {
   unlockAt: number;
   /** View level: the unit panel shows at the city-area level (3) only. */
   level: number;
-  unit: { name: string; status: string; kind: 'scout' | 'settler'; mode: Mode } | null;
+  /** 'waiting': a settler behind the one choosing a site, without actions. */
+  unit: { name: string; status: string; kind: UnitKind | 'waiting'; mode: Mode } | null;
   /** The flag tool is waiting for a tap on the map. */
   flagTool: boolean;
 }

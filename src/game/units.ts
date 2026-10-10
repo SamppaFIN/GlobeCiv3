@@ -9,12 +9,15 @@
  *   Tutki (explore)   to the flag if there is one, else to the nearest unmapped tile
  *   Kerää (gather)    to the nearest mapped resource tile and back to the camp
  *   Puolusta (defend) back to the camp, and stay
+ *
+ * A settler sent to its site founds a city there (STORY-028); cities add soldiers and
+ * settlers. Soldiers stay in their city.
  */
 import { findPath, nearestTile, tilesInRings } from './pathfinding';
 import { compassIndex } from './names';
 import { tileCenter } from '../globe/hexTiles';
 
-export type UnitKind = 'scout' | 'settler';
+export type UnitKind = 'scout' | 'settler' | 'warrior';
 export type Mode = 'explore' | 'gather' | 'defend';
 export const MODE_NAMES: Record<Mode, string> = { explore: 'Tutki', gather: 'Kerää', defend: 'Puolusta' };
 /** Rings a scout maps around itself (the state line Tutkimus adds one). */
@@ -66,7 +69,7 @@ export class Units {
   /** City sites around the camp, best first, and the chosen one. */
   sites: number[] = [];
   site = 0;
-  /** The settler is walking to the site to found the city (STORY-028 founds it). */
+  /** The settler is walking to the site to found a city there. */
   founding = false;
   /** City areas' emphasis; areas not listed are explored. */
   readonly areaPlans = new Map<number, AreaPlan>();
@@ -74,6 +77,7 @@ export class Units {
   stateLine: StateLine = 'research';
   /** The home province: Puolustus keeps exploring scouts inside it. */
   homeProvince = -1;
+  private nextId = 0;
 
   constructor(landing: number, world: World) {
     this.camp = landing;
@@ -96,7 +100,13 @@ export class Units {
    */
   findSites(world: World) {
     const rings = this.stateLine === 'expand' ? 4 : 3;
-    const scored = tilesInRings(this.settler.tile, rings)
+    const settler = this.settler;
+    if (!settler) {
+      this.sites = [];
+      this.site = 0;
+      return;
+    }
+    const scored = tilesInRings(settler.tile, rings)
       .filter(id => Number.isFinite(world.cost(id)))
       .map(id => [world.siteScore(id), id] as const)
       .sort((a, b) => b[0] - a[0] || a[1] - b[1])
@@ -129,17 +139,40 @@ export class Units {
 
   /** A new scout joins on a tile (a find, STORY-027) and maps around itself. */
   recruit(tile: number, world: World): Unit {
-    this.add('scout', `Tiedustelija ${this.units.filter(u => u.kind === 'scout').length + 1}`, tile);
-    world.reveal(tilesInRings(tile, this.sight));
-    return this.units[this.units.length - 1];
+    return this.spawn('scout', tile, world);
+  }
+
+  /** A new unit on a tile: a find's scout, or a city's soldier or settler (STORY-028). */
+  spawn(kind: UnitKind, tile: number, world: World): Unit {
+    const n = this.units.filter(u => u.kind === kind).length + 1;
+    const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'warrior' ? `Soturi ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
+    this.add(kind, name, tile);
+    const u = this.units[this.units.length - 1];
+    if (kind === 'scout') world.reveal(tilesInRings(tile, this.sight));
+    if (kind === 'warrior') u.mode = 'defend';
+    if (kind === 'settler' && this.settler === u) this.findSites(world);
+    return u;
+  }
+
+  /** The player marks a city site: the tile, or the nearest land to it. */
+  setSite(tile: number, world: World): boolean {
+    const cost = (id: number) => world.cost(id);
+    const land = Number.isFinite(cost(tile)) ? tile : nearestTile(tile, () => 1, id => Number.isFinite(cost(id)));
+    if (land === null || !this.settler) return false;
+    this.sites = [land, ...this.sites.filter(id => id !== land)];
+    this.site = 0;
+    this.founding = false;
+    this.settler.path = [];
+    return true;
   }
 
   private add(kind: UnitKind, name: string, tile: number) {
-    this.units.push({ id: this.units.length, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0 });
+    this.units.push({ id: this.nextId++, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0 });
   }
 
-  get settler(): Unit {
-    return this.units.find(u => u.kind === 'settler')!;
+  /** The settler whose site is chosen (the first one), if any is left. */
+  get settler(): Unit | undefined {
+    return this.units.find(u => u.kind === 'settler');
   }
 
   setMode(unit: Unit, mode: Mode) {
@@ -156,15 +189,16 @@ export class Units {
   nextSite() {
     if (this.sites.length) this.site = (this.site + 1) % this.sites.length;
     this.founding = false;
-    this.settler.path = [];
+    if (this.settler) this.settler.path = [];
   }
 
   /** Send the settler to the chosen site. */
   found(world: World) {
     const site = this.currentSite();
-    if (site === null) return;
+    const settler = this.settler;
+    if (site === null || !settler) return;
     this.founding = true;
-    this.settler.path = findPath(this.settler.tile, site, id => world.cost(id)) ?? [];
+    settler.path = findPath(settler.tile, site, id => world.cost(id)) ?? [];
   }
 
   /** Days of walking along a path. */
@@ -172,8 +206,9 @@ export class Units {
     return path.reduce((sum, id) => sum + world.cost(id), 0);
   }
 
-  /** One day: every unit acts. */
-  day(world: World) {
+  /** One day: every unit acts. Returns the tiles where cities were founded. */
+  day(world: World): number[] {
+    const founded: number[] = [];
     for (const u of this.units) {
       if (u.wait > 0) { u.wait--; continue; }
       if (!u.path.length && u.kind === 'scout') u.path = this.plan(u, world);
@@ -189,6 +224,15 @@ export class Units {
       }
       if (u.kind === 'settler' && !u.path.length) this.camp = u.tile;
     }
+    // The founding settler at its site becomes the city
+    const settler = this.settler;
+    if (this.founding && settler && !settler.path.length && settler.wait === 0 && settler.tile === this.currentSite()) {
+      this.units.splice(this.units.indexOf(settler), 1);
+      founded.push(settler.tile);
+      this.founding = false;
+      this.findSites(world);
+    }
+    return founded;
   }
 
   private atGatherStop(u: Unit) {
@@ -231,6 +275,8 @@ export function directionName(from: number, to: number): string {
 
 /** Status line under a unit's name (design 2b). */
 export function unitStatus(units: Units, u: Unit, world: World, terrainName: (id: number) => string): string {
+  if (u.kind === 'warrior') return 'Puolustaa kaupunkia';
+  if (u.kind === 'settler' && u !== units.settler) return 'Odottaa · seuraava uudisasukas';
   if (u.kind === 'settler') {
     const site = units.currentSite();
     if (site === null) return 'Ei maata lähellä';
