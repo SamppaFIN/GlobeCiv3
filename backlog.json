@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-09T21:31:14Z",
+    "generated_at": "2026-10-10T02:21:11Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "46a16b0",
+    "git_commit": "eae34b8",
     "git_branch": "main",
     "language": "fi"
   },
@@ -121,7 +121,7 @@
       "title": "Pelin kulku",
       "icon": "🗺️",
       "description": "Aloitusnäytöstä uuteen peliin, heksaruutukarttaan ja fog of wariin. Napautus sukeltaa alueen sisään taso kerrallaan (STORY-029). Autonomiset tiedustelijat kartoittavat maailmaa, ja zoom-tasot aukeavat kartoituksen myötä. Suunnitelma: docs/design/pelin-kulku.md. Grafiikat: Claude Designin Kartografi-paketti (docs/Aloitusnäyttö design directions/design_handoff_globeciv3).",
-      "status": "todo",
+      "status": "in_progress",
       "stories": [
         "STORY-029",
         "STORY-021",
@@ -134,7 +134,7 @@
         "STORY-028",
         "STORY-030"
       ],
-      "progress": 0
+      "progress": 20
     }
   ],
   "stories": [
@@ -652,18 +652,18 @@
       "depends_on": [
         "STORY-029"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Ruudukko jakaa saman ikosaedrin kuin valtiot taajuudella f = 330 = 6 × 55, joten jokainen valtion keskus on ruudun keskipiste. Ruutuja on 10f² + 2, ja 12 niistä on viisikulmioita (yksikkötesti).",
         "Piste → ruutu → keskipiste toimii edestakaisin kaikilla tahkoilla ja niiden reunoilla, ja naapureita on 6 (viisikulmiolla 5) (yksikkötesti)",
         "Kaupunkialue on niiden ruutujen joukko, joiden keskipiste kuuluu siihen, joten sisäkkäisyys on tarkka. Ruutumäärä kaupunkialuetta kohden mitataan ja kirjataan (tavoite noin 61, design-paketin heksamalli).",
         "Kaupunkialuetasolla piirretään heksareunat (--hex-edge, 0,6 px), ja alueiden rajat kulkevat ruutujen reunoja pitkin. Kaukaa rajat näyttävät samoilta kuin ennen. Intel UHD vähintään 55 fps."
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-012",
+        "implementation": "TICKET-IMPL-012",
+        "testing": "TICKET-TEST-012"
       }
     },
     {
@@ -819,7 +819,7 @@
       "depends_on": [
         "STORY-019"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Näkymän taso (planeetta, valtio, lääni, kaupunkialue) päätellään kameran etäisyydestä. Jokaisella tasolla on kehysetäisyys, jolla alue täyttää noin 70 % näytön kapeammasta mitasta (yksikkötesti).",
         "Napautus valitsee alueen nykyisellä tasolla ja korostaa sen aksenttireunalla. Toinen napautus samaan alueeseen tai tuplaklikkaus lentää alueen keskelle seuraavan tason kehykseen noin sekunnissa. Vähennetyllä liikkeellä siirtymä on välitön.",
@@ -827,11 +827,11 @@
         "Ylhäällä on murupolku (Planeetta › Valtio › Lääni › Kaupunkialue) ja 44 px:n takaisin-nappi, joka lentää tason ylös. Raahaus ja nipistys toimivat ennallaan, eikä raahaus valitse aluetta.",
         "E2E: napautus valitsee, toinen napautus lentää seuraavalle tasolle ja takaisin-nappi palaa. Ei konsolivirheitä."
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-011",
+        "implementation": "TICKET-IMPL-011",
+        "testing": "TICKET-TEST-011"
       }
     },
     {
@@ -1478,6 +1478,126 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-011",
+      "story": "STORY-029",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-10",
+      "approach": "Uusi moduuli src/globe/levels.ts määrittelee näkymän tasot (0 planeetta, 1 valtio, 2 lääni, 3 kaupunkialue). Jokaisella tasolla on kehysetäisyys, jolla tason alue (heksan ympäryssäde = sisäsäde × 2/√3) täyttää 70 % näytön kapeammasta mitasta. Planeetalla koko pallo täyttää saman osuuden. Näkymän taso on se, jonka kehysetäisyys on lähinnä logaritmisesti (rajat kehysetäisyyksien geometrisissä keskiarvoissa), joten vapaa zoom vaihtaa tasoa luontevasti. Napautus (osoitin alas ja ylös alle 8 px:n liikkeellä ja alle 500 ms:ssa, yksi osoitin) valitsee napautetun alueen näkymän tasolla: planeetalla valtion, valtiotasolla läänin ja läänitasolla kaupunkialueen. Toinen napautus samaan alueeseen lentää sen keskelle seuraavan tason kehysetäisyydelle (1 s, vähennetyllä liikkeellä heti). Tuplaklikkaus on kaksi napautusta, joten vanha tuplaklikkauslento säilyy. Shaderi saa kaksi uutta tietoa ruutukohtaisina uniformeina: valitun alueen keskus ja taso (aksenttireuna ja hehku sisäpuolella) sekä kontekstialue, eli alue, jonka sisällä kamera on (taso yksi ylempänä kuin näkymä). Kontekstin ulkopuolinen maailma himmennetään, jolloin näkyvä heksataso vaihtuu napautetun heksan mukaan. Alue tunnistetaan vertaamalla ruudun ehdokaslistan keskusta uniformiin, ja molemmat lasketaan samalla tavalla float64:ssä, joten float32-arvot ovat samat. Hehku käyttää laskettua rajaetäisyyttä tai, kun silmukka ohitetaan, verteksien rajavihjettä. Murupolku ja 44 px:n takaisin-nappi ovat DOM-kerros (src/ui), ja tyylit tulevat design-paketin tokens.css:stä ja Nocturne-luokista. Inter-fontti paketoidaan (@fontsource/inter, OFL-1.1).",
+      "alternatives_considered": [
+        {
+          "name": "Erillinen tasotila (diskreetti tila-automaatti) kameran etäisyyden sijaan",
+          "pros": "Selkeä tila, jota HUD voi seurata",
+          "cons": "Vapaa zoom (rulla, nipistys) ja tila voisivat mennä ristiin, ja saumaton zoom on moottorin ydinlupaus",
+          "rejected_because": "Taso johdetaan etäisyydestä, jolloin rulla, nipistys ja napautus ovat aina yhtäpitäviä"
+        },
+        {
+          "name": "Yksi napautus sukeltaa heti",
+          "pros": "Yksi kosketus vähemmän",
+          "cons": "Lääni- ja valtionäkymissä napautus valitsee alueen paneelia varten (design-paketin 6a ja 7a), ja vahingossa tehty napautus lentäisi pois",
+          "rejected_because": "Valinta ensin ja sukellus toisella napautuksella sopii yhteen paneelien kanssa, ja tuplaklikkaus toimii yhä"
+        },
+        {
+          "name": "Svelte-komponentit HUDille heti",
+          "pros": "Myöhemmät HUDit (2b, kortit) hyötyvät",
+          "cons": "Murupolku ja yksi nappi ovat muutama rivi DOM-koodia, ja runes-tyypitys tsc:ssä vaatii lisäasetuksia",
+          "rejected_because": "Yksinkertaisuus. Svelte arvioidaan uudelleen STORY-025:n HUDissa."
+        }
+      ],
+      "files_to_change": [
+        "src/globe/levels.ts (uusi) ja src/globe/levels.test.ts",
+        "src/globe/tiles.ts (valinta- ja kontekstiuniformit, shaderin korostus ja himmennys)",
+        "src/globe/main.ts (napautus, tasotila, murupolku)",
+        "src/ui/tokens.css, src/ui/hud.css ja src/ui/levelBar.ts (uudet)",
+        "package.json (@fontsource/inter)",
+        "tests/e2e/levels.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "levels.ts ja yksikkötestit: kehysetäisyydet pysty- ja vaakanäytöllä, tasot etäisyydestä, alueen polku pisteestä ja sukelluskohde",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 2,
+          "action": "Shaderin valinta ja konteksti, napautus ja murupolku pääpeliin",
+          "verify": "npm run build menee läpi, ja kuvissa valittu alue näkyy aksenttireunalla ja konteksti kirkkaana"
+        },
+        {
+          "step": 3,
+          "action": "E2E: napautus valitsee, toinen napautus lentää, takaisin palaa. Vanhat kameratestit pysyvät vihreinä. Merge ja CI.",
+          "verify": "Kaikki vihreitä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-012",
+      "story": "STORY-022",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-10",
+      "approach": "Uusi moduuli src/globe/hexTiles.ts: alin karttataso on saman ikosaedrin (three.js IcosahedronGeometry) geodeettinen heksaruudukko taajuudella F = 330 = 6 × 55, joten jokainen valtion keskus on ruudun keskipiste. Piste kuuluu tahkoon, jonka keskipiste on lähin, ja tahkon tasossa lähimpään hilapisteeseen (heksasolut). Ruuduilla on kanoniset tunnisteet (12 kulmaa, särmät ja tahkojen sisäpisteet, yhteensä 10F² + 2), ja naapuri tahkon särmän takana löytyy taittamalla piste viereiseen tahkoon. Kaupunkialue on niiden ruutujen joukko, joiden keskipiste kuuluu siihen. Ruutumäärän tasaamiseksi läänien ja kaupunkialueiden keskukset tulevat kanonisesta asettelusta säännöllisessä heksassa (scripts/region-layout.mjs: Lloyd-relaksaatio ja pinta-alojen tasaus), joka sovitetaan kuhunkin valtioon naapureiden mukaan affiinikuvauksella. Jokaisen ruudun kaupunkialue lasketaan kerran taulukoksi (Regions.tileTable), ja se on ruutujäsenyyden ainoa lähde sekä pelilogiikalle että shaderille (16-bittinen tekstuuri). Shaderi laskee pikselin ruudun hilakoordinaateista, jotka jaetaan kokonais- ja murto-osaan ruudun keskipisteessä (sama tarkkuustemppu kuin kohinassa), piirtää heksareunat tokenilla --hex-edge kaupunkialuetasolla ja siirtää aluerajat ruutujen reunoille, kun ruutu on 4–8 px. Valinta ja konteksti käyttävät silloin ruutujäsenyyttä.",
+      "alternatives_considered": [
+        {
+          "name": "Aluehaku kolmen ruudun keskipisteessä pikseliä kohden (ensimmäinen toteutus)",
+          "pros": "Ei tekstuuria eikä käynnistyskustannusta",
+          "cons": "Mitattu Intel UHD:lla 19–30 fps (ennen 60), koska rajojen lähellä haku tehtiin kolmesti 10–30 valtion listasta, ja vakiotaulukot kasvattivat shaderia",
+          "rejected_because": "Mittaus. Tekstuuripohjainen ratkaisu palautti 58–60 fps:n."
+        },
+        {
+          "name": "Tarkat 61 ruudun kaupunkialueet alhaalta ylös (design-paketin superlaatoitus)",
+          "pros": "Jokainen kaupunkialue on täsmälleen 61 ruutua",
+          "cons": "Valtioista tulisi kukkamaisia ja niiden määrä muuttuisi, ja ikosaedrin kulmissa laatoitus katkeaa",
+          "rejected_because": "Valtioheksat on hyväksytty, ja pallolla tarkka laatoitus ei onnistu"
+        },
+        {
+          "name": "Lloyd-relaksaatio jokaiselle valtiolle pallolla käynnistyksessä",
+          "pros": "Huomioi jokaisen valtion todellisen muodon",
+          "cons": "Arviolta sekunteja käynnistyksessä",
+          "rejected_because": "Kanoninen asettelu ja affiinikuvaus antavat p10–p90 54–68 ruutua ilman käynnistyskustannusta"
+        },
+        {
+          "name": "Ruututaulukko Web Workerissa",
+          "pros": "Ei pysäytä pääsäiettä",
+          "cons": "Lisää monimutkaisuutta",
+          "rejected_because": "Mitattu 323–456 ms työpöydällä. Arvioidaan uudelleen, jos puhelimella aloitus hidastuu."
+        }
+      ],
+      "files_to_change": [
+        "src/globe/hexTiles.ts (uusi) ja hexTiles.test.ts",
+        "src/globe/regionLayout.ts (generoitu) ja scripts/region-layout.mjs",
+        "src/globe/regions.ts (asettelu, naapurit, ruututaulukko)",
+        "src/globe/levels.ts (polku ruututaulukosta)",
+        "src/globe/tiles.ts (tekstuurit, heksareunat, rajat ruutujen reunoilla)",
+        "src/globe/colors.ts (OKLCH-tokenit shaderiin)",
+        "tests/e2e/hexTiles.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Ruudukko ja testit: tunnisteiden bijektio, edestakaisuus, naapurit ja viisikulmiot, valtioiden keskukset, taitto särmien yli",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 2,
+          "action": "Tasainen asettelu ja ruututaulukko, ruutumäärät mitattuina",
+          "verify": "Ruutuja kaupunkialuetta kohden noin 61 (p10–p90 kirjataan)"
+        },
+        {
+          "step": 3,
+          "action": "Shaderi: heksareunat ja rajat ruutujen reunoilla, suorituskyky",
+          "verify": "Kuvat kaupunkialue-, ruutu- ja syvimmältä tasolta. Intel UHD vähintään 55 fps."
+        },
+        {
+          "step": 4,
+          "action": "E2E, merge ja CI",
+          "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -1827,6 +1947,94 @@
         "notes": "Ensimmäinen versio oli liian raskas: Intel UHD:lla 24–38 fps, ja CI-tilassa 8/13 testiä aikakatkaistiin (15,9 min). Optimointien jälkeen 56–61 fps kaikilla etäisyyksillä 3R … 2e-5R, CI-tila 4,5 min, ja GitHubin CI 2,3 min. Yksi aluetesti muutettiin tekemään yksi expect särmää kohden, koska 390 000 expect-kutsua ylitti 5 s:n aikarajan. Tarkistettava asia ei muuttunut."
       },
       "commit": "46a16b0",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-011",
+      "story": "STORY-029",
+      "plan": "PLAN-011",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/levels.ts",
+        "src/globe/levels.test.ts",
+        "src/globe/tiles.ts",
+        "src/globe/main.ts",
+        "src/main.ts",
+        "index.html",
+        "src/ui/tokens.css",
+        "src/ui/nocturne.css",
+        "src/ui/hud.css",
+        "src/ui/levelBar.ts",
+        "tests/e2e/levels.e2e.ts",
+        "package.json",
+        "package-lock.json"
+      ],
+      "change_summary": "Näkymän taso (planeetta, valtio, lääni, kaupunkialue) päätellään kameran etäisyydestä. Jokaisella tasolla on kehysetäisyys, jolla tason alue täyttää 70 % näytön kapeammasta mitasta. Napautus valitsee alueen nykyisellä tasolla ja korostaa sen aksenttireunalla ja hehkulla. Toinen napautus samaan alueeseen tai tuplaklikkaus lentää sen keskelle seuraavan tason kehysetäisyydelle. Alueen ulkopuolinen maailma himmennetään (konteksti), ja rajojen esiin häivytys on suhteessa näytön kokoon, joten jokainen taso näyttää täsmälleen alemman tasonsa heksat. Ylhäällä on murupolku ja 44 px:n takaisin-nappi. Tokenit ja Nocturne-luokat tulevat design-paketista, ja Inter-fontti on paketoitu (@fontsource/inter, OFL-1.1).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "main.ts: tuplaklikkauksen käsittelijä korvattiin napautuksella (valinta ja sukellus)",
+          "GlobeCamera maxDist 6R → 8R (pystynäytön planeettakehys on 6,5R)",
+          "TileManager: setHighlight, narrowPx ja uniformit focus*/context*/accentColor",
+          "Shaderi: läänien ja kaupunkialueiden häivytys suhteessa näytön kapeampaan mittaan (ennen 20–50 px)"
+        ],
+        "call_sites_found": [
+          "Tuplaklikkauksen E2E-testit (camera.e2e.ts)",
+          "TileManager-konstruktori main.ts:ssä"
+        ],
+        "call_sites_updated": [
+          "main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kameratestien tuplaklikkaus toimii sellaisenaan: ensimmäinen klikkaus valitsee valtion ja toinen lentää sen keskelle. Puhelimen pystynäytöllä aloitusetäisyys 1,47R on jo valtiotasoa. STORY-021 asettaa aloituksen planeettakehykseen."
+      },
+      "commit": "4e5028d",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-012",
+      "story": "STORY-022",
+      "plan": "PLAN-012",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/hexTiles.ts",
+        "src/globe/hexTiles.test.ts",
+        "src/globe/regionLayout.ts",
+        "scripts/region-layout.mjs",
+        "src/globe/regions.ts",
+        "src/globe/levels.ts",
+        "src/globe/tiles.ts",
+        "src/globe/tiles.test.ts",
+        "src/globe/colors.ts",
+        "src/globe/colors.test.ts",
+        "src/globe/main.ts",
+        "tests/e2e/hexTiles.e2e.ts",
+        "tests/e2e/levels.e2e.ts"
+      ],
+      "change_summary": "Alin karttataso on geodeettinen heksaruudukko (1 089 002 ruutua, 12 viisikulmiota) samalla ikosaedrilla kuin valtiot, taajuudella 330 = 6 × 55. Läänit ja kaupunkialueet saavat kanonisen, pinta-aloiltaan tasatun asettelun, joka sovitetaan kuhunkin valtioon. Kaupunkialueessa on nyt 54–68 ruutua (p10–p90, mediaani 62), kun ennen oli 40–90. Jokaisen ruudun kaupunkialue taulukoidaan kerran (noin 0,4 s) ja ladataan tekstuuriksi, joka on ruutujäsenyyden ainoa lähde. Shaderi laskee pikselin ruudun, piirtää heksareunat kaupunkialuetasolla ja siirtää aluerajat ruutujen reunoille, kun ruudut ovat 4–8 px. Valinta ja konteksti käyttävät silloin ruutujäsenyyttä.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Regions: konstruktori käyttää kanonista asettelua (läänien ja kaupunkialueiden keskukset siirtyivät), uudet neighbors, tileTable ja cityOfTile",
+          "levels.regionPath: alueet ruututaulukosta",
+          "TileManager.setHighlight: Highlight-tyyppi sisältää alueen tunnisteen",
+          "tiles.ts: rajavihjeet rajataan äärellisiksi"
+        ],
+        "call_sites_found": [
+          "regionPath: main.ts (polku ja konteksti), levels.ts (regionAt, backTarget)",
+          "setHighlight: main.ts",
+          "Regions.centers: tiles.ts, regions.test.ts, levels.ts"
+        ],
+        "call_sites_updated": [
+          "main.ts",
+          "tests/e2e/levels.e2e.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Ensimmäinen versio haki alueet kolmesta ruudun keskipisteestä pikseliä kohden: Intel UHD:lla 19–30 fps. Tekstuuripohjainen versio: 58–60 fps. Syvällä zoomissa löytyi vika, jossa ääretön rajavihje interpoloitui GPU:lla NaN:ksi ja täytti kokonaisia ruutuja rajan värillä. Korjattu, ja regressiotesti kaatuu ilman korjausta."
+      },
+      "commit": "851605d",
       "progress": 100
     }
   ],
@@ -2741,6 +2949,244 @@
         "decision": "accepted",
         "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-09"
+      }
+    },
+    {
+      "id": "TICKET-TEST-011",
+      "story": "STORY-029",
+      "implementation_ticket": "TICKET-IMPL-011",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Ensimmäisessä versiossa kaupunkialueiden rajat näkyivät jo valtiotasolla, koska häivytys oli pikseleinä. Korjattiin suhteuttamalla häivytys näytön kokoon.",
+        "files_changed": [
+          "src/globe/tiles.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) sekä GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Kehysetäisyydet pysty- ja vaakanäytöllä: alue täyttää kapeamman mitan",
+            "expected": "Vaakasuunnassa 70 % ± 5, pystysuunnassa kallistuksen verran vähemmän",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Taso etäisyydestä, alueen polku ja sukellus- ja paluukohteet",
+            "expected": "Oikeat tasot ja sisäkkäiset polut 200 satunnaisessa pisteessä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: napautus valitsee, toinen napautus lentää valtio-, lääni- ja kaupunkialuetasolle, ja takaisin-nappi palaa planeetalle",
+            "expected": "Taso, polku ja kohde oikein. Takaisin-nappi vähintään 44 × 44 px. Ei konsolivirheitä.",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: raahaus ei valitse aluetta",
+            "expected": "Ei valintaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: 390 × 844 -kosketusnäyttö, kaksi napautusta",
+            "expected": "Sukellus toimii, eikä murupolku leikkaudu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Vanhat kameratestit (tuplaklikkaus, vähennetty liike, rulla keskeyttää, lennon kesto hitailla frameilla)",
+            "expected": "Vihreä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Suorituskyky: Intel UHD, 1280×800, valinta ja konteksti päällä, etäisyydet 3R … 2e-5R",
+            "expected": "Lähellä 60 fps:ää",
+            "result": "60,1–60,4 fps kaikilla etäisyyksillä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo 37995589213 (commit 8f16f3e)",
+            "expected": "Vihreä ja julkaisu",
+            "result": "success",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Puhelimella (S23 Ultra) Pagesista",
+            "expected": "Napautus ja sukellus toimivat sormella",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-011-planet-selected.png",
+          "docs/screenshots/TICKET-TEST-011-state.png",
+          "docs/screenshots/TICKET-TEST-011-state-selected.png",
+          "docs/screenshots/TICKET-TEST-011-province.png",
+          "docs/screenshots/TICKET-TEST-011-phone.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Taso päätellään etäisyydestä, ja kehys täyttää noin 70 %",
+            "checked": true
+          },
+          {
+            "item": "Napautus valitsee ja korostaa, toinen napautus sukeltaa",
+            "checked": true
+          },
+          {
+            "item": "Jokainen taso näyttää alemman tasonsa heksat (ruudut STORY-022:ssa)",
+            "checked": true
+          },
+          {
+            "item": "Murupolku ja 44 px:n takaisin-nappi",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-10"
+      }
+    },
+    {
+      "id": "TICKET-TEST-012",
+      "story": "STORY-022",
+      "implementation_ticket": "TICKET-IMPL-012",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kaksi korjausta ennen mergeä: (1) suorituskyky, kun aluehaut korvattiin ruututaulukon tekstuurilla, ja (2) ääretön rajavihje, joka muuttui GPU:lla NaN:ksi.",
+        "files_changed": [
+          "src/globe/tiles.ts",
+          "src/globe/regions.ts",
+          "src/globe/hexTiles.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader, pikselisuhde 0,5). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Tunnisteet: jokainen tahkojen hilapiste saa tunnisteen, ja niitä on 10F² + 2",
+            "expected": "Bijektio",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Edestakaisuus: 20 000 ruutua ja niiden lähipisteet kaikilla tahkoilla, 20 000 satunnaista pistettä",
+            "expected": "Oma ruutu löytyy, ja piste on alle yhden välin päässä keskipisteestään",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Naapurit: 12 viisikulmiota (5), 5 000 heksaa (6) symmetrisesti, ja taitto särmän yli kuten shaderissa",
+            "expected": "Samat naapurit kuin suoralla haulla",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Valtioiden 362 keskusta",
+            "expected": "Jokainen on ruudun keskipiste",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ruututaulukko vs. Regions.cityOf 30 000 ruudussa",
+            "expected": "Sama, paitsi tasapelit rajalla",
+            "result": "pass (tasapelejä alle 30)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ruutuja kaupunkialuetta kohden 300 satunnaisessa kaupunkialueessa",
+            "expected": "Noin 61",
+            "result": "min 34, p10 54, mediaani 62, p90 68, max 90, keskiarvo 61,8",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Regressio: rajavihjeet ovat äärellisiä syvällä zoomissa",
+            "expected": "Kaatuu ilman korjausta, menee läpi korjauksen kanssa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kontekstin himmennys kaupunkialuetasolla valtion rajalla",
+            "expected": "Kuvan kirkkaus noudattaa ruutujäsenyyttä eikä pikselin Voronoi-aluetta",
+            "result": "Ruutujäsenyys 99,4 %, pikselijäsenyys 97,2 %, 150 näytettä eroaa",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: heksat kaupunkialuetasolta syvimmälle tasolle",
+            "expected": "Rajat suoria ruudun reunoja, ei virheitä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+            "expected": "Vihreä",
+            "result": "18/18 paikallisesti, 18/18 CI-tilassa (9,2 min)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Suorituskyky: Intel UHD, 1280×800, valtion rajalla planeetasta syvimpään",
+            "expected": "Vähintään 55 fps",
+            "result": "planeetta 60,1 · valtio 59,6 · lääni 60,1 · kaupunkialue 60,1 · /3 60,2 · /8 60,1 · /200 58,2 · syvin 60,4 fps (ensimmäinen versio 19–30)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ruututaulukon laskenta selaimessa (Chrome, työpöytä)",
+            "expected": "Mitataan",
+            "result": "323–456 ms kolmella latauksella",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo 38015837867 (commit eae34b8)",
+            "expected": "Vihreä ja julkaisu",
+            "result": "success (10,2 min)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Puhelimella (S23 Ultra) Pagesista",
+            "expected": "Heksat ja rajat näkyvät, ja peli on sulava",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-012-land-city-area.png",
+          "docs/screenshots/TICKET-TEST-012-border-city-zoom.png",
+          "docs/screenshots/TICKET-TEST-012-border-tile-zoom.png",
+          "docs/screenshots/TICKET-TEST-012-border-deepest.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Sama ikosaedri, F = 330, 10F² + 2 ruutua ja 12 viisikulmiota",
+            "checked": true
+          },
+          {
+            "item": "Edestakaisuus ja naapurit kaikilla tahkoilla ja särmillä",
+            "checked": true
+          },
+          {
+            "item": "Kaupunkialue ruutujen joukkona, noin 61 ruutua, mitattu ja kirjattu",
+            "checked": true
+          },
+          {
+            "item": "Heksareunat ja rajat ruutujen reunoilla, vähintään 55 fps",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-10"
       }
     }
   ]

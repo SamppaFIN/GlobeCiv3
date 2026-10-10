@@ -1,0 +1,45 @@
+{
+  "id": "TICKET-IMPL-012",
+  "story": "STORY-022",
+  "plan": "PLAN-012",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/hexTiles.ts",
+    "src/globe/hexTiles.test.ts",
+    "src/globe/regionLayout.ts",
+    "scripts/region-layout.mjs",
+    "src/globe/regions.ts",
+    "src/globe/levels.ts",
+    "src/globe/tiles.ts",
+    "src/globe/tiles.test.ts",
+    "src/globe/colors.ts",
+    "src/globe/colors.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/hexTiles.e2e.ts",
+    "tests/e2e/levels.e2e.ts"
+  ],
+  "change_summary": "Alin karttataso on geodeettinen heksaruudukko (1 089 002 ruutua, 12 viisikulmiota) samalla ikosaedrilla kuin valtiot, taajuudella 330 = 6 × 55. Läänit ja kaupunkialueet saavat kanonisen, pinta-aloiltaan tasatun asettelun, joka sovitetaan kuhunkin valtioon. Kaupunkialueessa on nyt 54–68 ruutua (p10–p90, mediaani 62), kun ennen oli 40–90. Jokaisen ruudun kaupunkialue taulukoidaan kerran (noin 0,4 s) ja ladataan tekstuuriksi, joka on ruutujäsenyyden ainoa lähde. Shaderi laskee pikselin ruudun, piirtää heksareunat kaupunkialuetasolla ja siirtää aluerajat ruutujen reunoille, kun ruudut ovat 4–8 px. Valinta ja konteksti käyttävät silloin ruutujäsenyyttä.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Regions: konstruktori käyttää kanonista asettelua (läänien ja kaupunkialueiden keskukset siirtyivät), uudet neighbors, tileTable ja cityOfTile",
+      "levels.regionPath: alueet ruututaulukosta",
+      "TileManager.setHighlight: Highlight-tyyppi sisältää alueen tunnisteen",
+      "tiles.ts: rajavihjeet rajataan äärellisiksi"
+    ],
+    "call_sites_found": [
+      "regionPath: main.ts (polku ja konteksti), levels.ts (regionAt, backTarget)",
+      "setHighlight: main.ts",
+      "Regions.centers: tiles.ts, regions.test.ts, levels.ts"
+    ],
+    "call_sites_updated": [
+      "main.ts",
+      "tests/e2e/levels.e2e.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Ensimmäinen versio haki alueet kolmesta ruudun keskipisteestä pikseliä kohden: Intel UHD:lla 19–30 fps. Tekstuuripohjainen versio: 58–60 fps. Syvällä zoomissa löytyi vika, jossa ääretön rajavihje interpoloitui GPU:lla NaN:ksi ja täytti kokonaisia ruutuja rajan värillä. Korjattu, ja regressiotesti kaatuu ilman korjausta."
+  },
+  "commit": "851605d",
+  "progress": 100
+}

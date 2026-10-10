@@ -281,13 +281,13 @@ hakemisto.
     { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012", "STORY-019"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] },
-    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "todo", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030"] }
+    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030"] }
   ],
   "stories_total": 30,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010"],
-  "next": "STORY-029, sitten STORY-022 ja STORY-021"
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012"],
+  "next": "STORY-021, sitten STORY-023"
 }
 ```
 
@@ -383,6 +383,9 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-10 | Tasonavigointi: napautus valitsee alueen ja toinen napautus (tai tuplaklikkaus) sukeltaa sen sisään, jolloin näkymän taso ja näytettävä heksatyyppi vaihtuvat: planeetalla valtiot, valtiossa läänit, läänissä kaupunkialueet ja kaupunkialueessa ruudut. Uusi STORY-029 tehdään ensin, koska aloituslento (STORY-021) ja tasonäkymät (STORY-026) käyttävät samoja tasoja. | Samin pyyntö | Sami |
 | 2026-10-10 | Design-paketin tasomainen heksamalli (kaupunkialue on 61 ruudun heksa, ja lääni ja valtio ovat 7 + 7 superlaatoitusta) toteutetaan pallolla geodeettisena ruudukkona samalla ikosaedrilla kuin valtiot (f = 330 = 6 × 55). Kaupunkialue on niiden ruutujen joukko, joiden keskipiste kuuluu siihen, joten ruutumäärä vaihtelee noin 61:n ympärillä. Pallon pintaa ei voi laatoittaa tarkasti 61 ruudun heksoilla. | Sääntö 1: yksi maailma | Linssi (Samin valtuutuksella) |
 | 2026-10-10 | Tasomatriisin tutkimukset ja rakennukset sekä detail-näkymät 6a–6f siirtyvät MVP:n jälkeen (STORY-030). MVP:ssä jokaisella tasolla on vähintään yksi toiminto (STORY-026). Resurssit 12–18 ovat Claude Designin ehdotuksia, eivät Civ I -lukuja, ja niiden arvot tarkistetaan ennen käyttöä. | MVP pysyy rajattuna. Sääntö 4. | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | STORY-029 hyväksyttiin: napautus valitsee alueen, toinen napautus sukeltaa sen sisään, ja murupolun takaisin-nappi palaa tason ylös. Rajojen esiin häivytys on suhteessa näytön kokoon, joten jokainen taso näyttää täsmälleen alemman tasonsa heksat. Inter-fontti paketoidaan (@fontsource/inter, OFL-1.1), eikä Google Fontsia ladata. | Fontti ja testit eivät riipu ulkoisesta palvelusta | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | STORY-022 hyväksyttiin: alin karttataso on geodeettinen heksaruudukko (F = 330, 1 089 002 ruutua). Läänit ja kaupunkialueet saavat kanonisen, pinta-aloiltaan tasatun asettelun, ja kaupunkialueessa on 54–68 ruutua (p10–p90). Ruutujen kaupunkialueet lasketaan kerran taulukoksi (noin 0,4 s työpöydällä), joka on ruutujäsenyyden ainoa lähde pelilogiikalle ja shaderille. Intel UHD 58–60 fps. | Mittaukset tiketeissä TICKET-TEST-012. Aluehaku pikseleittäin (19–30 fps) hylättiin mittauksen perusteella. | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | Assets-kansion maastoshaderit eivät mallinna planeettaa, mutta niitä voi käyttää ruutujen pintakuvioina esirenderöityinä tekstuureina. Merishaderi on johdettu Seascape-shaderista (CC BY-NC-SA 3.0), joten Assets-kansiota ei commitoida ennen kuin vesi on kirjoitettu uudelleen. Muistio: docs/spikes/assets-maastoshaderit.md. | GPL v3 -yhteensopivuus (osio 3) | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 
@@ -395,6 +398,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
 9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä.
+10. **Assets-maastoshaderit.** Kirjoitetaanko vesi uudelleen omana (tai pyydetään Claude Designilta), ja käytetäänkö pintakuvioita STORY-023:ssa? Muistio: docs/spikes/assets-maastoshaderit.md.
 
 ### Ratkenneet kysymykset
 

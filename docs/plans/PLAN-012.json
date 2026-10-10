@@ -1,0 +1,66 @@
+{
+  "id": "PLAN-012",
+  "story": "STORY-022",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Uusi moduuli src/globe/hexTiles.ts: alin karttataso on saman ikosaedrin (three.js IcosahedronGeometry) geodeettinen heksaruudukko taajuudella F = 330 = 6 × 55, joten jokainen valtion keskus on ruudun keskipiste. Piste kuuluu tahkoon, jonka keskipiste on lähin, ja tahkon tasossa lähimpään hilapisteeseen (heksasolut). Ruuduilla on kanoniset tunnisteet (12 kulmaa, särmät ja tahkojen sisäpisteet, yhteensä 10F² + 2), ja naapuri tahkon särmän takana löytyy taittamalla piste viereiseen tahkoon. Kaupunkialue on niiden ruutujen joukko, joiden keskipiste kuuluu siihen. Ruutumäärän tasaamiseksi läänien ja kaupunkialueiden keskukset tulevat kanonisesta asettelusta säännöllisessä heksassa (scripts/region-layout.mjs: Lloyd-relaksaatio ja pinta-alojen tasaus), joka sovitetaan kuhunkin valtioon naapureiden mukaan affiinikuvauksella. Jokaisen ruudun kaupunkialue lasketaan kerran taulukoksi (Regions.tileTable), ja se on ruutujäsenyyden ainoa lähde sekä pelilogiikalle että shaderille (16-bittinen tekstuuri). Shaderi laskee pikselin ruudun hilakoordinaateista, jotka jaetaan kokonais- ja murto-osaan ruudun keskipisteessä (sama tarkkuustemppu kuin kohinassa), piirtää heksareunat tokenilla --hex-edge kaupunkialuetasolla ja siirtää aluerajat ruutujen reunoille, kun ruutu on 4–8 px. Valinta ja konteksti käyttävät silloin ruutujäsenyyttä.",
+  "alternatives_considered": [
+    {
+      "name": "Aluehaku kolmen ruudun keskipisteessä pikseliä kohden (ensimmäinen toteutus)",
+      "pros": "Ei tekstuuria eikä käynnistyskustannusta",
+      "cons": "Mitattu Intel UHD:lla 19–30 fps (ennen 60), koska rajojen lähellä haku tehtiin kolmesti 10–30 valtion listasta, ja vakiotaulukot kasvattivat shaderia",
+      "rejected_because": "Mittaus. Tekstuuripohjainen ratkaisu palautti 58–60 fps:n."
+    },
+    {
+      "name": "Tarkat 61 ruudun kaupunkialueet alhaalta ylös (design-paketin superlaatoitus)",
+      "pros": "Jokainen kaupunkialue on täsmälleen 61 ruutua",
+      "cons": "Valtioista tulisi kukkamaisia ja niiden määrä muuttuisi, ja ikosaedrin kulmissa laatoitus katkeaa",
+      "rejected_because": "Valtioheksat on hyväksytty, ja pallolla tarkka laatoitus ei onnistu"
+    },
+    {
+      "name": "Lloyd-relaksaatio jokaiselle valtiolle pallolla käynnistyksessä",
+      "pros": "Huomioi jokaisen valtion todellisen muodon",
+      "cons": "Arviolta sekunteja käynnistyksessä",
+      "rejected_because": "Kanoninen asettelu ja affiinikuvaus antavat p10–p90 54–68 ruutua ilman käynnistyskustannusta"
+    },
+    {
+      "name": "Ruututaulukko Web Workerissa",
+      "pros": "Ei pysäytä pääsäiettä",
+      "cons": "Lisää monimutkaisuutta",
+      "rejected_because": "Mitattu 323–456 ms työpöydällä. Arvioidaan uudelleen, jos puhelimella aloitus hidastuu."
+    }
+  ],
+  "files_to_change": [
+    "src/globe/hexTiles.ts (uusi) ja hexTiles.test.ts",
+    "src/globe/regionLayout.ts (generoitu) ja scripts/region-layout.mjs",
+    "src/globe/regions.ts (asettelu, naapurit, ruututaulukko)",
+    "src/globe/levels.ts (polku ruututaulukosta)",
+    "src/globe/tiles.ts (tekstuurit, heksareunat, rajat ruutujen reunoilla)",
+    "src/globe/colors.ts (OKLCH-tokenit shaderiin)",
+    "tests/e2e/hexTiles.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Ruudukko ja testit: tunnisteiden bijektio, edestakaisuus, naapurit ja viisikulmiot, valtioiden keskukset, taitto särmien yli",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Tasainen asettelu ja ruututaulukko, ruutumäärät mitattuina",
+      "verify": "Ruutuja kaupunkialuetta kohden noin 61 (p10–p90 kirjataan)"
+    },
+    {
+      "step": 3,
+      "action": "Shaderi: heksareunat ja rajat ruutujen reunoilla, suorituskyky",
+      "verify": "Kuvat kaupunkialue-, ruutu- ja syvimmältä tasolta. Intel UHD vähintään 55 fps."
+    },
+    {
+      "step": 4,
+      "action": "E2E, merge ja CI",
+      "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

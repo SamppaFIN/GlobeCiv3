@@ -1,0 +1,134 @@
+{
+  "id": "TICKET-TEST-012",
+  "story": "STORY-022",
+  "implementation_ticket": "TICKET-IMPL-012",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kaksi korjausta ennen mergeä: (1) suorituskyky, kun aluehaut korvattiin ruututaulukon tekstuurilla, ja (2) ääretön rajavihje, joka muuttui GPU:lla NaN:ksi.",
+    "files_changed": [
+      "src/globe/tiles.ts",
+      "src/globe/regions.ts",
+      "src/globe/hexTiles.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader, pikselisuhde 0,5). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Tunnisteet: jokainen tahkojen hilapiste saa tunnisteen, ja niitä on 10F² + 2",
+        "expected": "Bijektio",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Edestakaisuus: 20 000 ruutua ja niiden lähipisteet kaikilla tahkoilla, 20 000 satunnaista pistettä",
+        "expected": "Oma ruutu löytyy, ja piste on alle yhden välin päässä keskipisteestään",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Naapurit: 12 viisikulmiota (5), 5 000 heksaa (6) symmetrisesti, ja taitto särmän yli kuten shaderissa",
+        "expected": "Samat naapurit kuin suoralla haulla",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Valtioiden 362 keskusta",
+        "expected": "Jokainen on ruudun keskipiste",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ruututaulukko vs. Regions.cityOf 30 000 ruudussa",
+        "expected": "Sama, paitsi tasapelit rajalla",
+        "result": "pass (tasapelejä alle 30)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ruutuja kaupunkialuetta kohden 300 satunnaisessa kaupunkialueessa",
+        "expected": "Noin 61",
+        "result": "min 34, p10 54, mediaani 62, p90 68, max 90, keskiarvo 61,8",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Regressio: rajavihjeet ovat äärellisiä syvällä zoomissa",
+        "expected": "Kaatuu ilman korjausta, menee läpi korjauksen kanssa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kontekstin himmennys kaupunkialuetasolla valtion rajalla",
+        "expected": "Kuvan kirkkaus noudattaa ruutujäsenyyttä eikä pikselin Voronoi-aluetta",
+        "result": "Ruutujäsenyys 99,4 %, pikselijäsenyys 97,2 %, 150 näytettä eroaa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: heksat kaupunkialuetasolta syvimmälle tasolle",
+        "expected": "Rajat suoria ruudun reunoja, ei virheitä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "18/18 paikallisesti, 18/18 CI-tilassa (9,2 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky: Intel UHD, 1280×800, valtion rajalla planeetasta syvimpään",
+        "expected": "Vähintään 55 fps",
+        "result": "planeetta 60,1 · valtio 59,6 · lääni 60,1 · kaupunkialue 60,1 · /3 60,2 · /8 60,1 · /200 58,2 · syvin 60,4 fps (ensimmäinen versio 19–30)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ruututaulukon laskenta selaimessa (Chrome, työpöytä)",
+        "expected": "Mitataan",
+        "result": "323–456 ms kolmella latauksella",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo 38015837867 (commit eae34b8)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "success (10,2 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Heksat ja rajat näkyvät, ja peli on sulava",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-012-land-city-area.png",
+      "docs/screenshots/TICKET-TEST-012-border-city-zoom.png",
+      "docs/screenshots/TICKET-TEST-012-border-tile-zoom.png",
+      "docs/screenshots/TICKET-TEST-012-border-deepest.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Sama ikosaedri, F = 330, 10F² + 2 ruutua ja 12 viisikulmiota",
+        "checked": true
+      },
+      {
+        "item": "Edestakaisuus ja naapurit kaikilla tahkoilla ja särmillä",
+        "checked": true
+      },
+      {
+        "item": "Kaupunkialue ruutujen joukkona, noin 61 ruutua, mitattu ja kirjattu",
+        "checked": true
+      },
+      {
+        "item": "Heksareunat ja rajat ruutujen reunoilla, vähintään 55 fps",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "TICKET-IMPL-011",
+  "story": "STORY-029",
+  "plan": "PLAN-011",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/levels.ts",
+    "src/globe/levels.test.ts",
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "src/main.ts",
+    "index.html",
+    "src/ui/tokens.css",
+    "src/ui/nocturne.css",
+    "src/ui/hud.css",
+    "src/ui/levelBar.ts",
+    "tests/e2e/levels.e2e.ts",
+    "package.json",
+    "package-lock.json"
+  ],
+  "change_summary": "Näkymän taso (planeetta, valtio, lääni, kaupunkialue) päätellään kameran etäisyydestä. Jokaisella tasolla on kehysetäisyys, jolla tason alue täyttää 70 % näytön kapeammasta mitasta. Napautus valitsee alueen nykyisellä tasolla ja korostaa sen aksenttireunalla ja hehkulla. Toinen napautus samaan alueeseen tai tuplaklikkaus lentää sen keskelle seuraavan tason kehysetäisyydelle. Alueen ulkopuolinen maailma himmennetään (konteksti), ja rajojen esiin häivytys on suhteessa näytön kokoon, joten jokainen taso näyttää täsmälleen alemman tasonsa heksat. Ylhäällä on murupolku ja 44 px:n takaisin-nappi. Tokenit ja Nocturne-luokat tulevat design-paketista, ja Inter-fontti on paketoitu (@fontsource/inter, OFL-1.1).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: tuplaklikkauksen käsittelijä korvattiin napautuksella (valinta ja sukellus)",
+      "GlobeCamera maxDist 6R → 8R (pystynäytön planeettakehys on 6,5R)",
+      "TileManager: setHighlight, narrowPx ja uniformit focus*/context*/accentColor",
+      "Shaderi: läänien ja kaupunkialueiden häivytys suhteessa näytön kapeampaan mittaan (ennen 20–50 px)"
+    ],
+    "call_sites_found": [
+      "Tuplaklikkauksen E2E-testit (camera.e2e.ts)",
+      "TileManager-konstruktori main.ts:ssä"
+    ],
+    "call_sites_updated": [
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kameratestien tuplaklikkaus toimii sellaisenaan: ensimmäinen klikkaus valitsee valtion ja toinen lentää sen keskelle. Puhelimen pystynäytöllä aloitusetäisyys 1,47R on jo valtiotasoa. STORY-021 asettaa aloituksen planeettakehykseen."
+  },
+  "commit": "4e5028d",
+  "progress": 100
+}

@@ -1,0 +1,104 @@
+{
+  "id": "TICKET-TEST-011",
+  "story": "STORY-029",
+  "implementation_ticket": "TICKET-IMPL-011",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäisessä versiossa kaupunkialueiden rajat näkyivät jo valtiotasolla, koska häivytys oli pikseleinä. Korjattiin suhteuttamalla häivytys näytön kokoon.",
+    "files_changed": [
+      "src/globe/tiles.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) sekä GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Kehysetäisyydet pysty- ja vaakanäytöllä: alue täyttää kapeamman mitan",
+        "expected": "Vaakasuunnassa 70 % ± 5, pystysuunnassa kallistuksen verran vähemmän",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Taso etäisyydestä, alueen polku ja sukellus- ja paluukohteet",
+        "expected": "Oikeat tasot ja sisäkkäiset polut 200 satunnaisessa pisteessä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: napautus valitsee, toinen napautus lentää valtio-, lääni- ja kaupunkialuetasolle, ja takaisin-nappi palaa planeetalle",
+        "expected": "Taso, polku ja kohde oikein. Takaisin-nappi vähintään 44 × 44 px. Ei konsolivirheitä.",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: raahaus ei valitse aluetta",
+        "expected": "Ei valintaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: 390 × 844 -kosketusnäyttö, kaksi napautusta",
+        "expected": "Sukellus toimii, eikä murupolku leikkaudu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vanhat kameratestit (tuplaklikkaus, vähennetty liike, rulla keskeyttää, lennon kesto hitailla frameilla)",
+        "expected": "Vihreä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky: Intel UHD, 1280×800, valinta ja konteksti päällä, etäisyydet 3R … 2e-5R",
+        "expected": "Lähellä 60 fps:ää",
+        "result": "60,1–60,4 fps kaikilla etäisyyksillä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo 37995589213 (commit 8f16f3e)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "success",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Napautus ja sukellus toimivat sormella",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-011-planet-selected.png",
+      "docs/screenshots/TICKET-TEST-011-state.png",
+      "docs/screenshots/TICKET-TEST-011-state-selected.png",
+      "docs/screenshots/TICKET-TEST-011-province.png",
+      "docs/screenshots/TICKET-TEST-011-phone.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Taso päätellään etäisyydestä, ja kehys täyttää noin 70 %",
+        "checked": true
+      },
+      {
+        "item": "Napautus valitsee ja korostaa, toinen napautus sukeltaa",
+        "checked": true
+      },
+      {
+        "item": "Jokainen taso näyttää alemman tasonsa heksat (ruudut STORY-022:ssa)",
+        "checked": true
+      },
+      {
+        "item": "Murupolku ja 44 px:n takaisin-nappi",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}
