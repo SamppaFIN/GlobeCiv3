@@ -127,6 +127,13 @@ export class Units {
     return true;
   }
 
+  /** A new scout joins on a tile (a find, STORY-027) and maps around itself. */
+  recruit(tile: number, world: World): Unit {
+    this.add('scout', `Tiedustelija ${this.units.filter(u => u.kind === 'scout').length + 1}`, tile);
+    world.reveal(tilesInRings(tile, this.sight));
+    return this.units[this.units.length - 1];
+  }
+
   private add(kind: UnitKind, name: string, tile: number) {
     this.units.push({ id: this.units.length, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0 });
   }

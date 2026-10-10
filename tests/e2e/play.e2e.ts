@@ -11,6 +11,8 @@ async function startGame(page: Page): Promise<string[]> {
   await ready;
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
+  // Discoveries (STORY-027) stop the game; these tests are about the clock and the units
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   return errors;
 }
 
