@@ -1,0 +1,36 @@
+{
+  "id": "TICKET-IMPL-014",
+  "story": "STORY-023",
+  "plan": "PLAN-014",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/terrainTypes.ts",
+    "src/game/terrainTypes.test.ts",
+    "src/globe/glyphAtlas.ts",
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "tests/e2e/terrain.e2e.ts"
+  ],
+  "change_summary": "Ruudun maasto (11 tyyppiä) määräytyy ruudun keskipisteen korkeudesta, leveysasteesta ja kosteudesta, johon kuuluu ruutumittakaavan vaihtelu, jotta maastot sekoittuvat kuten Civ-kartalla. Erikoisresurssi on 22 %:ssa ruuduista (design-paketin karttanäkymä). Tuotot, liikkumiskustannukset ja resurssien bonukset ovat Freecivin civ1-sääntösarjasta (lähde koodissa). Tyypit lasketaan laiskasti kaupunkialue kerrallaan kameran ympäriltä (noin 9 µs ruutua kohden) ja ladataan 8-bittiseksi tekstuuriksi enintään viidesti sekunnissa. Shaderi maalaa kaupunkialuetasolla ruudun tokens.css:n maastovärillä (meri syvyyden mukaan), piirtää rantaviivan musteella ja keskelle maaston merkin sekä resurssin merkin kuvakkeineen. Merkit ja kuvakkeet piirretään kerran canvasiin design-paketin poluista, ja ne ovat näytön suhteen pystyssä.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "tiles.ts: faceTexture sisältää kulmat (latticeLocal), tileTypeTex, glyphAtlas, terrainColors ja screenUp",
+      "tiles.ts: tileId yhdellä paluukohdalla (ANGLE:n HLSL-varoitus)",
+      "TileManager.tileCodes ja tileCodesChanged",
+      "main.ts: globeTileTypes ja globeHexTiles testejä varten"
+    ],
+    "call_sites_found": [
+      "tileId (shader): oma ruutu ja kaksi naapuria",
+      "TileManager-konstruktori main.ts:ssä"
+    ],
+    "call_sites_updated": [
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kaksi shaderivirhettä löytyi kuvakaappausajossa ennen mergeä (säde-uniformi ennen esittelyä ja HLSL-varoitus). Suorituskyky: ruudun keskipiste ja tyyppi lasketaan vain tarvittaessa, mikä nosti syvän zoomin maalla 47:stä 54 fps:ään."
+  },
+  "commit": "709eb28",
+  "progress": 100
+}

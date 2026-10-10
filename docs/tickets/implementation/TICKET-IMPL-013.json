@@ -1,0 +1,50 @@
+{
+  "id": "TICKET-IMPL-013",
+  "story": "STORY-021",
+  "plan": "PLAN-013",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/start.ts",
+    "src/game/start.test.ts",
+    "src/ui/startScreen.ts",
+    "src/ui/hud.css",
+    "src/ui/levelBar.ts",
+    "src/ui/nocturne.css",
+    "src/globe/main.ts",
+    "index.html",
+    "tests/e2e/start.e2e.ts",
+    "tests/e2e/smoke.e2e.ts",
+    "tests/e2e/camera.e2e.ts",
+    "tests/e2e/hexTiles.e2e.ts",
+    "tests/e2e/levels.e2e.ts",
+    "tests/e2e/surface.e2e.ts"
+  ],
+  "change_summary": "Peli alkaa Kartografi-aloitusnäytöstä (design 1a): otsikkolohko, kompassirengas oikean 3D-pallon ympärillä, Uusi peli -nappi (52 px) ja Kartoitettu 0 %. Pallo kehystetään otsikon ja napin väliin (puhelimella 76 % leveydestä) ja pyörii 80 s kierrokseen, vähennetyllä liikkeellä ei. Uusi peli valitsee aloituskaupunkialueen siemenestä (|y| ≤ 0,8 ja vähintään puolet maata). ?seed=N kiinnittää siemenen. Lento noudattaa kuvakäsikirjoitusta 2a: 1 s kääntyminen planeettaetäisyydellä ja 2 s laskeutuminen, ja korostus seuraa kohdetta tasoittain. Vähennetyllä liikkeellä siirtymä on leikkaus ja 200 ms:n häivytys. Perillä zoom ulos lukitaan kaupunkialuetasolle, ja takaisin-nappi piilotetaan. Valo tulee näkymän vasemmasta yläkulmasta, joten näkyvä maailma on aina valaistu. ?free ohittaa aloitusnäytön ja lukon.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: renderöijä läpinäkyvä, taustagradientti CSS:stä",
+      "main.ts: valon suunta kameran mukaan joka framessa (ennen kiinteä)",
+      "LevelBarState.canGoBack ja setVisible",
+      "Moottorin E2E-testit avaavat ./?free"
+    ],
+    "call_sites_found": [
+      "levelBar.update (main.ts)",
+      "tiles.sunDir (main.ts, tiles.ts)",
+      "page.goto(./) viidessä E2E-tiedostossa"
+    ],
+    "call_sites_updated": [
+      "main.ts",
+      "tests/e2e/camera.e2e.ts",
+      "tests/e2e/hexTiles.e2e.ts",
+      "tests/e2e/levels.e2e.ts",
+      "tests/e2e/surface.e2e.ts",
+      "tests/e2e/smoke.e2e.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Aloitusnäytön pallo näkyy vielä kartoitettuna (värit ja rajat). Designin tumma, sumuinen siluetti tulee sumun myötä (STORY-024)."
+  },
+  "commit": "37800c6",
+  "progress": 100
+}

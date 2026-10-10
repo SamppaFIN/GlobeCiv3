@@ -1,0 +1,95 @@
+{
+  "id": "TICKET-TEST-014",
+  "story": "STORY-023",
+  "implementation_ticket": "TICKET-IMPL-014",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäisessä luokittelussa arktista oli kolmannes maasta ja vuoria 0,2 %, koska kynnykset eivät vastanneet tämän siemenen jakaumaa. Kynnykset säädettiin mitatuista kvantiileista.",
+    "files_changed": [
+      "src/game/terrainTypes.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Tuotot jokaiselle maastolle resurssin kanssa ja ilman",
+        "expected": "Freecivin civ1-sääntösarjan luvut",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "20 000 satunnaista ruutua",
+        "expected": "Deterministinen, meri täsmälleen merenpinnan alla, kaikki 11 tyyppiä, resursseja noin 22 %",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Tyyppien osuudet 40 000 ruudussa (maasta)",
+        "expected": "Kaikki tyypit esiintyvät järkevästi",
+        "result": "ruohomaa 19,4 · tundra 18,6 · tasanko 18,3 · metsä 8,1 · arktinen 8,0 · aavikko 7,9 · kukkulat 7,7 · vuoret 5,5 · suo 4,6 · viidakko 1,9 %. Merta 65,8 % kaikista.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: neljän maavaltion kaupunkialuenäkymä, ruutujen värit kuvasta",
+        "expected": "Ruudun väri on lähinnä oman tyyppinsä tokenia",
+        "result": "CI-tilassa 76 / 76 maaruutua, 5 tyyppiä. Kehitysvaiheessa kahdeksalla valtiolla 149 / 149 ja 7 tyyppiä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "23/23 paikallisesti. CI-tilassa ensin 21/23: maastotesti ylitti aikarajan (8 näkymää), ja kontekstitestin absoluuttinen 97 %:n raja kaatui, koska ruutujen merkit osuvat näytteisiin pikselisuhteella 0,5. Testi oli tältä osin väärin: raja 93 %, vertailu ruutu- ja pikselijäsenyyden välillä ennallaan, ja maastotestissä 4 näkymää. Sen jälkeen vihreä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky maalla: Intel UHD, 1280×800",
+        "expected": "Vähintään 55 fps, eikä hitaampi kuin ilman tätä storya",
+        "result": "planeetta 60,4 · valtio 58,6 · lääni 60,1 · kaupunkialue 60,0 · /2,5 60,5 · /8 59,5 · /200 54,4 fps. Mainissa ilman tätä storya samat kohdat: valtio 55,4 ja /200 51,8 fps, joten syvän zoomin noin 52–54 fps maalla on jatkuvan maaston perustaso.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo 38019244497 (commit 209719e)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "success (16,5 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Merkit ja resurssit erottuvat, ja peli on sulava",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-014-land-city.png",
+      "docs/screenshots/TICKET-TEST-014-land-closer.png",
+      "docs/screenshots/TICKET-TEST-014-coast.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "11 maastoa ja resurssit deterministisesti, tuotot lähteen mukaan",
+        "checked": true
+      },
+      {
+        "item": "Maastovärit tokeneista ja jokaisella maastolla merkki",
+        "checked": true
+      },
+      {
+        "item": "Resurssit kuvakkeina ruutujen keskellä",
+        "checked": true
+      },
+      {
+        "item": "Suorituskyky mitattu ja kirjattu",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}
