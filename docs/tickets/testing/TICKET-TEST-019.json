@@ -79,13 +79,13 @@
       {
         "steps": "Jälkikorjaus: tauolla jo valitun nopeuden napautus",
         "expected": "Peli jatkuu",
-        "result": "Testi toisti vian (Tauolla) ja menee korjauksen jälkeen läpi",
+        "result": "Testi toisti vian (Tauolla) ja menee korjauksen jälkeen läpi. CI-ajo 38046315769 (c332daa, 19,8 min) vihreä ja julkaistu.",
         "outcome": "pass"
       },
       {
         "steps": "Jälkikorjaus: yksiköiden ylläpito despotismissa (Freeciv civ1)",
         "expected": "Kolme kaupungin rakentamaa yksikköä ilmaiseksi, sen jälkeen 1 tuotanto kustakin, uudisasukas 1 ruoka; maksamaton yksikkö lähtee ennen kuin kaupunki näkee nälkää; aloitusyksiköillä ei ole kotikaupunkia",
-        "result": "Yksikkötestit vihreitä (cities.test.ts ja units.test.ts); kaupunki-, löytö- ja peli-E2E vihreitä",
+        "result": "Yksikkötestit vihreitä (cities.test.ts ja units.test.ts); kaupunki-, löytö- ja peli-E2E vihreitä. CI-ajo 38046315769 (c332daa, 19,8 min) vihreä ja julkaistu.",
         "outcome": "pass"
       }
     ],

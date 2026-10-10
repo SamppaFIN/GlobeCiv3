@@ -86,7 +86,7 @@
       {
         "steps": "Jälkikorjaukset (haara fix/hud-polish)",
         "expected": "Valtiotason jälkeen mittari näyttää pelkän osuuden ilman rajaa; sirut pysyvät paneelien välissä",
-        "result": "Testit toistivat molemmat (61 / 60 % ja siru 653 px > paneeli 643 px) ja menevät korjauksen jälkeen läpi",
+        "result": "Testit toistivat molemmat (61 / 60 % ja siru 653 px > paneeli 643 px) ja menivät korjauksen jälkeen läpi paikallisesti ja CI-tilassa. GitHubin ajo 38045161336 (9d41d63) oli silti punainen: ensimmäisellä framella sirut asetettiin ennen kuin alapaneeli näkyi, ja hitaalla ajokoneella testi ehti katsoa juuri sitä framea. Paneelit päivitetään nyt ennen siruja, ja testi lukee ensimmäisen framen sivun sisällä (vanhalla järjestyksellä se epäonnistuu joka koneella: 652,5 > 643). Ajo 38046315769 (c332daa, 19,8 min) vihreä ja julkaistu.",
         "outcome": "pass"
       }
     ],
