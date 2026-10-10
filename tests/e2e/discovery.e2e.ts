@@ -66,6 +66,8 @@ test('a discovery stops the game until one of its two finds is chosen, and the c
   const finds: string[] = s.discovery.finds;
   const pick = finds.includes('ruins') ? finds.indexOf('ruins') : 0;
   const before = { units: s.units.length, bonuses: s.bonuses.length, mapped: s.mapped };
+  // The next discovery (at 4× only seconds away) would stop the game again; this test is about the first
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await options.nth(pick).click();
   await expect(page.getByRole('dialog')).toBeHidden();
   const after = await state(page);
