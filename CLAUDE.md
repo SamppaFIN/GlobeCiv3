@@ -1,6 +1,6 @@
 # CLAUDE.md — GlobeCiv3
 
-> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · päivitetty 2026-10-09
+> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · päivitetty 2026-10-10
 > Lue tämä kokonaan ennen ensimmäistä vastausta jokaisessa uudessa keskustelussa.
 > Osiot 1–11 syntyivät haastattelusta. Osiot 12 ja 13 kasvavat projektin mukana —
 > päivitä päivämäärä aina, kun muutat tiedostoa.
@@ -284,10 +284,10 @@ hakemisto.
     { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030"] }
   ],
   "stories_total": 30,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014"],
-  "next": "STORY-024, sitten STORY-025"
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014", "PLAN-015", "PLAN-016", "PLAN-017"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014", "TICKET-IMPL-015", "TICKET-IMPL-016", "TICKET-IMPL-017"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014", "TICKET-TEST-015", "TICKET-TEST-016", "TICKET-TEST-017"],
+  "next": "STORY-027, sitten STORY-028"
 }
 ```
 
@@ -388,6 +388,10 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-10 | Assets-kansion maastoshaderit eivät mallinna planeettaa, mutta niitä voi käyttää ruutujen pintakuvioina esirenderöityinä tekstuureina. Merishaderi on johdettu Seascape-shaderista (CC BY-NC-SA 3.0), joten Assets-kansiota ei commitoida ennen kuin vesi on kirjoitettu uudelleen. Muistio: docs/spikes/assets-maastoshaderit.md. | GPL v3 -yhteensopivuus (osio 3) | Linssi (Samin valtuutuksella) |
 | 2026-10-10 | STORY-021 hyväksyttiin: peli alkaa Kartografi-aloitusnäytöstä, Uusi peli lentää siemenestä valittuun kaupunkialueeseen (1 s kääntyminen ja 2 s laskeutuminen), ja zoom ulos lukitaan kaupunkialuetasolle. Valo tulee näkymän vasemmasta yläkulmasta, joten näkyvä maailma on aina valaistu (kartta, ei yö- ja päiväpuolta). Kehitystila ?free ohittaa aloituksen ja lukon. | Design 1a ja 2a. Laskeutumispaikka oli ensin yöpuolella. | Linssi (Samin valtuutuksella) |
 | 2026-10-10 | STORY-023 hyväksyttiin: ruudun maasto (11 tyyppiä) on ruudun keskipisteen funktio, resurssi on 22 %:ssa ruuduista, ja tuotot ovat Freecivin civ1-sääntösarjasta. Tyypit lasketaan laiskasti kaupunkialue kerrallaan. Kaupunkialuetasolla ruudut piirretään tokenväreillä, merkeillä, resurssimerkeillä ja musteisella rantaviivalla. | Mittaukset tiketissä TICKET-TEST-014 | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | STORY-024 hyväksyttiin: sumu on Kartografi-tyylinen kaikilla tasoilla. Ruututasolla sumun reuna on tarkka heksa ja kaukana kuution tahkojen sumukartan pehmeä reuna. Rajat piirretään sumun päälle kuten designissa. Aloitusnäytön pallo on designin siluetti. | Design 1a, 2a ja 2b | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | STORY-025 hyväksyttiin: päiväkello, autonomiset yksiköt (tiedustelijoiden moodit ja lippu, uudisasukkaan kaupunkipaikka) ja designin 2b HUD. Kaupunkialueen kehys täyttää puhelimen leveyden (vaakanäytöllä 75 % korkeudesta). Pelin kaupunkialuetasolla ei himmennetä kontekstin ulkopuolta, koska sumu kertoo jo tuntemattoman. | Design 2b | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | STORY-026 hyväksyttiin: tasot avautuvat kartoituksella (60 % kotiläänistä avaa läänitason, 60 % kotivaltiosta valtiotason), avautumisesta kertoo kortti 5a, ja zoom-raja kasvaa. Läänitasolla on kaupunkialueiden sirut, painotus Tutki/Asuta/Ohita ja retkikunta (6a), ja valtiotasolla läänien sirut, valtion linja ja tavoitelääni (7a). Nimet tulevat ilmansuunnasta emoalueen keskeltä ja vallitsevasta maisemasta. Pelissä pohjoinen on ylhäällä. Pystynäytöllä valtio ja lääni täyttävät leveyden, jotta 96 px:n sirut mahtuvat. | Design 5a, 6a ja 7a. Sirut menivät puhelimessa päällekkäin FILL-kehyksellä (testi toistaa). | Linssi (Samin valtuutuksella) |
+| 2026-10-10 | Aikaan sidottu E2E-tarkistus mitataan sivun sisällä tapahtumien (esimerkiksi päivänvaihtojen) framejen välillä, ei kiinteästä ikkunasta. Hitaat framet eivät silloin vääristä tulosta. | Kellotesti oli punainen GitHubissa kahdesti, vaikka peli toimi (sääntö 5) | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 
@@ -399,7 +403,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 6. ~~**Dependabotin 9 PR:ää.**~~ Ratkaistu 2026-10-09: mergetty yhtenä päivityksenä (päätöstaulukko).
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
-9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi.
+9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi. STORY-026:n lääni- ja valtiotasot mitataan uudelleen, kun GPU on vapaa (TICKET-TEST-017: mittauksen aikana toinen selain kuormitti GPU:ta).
 10. **Assets-maastoshaderit.** Kirjoitetaanko vesi uudelleen omana (tai pyydetään Claude Designilta), ja käytetäänkö pintakuvioita STORY-023:ssa? Muistio: docs/spikes/assets-maastoshaderit.md.
 
 ### Ratkenneet kysymykset

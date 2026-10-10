@@ -1,0 +1,123 @@
+{
+  "id": "TICKET-TEST-017",
+  "story": "STORY-026",
+  "implementation_ticket": "TICKET-IMPL-017",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kolme löydöstä korjattiin ennen hyväksyntää. (1) Puhelimessa sirut menivät päällekkäin, koska lääni täytti vain 70 % leveydestä ja alueet olivat sirua kapeampia (kuvakaappauksista; uusi testi toistaa: sirut 0-4 ja 0-6). (2) Sumutesti mittasi kirkkauden siruista, jotka osuvat alueiden keskipisteisiin; HUD piilotetaan nyt ennen kuin framet asettuvat (kuvakaappauksen style-valinta ei ehtinyt hitaaseen SwiftShader-frameen). (3) Laattojen yksikkötesti ylitti 5 s:n oletusajan rinnakkaisajossa (5,2–5,3 s kahdesti neljästä), joten sille annettiin 30 s kuten muille raskaille laattatesteille.",
+    "files_changed": [
+      "src/globe/levels.ts",
+      "src/globe/levels.test.ts",
+      "tests/e2e/unlock.e2e.ts",
+      "tests/e2e/fog.e2e.ts",
+      "src/globe/tiles.test.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Avautuminen: 59 % ja 60 % kotiläänistä, sitten kotivaltiosta",
+        "expected": "Läänitaso aukeaa tasan 60 %:ssa, valtiotaso sen jälkeen, ja raja on yksi vakio",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Nimet: ilmansuunta, maisema, illatiivi ja päällekkäiset nimet",
+        "expected": "Itäranta → Itärantaan, Lounaissuo → Lounaissuohon, koti on Kotialue; saman niminen saa suunnan",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Tasotoiminnot yksiköiden logiikassa: Ohita, Asuta, valtion linja ja retkikunta",
+        "expected": "Ohitettuun alueeseen ei suunnata, Asuta tuo alueen paikan ensimmäiseksi, Tutkimus +1 näkö ja Laajentuminen lisää paikkoja, retkikunta saavuttaa ruudun",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: läänitaso (59 % ja 61 %, kortti, Zoomaa ulos, sirut, Ohita, retkikunta, zoom-raja)",
+        "expected": "Kortti vasta 60 %:ssa, seitsemän sirua ja Kotialue, valinta, painotus ja lippu, zoom ulos pysähtyy läänitasolle",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valtiotaso (Myöhemmin, miinusnäppäin, kortti, sirut, Puolustus, Tavoitteeksi)",
+        "expected": "Miinus zoomaa avatun tason ylös, seitsemän läänin sirua ja Kotilääni, linja vaihtuu ja tavoite näkyy sirussa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelin (390×844): läänin ja valtion sirut",
+        "expected": "Mikään sirupari ei ole päällekkäin",
+        "result": "Vanhalla kehyksellä sirut 0-4 ja 0-6 päällekkäin (testi toistaa vian), korjauksen jälkeen pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "CI-tilassa ensin 30/31: sumutesti mittasi sirua (korjattu 2c89a95, sen jälkeen 2/2 ilman uusintaa). Korjausten jälkeen paikallisesti levels, unlock, start ja play 13/13, CI-tilassa levels ja unlock 6/6 sekä play ja fog vihreitä. Koko joukko GitHubissa (alla).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky: HUD:n osuus (A/B samassa istunnossa, Intel UHD, 1280×800, peli käynnissä 1×)",
+        "expected": "Sirut ja paneelien sumennus eivät pudota fps:ää",
+        "result": "Kaupunkialue 41,1 / ilman blur 37,4 / ilman HUD 38,5 fps, lääni 27,0 / 28,5 / 30,5, valtio 26,5 / 27,2 / 28,3. Erot ovat mittauksen hajonnan suuruisia.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky: tavoite 60 fps (Intel UHD)",
+        "expected": "Lääni- ja valtiotaso pelissä noin 60 fps",
+        "result": "Ei vertailukelpoinen. Samin oma Chrome käytti mittauksen aikana noin 90 % GPU:n 3D-moottorista, ja sama tilanne pudotti muuttumattoman aloitusnäytön 60,1:stä 37–41 fps:ään. Mitataan uudelleen, kun GPU on vapaa.",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "CI-ajot",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38034382981 (b7853ec, 21,8 min): vihreä ja julkaistu. Puhelinkorjaus: ajo 38035648617 (0da3d6e, 17,6 min) vihreä ja julkaistu.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Kortti, sirut ja paneelit toimivat sormella, nipistys zoomaa ulos",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "known_issues": [
+      "Kun valtiotaso on auki, mittari näyttää yhä valtion osuuden (esimerkiksi 65 / 60 %), vaikka seuraava taso aukeaa vasta valtauksella MVP:n jälkeen.",
+      "Työpöydällä läänin alimman alueen siru voi jäädä osin alapaneelin alle. Alueen voi silti valita napauttamalla karttaa."
+    ],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-017-unlock.png",
+      "docs/screenshots/TICKET-TEST-017-province.png",
+      "docs/screenshots/TICKET-TEST-017-state.png",
+      "docs/screenshots/TICKET-TEST-017-phone-province.png",
+      "docs/screenshots/TICKET-TEST-017-phone-state.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Lääni ja valtio aukeavat 60 %:ssa, raja on yksi vakio",
+        "checked": true
+      },
+      {
+        "item": "Kortti 5a ja kasvava zoom-raja",
+        "checked": true
+      },
+      {
+        "item": "Lääninäkymä 6a ja valtionäkymä 7a",
+        "checked": true
+      },
+      {
+        "item": "Jokaisella avatulla tasolla vähintään yksi pelitilaa muuttava toiminto",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}

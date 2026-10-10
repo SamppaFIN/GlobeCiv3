@@ -1,0 +1,35 @@
+{
+  "id": "TICKET-IMPL-015",
+  "story": "STORY-024",
+  "plan": "PLAN-015",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/mapping.ts",
+    "src/game/mapping.test.ts",
+    "src/globe/fogMap.ts",
+    "src/game/terrainTypes.ts",
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "tests/e2e/fog.e2e.ts"
+  ],
+  "change_summary": "Kartoitus on ruutukohtainen ja pysyvä (mapping.ts). Shaderi lukee sen kahta reittiä: ruutukoodin bitti 5 ruututasolla (sumun reuna on tarkka heksa) ja kuution tahkojen sumukartta (6 × 256², 393 216 tekseliä) kaukaa (pehmeä reuna). Vaihto tapahtuu samalla 4–8 px:n välillä kuin rajojen kiinnittyminen. Kartoittamaton on --fog peittävyydellä 0,88, mustevarjostus 0,11 (0,7 px viivat 7 px välein, 38°) ja katkoviivainen rannikon aavistus. Kartoitetun reunassa on 1,6 px:n musteviiva, jota aalto väreilee reunaa pitkin, ja kaukana sumukartan puolivälin käyrä. Rajat piirretään sumun päälle kuten designissa. Aloitusnäytön pallo on nyt designin siluetti (sumu, ei rajoja). Laskeutumisruutu naapureineen kartoittuu lennon alussa ja aloituskaupunkialue perillä. ?free on ilman sumua.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "TileTypeTable.fillTile ja fill säilyttävät koodin ylemmät bitit",
+      "tiles.ts: fogOn, fogMap, tileWorldCenter; heksareunat vain kartoitetuilla ruuduilla pelissä; heightWidth lasketaan yhtenäisessä ohjausvuossa",
+      "main.ts: reveal(), borderStrength 0 aloitusnäytöllä"
+    ],
+    "call_sites_found": [
+      "TileTypeTable.fill (main.ts updateTileTypes)"
+    ],
+    "call_sites_updated": [
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Sumukartan tekseli suurennettiin 512²:sta 256²:een tahkoa kohden, jotta ruutujen jalanjäljet peittävät tekselit myös kuution kulmissa eikä kartoitetun sisälle jää reikiä."
+  },
+  "commit": "c3b4652",
+  "progress": 100
+}
