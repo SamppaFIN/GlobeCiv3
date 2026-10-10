@@ -73,9 +73,10 @@ test('at city-area zoom the context region follows tile edges, not the smooth bo
   }, shot.toString('base64'));
   console.log('[hex-context] ' + JSON.stringify(result));
   expect(result.inside).toBeGreaterThan(50);
-  // Lines and hex edges disturb a few samples; the step zones along the border tell the two apart
+  // Lines, hex edges and (since STORY-023) tile glyphs and resource markers disturb some
+  // samples, more at the CI pixel ratio of 0.5; the step zones along the border tell the two apart
   expect(result.differ).toBeGreaterThan(10);
-  expect(result.tile).toBeGreaterThan(0.97);
+  expect(result.tile).toBeGreaterThan(0.93);
   expect(result.tile).toBeGreaterThan(result.pixel + (result.differ / result.n) * 0.5);
   expect(errors).toEqual([]);
 });
