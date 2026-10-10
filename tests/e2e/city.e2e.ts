@@ -95,6 +95,12 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   const [cx, cy] = await onScreen(page, city.tile);
   await page.mouse.click(cx, cy - 10);
   await expect(card).toBeVisible();
+  // Without a pointer: the HUD's city button opens it from the keyboard
+  await card.getByRole('button', { name: 'Sulje' }).click();
+  await expect(card).toBeHidden();
+  await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(card).toBeVisible();
 
   // Days go on (4× is still chosen): the city grows or its Soturi is ready
   await page.getByRole('button', { name: 'Jatka' }).click();
@@ -104,7 +110,15 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   }, null, { timeout: 90_000 });
   const later = await state(page);
   const soldier = later.units.find((u: any) => u.kind === 'warrior');
-  if (soldier) expect([soldier.name, soldier.tile, soldier.mode]).toEqual(['Soturi 1', city.tile, 'defend']);
+  if (soldier) {
+    expect([soldier.name, soldier.tile, soldier.mode]).toEqual(['Soturi 1', city.tile, 'defend']);
+    // A soldier in the city does not hide it: a tap still opens the card
+    await card.getByRole('button', { name: 'Sulje' }).click();
+    await expect(card).toBeHidden();
+    const [sx, sy] = await onScreen(page, city.tile);
+    await page.mouse.click(sx, sy - 10);
+    await expect(card).toBeVisible();
+  }
   await page.screenshot({ path: testInfo.outputPath('city-later.png') });
   expect(errors).toEqual([]);
 });
@@ -128,6 +142,12 @@ test.describe('on a phone', () => {
       expect(r.width).toBeGreaterThanOrEqual(43.5);
     }
     expect(await card.locator('.city-build-name').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    // The top panel still fits with the city button
+    const top = (await page.locator('.hud-top').boundingBox())!;
+    expect(top.x + top.width).toBeLessThanOrEqual(390);
+    const cityButton = (await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).boundingBox())!;
+    expect(cityButton.width).toBeGreaterThanOrEqual(43.5);
+    expect(await page.locator('.hud-day').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('city-phone.png') });
     expect(errors).toEqual([]);
   });

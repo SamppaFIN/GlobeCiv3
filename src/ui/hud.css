@@ -65,6 +65,7 @@
 .hud-row { display: flex; align-items: center; gap: 8px; }
 .hud-row[hidden] { display: none; }
 .hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
+.hud-city[hidden] { display: none; }
 .hud-speed { flex: none; }
 .hud-speed .seg-opt { min-width: var(--touch-target); min-height: var(--touch-target); justify-content: center; padding: 0 8px; }
 .hud-spacer { flex: 1; }

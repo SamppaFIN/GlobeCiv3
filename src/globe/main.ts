@@ -353,6 +353,10 @@ function startPlay(startCity: number) {
       // Bring it into view at the current distance
       rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
     },
+    openCity: () => {
+      if (!play || !play.cities.length) return;
+      play.openCity = play.openCity === null ? 0 : (play.openCity + 1) % play.cities.length;
+    },
   });
   // The first scout is selected, as in the design
   play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, hud };
@@ -618,15 +622,16 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
     play.flagTool = false;
     return true;
   }
-  const picked = unitLayer.pick(play.units.units, camera, x, y, width, height, 22, tileSpacing());
-  if (picked !== null) {
-    play.selected = picked;
-    return true;
-  }
   const city = play.cities.find(c => {
     const at = toScreen(tileCenter(c.tile));
     return at !== null && Math.hypot(at[0] - x, at[1] - y) < 30;
   });
+  // A unit standing in the tapped city does not hide it (the unit button still selects it)
+  const picked = unitLayer.pick(play.units.units, camera, x, y, width, height, 22, tileSpacing());
+  if (picked !== null && play.units.units[picked].tile !== city?.tile) {
+    play.selected = picked;
+    return true;
+  }
   if (city) {
     play.openCity = city.id;
     return true;
@@ -668,6 +673,7 @@ function updatePlay(dt: number) {
     level: viewLevel,
     unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode },
     flagTool: play.flagTool,
+    city: play.cities[0]?.name ?? null,
   };
   play.hud.update(state);
   unitLayer.update({
