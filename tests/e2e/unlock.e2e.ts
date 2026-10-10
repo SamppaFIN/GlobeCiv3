@@ -99,3 +99,31 @@ test('the state level opens next, with the state line and a target province', as
   await page.screenshot({ path: testInfo.outputPath('state.png') });
   expect(errors).toEqual([]);
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test('the province and state chips do not overlap: the region spans the width', async ({ page }) => {
+    test.setTimeout(120_000);
+    const errors = await startGame(page);
+    const overlaps = async () => {
+      const boxes = await page.locator('.chip:not([hidden])').evaluateAll(els => els.map(e => e.getBoundingClientRect().toJSON()));
+      expect(boxes).toHaveLength(7);
+      const pairs: string[] = [];
+      for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+        const [a, b] = [boxes[i], boxes[j]];
+        if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) pairs.push(`${i}-${j}`);
+      }
+      return pairs;
+    };
+    await mapShare(page, 'province', 0.61);
+    await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
+    await arrive(page, 2);
+    expect(await overlaps()).toEqual([]);
+    await mapShare(page, 'state', 0.61);
+    await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
+    await arrive(page, 1);
+    expect(await overlaps()).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+});
