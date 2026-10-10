@@ -10,6 +10,8 @@ import { Regions } from './regions';
 import { terrainHeight } from './terrain';
 import { TileManager } from './tiles';
 import { createLevelBar } from '../ui/levelBar';
+import { createStartScreen, RING_EXTENT } from '../ui/startScreen';
+import { chooseStartCity } from '../game/start';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -17,11 +19,11 @@ const scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-// Background is the clear colour so the separate star pass shows through
-renderer.setClearColor(0x0a0a14);
+// Transparent clear: the page's Kartografi gradient is the background, stars are drawn over it
+renderer.setClearColor(0x000000, 0);
 renderer.autoClear = false;
 container.appendChild(renderer.domElement);
 
@@ -93,11 +95,12 @@ let selection: RegionRef | null = null;
 let path: RegionRef[] = [];
 let flight: FlightTarget | null = null;
 
-function fly(to: FlightTarget) {
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function fly(to: FlightTarget, durationS = 1) {
   selection = null;
   flight = to;
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  rig.flyTo(to.point, to.dist, reduceMotion ? 0 : 1);
+  rig.flyTo(to.point, to.dist, reduceMotion() ? 0 : durationS);
 }
 
 function onTap(clientX: number, clientY: number) {
@@ -129,15 +132,111 @@ const release = (e: PointerEvent, tap: boolean) => {
 renderer.domElement.addEventListener('pointerup', e => release(e, true));
 renderer.domElement.addEventListener('pointercancel', e => release(e, false));
 
-const levelBar = createLevelBar(document.getElementById('hud')!, () => {
+const hud = document.getElementById('hud')!;
+const levelBar = createLevelBar(hud, () => {
   const to = backTarget(regions, flight ? flight.point : rig.target, viewLevel, frames);
   if (to) fly(to);
 });
+
+// ─── Start screen, new game and fly-in (STORY-021) ───────────
+// ?free skips the start screen and the zoom lock (engine tests, development).
+// ?seed=N fixes the game seed, so the same seed starts in the same place.
+const params = new URLSearchParams(window.location.search);
+type Screen = 'start' | 'intro' | 'playing' | 'free';
+let screen: Screen = params.has('free') ? 'free' : 'start';
+let game: { seed: number; startCity: number } | null = null;
+/** Zooming out is allowed down to this view level (0: no lock). STORY-026 lowers it. */
+let lockedLevel = 0;
+/** Fly-in legs still to fly, and the start city's centre while flying in. */
+const legs: { to: FlightTarget; durationS: number }[] = [];
+let introTarget: THREE.Vector3 | null = null;
+/** Planet rotation on the start screen: one turn in 80 s (design 1a). */
+const SPIN_RAD_PER_S = (2 * Math.PI) / 80;
+const spinAxis = new THREE.Vector3(0, 1, 0);
+const spinStep = new THREE.Quaternion();
+/** Inverse of the accumulated spin, so the stars stay still while the camera orbits. */
+const spinInverse = new THREE.Quaternion();
+
+/** Largest distance that stays at the city-area view level. */
+const lockDist = () => Math.sqrt(frames[2] * frames[3]) * 0.97;
+
+const startScreen = screen === 'start' ? createStartScreen(hud, newGame) : null;
+levelBar.setVisible(screen === 'free');
+
+/**
+ * Frame the planet between the title and the actions: radius at most 38 % of the width
+ * (as in the design), ring included. The globe is centred, so the free space is used
+ * symmetrically around the middle of the screen.
+ */
+function frameStartPlanet() {
+  if (!startScreen) return;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const { top, bottom } = startScreen.freeSpace();
+  const room = Math.min(h / 2 - top, bottom - h / 2) - 12;
+  const r = Math.max(40, Math.min(0.38 * w, room / RING_EXTENT));
+  // A sphere seen from distance D spans the half-angle asin(R / D)
+  const half = Math.atan((r / (h / 2)) * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+  rig.dist = RADIUS / Math.sin(half) - RADIUS;
+  rig.apply();
+  startScreen.placeRing(w / 2, h / 2, r);
+}
+
+function newGame() {
+  if (screen !== 'start' || !startScreen) return;
+  const seed = params.has('seed') ? Number(params.get('seed')) : crypto.getRandomValues(new Uint32Array(1))[0] >>> 1;
+  const startCity = chooseStartCity(regions, seed);
+  game = { seed, startCity };
+  screen = 'intro';
+  introTarget = regions.centers[2][startCity].clone();
+  const reduce = reduceMotion();
+  startScreen.hide(!reduce);
+  if (reduce) {
+    // Straight cut, softened by a 200 ms fade (Web Animations follow the wall clock)
+    const cut = document.createElement('div');
+    cut.className = 'cut-fade';
+    document.body.appendChild(cut);
+    cut.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 }).finished.then(() => cut.remove());
+    legs.push({ to: { point: introTarget, dist: frames[3], level: 3 }, durationS: 0 });
+  } else {
+    // Storyboard 2a: turn onto the target at planet distance (1 s), then descend (2 s)
+    legs.push({ to: { point: introTarget, dist: rig.dist, level: 0 }, durationS: 1 });
+    legs.push({ to: { point: introTarget, dist: frames[3], level: 3 }, durationS: 2 });
+  }
+}
+
+/** Advance the start screen and the fly-in for this frame. */
+function updateGameFlow(dt: number) {
+  if (screen === 'start') {
+    if (!reduceMotion()) {
+      spinStep.setFromAxisAngle(spinAxis, -SPIN_RAD_PER_S * dt);
+      rig.target.applyQuaternion(spinStep);
+      rig.forward.applyQuaternion(spinStep);
+      rig.apply();
+      spinInverse.multiply(spinStep.invert());
+    }
+    return;
+  }
+  if (screen !== 'intro' || rig.flying) return;
+  const leg = legs.shift();
+  if (leg) {
+    fly(leg.to, leg.durationS);
+    return;
+  }
+  // Landed: the city area is the game's view, and zooming out waits for the unlock (STORY-026)
+  screen = 'playing';
+  introTarget = null;
+  lockedLevel = 3;
+  rig.maxDist = lockDist();
+  startScreen?.remove();
+  levelBar.setVisible(true);
+}
 
 /** Level, breadcrumb, selection and context for this frame. */
 function updateLevel() {
   if (!rig.flying) flight = null;
   viewLevel = levelForDist(rig.dist, frames);
+  if (introTarget) selection = viewLevel < 3 ? regionPath(regions, introTarget, viewLevel + 1)[viewLevel] : null;
   if (selection && selection.level !== viewLevel) selection = null;
   // During a flight the breadcrumb and context follow the destination, never deeper
   // than the destination level, so they do not flicker across regions on the way
@@ -149,10 +248,14 @@ function updateLevel() {
     selection ? { ...selection, center: regionCenter(regions, selection) } : null,
     context ? { ...context, center: regionCenter(regions, context) } : null,
   );
-  levelBar.update({ level: viewLevel, path, selection });
+  levelBar.update({ level: viewLevel, path, selection: introTarget ? null : selection, canGoBack: viewLevel > lockedLevel });
 }
 
 // ─── Animation loop ───────────────────────────────
+const lightX = new THREE.Vector3();
+const lightY = new THREE.Vector3();
+const lightZ = new THREE.Vector3();
+const lightBasis = camera.matrixWorld;
 let lastFrame = performance.now();
 function animate(now = performance.now()) {
   requestAnimationFrame(animate);
@@ -160,9 +263,14 @@ function animate(now = performance.now()) {
   const dt = (now - lastFrame) / 1000;
   lastFrame = now;
   rig.update(dt);
+  updateGameFlow(dt);
   updateLevel();
+  // Light from the top left of the view (design: light from the top left), so the
+  // part of the world in view is always lit: a map, not a day and night side
+  lightBasis.extractBasis(lightX, lightY, lightZ);
+  tiles.sunDir.value.copy(lightX.multiplyScalar(-0.45)).addScaledVector(lightY, 0.55).addScaledVector(lightZ, 0.7).normalize();
   tiles.update(camera, renderer.domElement.clientHeight, dt);
-  starCamera.quaternion.copy(camera.quaternion);
+  starCamera.quaternion.copy(spinInverse).multiply(camera.quaternion);
   renderer.clear();
   renderer.render(starScene, starCamera);
   renderer.clearDepth();
@@ -178,7 +286,10 @@ window.addEventListener('resize', () => {
   frames = frameDistances(RADIUS, regions.inradius, camera.fov, camera.aspect);
   renderer.setSize(window.innerWidth, window.innerHeight);
   setNarrowPx();
+  if (screen === 'start') frameStartPlanet();
+  if (lockedLevel === 3) rig.maxDist = lockDist();
 });
+frameStartPlanet();
 
 // ─── Export globals ───────────────────────────────
 (window as any).globeScene = scene;
@@ -187,6 +298,11 @@ window.addEventListener('resize', () => {
 (window as any).globeTiles = tiles;
 (window as any).globeTerrain = { terrainHeight };
 (window as any).globeRegions = regions;
+(window as any).globeGame = {
+  get state() {
+    return { screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist() };
+  },
+};
 (window as any).globeLevels = {
   get state() {
     return { level: viewLevel, path, selection, frames, flying: rig.flying };

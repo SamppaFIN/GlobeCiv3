@@ -9,7 +9,8 @@ interface RigState {
 
 async function openGame(page: Page): Promise<void> {
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./');
+  // The engine without the start screen and the zoom lock (STORY-021)
+  await page.goto('./?free');
   await ready;
 }
 

@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-013",
+  "story": "STORY-021",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Peli alkaa aloitusnäytöstä (design-paketin 1a), jonka planeetta on oikea 3D-pallo (sääntö 1), ei kuva. DOM-kerros näyttää otsikkolohkon (Tuntematon maailma, GlobeCiv 46 px, Kartta, joka piirtyy), kompassirenkaan pallon ympärillä (tikit 5° välein ja P/I/E/L) ja alhaalla Uusi peli -napin (52 px) sekä rivin Kartoitettu 0 %. Kamera asetetaan niin, että pallo mahtuu otsikon ja napin väliin (puhelimella 76 % leveydestä kuten designissa), ja rengas piirretään pallon näytöllä näkyvän säteen mukaan. Pallo pyörii 80 s kierrokseen (kamera kiertää napa-akselin ympäri), vähennetyllä liikkeellä ei pyöri. Taustan radiaaligradientti tulee CSS:stä, ja renderöijän tyhjennys on läpinäkyvä. Uusi peli valitsee aloituskaupunkialueen uudella moduulilla src/game/start.ts: siemen määrää ehdokkaiden järjestyksen, ja ensimmäinen kaupunkialue, joka on navoista kaukana (|y| ≤ 0,8) ja jonka ruuduista vähintään puolet on maata, valitaan. Siemen tulee URL:stä (?seed=) tai satunnaisesti, joten sama siemen antaa saman paikan. Lento noudattaa kuvakäsikirjoitusta 2a kahtena osana: 1 s kääntyminen kohteen päälle planeettaetäisyydellä (otsikko ja nappi häipyvät, kohdevaltio korostuu aksentilla) ja 2 s laskeutuminen kaupunkialueen kehykseen, jonka aikana korostus seuraa näkymän tasoa (valtio, lääni, kaupunkialue). Vähennetyllä liikkeellä siirtymä on suora leikkaus ja 200 ms:n häivytys. Perillä kameran zoom-raja lukitaan kaupunkialuetasolle (STORY-026 avaa sitä), ja takaisin-nappi piilotetaan lukon ajaksi. Kehitystila ?free ohittaa aloitusnäytön ja lukon, ja moottorin E2E-testit avaavat pelin sillä.",
+  "alternatives_considered": [
+    {
+      "name": "Aloitusnäytön planeetta SVG-kuvana kuten designissa",
+      "pros": "Täsmälleen designin näköinen",
+      "cons": "Rikkoo säännön 1 (yksi maailma, yksi renderöijä), ja lento alkaisi eri pallosta kuin se, jolle laskeudutaan",
+      "rejected_because": "Sääntö 1. Sumun tyyli (STORY-024) tekee 3D-pallosta designin mukaisen siluetin."
+    },
+    {
+      "name": "Yksi 3 s:n lento suoraan kaupunkialueelle",
+      "pros": "Yksinkertaisempi",
+      "cons": "Jos kohde on pallon takana, kamera kiitää valtiotasolla pinnan yli suurella nopeudella",
+      "rejected_because": "Kuvakäsikirjoitus 2a kääntyy ensin planeettaetäisyydellä ja laskeutuu vasta sitten"
+    }
+  ],
+  "files_to_change": [
+    "src/game/start.ts (uusi) ja src/game/start.test.ts",
+    "src/ui/startScreen.ts (uusi) ja src/ui/hud.css",
+    "src/globe/main.ts (aloitus, lento, lukko, ?free ja ?seed)",
+    "src/globe/levels.ts (pallon kehys aloitusnäytölle)",
+    "index.html (taustagradientti)",
+    "tests/e2e/start.e2e.ts (uusi) sekä ?free muihin E2E-testeihin"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Aloituspaikan valinta ja yksikkötestit: determinismi, maata vähintään puolet ja ei napa-aluetta",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Aloitusnäyttö, pyöriminen, kaksivaiheinen lento, vähennetty liike ja zoom-lukko",
+      "verify": "Kuvat aloitusnäytöstä puhelimella ja työpöydällä, lennon keskeltä ja perillä"
+    },
+    {
+      "step": 3,
+      "action": "E2E: aloitusnäyttö, lento, lukko ja vähennetty liike. Moottorin testit ?free-tilaan. Merge ja CI.",
+      "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

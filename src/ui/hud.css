@@ -27,3 +27,25 @@
 }
 .level-hint { font-size: 12px; color: var(--c-muted); }
 .level-hint:empty { display: none; }
+.level-bar[hidden] { display: none; }
+
+/* Start screen (STORY-021, design view 1a). It blocks input to the globe until the
+   new game has landed, also while it fades out. */
+.start { position: absolute; inset: 0; pointer-events: auto; transition: opacity 400ms ease; }
+.start-leaving { opacity: 0; }
+.start-ring { position: absolute; overflow: visible; pointer-events: none; }
+.start-title, .start-actions {
+  position: absolute; left: 0; right: 0; margin: 0 auto; max-width: 390px; padding: 0 28px;
+  display: flex; flex-direction: column;
+}
+.start-title { top: max(72px, calc(env(safe-area-inset-top) + 24px)); gap: 6px; }
+.start-kicker { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink); }
+.start-title h1 { margin: 0; font-size: 46px; font-weight: 500; line-height: 1.12; letter-spacing: -0.02em; color: var(--c-text); }
+.start-subtitle { font-size: 15px; color: var(--c-muted); }
+.start-actions { bottom: max(48px, calc(env(safe-area-inset-bottom) + 24px)); gap: 14px; }
+.start-new { min-height: 52px; font-size: 16px; gap: 10px; background: color-mix(in srgb, var(--c-bg) 60%, transparent); }
+.start-progress { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--c-muted); }
+.start-track { flex: 1; height: 2px; border-radius: 2px; background: #3f424d; }
+
+/* Reduced motion: the fly-in is a cut, softened by a 200 ms fade (Web Animations) */
+.cut-fade { position: fixed; inset: 0; z-index: 3; background: var(--c-bg); pointer-events: none; }
