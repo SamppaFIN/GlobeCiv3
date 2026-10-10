@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-018",
+  "story": "STORY-027",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Uusi puhdas moduuli src/game/discoveries.ts: noin joka 60. maaruutu on löytö (yksi vakio DISCOVERY_EVERY), ja löytö ja sen kaksi vaihtoehtoa lasketaan hashista pelin siemenestä ja ruudun tunnuksesta (sääntö 3, ei Math.random). Vaihtoehdot ovat omia keksintöjä (sääntö 4): Kalaisat vedet (+2 ruokaa ruudulle, vain rannikolla), Vanhat rauniot (uusi tiedustelija), Malmisuoni (+2 tuotantoa ruudulle), Vanha kauppapolku (+2 kauppaa ruudulle) ja Näköalapaikka (kartoittaa neljän ruudun säteeltä). Löytö syntyy vain, kun tiedustelija kartoittaa ruudun pelin aikana: aloituksen paljastus, testikoukku, näköalapaikka ja uuden tiedustelijan ensimmäinen näkymä eivät tee löytöjä, joten kortit eivät ketjuunnu. Kun löytö syntyy, päivät pysähtyvät löydön päivään, eikä kello etene ennen valintaa. Kortti noudattaa designia 4a: Peli pysähtyi · Päivä N -siru, aksenttirengas löytöruudulla (kamera kääntyy ruutuun), alapaneelissa Löytö · tiedustelijan nimi, alueen nimi, lause kahdesta löydöstä, kaksi 64 px:n valintaa ja huomautus. Pelin HUD-paneelit piilotetaan kortin ajaksi kuten designissa. Valinnan jälkeen HUD näyttää ilmoituksen (role=status), ja ruutubonukset tallentuvat pelitilaan STORY-028:n tuottoja varten. Avautumiskortti odottaa, kunnes löytö on ratkaistu.",
+  "alternatives_considered": [
+    {
+      "name": "Löydöt kaikista kartoitetuista ruuduista",
+      "pros": "Yksinkertaisempi kytkentä",
+      "cons": "Näköalapaikka ja uusi tiedustelija kartoittavat ruutuja, jolloin kortit ketjuuntuisivat, ja testikoukku avautumistesteissä avaisi kortteja",
+      "rejected_because": "Story sanoo tutkituille ruuduille: vain tiedustelijan liike tuottaa löytöjä"
+    },
+    {
+      "name": "Löytö jokaisessa uudessa kaupunkialueessa",
+      "pros": "Tasainen tahti",
+      "cons": "Ei ole ruutukohtainen, eikä löytöruutua voi merkitä",
+      "rejected_because": "Design 4a merkitsee löytöruudun aksenttirenkaalla"
+    }
+  ],
+  "files_to_change": [
+    "src/game/discoveries.ts ja discoveries.test.ts (uudet)",
+    "src/game/units.ts (recruit: uusi tiedustelija)",
+    "src/ui/discoveryCard.ts (uusi): siru, rengas, kortti ja ilmoitus",
+    "src/ui/hud.css ja src/ui/gameHud.ts (taukokuvake jaetaan)",
+    "src/globe/main.ts (tunnistus, pysähdys, valinta, testikoukut)",
+    "tests/e2e/discovery.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Löydöt ja niiden vaikutukset puhtaana logiikkana yksikkötesteineen",
+      "verify": "npm test vihreä: determinismi, tiheys, rannikkoehto ja vaikutukset"
+    },
+    {
+      "step": 2,
+      "action": "Kortti 4a, pysähdys, valinta ja ilmoitus peliin",
+      "verify": "Kuvakaappaukset työpöydältä ja puhelimesta, ei konsolivirheitä"
+    },
+    {
+      "step": 3,
+      "action": "E2E: tiedustelija lähetetään lähimmälle löydölle, peli pysähtyy, valinta muuttaa tilaa ja peli jatkuu. Merge ja CI.",
+      "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

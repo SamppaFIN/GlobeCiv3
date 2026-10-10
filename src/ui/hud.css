@@ -133,3 +133,53 @@
 .area-expedition[hidden] { display: none; }
 .state-target { flex: 1; }
 .state-set-target { flex: none; min-height: var(--touch-target); }
+
+/* Discovery (STORY-027, design 4a): the game stands still until a find is chosen */
+.discovery { position: absolute; inset: 0; pointer-events: none; }
+.discovery[hidden], .discovery-ring[hidden] { display: none; }
+.discovery-shade {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--c-bg) 30%, transparent) 0%, transparent 30%, color-mix(in srgb, var(--c-bg) 85%, transparent) 62%);
+}
+.discovery-ring {
+  position: absolute; left: 0; top: 0; width: 52px; height: 52px; margin: -26px 0 0 -26px;
+  border-radius: 50%; border: 2px solid var(--c-accent-light); box-shadow: 0 0 16px var(--c-accent);
+}
+.discovery-pause {
+  position: absolute; left: 8px; top: max(32px, calc(env(safe-area-inset-top) + 8px));
+  display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px;
+  border-radius: var(--radius-md); background: color-mix(in srgb, var(--c-bg) 85%, transparent); font-size: 13px;
+}
+.discovery-card {
+  position: absolute; left: 8px; right: 8px; bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px));
+  max-width: 480px; margin: 0 auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  border-radius: var(--radius-lg); background: color-mix(in srgb, var(--c-surface) 94%, transparent);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 0 1px var(--c-divider), 0 16px 40px rgba(0, 0, 0, 0.65); pointer-events: auto;
+}
+.discovery-head { display: flex; flex-direction: column; gap: 4px; }
+.discovery-kicker { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-accent-text); }
+.discovery-title { margin: 0; font-size: 22px; font-weight: 500; line-height: 1.2; }
+.discovery-body { font-size: 14px; color: var(--c-muted); text-wrap: pretty; }
+.discovery-options { display: flex; flex-direction: column; gap: 8px; }
+.discovery-option { justify-content: flex-start; gap: 12px; min-height: 64px; padding: 10px 12px; text-align: left; }
+.discovery-icon {
+  width: 40px; height: 40px; flex: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--c-bg); box-shadow: 0 0 0 1px var(--ink); color: var(--ink);
+}
+.discovery-option-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.discovery-option-title { font-size: 15px; }
+.discovery-option-effect { font-size: 12px; color: var(--c-muted); }
+.discovery-note { font-size: 12px; color: var(--c-muted); }
+#hud.discovering .hud-top, #hud.discovering .hud-bottom, #hud.discovering .level-bottom, #hud.discovering .chips { display: none; }
+.hud-notice {
+  position: absolute; left: 8px; right: 8px; margin: 0 auto; max-width: 464px; width: fit-content;
+  top: calc(max(32px, calc(env(safe-area-inset-top) + 8px)) + 90px);
+  padding: 8px 12px; border-radius: var(--radius-md); background: var(--c-hud);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 13px;
+  opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+}
+.hud-notice-on { opacity: 1; visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .hud-notice { transition: none; } }

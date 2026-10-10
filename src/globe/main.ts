@@ -27,6 +27,8 @@ import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/pro
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, type RegionName } from '../game/names';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
+import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
+import { createDiscoveryCard } from '../ui/discoveryCard';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -214,9 +216,9 @@ const BORDER_STRENGTH = tiles.borderStrength.value;
 if (screen === 'start') tiles.borderStrength.value = 0;
 
 /** Map tiles: their terrain, the mapped bit and the coarse fog map, uploaded at once. */
-function reveal(ids: Iterable<number>) {
+function reveal(ids: Iterable<number>): number[] {
   const fresh = mapState.reveal(ids);
-  if (!fresh.length) return;
+  if (!fresh.length) return fresh;
   const codes = tiles.tileCodes;
   for (const id of fresh) {
     tileTypes.fillTile(id);
@@ -225,6 +227,7 @@ function reveal(ids: Iterable<number>) {
   paintMapped(tiles.fogData, fresh);
   tiles.tileCodesChanged();
   tiles.fogChanged();
+  return fresh;
 }
 
 /**
@@ -288,6 +291,12 @@ interface Play {
   progress: Progress;
   /** The province chosen as the state's target (design 7a), or -1. */
   targetProvince: number;
+  /** Discoveries waiting for a choice, the shown one first (STORY-027). */
+  discoveries: Discovery[];
+  /** Extra yield on tiles from finds; STORY-028's cities count it. */
+  bonuses: Map<number, Yield>;
+  /** Finds kept so far. */
+  found: number;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -296,11 +305,18 @@ const terrainOf = (id: number): Terrain => {
   tileTypes.fillTile(id);
   return TERRAINS[(tileTypes.codes[id] & 15) - 1];
 };
+/** True while the units take their day: tiles mapped then may hold discoveries. */
+let scouting = false;
+/** Tests of the clock and the units turn discoveries off (they stop the game). */
+let discoveriesOn = true;
 const world: World = {
   cost: id => (terrainOf(id) === 'ocean' ? Infinity : TERRAIN_RULES[terrainOf(id)].move),
   isMapped: id => mapState.isMapped(id),
   hasResource: id => (tileTypes.codes[id] & 16) !== 0,
-  reveal: ids => reveal(ids),
+  reveal: ids => {
+    const fresh = reveal(ids);
+    if (scouting) noteDiscoveries(fresh);
+  },
   cityOf: id => regions.tileTable()[id],
   // A city site is as good as the food, shields and trade within two rings (food counts twice)
   siteScore: id => tilesInRings(id, 2).reduce((sum, t) => {
@@ -334,7 +350,56 @@ function startPlay(startCity: number) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, hud };
+}
+
+// ─── Discoveries (STORY-027) ──────────────────────
+// About one land tile in 60 holds a discovery (from the seed). The scout that maps it
+// stops the game; the player keeps one of two finds.
+const discoveryCard = createDiscoveryCard(hud_root, index => {
+  if (!play) return;
+  const d = play.discoveries.shift();
+  if (!d) return;
+  discoveryCard.hide();
+  play.found++;
+  discoveryCard.notice(applyFind(d.finds[index], d, play.units, world, play.bonuses));
+});
+
+function noteDiscoveries(fresh: number[]) {
+  if (!play || !game || !discoveriesOn) return;
+  for (const tile of fresh) {
+    if (!Number.isFinite(world.cost(tile))) continue;
+    const finds = discoveryAt(game.seed, tile, neighbors(tile).some(n => terrainOf(n) === 'ocean'));
+    if (!finds) continue;
+    // The finder is the scout nearest to the tile
+    const at = tileCenter(tile);
+    let finder = 0, best = Infinity;
+    play.units.units.forEach((u, i) => {
+      const a = u.kind === 'scout' ? tileCenter(u.tile).angleTo(at) : Infinity;
+      if (a < best) { best = a; finder = i; }
+    });
+    play.discoveries.push({ tile, finder, finds });
+  }
+}
+
+/** Show the first waiting discovery and keep its ring on the tile. */
+function updateDiscovery() {
+  if (!play) return;
+  const d = play.discoveries[0];
+  if (!d) return;
+  if (!discoveryCard.visible) {
+    discoveryCard.show({
+      day: clock.day,
+      kicker: `Löytö · ${play.units.units[d.finder].name}`,
+      title: nameOf(2, regions.tileTable()[d.tile]).name,
+      body: discoverySentence(d.finds),
+      options: d.finds.map(kind => ({ kind, title: FINDS[kind].title, effect: FINDS[kind].effect })),
+    });
+    // Bring the tile into view above the card
+    rig.flyTo(tileCenter(d.tile), rig.dist, reduceMotion() ? 0 : 0.6);
+  }
+  const at = toScreen(tileCenter(d.tile));
+  discoveryCard.setRing(at?.[0] ?? null, at?.[1] ?? null);
 }
 
 // ─── Province and state levels (STORY-026) ────────
@@ -411,7 +476,7 @@ const toScreen = (v: THREE.Vector3): [number, number] | null => {
 /** Chips and panels of the province and state levels, and the unlocks. */
 function updateLevels() {
   if (!play || !game) return;
-  const opened = advance(play.progress, mapState.share(play.province), mapState.share(play.state));
+  const opened = play.discoveries.length ? null : advance(play.progress, mapState.share(play.province), mapState.share(play.state));
   if (opened !== null) {
     lockedLevel = opened;
     rig.maxDist = lockDist(opened);
@@ -483,8 +548,17 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 
 function updatePlay(dt: number) {
   if (!play) return;
-  const days = clock.advance(dt);
-  for (let d = 0; d < days; d++) play.units.day(world);
+  const days = play.discoveries.length ? 0 : clock.advance(dt);
+  for (let d = 0; d < days; d++) {
+    scouting = true;
+    play.units.day(world);
+    scouting = false;
+    if (play.discoveries.length) {
+      clock.day -= days - d - 1;
+      break;
+    }
+  }
+  updateDiscovery();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
     day: clock.day,
@@ -630,7 +704,25 @@ frameStartPlanet();
 (window as any).globeTileTypes = { tileInfo, codes: tileTypes.codes };
 (window as any).globeMap = { isMapped: (id: number) => mapState.isMapped(id) };
 // For tests: map tiles without waiting for the scouts
-(window as any).globeDebug = { reveal: (ids: number[]) => reveal(ids) };
+(window as any).globeDebug = {
+  reveal: (ids: number[]) => reveal(ids),
+  /** Unmapped land tiles holding discoveries, nearest to the camp first (STORY-027). */
+  discoverySites: (count: number) => {
+    if (!play || !game) return [];
+    const sites: { tile: number; finds: string[] }[] = [];
+    for (let rings = 2; sites.length < count && rings <= 40; rings += 2) {
+      sites.length = 0;
+      for (const tile of tilesInRings(play.units.camp, rings)) {
+        if (mapState.isMapped(tile) || !Number.isFinite(world.cost(tile))) continue;
+        const finds = discoveryAt(game.seed, tile, neighbors(tile).some(n => terrainOf(n) === 'ocean'));
+        if (finds) sites.push({ tile, finds });
+      }
+    }
+    return sites.slice(0, count);
+  },
+  sendTo: (tile: number) => play?.units.sendTo(tile, world) ?? false,
+  setDiscoveries: (on: boolean) => { discoveriesOn = on; },
+};
 (window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
 (window as any).globeGame = {
   get state() {
@@ -640,6 +732,7 @@ frameStartPlanet();
       units: play?.units.units.map(u => ({ name: u.name, kind: u.kind, tile: u.tile, mode: u.mode, path: u.path.length })) ?? [],
       selected: play?.selected ?? null, flag: play?.units.flag ?? null, site: play?.units.currentSite() ?? null,
       openLevel: play?.progress.openLevel ?? null, areaPlans: play ? [...play.units.areaPlans] : [], stateLine: play?.units.stateLine ?? null,
+      discovery: play?.discoveries[0] ?? null, found: play?.found ?? 0, bonuses: play ? [...play.bonuses] : [],
     };
   },
 };
