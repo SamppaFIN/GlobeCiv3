@@ -1,0 +1,41 @@
+{
+  "id": "TICKET-IMPL-020",
+  "story": "STORY-031",
+  "plan": "PLAN-020",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "src/globe/surfacePatterns.ts",
+    "src/globe/surfacePatterns.test.ts",
+    "src/globe/surfaceWorker.ts",
+    "src/globe/tiles.ts",
+    "tests/e2e/start.e2e.ts",
+    "tests/e2e/terrain.e2e.ts",
+    "README.md",
+    "public/icons.svg"
+  ],
+  "change_summary": "Aloitusnäytön planeetta kääntyy vedolla ja nuolinäppäimillä, ja tartuttu kohta pysyy osoittimen alla. Ruuduilla on kaupunkialuetasolla maastonsa pintakuvio valona ja varjona tokenvärin päällä. Vesi on oma (merikarttojen aallonharjat), ja pelto ilman kiinteää jokea, metsä ja korkokuva on siirretty Assets-shadereista. Kuviot lasketaan Web Workerissa, kun uusi peli alkaa tai näkymä saavuttaa kaupunkialuetason, ja ne häivytetään esiin 0,6 s:ssa. globeTiles.surfaceOn kytkee ne pois. README kuvaa pelin nykytilan ja ohjauksen, ja Viten käyttämätön icons.svg poistettiin.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "tiles.ts: surfaceTex, surfaceMean, surfaceStd, surfaceOn, surfaceIn ja surfaceOf; ruudun paikalliset koordinaatit lasketaan kerran merkeille ja kuviolle",
+      "main.ts: turnStartPlanet ja orbitStart, requestSurfacePatterns"
+    ],
+    "call_sites_found": [
+      "aloitusnäytön kerros (startScreen.element)",
+      "tile-shaderin STORY-023:n ruutulohko",
+      "terrain.e2e.ts värivertailu"
+    ],
+    "call_sites_updated": [
+      "main.ts",
+      "tiles.ts",
+      "tests/e2e/terrain.e2e.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Värivertailutesti ajetaan ilman kuvioita, koska se testaa tokenvärejä, ja kuvioilla on oma testinsä. src/spike jää vielä: bench-skripti ja STORY-006:n tarkkuusmittaus käyttävät sitä, joten se poistetaan STORY-006:n yhteydessä."
+  },
+  "commit": "7b25613, 66d6426, polish/finishing",
+  "progress": 100
+}

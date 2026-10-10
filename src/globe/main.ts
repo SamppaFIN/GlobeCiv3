@@ -87,6 +87,7 @@ tiles.glyphAtlas.value = createGlyphAtlas();
 // Surface patterns are computed in a worker once needed (a new game, or the city-area
 // level in ?free); tiles are plain until they arrive
 let surfaceRequested = false;
+let surfaceArrivedAt = -Infinity;
 function requestSurfacePatterns() {
   if (surfaceRequested) return;
   surfaceRequested = true;
@@ -99,6 +100,8 @@ function requestSurfacePatterns() {
     tex.generateMipmaps = true;
     tex.needsUpdate = true;
     tiles.surfaceTex.value = tex;
+    // Fade in over 0.6 s of wall time (rule 5) rather than pop in; at once with reduced motion
+    surfaceArrivedAt = reduceMotion() ? -Infinity : performance.now();
     tiles.surfaceMean.value.set(...mean);
     tiles.surfaceStd.value.set(...std);
     worker.terminate();
@@ -866,6 +869,7 @@ function animate(now = performance.now()) {
   lastFrame = now;
   rig.update(dt);
   alignNorth(dt);
+  tiles.surfaceIn.value = Math.min(1, (now - surfaceArrivedAt) / 600);
   updateGameFlow(dt);
   updateLevel();
   // Light from the top left of the view (design: light from the top left), so the

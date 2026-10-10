@@ -1,0 +1,51 @@
+{
+  "id": "PLAN-020",
+  "story": "STORY-031",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Aloitusnäytön kerros ottaa vedon itse (se estää muun syötteen pallolle tarkoituksella): vedon alussa haetaan pallon kohta osoittimen alta, ja jokaisella liikkeellä kamerarigiä kierretään niin, että sama kohta on taas osoittimen alla, kuten pelin omassa vedossa. Pallon ohi alkanut veto ja nuolinäppäimet kääntävät pikselien mukaan. Tähtitaivas kääntyy vastakkaiseen suuntaan kuten hitaassa pyörimisessä. Pintakuviot ovat yhdessä RGBA-tekstuurissa (vesi, pelto, metsä ja korkokuva). Tile-shader ottaa värin tokeneista ja käyttää kuviota vain valona ja varjona, ruudun tunnisteen hashista valitulla otteella. Vesi on oma, ja muut on siirretty Assets-shadereista JavaScriptiksi, ja ne lasketaan Web Workerissa, kun uusi peli alkaa tai näkymä saavuttaa kaupunkialuetason. Saapuessaan kuviot häivytetään esiin 0,6 s:ssa.",
+  "alternatives_considered": [
+    {
+      "name": "Kuviot shaderina GPU:lla",
+      "pros": "Laskenta itsessään 25 ms",
+      "cons": "Direct3D-käännös pysäytti pääsäikeen noin 1,8 s:ksi, myös compileAsyncilla",
+      "rejected_because": "Pitkä tehtävä latauksessa (mitattu)"
+    },
+    {
+      "name": "Valmiiksi lasketut kuvat repossa",
+      "pros": "Ei ajonaikaista kustannusta",
+      "cons": "Binääri repoon, joka pitää laskea uudelleen kuvion muuttuessa",
+      "rejected_because": "Sääntö 3: generoitu sisältö on funktio"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "src/globe/surfacePatterns.ts ja surfacePatterns.test.ts (uudet)",
+    "src/globe/surfaceWorker.ts (uusi)",
+    "src/globe/tiles.ts",
+    "tests/e2e/start.e2e.ts",
+    "tests/e2e/terrain.e2e.ts",
+    "README.md",
+    "public/icons.svg (poisto)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Aloitusnäytön veto ja nuolinäppäimet",
+      "verify": "E2E: kohta osoittimen alla 3 px:n tarkkuudella hiirellä ja kosketuksella"
+    },
+    {
+      "step": 2,
+      "action": "Pintakuviot workerissa ja tile-shaderissa",
+      "verify": "E2E: kuviot varjostavat ruutuja muuttamatta sävyä; pitkät tehtävät ja fps mitattu"
+    },
+    {
+      "step": 3,
+      "action": "Viimeistely: pehmeä esiintulo, README ja käyttämätön icons.svg pois",
+      "verify": "Kaikki testit vihreinä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}
