@@ -45,6 +45,7 @@ test('a new game maps the start city area and leaves the rest of its province in
   expect((await page.evaluate(() => (window as any).globeGame.state)).mapped).toBe(0);
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
+  await page.getByRole('button', { name: 'Tauko' }).click();
 
   // Every tile of the start city area is mapped, and its neighbours' tiles are not
   const counts = await page.evaluate(() => {
@@ -68,8 +69,10 @@ test('a new game maps the start city area and leaves the rest of its province in
   });
   expect(counts.inside).toBeGreaterThan(30);
   expect(counts.insideMapped).toBe(counts.inside);
-  expect(counts.outsideMapped).toBe(0);
-  expect(counts.mapped).toBe(counts.inside);
+  // Since STORY-025 the scouts map their sight from the first day, so a few tiles beyond
+  // the start area may be mapped already; most of the surroundings are still fog
+  expect(counts.outsideMapped).toBeLessThan(counts.outside * 0.15);
+  expect(counts.mapped).toBeGreaterThanOrEqual(counts.inside);
 
   // From the province level (the lock is lifted for the test), the start city is lit and
   // a sibling city area of the same province is in fog
