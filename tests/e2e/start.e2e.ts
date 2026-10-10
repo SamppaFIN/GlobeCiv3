@@ -88,7 +88,9 @@ test('Uusi peli flies to the start city in about 3 s and locks zooming out at th
     const w = window as any;
     return w.globeCamera.target.clone().normalize().angleTo(w.globeRegions.centers[2][id]);
   }, game.startCity)).toBeLessThan(1e-6);
-  await expect(page.locator('.level-bar')).toBeVisible();
+  // In the game the city-area HUD (design 2b, STORY-025) takes the top; no level bar or back button
+  await expect(page.locator('.hud-top')).toBeVisible();
+  await expect(page.locator('.level-bar')).toBeHidden();
   await expect(page.locator('.level-back')).toBeHidden();
   await page.screenshot({ path: testInfo.outputPath('landed.png') });
 

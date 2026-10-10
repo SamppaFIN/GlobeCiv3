@@ -17,6 +17,12 @@ import { tileInfo, TileTypeTable } from '../game/terrainTypes';
 import { createGlyphAtlas } from './glyphAtlas';
 import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
+import { GameClock, type Speed } from '../game/clock';
+import { tilesInRings } from '../game/pathfinding';
+import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
+import { unitStatus, Units, type Mode, type World } from '../game/units';
+import { UnitLayer } from './unitLayer';
+import { createGameHud, type GameHudState } from '../ui/gameHud';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -138,6 +144,7 @@ function onTap(clientX: number, clientY: number) {
   const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
   // Ray against the sphere itself: works at every zoom level
   const hit = rig.raycast(ndc);
+  if (play && viewLevel === 3 && tapPlay(clientX - rect.left, clientY - rect.top, rect.width, rect.height, hit)) return;
   const ref = hit ? regionAt(regions, hit, viewLevel) : null;
   if (ref && sameRegion(ref, selection)) fly(diveTarget(regions, ref, frames));
   else selection = ref;
@@ -163,6 +170,7 @@ renderer.domElement.addEventListener('pointerup', e => release(e, true));
 renderer.domElement.addEventListener('pointercancel', e => release(e, false));
 
 const hud = document.getElementById('hud')!;
+const hud_root = hud;
 const levelBar = createLevelBar(hud, () => {
   const to = backTarget(regions, flight ? flight.point : rig.target, viewLevel, frames);
   if (to) fly(to);
@@ -260,6 +268,111 @@ function newGame() {
   }
 }
 
+// ─── Play: day clock, units and the HUD (STORY-025) ─
+// After landing, a day passes every 1.5 s / speed. Units act on their own each day;
+// the player sets scouts' modes and the flag, and the settler's city site.
+/** Share of a province that unlocks the next level (STORY-026 acts on it). */
+const UNLOCK_SHARE = 0.6;
+const clock = new GameClock();
+const unitLayer = new UnitLayer(RADIUS);
+scene.add(unitLayer.group);
+interface Play {
+  units: Units;
+  selected: number;
+  flagTool: boolean;
+  /** Tiles of the start province, for the mapping meter. */
+  province: number[];
+  hud: ReturnType<typeof createGameHud>;
+}
+let play: Play | null = null;
+
+const terrainOf = (id: number): Terrain => {
+  tileTypes.fillTile(id);
+  return TERRAINS[(tileTypes.codes[id] & 15) - 1];
+};
+const world: World = {
+  cost: id => (terrainOf(id) === 'ocean' ? Infinity : TERRAIN_RULES[terrainOf(id)].move),
+  isMapped: id => mapState.isMapped(id),
+  hasResource: id => (tileTypes.codes[id] & 16) !== 0,
+  reveal: ids => reveal(ids),
+  // A city site is as good as the food, shields and trade within two rings (food counts twice)
+  siteScore: id => tilesInRings(id, 2).reduce((sum, t) => {
+    const terrain = terrainOf(t);
+    const rule = TERRAIN_RULES[terrain];
+    const res = tileTypes.codes[t] & 16 ? RESOURCES[rule.resource] : { food: 0, shield: 0, trade: 0 };
+    return sum + 2 * (rule.food + res.food) + rule.shield + res.shield + rule.trade + res.trade;
+  }, 0),
+};
+
+function startPlay(startCity: number) {
+  const units = new Units(pointToTile(regions.centers[2][startCity]), world);
+  const province = Math.floor(startCity / 7);
+  const provinceTiles: number[] = [];
+  for (let c = province * 7; c < province * 7 + 7; c++) provinceTiles.push(...cityTiles(regions, c));
+  const hud = createGameHud(hud_root, {
+    togglePause: () => { clock.paused = !clock.paused; },
+    setSpeed: (speed: Speed) => { clock.speed = speed; clock.paused = false; },
+    setMode: (mode: Mode) => { if (play) play.units.setMode(play.units.units[play.selected], mode); },
+    toggleFlagTool: () => { if (play) play.flagTool = !play.flagTool; },
+    found: () => { if (play) play.units.found(world); },
+    nextSite: () => { if (play) play.units.nextSite(); },
+    nextUnit: () => {
+      if (!play) return;
+      play.selected = (play.selected + 1) % play.units.units.length;
+      // Bring it into view at the current distance
+      rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+    },
+  });
+  // The first scout is selected, as in the design
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, hud };
+}
+
+/** A tap at the city-area level: a unit, or the flag's tile with the flag tool. Returns true if used. */
+function tapPlay(x: number, y: number, width: number, height: number, hit: THREE.Vector3 | null): boolean {
+  if (!play) return false;
+  if (play.flagTool && hit) {
+    const tile = pointToTile(hit);
+    if (Number.isFinite(world.cost(tile))) {
+      play.units.flag = tile;
+      for (const u of play.units.units) if (u.kind === 'scout' && u.mode === 'explore') u.path = [];
+    }
+    play.flagTool = false;
+    return true;
+  }
+  const picked = unitLayer.pick(play.units.units, camera, x, y, width, height, 22, tileSpacing());
+  if (picked === null) return false;
+  play.selected = picked;
+  return true;
+}
+
+/** Distance between tile centres in world units near the camera target. */
+const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
+
+function updatePlay(dt: number) {
+  if (!play) return;
+  const days = clock.advance(dt);
+  for (let d = 0; d < days; d++) play.units.day(world);
+  const u = play.units.units[play.selected];
+  const state: GameHudState = {
+    day: clock.day,
+    speed: clock.speed,
+    paused: clock.paused,
+    mapped: mapState.share(play.province),
+    unlockAt: UNLOCK_SHARE,
+    unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind, mode: u.mode },
+    flagTool: play.flagTool,
+  };
+  play.hud.update(state);
+  unitLayer.update({
+    units: play.units.units,
+    selected: play.selected,
+    flag: play.units.flag,
+    site: play.units.currentSite(),
+    founding: play.units.founding,
+    spacing: tileSpacing(),
+  }, camera.position);
+}
+
 /** Advance the start screen and the fly-in for this frame. */
 function updateGameFlow(dt: number) {
   if (screen === 'start') {
@@ -281,12 +394,12 @@ function updateGameFlow(dt: number) {
   // Landed: the start city area is mapped, it is the game's view, and zooming out
   // waits for the unlock (STORY-026)
   if (game) reveal(cityTiles(regions, game.startCity));
+  if (game) startPlay(game.startCity);
   screen = 'playing';
   introTarget = null;
   lockedLevel = 3;
   rig.maxDist = lockDist();
   startScreen?.remove();
-  levelBar.setVisible(true);
 }
 
 /** Level, breadcrumb, selection and context for this frame. */
@@ -300,7 +413,9 @@ function updateLevel() {
   const anchor = flight ? flight.point : rig.target;
   const depth = flight ? Math.min(viewLevel, flight.level) : viewLevel;
   path = regionPath(regions, anchor, depth);
-  const context = path.length ? path[path.length - 1] : null;
+  // In the game at the city-area level the fog already shows what is unknown, and the
+  // scouts' finds beyond the start area must not look dimmed: no context there
+  const context = path.length && !(screen === 'playing' && viewLevel === 3) ? path[path.length - 1] : null;
   tiles.setHighlight(
     selection ? { ...selection, center: regionCenter(regions, selection) } : null,
     context ? { ...context, center: regionCenter(regions, context) } : null,
@@ -328,6 +443,7 @@ function animate(now = performance.now()) {
   tiles.sunDir.value.copy(lightX.multiplyScalar(-0.45)).addScaledVector(lightY, 0.55).addScaledVector(lightZ, 0.7).normalize();
   tiles.screenUp.value.copy(lightY);
   updateTileTypes(now);
+  updatePlay(dt);
   tiles.update(camera, renderer.domElement.clientHeight, dt);
   starCamera.quaternion.copy(spinInverse).multiply(camera.quaternion);
   renderer.clear();
@@ -362,7 +478,12 @@ frameStartPlanet();
 (window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
 (window as any).globeGame = {
   get state() {
-    return { screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist(), mapped: mapState.count };
+    return {
+      screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist(), mapped: mapState.count,
+      day: clock.day, speed: clock.speed, paused: clock.paused,
+      units: play?.units.units.map(u => ({ name: u.name, kind: u.kind, tile: u.tile, mode: u.mode, path: u.path.length })) ?? [],
+      selected: play?.selected ?? null, flag: play?.units.flag ?? null, site: play?.units.currentSite() ?? null,
+    };
   },
 };
 (window as any).globeLevels = {

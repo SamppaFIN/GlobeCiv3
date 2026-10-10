@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-016",
+  "story": "STORY-025",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Pelilogiikka on puhdasta TypeScriptiä kansiossa src/game. clock.ts: päivä vaihtuu 1,5 s / nopeus seinäkellon mukaan (sääntö 5), tauko pysäyttää, ja yhden framen kiinniotto on rajattu, jottei piilotettu välilehti tuota satoja päiviä kerralla. pathfinding.ts: A* ruutugraafissa, kustannuksena maaston liikkumiskustannus (Freeciv civ1), meri kulkukelvoton maayksiköille ja heuristiikkana kulmaetäisyys ruutuväleinä. units.ts: uudessa pelissä uudisasukas laskeutumisruudussa ja kaksi tiedustelijaa sen maanaapureissa. Joka päivä yksikkö etenee reitillään, ja ruutu, jonka liikkumiskustannus on c, vie c päivää. Tiedustelija paljastaa ruudut kahden renkaan säteellä. Moodit: Tutki kulkee lipulle, jos sellainen on, ja muuten lähimpään kartoittamattomaan ruutuun (leveyshaku). Kerää kulkee lähimmälle kartoitetulle resurssiruudulle ja takaisin leiriin, ja kantamukset lasketaan. Puolusta palaa leiriin ja pysyy siellä. Uudisasukas ehdottaa kaupungin paikkaa (paras maaruutu kolmen renkaan sisällä ympäristön tuottojen mukaan), Vaihda paikka siirtyy seuraavaksi parhaaseen, ja Perusta kaupunki tähän kävelyttää uudisasukkaan paikalle (perustaminen on STORY-028). Näkymässä yksiköt ovat sprite-kuvakkeita ruutujensa keskellä, valittu saa aksenttirenkaan, tiedustelijan reitti on pisteviiva musteella ja uudisasukkaan polku katkoviiva aksentilla kaupungin paikan katkoviivaympyrään. HUD noudattaa designin näkymää 2b: ylhäällä tauko, nopeus 1×/2×/4×, Päivä N ja läänin kartoitusmittari, jossa on merkki 60 %:n kohdalla, ja alhaalla valitun yksikön nimi, tila ja toiminnot. Yksikkö valitaan napauttamalla sitä kartalla (44 px:n osuma-alue). Kaupunkialueen kehys täyttää nyt koko kapeamman mitan (design: 61 ruudun alue täyttää 390 px:n leveyden), jolloin ruudut ovat puhelimella noin 40 px.",
+  "alternatives_considered": [
+    {
+      "name": "Yksiköt shaderissa ruutukuvakkeiden tapaan",
+      "pros": "Ei erillisiä objekteja",
+      "cons": "Yksiköt liikkuvat, valitaan ja saavat reitit ja renkaat. Ruutukohtainen tekstuuri päivittyisi jatkuvasti.",
+      "rejected_because": "Spritet ja viivat Three.js-scenessä ovat yksinkertaisempia ja yksiköitä on vähän"
+    },
+    {
+      "name": "Vuoropohjainen liike",
+      "pros": "Civ I:n tapa",
+      "cons": "Pelaaja valitsi reaaliajan ja tauon (päätös 2026-10-09)",
+      "rejected_because": "Päätös"
+    }
+  ],
+  "files_to_change": [
+    "src/game/clock.ts, pathfinding.ts, units.ts (uudet) ja niiden testit",
+    "src/globe/unitLayer.ts (uusi): spritet, renkaat ja reitit",
+    "src/ui/gameHud.ts (uusi) ja src/ui/hud.css",
+    "src/globe/levels.ts (kaupunkialueen kehys)",
+    "src/globe/main.ts (päivätikki, valinta, lippu, HUD)",
+    "tests/e2e/play.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Kello, A* ja yksiköiden päivä yksikkötesteineen: kesto seinäkellon mukaan, reitti kiertää meren, tiedustelija paljastaa sumua, lippu ohjaa, kerääjä kulkee resurssin ja leirin väliä",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Yksiköiden spritet ja reitit, HUD ja valinta napauttamalla",
+      "verify": "Kuvat puhelimella ja työpöydällä. Ei konsolivirheitä. Intel UHD vähintään 55 fps kaupunkialuetasolla."
+    },
+    {
+      "step": 3,
+      "action": "E2E: päivät kuluvat ja tauko pysäyttää, tiedustelija paljastaa ruutuja, moodin vaihto ja lippu, nopeus. Merge ja CI.",
+      "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

@@ -15,6 +15,12 @@ export type ViewLevel = 0 | 1 | 2 | 3;
 export const LEVEL_NAMES = ['Planeetta', 'Valtio', 'Lääni', 'Kaupunkialue'] as const;
 /** Share of the narrower screen dimension that a framed region spans. */
 export const FILL = 0.7;
+/**
+ * The city area is the game's main view: on a portrait phone it spans the whole width
+ * (design 2b: the 61-tile area fills 390 px); on a landscape screen 75 % of the height,
+ * leaving room for the HUD panels above and below.
+ */
+export const cityFill = (aspect: number) => (aspect < 1 ? 1 : 0.75);
 /** Circumradius of a hexagon over its inradius. */
 const CIRCUM = 2 / Math.sqrt(3);
 
@@ -35,13 +41,14 @@ export function narrowHalfFov(fovYDeg: number, aspect: number): number {
  * narrow half-field. The planet level fits the whole globe the same way.
  */
 export function frameDistances(R: number, inradius: readonly number[], fovYDeg: number, aspect: number): [number, number, number, number] {
-  const t = Math.tan(narrowHalfFov(fovYDeg, aspect)) * FILL;
-  const region = (alpha: number) => {
+  const narrow = Math.tan(narrowHalfFov(fovYDeg, aspect));
+  const t = narrow * FILL;
+  const region = (alpha: number, tan: number) => {
     const b = alpha * CIRCUM;
-    return (R * Math.sin(b)) / t - R * (1 - Math.cos(b));
+    return (R * Math.sin(b)) / tan - R * (1 - Math.cos(b));
   };
   const planet = R / Math.sin(Math.atan(t)) - R;
-  return [planet, region(inradius[0]), region(inradius[1]), region(inradius[2])];
+  return [planet, region(inradius[0], t), region(inradius[1], t), region(inradius[2], narrow * cityFill(aspect))];
 }
 
 /** View level for a camera distance: the level whose framing distance is nearest on a log scale. */
