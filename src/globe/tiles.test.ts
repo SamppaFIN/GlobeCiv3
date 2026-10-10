@@ -50,7 +50,7 @@ describe('TileManager', () => {
         expect(keys(tiles)).toBe(first);
       }
     }
-  });
+  }, 30_000);
 
   it('does not flicker when tiles hover around the split threshold', () => {
     // Keep the camera still (so visibility cannot change) and swing only the

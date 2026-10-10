@@ -2,7 +2,8 @@
  * levels.ts — view levels of the globe: planet, state, province, city area.
  *
  * Each level has a framing distance at which one of its regions (or the whole
- * planet) fills FILL of the narrower screen dimension. The current level follows
+ * planet) fills FILL of the narrower screen dimension (on a portrait phone, the
+ * width; see regionFill and cityFill). The current level follows
  * from the camera distance, so the wheel, pinch and tap navigation always agree.
  * Tapping a region at the current level selects it; diving flies to its centre at
  * the next level's framing distance.
@@ -21,6 +22,11 @@ export const FILL = 0.7;
  * leaving room for the HUD panels above and below.
  */
 export const cityFill = (aspect: number) => (aspect < 1 ? 1 : 0.75);
+/**
+ * States and provinces also span the whole width of a portrait phone, so the 96 px chips
+ * of designs 6a and 7a fit on their areas; at FILL they overlapped at 390 px.
+ */
+export const regionFill = (aspect: number) => (aspect < 1 ? 1 : FILL);
 /** Circumradius of a hexagon over its inradius. */
 const CIRCUM = 2 / Math.sqrt(3);
 
@@ -48,7 +54,7 @@ export function frameDistances(R: number, inradius: readonly number[], fovYDeg: 
     return (R * Math.sin(b)) / tan - R * (1 - Math.cos(b));
   };
   const planet = R / Math.sin(Math.atan(t)) - R;
-  return [planet, region(inradius[0], t), region(inradius[1], t), region(inradius[2], narrow * cityFill(aspect))];
+  return [planet, region(inradius[0], narrow * regionFill(aspect)), region(inradius[1], narrow * regionFill(aspect)), region(inradius[2], narrow * cityFill(aspect))];
 }
 
 /** View level for a camera distance: the level whose framing distance is nearest on a log scale. */

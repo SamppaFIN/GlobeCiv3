@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
-import { backTarget, cityFill, diveTarget, FILL, frameDistances, levelForDist, regionAt, regionPath, sameRegion, type ViewLevel } from './levels';
+import { backTarget, cityFill, diveTarget, frameDistances, levelForDist, regionAt, regionFill, regionPath, sameRegion, type ViewLevel } from './levels';
 import { CHILDREN, Regions } from './regions';
 
 const R = 5;
@@ -39,7 +39,7 @@ describe('view levels', () => {
     for (let i = 0; i < 4; i++) expect(p[i]).toBeGreaterThan(l[i]);
   });
 
-  it('makes a framed region span about FILL of the narrower screen dimension', () => {
+  it('makes a framed region span its fill of the narrower screen dimension', () => {
     const state = regions.centers[0][100];
     for (const [aspect, axis] of [[PORTRAIT, 'x'], [LANDSCAPE, 'y']] as const) {
       const frames = frameDistances(R, regions.inradius, 45, aspect);
@@ -50,7 +50,7 @@ describe('view levels', () => {
         // The camera tilts toward the horizon close to the surface, which shortens the
         // vertical extent a little; the horizontal extent stays exact
         const span = Math.abs(axis === 'x' ? ndc.x : ndc.y);
-        const fill = level === 3 ? cityFill(aspect) : FILL;
+        const fill = level === 3 ? cityFill(aspect) : regionFill(aspect);
         if (axis === 'x') expect(span).toBeCloseTo(fill, 1);
         else expect(span).toBeGreaterThan(fill * 0.75);
         expect(span).toBeLessThan(fill * 1.1);
