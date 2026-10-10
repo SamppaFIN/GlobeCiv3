@@ -55,14 +55,18 @@ export interface Chip {
   selected: boolean;
 }
 
+/** Half a chip's height (44 px, design 96 × 44) and a 4 px margin. */
+const CHIP_HALF = 26;
+
 /** Region chips over the map (design 6a, 7a). Tapping one selects it; tapping it again dives in. */
-export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[]): void } {
+export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }): void } {
   const layer = document.createElement('div');
   layer.className = 'chips';
   root.appendChild(layer);
   const pool: HTMLButtonElement[] = [];
   return {
-    update(chips) {
+    /** `free`: the screen band between the HUD panels; chips are kept inside it so they can be tapped. */
+    update(chips, free) {
       while (pool.length < chips.length) {
         const b = document.createElement('button');
         b.type = 'button';
@@ -77,8 +81,9 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
         b.hidden = !c || c.x === null || c.y === null;
         if (!c || b.hidden) return;
         b.dataset.id = String(c.id);
-        // Centred on the region, whatever the chip's width
-        b.style.transform = `translate(${c.x!.toFixed(1)}px, ${c.y!.toFixed(1)}px) translate(-50%, -50%)`;
+        // Centred on the region, whatever the chip's width, but not under a panel
+        const y = Math.min(Math.max(c.y!, free.top + CHIP_HALF), free.bottom - CHIP_HALF);
+        b.style.transform = `translate(${c.x!.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`;
         b.classList.toggle('chip-selected', c.selected);
         b.setAttribute('aria-pressed', String(c.selected));
         b.querySelector('.chip-name')!.textContent = c.name;

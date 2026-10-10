@@ -75,12 +75,17 @@
         "expected": "Perustaminen ja kortti sormella",
         "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
         "outcome": "not_run"
+      },
+      {
+        "steps": "Jälkikorjaus: tauolla jo valitun nopeuden napautus",
+        "expected": "Peli jatkuu",
+        "result": "Testi toisti vian (Tauolla) ja menee korjauksen jälkeen läpi",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
     "known_issues": [
       "Yksiköiden ylläpitoa (tuotanto ja ruoka) ei vielä ole.",
-      "Kun peli on tauolla, jo valitun nopeuden napautus ei jatka peliä; Jatka-nappi jatkaa.",
       "Kameratesti (OrbitControls-rajat) ylitti 30 s:n oletusajan kuormitetussa CI-tilan ajossa ja meni uusinnalla läpi; GitHubissa se on ollut vihreä."
     ],
     "screenshots": [

@@ -20,10 +20,10 @@ export interface GameHudState {
   day: number;
   speed: Speed;
   paused: boolean;
-  /** Mapped share of the region the meter shows (0–1), its name and the share that unlocks it. */
+  /** Mapped share of the region the meter shows (0–1), its name and the share that unlocks it (null: nothing more opens by mapping). */
   mapped: number;
   meterName: string;
-  unlockAt: number;
+  unlockAt: number | null;
   /** View level: the unit panel shows at the city-area level (3) only. */
   level: number;
   /** 'waiting': a settler behind the one choosing a site, without actions. */
@@ -84,7 +84,11 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   const q = <T extends Element>(s: string) => el.querySelector<T>(s)!;
   const pause = q<HTMLButtonElement>('.hud-pause');
   pause.addEventListener('click', on.togglePause);
-  el.querySelectorAll<HTMLInputElement>('input[name="hud-speed"]').forEach(i => i.addEventListener('change', () => on.setSpeed(Number(i.value) as Speed)));
+  // Also on click: tapping the speed already chosen fires no change, but should go on after a pause
+  el.querySelectorAll<HTMLInputElement>('input[name="hud-speed"]').forEach(i => {
+    i.addEventListener('change', () => on.setSpeed(Number(i.value) as Speed));
+    i.addEventListener('click', () => on.setSpeed(Number(i.value) as Speed));
+  });
   el.querySelectorAll<HTMLInputElement>('input[name="hud-mode"]').forEach(i => i.addEventListener('change', () => on.setMode(i.value as Mode)));
   q<HTMLButtonElement>('.hud-flag').addEventListener('click', on.toggleFlagTool);
   q<HTMLButtonElement>('.hud-found').addEventListener('click', on.found);
@@ -106,9 +110,12 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       q<HTMLElement>('.hud-day-label').textContent = s.paused ? 'Tauolla' : `${s.speed}× nopeus`;
       const pct = Math.round(s.mapped * 100);
       q<HTMLElement>('.hud-meter-fill').style.width = `${Math.min(100, pct)}%`;
-      q<HTMLElement>('.hud-meter-tick').style.left = `${s.unlockAt * 100}%`;
+      const tick = q<HTMLElement>('.hud-meter-tick');
+      tick.hidden = s.unlockAt === null;
+      if (s.unlockAt !== null) tick.style.left = `${s.unlockAt * 100}%`;
       q<HTMLElement>('.hud-meter').setAttribute('aria-valuenow', String(pct));
-      q<HTMLElement>('.hud-meter-value').textContent = `${pct} / ${Math.round(s.unlockAt * 100)} %`;
+      q<HTMLElement>('.hud-meter-value').textContent = s.unlockAt === null ? `${pct} %` : `${pct} / ${Math.round(s.unlockAt * 100)} %`;
+      q<HTMLElement>('.hud-meter').setAttribute('aria-label', `${{ Lääni: 'Läänistä', Valtio: 'Valtiosta' }[s.meterName] ?? s.meterName} kartoitettu`);
       q<HTMLElement>('.hud-meter-name').textContent = s.meterName;
       const city = q<HTMLElement>('.hud-city');
       city.hidden = !s.city;

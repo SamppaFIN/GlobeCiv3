@@ -77,6 +77,7 @@
 .hud-meter { flex: 1; height: 4px; border-radius: 2px; background: #3f424d; position: relative; }
 .hud-meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--ink); }
 .hud-meter-tick { position: absolute; top: -4px; width: 2px; height: 12px; background: #cfd3e5; }
+.hud-meter-tick[hidden] { display: none; }
 .hud-meter-value { font-size: 12px; font-variant-numeric: tabular-nums; }
 .hud-unit {
   display: flex; align-items: baseline; gap: 8px; padding: 4px; min-width: 0; min-height: 32px;

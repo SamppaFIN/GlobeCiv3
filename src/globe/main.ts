@@ -582,7 +582,12 @@ function updateLevels() {
       list.push({ id, name: nameOf(level, id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
     }
   }
-  chips.update(list);
+  const topPanel = hud_root.querySelector<HTMLElement>('.hud-top');
+  const bottomPanel = hud_root.querySelector<HTMLElement>('.level-bottom:not([hidden])');
+  chips.update(list, {
+    top: topPanel && !topPanel.hidden ? topPanel.getBoundingClientRect().bottom : 0,
+    bottom: bottomPanel ? bottomPanel.getBoundingClientRect().top : window.innerHeight,
+  });
   const area = selectedArea();
   const province = selectedProvince();
   levelPanels.update(
@@ -669,7 +674,7 @@ function updatePlay(dt: number) {
     paused: clock.paused,
     mapped: mapState.share(play.progress.meter === 'province' ? play.province : play.state),
     meterName: play.progress.meter === 'province' ? 'Lääni' : 'Valtio',
-    unlockAt: UNLOCK_SHARE,
+    unlockAt: play.progress.meter === 'done' ? null : UNLOCK_SHARE,
     level: viewLevel,
     unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode },
     flagTool: play.flagTool,

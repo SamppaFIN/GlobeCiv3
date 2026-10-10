@@ -287,7 +287,7 @@ hakemisto.
   "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014", "PLAN-015", "PLAN-016", "PLAN-017", "PLAN-018", "PLAN-019"],
   "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014", "TICKET-IMPL-015", "TICKET-IMPL-016", "TICKET-IMPL-017", "TICKET-IMPL-018", "TICKET-IMPL-019"],
   "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014", "TICKET-TEST-015", "TICKET-TEST-016", "TICKET-TEST-017", "TICKET-TEST-018", "TICKET-TEST-019"],
-  "next": "Samin puhelintestit Pagesista ja suorituskyvyn uusintamittaus (avoin kysymys 9); sitten STORY-030 (MVP:n jälkeen)"
+  "next": "Samin puhelintestit Pagesista; sitten STORY-030 (MVP:n jälkeen)"
 }
 ```
 
@@ -405,7 +405,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 6. ~~**Dependabotin 9 PR:ää.**~~ Ratkaistu 2026-10-09: mergetty yhtenä päivityksenä (päätöstaulukko).
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
-9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi. STORY-026:n lääni- ja valtiotasot mitataan uudelleen, kun GPU on vapaa (TICKET-TEST-017: mittauksen aikana toinen selain kuormitti GPU:ta).
+9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi. STORY-026:n tasot mitattiin uudelleen GPU:n ollessa vapaa: kaupunkialue, lääni ja valtio 56,8–57,1 fps, sama kuin tyhjä aloitusnäyttö (TICKET-TEST-017).
 10. **Assets-maastoshaderit.** Kirjoitetaanko vesi uudelleen omana (tai pyydetään Claude Designilta), ja käytetäänkö pintakuvioita STORY-023:ssa? Muistio: docs/spikes/assets-maastoshaderit.md.
 
 ### Ratkenneet kysymykset

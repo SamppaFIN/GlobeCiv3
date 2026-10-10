@@ -4305,8 +4305,8 @@
           {
             "steps": "Suorituskyky: tavoite 60 fps (Intel UHD)",
             "expected": "Lääni- ja valtiotaso pelissä noin 60 fps",
-            "result": "Ei vertailukelpoinen. Samin oma Chrome käytti mittauksen aikana noin 90 % GPU:n 3D-moottorista, ja sama tilanne pudotti muuttumattoman aloitusnäytön 60,1:stä 37–41 fps:ään. Mitataan uudelleen, kun GPU on vapaa.",
-            "outcome": "not_run"
+            "result": "Uusintamittaus 2026-10-10 GPU:n ollessa vapaa (Intel UHD, 60 Hz:n näyttö, verkkovirta, 1280×800, Chrome ilman ikkunaa ja näkyvänä, peli käynnissä 1×, löydöt pois): aloitusnäyttö 57,1 ja 57,0 fps (vertailu), kaupunkialue 57,1, lääni 56,9 ja valtio 56,8. Tasot ovat vertailun tasolla, eli puuttuva 3 fps ei tule tasoista. Ensimmäinen mittaus ei ollut vertailukelpoinen, koska toinen selain kuormitti GPU:ta noin 90 %.",
+            "outcome": "pass"
           },
           {
             "steps": "CI-ajot",
@@ -4319,13 +4319,16 @@
             "expected": "Kortti, sirut ja paneelit toimivat sormella, nipistys zoomaa ulos",
             "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
             "outcome": "not_run"
+          },
+          {
+            "steps": "Jälkikorjaukset (haara fix/hud-polish)",
+            "expected": "Valtiotason jälkeen mittari näyttää pelkän osuuden ilman rajaa; sirut pysyvät paneelien välissä",
+            "result": "Testit toistivat molemmat (61 / 60 % ja siru 653 px > paneeli 643 px) ja menevät korjauksen jälkeen läpi",
+            "outcome": "pass"
           }
         ],
         "console_findings": [],
-        "known_issues": [
-          "Kun valtiotaso on auki, mittari näyttää yhä valtion osuuden (esimerkiksi 65 / 60 %), vaikka seuraava taso aukeaa vasta valtauksella MVP:n jälkeen.",
-          "Työpöydällä läänin alimman alueen siru voi jäädä osin alapaneelin alle. Alueen voi silti valita napauttamalla karttaa."
-        ],
+        "known_issues": [],
         "screenshots": [
           "docs/screenshots/TICKET-TEST-017-unlock.png",
           "docs/screenshots/TICKET-TEST-017-province.png",
@@ -4535,12 +4538,17 @@
             "expected": "Perustaminen ja kortti sormella",
             "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
             "outcome": "not_run"
+          },
+          {
+            "steps": "Jälkikorjaus: tauolla jo valitun nopeuden napautus",
+            "expected": "Peli jatkuu",
+            "result": "Testi toisti vian (Tauolla) ja menee korjauksen jälkeen läpi",
+            "outcome": "pass"
           }
         ],
         "console_findings": [],
         "known_issues": [
           "Yksiköiden ylläpitoa (tuotanto ja ruoka) ei vielä ole.",
-          "Kun peli on tauolla, jo valitun nopeuden napautus ei jatka peliä; Jatka-nappi jatkaa.",
           "Kameratesti (OrbitControls-rajat) ylitti 30 s:n oletusajan kuormitetussa CI-tilan ajossa ja meni uusinnalla läpi; GitHubissa se on ollut vihreä."
         ],
         "screenshots": [
