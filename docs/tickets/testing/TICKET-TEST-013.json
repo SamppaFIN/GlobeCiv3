@@ -1,0 +1,96 @@
+{
+  "id": "TICKET-TEST-013",
+  "story": "STORY-021",
+  "implementation_ticket": "TICKET-IMPL-013",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäisessä versiossa laskeutumispaikka oli pallon yöpuolella kiinteän auringon takia. Korjattiin sitomalla valo kameraan (design: valo vasemmalta ylhäältä).",
+    "files_changed": [
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Aloituspaikka siemenille 1–20",
+        "expected": "Sama siemen antaa saman paikan, paikka on maata vähintään puolet ja |y| ≤ 0,8, ja eri siemenet antavat eri paikkoja",
+        "result": "pass (yli 15 eri paikkaa 20 siemenellä)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelin: aloitusnäyttö",
+        "expected": "Otsikko, alaotsikko, Tuntematon maailma, Kartoitettu 0 %, nappi vähintään 52 px ja 28 px:n reunoin, pallo 72–80 % leveydestä, rengas pallon keskellä, tasopalkki piilossa, pallo pyörii",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: Uusi peli siemenellä 42",
+        "expected": "Lento 2,9–4,5 s, perillä kaupunkialuetaso ja kohteena aloituskaupunkialueen keskus, takaisin-nappi piilossa, zoom ulos pysähtyy lukkoon",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: sama siemen kahdesti",
+        "expected": "Sama aloituskaupunkialue",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: vähennetty liike",
+        "expected": "Pallo ei pyöri, ja Uusi peli leikkaa suoraan perille",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "22/22 paikallisesti, aloitustestit 6/6 CI-tilassa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo 38016775557 (commit a4d291d)",
+        "expected": "Vihreä ja julkaisu",
+        "result": "success (19,3 min jonon kanssa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Aloitusnäyttö mahtuu, lento on sulava, ja perillä kaupunkialue näkyy",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-013-start-phone.png",
+      "docs/screenshots/TICKET-TEST-013-start-desktop.png",
+      "docs/screenshots/TICKET-TEST-013-intro.png",
+      "docs/screenshots/TICKET-TEST-013-landed.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Aloitusnäyttö design 1a:n rakenteella (siluetti tulee STORY-024:ssä)",
+        "checked": true
+      },
+      {
+        "item": "Aloituspaikka deterministisesti siemenestä, maata ja ei napa-aluetta",
+        "checked": true
+      },
+      {
+        "item": "Lento kuvakäsikirjoituksen 2a mukaan, vähennetyllä liikkeellä leikkaus",
+        "checked": true
+      },
+      {
+        "item": "Zoom-lukko ja ?free-kehitystila",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}
