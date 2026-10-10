@@ -136,3 +136,34 @@ test('with reduced motion the new game cuts straight to the start city', async (
   expect((await levelState(page)).level).toBe(3);
   expect(errors).toEqual([]);
 });
+
+test('a drag turns the start planet under the pointer, so do the arrow keys, and the new game still starts', async ({ page }) => {
+  test.setTimeout(120_000);
+  // No slow spin while measuring
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const errors = await openGame(page, '?seed=42');
+  const { width, height } = page.viewportSize()!;
+  const [cx, cy] = [width / 2, height / 2];
+  const centre = await page.evaluate(() => (window as any).globeCamera.target.toArray());
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 60, cy + 30, { steps: 6 });
+  await page.mouse.up();
+  // The surface point that was at the centre is now under the pointer
+  const at = await page.evaluate(p => {
+    const w = window as any;
+    const v = w.globeCamera.target.clone().fromArray(p).normalize().multiplyScalar(w.globeCamera.R).project(w.globeCamera.camera);
+    return [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight];
+  }, centre);
+  expect(Math.abs(at[0] - (cx + 60))).toBeLessThan(3);
+  expect(Math.abs(at[1] - (cy + 30))).toBeLessThan(3);
+
+  const before = await page.evaluate(() => (window as any).globeCamera.target.toArray());
+  await page.keyboard.press('ArrowLeft');
+  const turned = await page.evaluate(t => (window as any).globeCamera.target.angleTo((window as any).globeCamera.target.clone().fromArray(t)), before);
+  expect(turned).toBeGreaterThan(0.05);
+
+  await page.getByRole('button', { name: 'Uusi peli' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
+  expect(errors).toEqual([]);
+});

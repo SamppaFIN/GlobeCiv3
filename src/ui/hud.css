@@ -31,7 +31,8 @@
 
 /* Start screen (STORY-021, design view 1a). It blocks input to the globe until the
    new game has landed, also while it fades out. */
-.start { position: absolute; inset: 0; pointer-events: auto; transition: opacity 400ms ease; }
+.start { position: absolute; inset: 0; pointer-events: auto; transition: opacity 400ms ease; touch-action: none; cursor: grab; }
+.start .btn { cursor: pointer; }
 .start-leaving { opacity: 0; }
 .start-ring { position: absolute; overflow: visible; pointer-events: none; }
 .start-title, .start-actions {
