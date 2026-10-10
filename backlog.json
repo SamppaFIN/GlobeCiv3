@@ -4544,11 +4544,16 @@
             "expected": "Peli jatkuu",
             "result": "Testi toisti vian (Tauolla) ja menee korjauksen jälkeen läpi",
             "outcome": "pass"
+          },
+          {
+            "steps": "Jälkikorjaus: yksiköiden ylläpito despotismissa (Freeciv civ1)",
+            "expected": "Kolme kaupungin rakentamaa yksikköä ilmaiseksi, sen jälkeen 1 tuotanto kustakin, uudisasukas 1 ruoka; maksamaton yksikkö lähtee ennen kuin kaupunki näkee nälkää; aloitusyksiköillä ei ole kotikaupunkia",
+            "result": "Yksikkötestit vihreitä (cities.test.ts ja units.test.ts); kaupunki-, löytö- ja peli-E2E vihreitä",
+            "outcome": "pass"
           }
         ],
         "console_findings": [],
         "known_issues": [
-          "Yksiköiden ylläpitoa (tuotanto ja ruoka) ei vielä ole.",
           "Kameratesti (OrbitControls-rajat) ylitti 30 s:n oletusajan kuormitetussa CI-tilan ajossa ja meni uusinnalla läpi; GitHubissa se on ollut vihreä."
         ],
         "screenshots": [

@@ -29,7 +29,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, nextBuild, workedTiles, workedYield, CITY_RINGS, type City, type CityYield } from '../game/cities';
+import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, nextBuild, shortfall, workedTiles, workedYield, CITY_RINGS, type City, type CityYield, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -374,12 +374,18 @@ function yieldOf(id: number, centre: boolean) {
   return b ? { food: y.food + b.food, shield: y.shield + b.shield, trade: y.trade + b.trade } : y;
 }
 
+/** Units a city built and still supports. */
+function supportOf(c: City): Support {
+  const units = play ? play.units.units.filter(u => u.home === c.id) : [];
+  return { units: units.length, settlers: units.filter(u => u.kind === 'settler').length };
+}
+
 /** Yields of the cities in founding order; a tile is worked by the first city that takes it. */
 function cityYields(): CityYield[] {
   if (!play) return [];
   const taken = new Set<number>();
   return play.cities.map(c => {
-    const y = cityYield(c, yieldOf, taken);
+    const y = cityYield(c, yieldOf, taken, supportOf(c));
     for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
     return y;
   });
@@ -392,13 +398,18 @@ function foundAt(tile: number) {
   play.openCity = city.id;
 }
 
-/** A day of every city. */
+/** A day of every city: units it cannot pay for leave first (newest first), then it grows and builds. */
 function cityDays() {
   if (!play) return;
-  const yields = cityYields();
+  let yields = cityYields();
   play.cities.forEach((c, i) => {
+    for (let short = shortfall(c, yields[i], supportOf(c)); short; short = shortfall(c, yields[i], supportOf(c))) {
+      const own = play!.units.units.filter(u => u.home === c.id && (short === 'shield' || u.kind === 'settler'));
+      play!.units.disband(own[own.length - 1], world);
+      yields = cityYields();
+    }
     const done = cityDay(c, yields[i]);
-    if (done) play!.units.spawn(done, c.tile, world);
+    if (done) play!.units.spawn(done, c.tile, world, c.id);
   });
 }
 

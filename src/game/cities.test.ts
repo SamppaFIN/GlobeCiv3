@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
-import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, nextBuild, workedTiles, workedYield, type City } from './cities';
+import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, nextBuild, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
@@ -58,6 +58,21 @@ describe('cities', () => {
     const starving = city(5);
     cityDay(starving, cityYield(starving, yieldOf));
     expect([starving.size, starving.food]).toEqual([4, 0]);
+  });
+
+  it('pay upkeep under Despotism: three units free, a shield for each beyond, a food for each settler', () => {
+    const c = city(2); // 7 food, 2 shields, 2 trade, surplus 3
+    expect(cityYield(c, yieldOf, undefined, { units: 3, settlers: 0 })).toEqual({ food: 7, shield: 2, trade: 2, surplus: 3 });
+    expect(cityYield(c, yieldOf, undefined, { units: 5, settlers: 2 })).toEqual({ food: 7, shield: 0, trade: 2, surplus: 1 });
+    const six = { units: 6, settlers: 0 };
+    expect(shortfall(c, cityYield(c, yieldOf, undefined, six), six)).toBe('shield');
+    // Out of food with settlers to feed: a settler leaves before the city starves
+    const settlers = { units: 4, settlers: 4 };
+    const hungry = cityYield(c, yieldOf, undefined, settlers);
+    expect(hungry.surplus).toBe(-1);
+    expect(shortfall(c, hungry, settlers)).toBe('food');
+    c.food = 5;
+    expect(shortfall(c, hungry, settlers)).toBeNull();
   });
 
   it('build a 10-shield Soturi, and an Uudisasukas for 40 shields and a citizen', () => {

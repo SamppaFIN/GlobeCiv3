@@ -154,6 +154,20 @@ describe('cities and units (STORY-028)', () => {
     expect(tileCenter(site).angleTo(tileCenter(sea))).toBeLessThan(0.05);
   });
 
+  it('a city supports the units it built; a disbanded settler gives way to the next', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    expect(units.units.every(u => u.home === null)).toBe(true);
+    const second = units.spawn('settler', START_TILE, world, 0);
+    expect(second.home).toBe(0);
+    const first = units.settler!;
+    units.found(world);
+    units.disband(first, world);
+    expect(units.settler).toBe(second);
+    expect(units.founding).toBe(false);
+    expect(units.sites.length).toBeGreaterThan(0);
+  });
+
   it('cities add soldiers that stay put, and settlers that get new sites', () => {
     const world = makeWorld();
     const units = new Units(START_TILE, world);
