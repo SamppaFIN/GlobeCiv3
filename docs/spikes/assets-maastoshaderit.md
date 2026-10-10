@@ -83,3 +83,23 @@ Lähteet:
    sommitelmaa) renderöidään latauksessa tekstuureiksi ja näytetään
    kaupunkialuetasolla heksasekoituksella.
 3. Shadereita ei ajeta pikseleittäin pelin pintashaderissa.
+
+## 6. Ratkaisu (2026-10-10)
+
+Sami: jos lisenssi estää, tehdään oma, kunhan jotain on.
+
+- Ruuduilla on nyt pintakuviot kaupunkialuetasolla (`src/globe/surfacePatterns.ts`).
+  Värit tulevat edelleen tokeneista, ja kuvio antaa vain valoa ja varjoa. Jokainen
+  heksaruutu näyttää oman otteensa kuviosta, joten toistoa ei näy.
+- **Vesi on oma:** vanhojen merikarttojen tapaan kaartuvat, katkoviivaiset aallonharjat.
+  Seascape-johdannaista merta ei käytetä.
+- **Pelto (ilman kiinteää jokea), metsä ja korkokuva** on siirretty Assets-shadereista
+  JavaScriptiksi. Jäätikkö jäi pois kiinteän sommitelmansa takia: arktinen ja tundra
+  käyttävät korkokuvaa heikkona.
+- **Kuviot lasketaan Web Workerissa** (noin 1,4 s työpöydällä), kun uusi peli alkaa tai
+  näkymä saavuttaa kaupunkialuetason. Shaderina käännös olisi pysäyttänyt pääsäikeen noin
+  1,8 s:ksi Direct3D:llä (mitattu: käännös noin 1,5 s, itse piirto noin 25 ms).
+- **Kustannus pelissä:** A/B samassa istunnossa (Intel UHD, toinen selain kuormitti
+  GPU:ta) mediaanit 38,4 ja 40,7 fps, eli noin 6 %. Kuvioilla on kytkin
+  (`globeTiles.surfaceOn`), jos puhelin ei jaksa.
+- `Assets/`-kansiota ei edelleenkään commitoida, koska merishaderi on siellä.

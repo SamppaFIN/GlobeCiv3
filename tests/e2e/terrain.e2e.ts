@@ -22,6 +22,8 @@ test('at city-area zoom a tile shows the colour of its terrain type', async ({ p
   // Four views; the software renderer in CI needs about 30 s per view
   test.setTimeout(240_000);
   const errors = await openGame(page);
+  // The token colours themselves; the surface patterns' light and shade has its own test
+  await page.evaluate(() => { (window as any).globeTiles.surfaceOn.value = 0; });
   // Land states away from the poles: look at each from the city-area framing distance
   const starts: number[] = await page.evaluate(() => {
     const w = window as any;
@@ -105,5 +107,70 @@ test('at city-area zoom a tile shows the colour of its terrain type', async ({ p
   expect(kinds.size).toBeGreaterThanOrEqual(3);
   expect(matched / checked).toBeGreaterThan(0.95);
   expect(checked).toBeGreaterThan(10);
+  expect(errors).toEqual([]);
+});
+
+test('at city-area zoom the surface patterns shade the tiles, without changing their colour', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors = await openGame(page);
+  // The first land state away from the poles, at the city-area framing distance
+  const surfaced = page.waitForEvent('console', { predicate: m => m.text().includes('Surface patterns'), timeout: 60_000 });
+  await page.evaluate(() => {
+    const w = window as any;
+    const node = w.globeNodes.find((n: any) => {
+      const v = n.position.clone().normalize();
+      return w.globeTerrain.terrainHeight(v, 30) > 0.05 && Math.abs(v.y) < 0.75;
+    });
+    w.globeCamera.target.copy(node.position.clone().normalize());
+    // Half the city-area framing distance: the patterns fade in from 24 to 48 device pixels
+    // per tile, and CI renders at half the pixel ratio
+    w.globeCamera.dist = w.globeLevels.state.frames[3] * 0.5;
+    w.globeCamera.apply();
+    w.globeTiles.budgetMs = 1e9;
+  });
+  // The patterns are computed in a worker once the city-area level is reached
+  await surfaced;
+  const settle = () => page.waitForFunction(() => {
+    const w = window as any;
+    const st = w.globeTiles.lastStats;
+    w.__stable = st.queue === 0 && st.created === 0 ? (w.__stable ?? 0) + 1 : 0;
+    return w.__stable >= 5;
+  }, null, { timeout: 60_000, polling: 'raf' });
+  const shot = async (on: number) => {
+    await page.evaluate(v => { (window as any).globeTiles.surfaceOn.value = v; (window as any).__stable = 0; }, on);
+    await settle();
+    return (await page.screenshot({ clip: { x: 440, y: 250, width: 400, height: 300 } })).toString('base64');
+  };
+  const plain = await shot(0);
+  const shaded = await shot(1);
+  // Per pixel: how much brighter or darker, and how much the hue moved
+  const diff = await page.evaluate(async ([a, b]) => {
+    const pixels = async (b64: string) => {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      const ctx = c.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      return ctx.getImageData(0, 0, c.width, c.height).data;
+    };
+    const p = await pixels(a);
+    const q = await pixels(b);
+    let changed = 0, hueShift = 0, n = 0;
+    for (let i = 0; i < p.length; i += 4) {
+      const lp = p[i] + p[i + 1] + p[i + 2];
+      const lq = q[i] + q[i + 1] + q[i + 2];
+      n++;
+      if (Math.abs(lp - lq) > 9) changed++;
+      // Shading scales the colour: the channel ratios stay
+      if (lp > 60 && lq > 60) hueShift += Math.abs(p[i] / lp - q[i] / lq) + Math.abs(p[i + 1] / lp - q[i + 1] / lq);
+    }
+    return { changed: changed / n, hueShift: hueShift / n };
+  }, [plain, shaded] as const);
+  console.log('[surface]', JSON.stringify(diff));
+  expect(diff.changed).toBeGreaterThan(0.3);
+  expect(diff.hueShift).toBeLessThan(0.02);
   expect(errors).toEqual([]);
 });

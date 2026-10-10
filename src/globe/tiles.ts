@@ -10,6 +10,7 @@ import { children, MAX_LEVEL, tileToSphere, type Tile } from './cubeSphere';
 import { glslOklch, oklchToSrgb } from './colors';
 import { CORNERS, EDGE_BASE, FACE_ADJACENT, FACE_BASE, FACE_CENTROIDS, FACE_EDGES, FACE_INVERSES, FACES, FREQUENCY, TILE_COUNT } from './hexTiles';
 import { ATLAS_COLUMNS, ATLAS_ROWS } from './glyphAtlas';
+import { SURFACE_SIZE } from './surfacePatterns';
 import { createFogTexture, FOG_UV_GLSL } from './fogMap';
 import { TERRAINS } from '../game/terrainTypes';
 import { hierarchyAt, MAX_TILE_REGIONS, Regions, type RegionEntry } from './regions';
@@ -69,6 +70,15 @@ const TERRAIN_TOKENS: Record<string, [number, number, number]> = {
   plains: [0.75, 0.09, 105], swamp: [0.48, 0.06, 122], tundra: [0.66, 0.04, 160],
 };
 const terrainColors = TERRAINS.map(t => new THREE.Vector3(...oklchToSrgb(...TERRAIN_TOKENS[t])));
+/**
+ * Surface pattern of each terrain (surfacePatterns.ts): the channel (0 water, 1 fields,
+ * 2 forest, 3 relief) and how strongly it shades the token colour.
+ */
+const SURFACE_OF: Record<(typeof TERRAINS)[number], [number, number]> = {
+  ocean: [0, 1], arctic: [3, 0.35], desert: [3, 0.35], forest: [2, 1], grassland: [1, 0.5], hills: [3, 0.7],
+  jungle: [2, 1], mountains: [3, 1], plains: [1, 0.6], swamp: [0, 0.6], tundra: [3, 0.4],
+};
+const surfaceOf = TERRAINS.map(t => new THREE.Vector2(...SURFACE_OF[t]));
 
 /** City area of every hex tile as a 16-bit integer texture (Regions.tileTable). */
 function tileTexture(table: Uint16Array): THREE.DataTexture {
@@ -94,6 +104,11 @@ const hexShader = /* glsl */ `
   uniform highp usampler2D tileTypeTex;
   uniform sampler2D glyphAtlas;
   uniform vec3 terrainColors[${TERRAINS.length}];
+  uniform float surfaceOn;
+  uniform sampler2D surfaceTex;
+  uniform vec4 surfaceMean;
+  uniform vec4 surfaceStd;
+  uniform vec2 surfaceOf[${TERRAINS.length}];
   // World direction that is up on the screen, for upright glyphs
   uniform vec3 screenUp;
   // Fog of war (STORY-024): on in the game, off in ?free. The coarse fog map is read
@@ -450,12 +465,34 @@ const fragmentShader = /* glsl */ `
         if (near2 > 0 && (near2 == 1) != (ttype == 1)) coast = min(coast, e2);
         color = mix(color, INK, 0.4 * typeFade * (1.0 - smoothstep(0.3 * w, 0.8 * w, coast)));
         float glyphFade = typeFade * smoothstep(18.0, 30.0, spacingPx);
-        if (glyphFade > 0.0) {
-          // Tile-local coordinates in circumradii, upright on the screen
-          float s = spacing / 1.7320508;
+        float surfaceFade = surfaceOn * typeFade * smoothstep(24.0, 48.0, spacingPx);
+        // Tile-local coordinates in circumradii, upright on the screen
+        float s = spacing / 1.7320508;
+        vec2 g = vec2(0.0);
+        vec3 side = vec3(0.0);
+        vec3 up = vec3(0.0);
+        if (glyphFade > 0.0 || surfaceFade > 0.0) {
           vec3 rel = vLocal - radius * latticeLocal(latticeFace, hexBary[hq].xyz, hr - hexFrac[hq].xyz);
-          vec3 up = normalize(screenUp - n * dot(screenUp, n));
-          vec2 g = vec2(dot(rel, cross(up, n)), dot(rel, up)) / s;
+          up = normalize(screenUp - n * dot(screenUp, n));
+          side = cross(up, n);
+          g = vec2(dot(rel, side), dot(rel, up)) / s;
+        }
+        if (surfaceFade > 0.0) {
+          // The terrain's surface pattern as light and shade on the token colour, a different
+          // excerpt in every tile (the patterns do not tile); the mip level follows the tile's
+          // size on the screen, so it does not jump at the hex edges
+          uint hsh = uint(ownId) * 2654435761u;
+          hsh ^= hsh >> 15;
+          hsh *= 2246822519u;
+          vec2 offset = 0.2 + 0.6 * vec2(float(hsh & 1023u), float((hsh >> 10) & 1023u)) / 1023.0;
+          vec2 suv = offset + g * 0.175;
+          vec2 so = surfaceOf[ttype - 1];
+          vec4 mask = vec4(equal(vec4(so.x), vec4(0.0, 1.0, 2.0, 3.0)));
+          float lod = log2(max(1.0, 0.175 * ${SURFACE_SIZE}.0 * w / s));
+          float z = dot(textureLod(surfaceTex, suv, lod) - surfaceMean, mask) / dot(surfaceStd, mask);
+          color *= 1.0 + so.y * surfaceFade * 0.12 * clamp(z, -2.5, 2.5);
+        }
+        if (glyphFade > 0.0) {
           bool hasResource = (code & 16) != 0;
           // Terrain glyph (design: stroke --ink-dark at 0.5), above the resource if there is one
           vec2 gu = (g - vec2(0.0, hasResource ? 0.5 : 0.0)) / GLYPH_CELL + 0.5;
@@ -753,6 +790,12 @@ export class TileManager {
   private readonly tileTypeTex = { value: codeTexture() };
   /** Terrain glyph and resource icon atlas (glyphAtlas.ts); set by the page, empty in tests. */
   readonly glyphAtlas: { value: THREE.Texture } = { value: new THREE.DataTexture(new Uint8Array(4), 1, 1) };
+  /** Surface patterns (surfacePatterns.ts) and their channel statistics; set by the page. */
+  readonly surfaceTex: { value: THREE.Texture } = { value: new THREE.DataTexture(new Uint8Array([128, 128, 128, 128]), 1, 1) };
+  readonly surfaceMean = { value: new THREE.Vector4(0.5, 0.5, 0.5, 0.5) };
+  /** 1 draws the surface patterns, 0 not (a switch for slow devices and measurements). */
+  readonly surfaceOn = { value: 1 };
+  readonly surfaceStd = { value: new THREE.Vector4(1, 1, 1, 1) };
   /** World direction that is up on the screen. */
   readonly screenUp = { value: new THREE.Vector3(0, 1, 0) };
   /** 1 draws the fog of war (the game), 0 not (?free). */
@@ -894,6 +937,11 @@ export class TileManager {
         tileTypeTex: this.tileTypeTex,
         glyphAtlas: this.glyphAtlas,
         terrainColors: { value: terrainColors },
+        surfaceOn: this.surfaceOn,
+        surfaceTex: this.surfaceTex,
+        surfaceMean: this.surfaceMean,
+        surfaceStd: this.surfaceStd,
+        surfaceOf: { value: surfaceOf },
         screenUp: this.screenUp,
         fogOn: this.fogOn,
         fogMap: this.fogMap,

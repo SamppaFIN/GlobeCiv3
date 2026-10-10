@@ -64,6 +64,12 @@
       "requirement": "Ei oteta GlobeCiv3:een ennen kuin lähde ja lisenssi on selvitetty. Maasto generoidaan proseduraalisesti."
     },
     {
+      "name": "Ruutujen pintakuviot (src/globe/surfacePatterns.ts)",
+      "source": "Pelto, metsä ja korkokuva siirretty Assets-shadereista, jotka Claude teki Samin pyynnöstä; vesi on oma",
+      "license": "GPL-3.0-or-later",
+      "requirement": "Assets-kansion merishaderi on johdettu Seascapesta (CC BY-NC-SA 3.0), eikä sitä commitoida eikä käytetä"
+    },
+    {
       "name": "public/favicon.svg (oma pallo-ikoni, STORY-003) ja public/icons.svg (Viten pohjan jäänne, ei käytössä)",
       "source": "Oma ja Viten projektipohja",
       "license": "Oma: GPL-3.0-or-later. icons.svg: MIT (Vite)",
@@ -396,6 +402,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-10 | STORY-028 hyväksyttiin, ja EPIC-006:n MVP-storyt ovat valmiit (STORY-030 on MVP:n jälkeen). Uudisasukas perustaa kaupungin merkittyyn ruutuun. Kaupunki työstää keskustaa ja yhtä ruutua asukasta kohden kahden renkaan säteeltä, ja luvut tulevat Freecivin civ1-säännöistä: asukas syö 2 ruokaa, varasto on 20 + 10 per lisäasukas, keskusta on kasteltu, Soturi maksaa 10 ja Uudisasukas 40 tuotantoa ja asukkaan. Kortti 8a avautuu myös HUDin kaupunkinapista. Yksiköiden ylläpito puuttuu vielä. | Design 8a, sääntö 4 ja koodaussääntö 5 | Linssi (Samin valtuutuksella) |
 | 2026-10-10 | Yksiköiden ylläpito lisättiin Freecivin civ1-sääntöjen mukaan (despotismi on aloitushallinto): kaupunki maksaa rakentamistaan yksiköistä kolmen ilmaisen jälkeen 1 tuotannon kustakin ja uudisasukkaasta 1 ruoan, ja yksikkö, jota se ei pysty maksamaan, lähtee ennen kuin kaupunki näkee nälkää. Aloitusyksiköillä ei ole kotikaupunkia. | TICKET-TEST-019:n tunnettu puute, sääntö 4 | Linssi (Samin valtuutuksella) |
 | 2026-10-10 | Aloitusnäytön planeetta on pyöritettävissä: vedettäessä tartuttu pinnan kohta pysyy osoittimen alla (kuten pelin vedossa), ja nuolinäppäimet kääntävät sitä. Hidas pyöriminen jatkuu irrotuksen jälkeen, ja tähdet pysyvät paikallaan. | Samin pyyntö | Sami |
+| 2026-10-10 | Ruuduilla on pintakuviot kaupunkialuetasolla: oma vesi (merikarttojen aallonharjat) sekä Assets-shadereista siirretyt pelto, metsä ja korkokuva. Värit tulevat tokeneista, ja kuvio antaa vain valoa ja varjoa, ja jokaisessa ruudussa on oma otteensa. Kuviot lasketaan Web Workerissa, koska shaderin käännös olisi pysäyttänyt pääsäikeen noin 1,8 s:ksi. Kustannus on noin 6 % (A/B samassa istunnossa). | Sami: jos lisenssi estää, tehdään oma, kunhan jotain on. Seascape (CC BY-NC-SA) ei sovi GPL v3:een. | Sami |
 
 ### Avoimet kysymykset
 
@@ -408,7 +415,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
 9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi. STORY-026:n tasot mitattiin uudelleen GPU:n ollessa vapaa: kaupunkialue, lääni ja valtio 56,8–57,1 fps, sama kuin tyhjä aloitusnäyttö (TICKET-TEST-017).
-10. **Assets-maastoshaderit.** Kirjoitetaanko vesi uudelleen omana (tai pyydetään Claude Designilta), ja käytetäänkö pintakuvioita STORY-023:ssa? Muistio: docs/spikes/assets-maastoshaderit.md.
+10. ~~**Assets-maastoshaderit.**~~ Ratkaistu 2026-10-10: vesi kirjoitettiin omana, ja pelto, metsä ja korkokuva näkyvät ruuduissa pintakuvioina (päätöstaulukko, muistion kohta 6).
 
 ### Ratkenneet kysymykset
 
