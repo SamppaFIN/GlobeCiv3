@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
-import { backTarget, diveTarget, FILL, frameDistances, levelForDist, regionAt, regionPath, sameRegion, type ViewLevel } from './levels';
+import { backTarget, cityFill, diveTarget, FILL, frameDistances, levelForDist, regionAt, regionPath, sameRegion, type ViewLevel } from './levels';
 import { CHILDREN, Regions } from './regions';
 
 const R = 5;
@@ -50,9 +50,10 @@ describe('view levels', () => {
         // The camera tilts toward the horizon close to the surface, which shortens the
         // vertical extent a little; the horizontal extent stays exact
         const span = Math.abs(axis === 'x' ? ndc.x : ndc.y);
-        if (axis === 'x') expect(span).toBeCloseTo(FILL, 1);
-        else expect(span).toBeGreaterThan(FILL * 0.75);
-        expect(span).toBeLessThan(FILL * 1.1);
+        const fill = level === 3 ? cityFill(aspect) : FILL;
+        if (axis === 'x') expect(span).toBeCloseTo(fill, 1);
+        else expect(span).toBeGreaterThan(fill * 0.75);
+        expect(span).toBeLessThan(fill * 1.1);
       }
     }
   });

@@ -49,3 +49,39 @@
 
 /* Reduced motion: the fly-in is a cut, softened by a 200 ms fade (Web Animations) */
 .cut-fade { position: fixed; inset: 0; z-index: 3; background: var(--c-bg); pointer-events: none; }
+
+/* City-area HUD (STORY-025, design view 2b): translucent panels over the live map */
+.game-hud { position: absolute; inset: 0; pointer-events: none; }
+.hud-panel {
+  position: absolute; left: 8px; right: 8px; margin: 0 auto; max-width: 480px;
+  display: flex; flex-direction: column; gap: 6px; padding: 6px 8px 8px;
+  border-radius: var(--radius-md); background: var(--c-hud);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 0 1px #3f424d; pointer-events: auto;
+}
+.hud-panel[hidden] { display: none; }
+.hud-top { top: max(32px, calc(env(safe-area-inset-top) + 8px)); }
+.hud-bottom { bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px)); padding: 8px; }
+.hud-row { display: flex; align-items: center; gap: 8px; }
+.hud-row[hidden] { display: none; }
+.hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
+.hud-speed { flex: none; }
+.hud-speed .seg-opt { min-width: var(--touch-target); min-height: var(--touch-target); justify-content: center; padding: 0 8px; }
+.hud-spacer { flex: 1; }
+.hud-day { display: flex; flex-direction: column; align-items: flex-end; padding-right: 4px; }
+.hud-day-n { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.hud-day-label { font-size: 11px; color: var(--c-muted); }
+.hud-meter-row { gap: 10px; padding: 0 4px; }
+.hud-meter-name { font-size: 12px; color: #cfd3e5; }
+.hud-meter { flex: 1; height: 4px; border-radius: 2px; background: #3f424d; position: relative; }
+.hud-meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--ink); }
+.hud-meter-tick { position: absolute; top: -4px; width: 2px; height: 12px; background: #cfd3e5; }
+.hud-meter-value { font-size: 12px; font-variant-numeric: tabular-nums; }
+.hud-unit { display: flex; align-items: baseline; gap: 8px; padding: 0 4px; min-width: 0; }
+.hud-unit-name { font-size: 14px; font-weight: 500; white-space: nowrap; }
+.hud-unit-status { font-size: 12px; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-modes { display: flex; flex: 1; min-width: 0; }
+.hud-modes .seg-opt { flex: 1; min-height: var(--touch-target); justify-content: center; padding: 0 6px; }
+.hud-found { flex: 1; min-height: var(--touch-target); }
+.hud-next-site { flex: none; min-height: var(--touch-target); }
+.hud-active { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }

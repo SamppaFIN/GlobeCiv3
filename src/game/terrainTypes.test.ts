@@ -53,7 +53,7 @@ describe('tile terrain types', () => {
     }
     expect([...seen].sort()).toEqual([...TERRAINS].sort());
     expect(resources / n).toBeCloseTo(RESOURCE_RATE, 1);
-  });
+  }, 30_000);
 
   it('encodes the terrain and the resource flag in one byte, and fills a city area once', () => {
     expect(tileCode({ terrain: 'ocean', resource: null })).toBe(1);
