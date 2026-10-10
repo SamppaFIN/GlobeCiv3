@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { GlobeCamera } from './camera';
 import { MAX_LEVEL, pointToTile, tileKey, type Tile } from './cubeSphere';
+import { buildHexGrid } from './hexGrid';
+import { Regions } from './regions';
 import { TileManager } from './tiles';
 
 const R = 5;
@@ -95,5 +97,26 @@ describe('TileManager', () => {
     }
     expect(rows[rows.length - 1].level).toBe(MAX_LEVEL);
     console.log('[tile-counts] ' + JSON.stringify(rows));
+  }, 120_000);
+
+  it('gives every vertex a finite border hint (Infinity interpolates to NaN on the GPU)', () => {
+    // Deep tiles inside a province list a single city area: no sibling, no border
+    const regions = new Regions(buildHexGrid(R, 5).nodes);
+    const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
+    // Where the bug showed: inside a city area whose province lists no sibling nearby
+    const rig = new GlobeCamera(R, camera, { minDist: R * 2e-5, maxDist: R * 6, startDist: R * 2e-4 });
+    rig.target.set(-4.44756, 2.17002, 0.71429).normalize();
+    rig.forward.set(0, 1, 0);
+    rig.apply();
+    const tiles = new TileManager(R, regions);
+    tiles.budgetMs = 1e9;
+    settle(tiles, camera);
+    let checked = 0;
+    for (const mesh of tiles.group.children as THREE.Mesh[]) {
+      const hint = mesh.geometry.getAttribute('borderHint').array as Float32Array;
+      for (const v of hint) expect(Number.isFinite(v)).toBe(true);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(10);
   }, 120_000);
 });
