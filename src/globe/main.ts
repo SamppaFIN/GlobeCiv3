@@ -6,12 +6,15 @@ import * as THREE from 'three';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
+import { neighbors, pointToTile, tileCenter } from './hexTiles';
 import { Regions } from './regions';
 import { terrainHeight } from './terrain';
 import { TileManager } from './tiles';
 import { createLevelBar } from '../ui/levelBar';
 import { createStartScreen, RING_EXTENT } from '../ui/startScreen';
-import { chooseStartCity } from '../game/start';
+import { chooseStartCity, cityTiles } from '../game/start';
+import { tileInfo, TileTypeTable } from '../game/terrainTypes';
+import { createGlyphAtlas } from './glyphAtlas';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -63,6 +66,31 @@ attachInput(renderer.domElement, rig);
 const tileTableStart = performance.now();
 const tiles = new TileManager(RADIUS, regions);
 console.log(`[GlobeCiv3] Hex tile table: ${(performance.now() - tileTableStart).toFixed(0)} ms`);
+tiles.glyphAtlas.value = createGlyphAtlas();
+
+// ─── Tile terrain types near the view (STORY-023) ─
+// Computed a city area at a time (about 62 tiles) for the city areas around the camera
+// target at the city-area level; uploads are batched to at most five a second.
+const tileTypes = new TileTypeTable(tiles.tileCodes);
+let typesPending = false;
+let lastTypeUpload = 0;
+function updateTileTypes(now: number) {
+  if (viewLevel < 3) return;
+  const reach = Math.cos(regions.inradius[2] * 4);
+  const cities = regions.centers[2];
+  const start = performance.now();
+  for (let c = 0; c < cities.length; c++) {
+    if (cities[c].dot(rig.target) < reach || tileTypes.has(c)) continue;
+    tileTypes.fill(c, cityTiles(regions, c));
+    typesPending = true;
+    if (performance.now() - start > 4) break;
+  }
+  if (typesPending && now - lastTypeUpload > 200) {
+    tiles.tileCodesChanged();
+    typesPending = false;
+    lastTypeUpload = now;
+  }
+}
 scene.add(tiles.group);
 const setNarrowPx = () => {
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
@@ -269,6 +297,8 @@ function animate(now = performance.now()) {
   // part of the world in view is always lit: a map, not a day and night side
   lightBasis.extractBasis(lightX, lightY, lightZ);
   tiles.sunDir.value.copy(lightX.multiplyScalar(-0.45)).addScaledVector(lightY, 0.55).addScaledVector(lightZ, 0.7).normalize();
+  tiles.screenUp.value.copy(lightY);
+  updateTileTypes(now);
   tiles.update(camera, renderer.domElement.clientHeight, dt);
   starCamera.quaternion.copy(spinInverse).multiply(camera.quaternion);
   renderer.clear();
@@ -298,6 +328,8 @@ frameStartPlanet();
 (window as any).globeTiles = tiles;
 (window as any).globeTerrain = { terrainHeight };
 (window as any).globeRegions = regions;
+(window as any).globeTileTypes = { tileInfo, codes: tileTypes.codes };
+(window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
 (window as any).globeGame = {
   get state() {
     return { screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist() };

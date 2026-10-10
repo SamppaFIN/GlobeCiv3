@@ -1,0 +1,53 @@
+{
+  "id": "PLAN-014",
+  "story": "STORY-023",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Uusi moduuli src/game/terrainTypes.ts: ruudun maasto (11 tyyppiä) määräytyy ruudun keskipisteen korkeudesta (sama maastofunktio kuin pinnassa), leveysasteesta ja erillisestä kosteuskohinasta: meri korkeuden alla 0, napa-alueet arktisia ja tundraa, korkeat kohdat vuoria ja kukkuloita, ja muualla kosteus ja lämpötila valitsevat aavikon, tasangon, ruohomaan, metsän, viidakon tai suon. Erikoisresurssi on 22 %:ssa ruuduista (design-paketin karttanäkymä) hajautuksesta siemenen mukaan, ja jokaisella maastolla on yksi resurssi kuten Civ I:ssä. Tuotot, liikkumiskustannukset ja resurssien bonukset tulevat Freecivin civ1-sääntösarjasta (data/civ1/terrain.ruleset, format_version 50), ja lähde kirjataan koodiin. Nimet ovat omia. Ruutujen tyypit lasketaan laiskasti kaupunkialue kerrallaan (noin 62 ruutua, alle millisekunti) kameran lähellä ja myöhemmin paljastuneille ruuduille (STORY-024), ja ne ladataan 8-bittiseksi tekstuuriksi tunnisteen mukaan kuten kaupunkialueet. Shaderi maalaa kaupunkialuetasolla ruudun tokens.css:n maastovärillä (meri syvyyden mukaan liukuen) ja piirtää keskelle maaston merkin ja resurssin pyöreän merkin kuvakkeineen. Merkit ja kuvakkeet piirretään kerran canvasiin design-paketin poluista (glyph ja RI) atlakseksi, ja shaderi lukee atlasta ruudun omissa, näytön suhteen pystyssä olevissa koordinaateissa. Syvemmälle zoomatessa ruudun väri häivytetään jatkuvaan maastoon.",
+  "alternatives_considered": [
+    {
+      "name": "Kaikkien 1,09 miljoonan ruudun tyypit käynnistyksessä",
+      "pros": "Ei laiskaa kirjanpitoa",
+      "cons": "Arviolta 1–2 s työpöydällä ja useita sekunteja puhelimella, vaikka pelaaja näkee alussa vain yhden kaupunkialueen",
+      "rejected_because": "Laiska laskenta kaupunkialue kerrallaan on millisekunteja"
+    },
+    {
+      "name": "Tyypit GPU:lla laskentapassissa",
+      "pros": "Nopea",
+      "cons": "float32 voi kääntää kynnyksen lähellä olevan ruudun eri tyypiksi kuin CPU:n float64, ja tulos voisi vaihdella laitteittain",
+      "rejected_because": "Pelilogiikan (tuotot) ja näkymän on oltava sama totuus"
+    },
+    {
+      "name": "Assets-kansion maastoshaderit pintakuvioiksi",
+      "pros": "Rikkaampi ulkoasu",
+      "cons": "Merishaderin lisenssi ei sovi, ja käytöstä ei ole vielä päätöstä (avoin kysymys 10)",
+      "rejected_because": "Odottaa Samin päätöstä. Tokenit ja merkit ovat designin Kartografi-ilme."
+    }
+  ],
+  "files_to_change": [
+    "src/game/terrainTypes.ts (uusi) ja terrainTypes.test.ts",
+    "src/ui/glyphAtlas.ts (uusi): merkit ja kuvakkeet canvasiin",
+    "src/globe/tiles.ts (tyyppitekstuuri, värit, merkit ja kuvakkeet)",
+    "src/globe/main.ts (tyyppien laiska laskenta kameran ympärillä)",
+    "tests/e2e/hexTiles.e2e.ts (kuvat ja tarkistus, että ruudun väri vastaa tyyppiä)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Maastotyypit, resurssit ja tuotot sekä yksikkötestit: determinismi, kaikki 11 tyyppiä esiintyvät, tuotot lähdetaulukon mukaan",
+      "verify": "npm test vihreä, ja tyyppien osuudet kirjataan"
+    },
+    {
+      "step": 2,
+      "action": "Tyyppitekstuuri, värit, merkit ja resurssit shaderiin",
+      "verify": "Kuvat kaupunkialuetasolta maalta ja rannikolta. Intel UHD vähintään 55 fps."
+    },
+    {
+      "step": 3,
+      "action": "E2E, merge ja CI",
+      "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

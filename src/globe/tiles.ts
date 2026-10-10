@@ -7,8 +7,10 @@
  */
 import * as THREE from 'three';
 import { children, MAX_LEVEL, tileToSphere, type Tile } from './cubeSphere';
-import { glslOklch } from './colors';
-import { EDGE_BASE, FACE_ADJACENT, FACE_BASE, FACE_CENTROIDS, FACE_EDGES, FACE_INVERSES, FACES, FREQUENCY, TILE_COUNT } from './hexTiles';
+import { glslOklch, oklchToSrgb } from './colors';
+import { CORNERS, EDGE_BASE, FACE_ADJACENT, FACE_BASE, FACE_CENTROIDS, FACE_EDGES, FACE_INVERSES, FACES, FREQUENCY, TILE_COUNT } from './hexTiles';
+import { ATLAS_COLUMNS, ATLAS_ROWS } from './glyphAtlas';
+import { TERRAINS } from '../game/terrainTypes';
 import { hierarchyAt, MAX_TILE_REGIONS, Regions, type RegionEntry } from './regions';
 import { DEFAULT_SEED, heightRange, octaveSplit } from './terrain';
 
@@ -29,10 +31,11 @@ const TILE_TEX_WIDTH = 2048;
 /**
  * Per-face tables for the shader, one row per face: texels 0–2 the inverse corner matrix
  * (point → unnormalised barycentrics) by columns, 3 the centroid, 4 the corner ids,
- * 5 the edge opposite each corner slot, 6 the packed face across that edge (hexTiles.ts).
+ * 5 the edge opposite each corner slot, 6 the packed face across that edge (hexTiles.ts),
+ * 7–9 the corners (columns of the corner matrix).
  */
 function faceTexture(): THREE.DataTexture {
-  const W = 7;
+  const W = 10;
   const data = new Float32Array(W * 20 * 4);
   const put = (f: number, k: number, v: number[]) => data.set(v, (f * W + k) * 4);
   for (let f = 0; f < 20; f++) {
@@ -42,11 +45,29 @@ function faceTexture(): THREE.DataTexture {
     put(f, 4, [...FACES[f], 0]);
     put(f, 5, [...FACE_EDGES[f], 0]);
     put(f, 6, [...FACE_ADJACENT[f], 0]);
+    FACES[f].forEach((c, k) => put(f, 7 + k, [CORNERS[c].x, CORNERS[c].y, CORNERS[c].z, 0]));
   }
   const tex = new THREE.DataTexture(data, W, 20, THREE.RGBAFormat, THREE.FloatType);
   tex.needsUpdate = true;
   return tex;
 }
+
+/** Per-tile codes (terrainTypes.ts tileCode) as an 8-bit integer texture, filled on demand. */
+function codeTexture(): THREE.DataTexture {
+  const height = Math.ceil(TILE_COUNT / TILE_TEX_WIDTH);
+  const tex = new THREE.DataTexture(new Uint8Array(TILE_TEX_WIDTH * height), TILE_TEX_WIDTH, height, THREE.RedIntegerFormat, THREE.UnsignedByteType);
+  tex.internalFormat = 'R8UI';
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/** Terrain colours from tokens.css (--terrain-*), raw sRGB in TERRAINS order; ocean is its shallow end. */
+const TERRAIN_TOKENS: Record<string, [number, number, number]> = {
+  ocean: [0.47, 0.072, 228], arctic: [0.9, 0.02, 240], desert: [0.8, 0.08, 82], forest: [0.5, 0.09, 148],
+  grassland: [0.67, 0.12, 132], hills: [0.63, 0.07, 92], jungle: [0.45, 0.11, 162], mountains: [0.6, 0.02, 60],
+  plains: [0.75, 0.09, 105], swamp: [0.48, 0.06, 122], tundra: [0.66, 0.04, 160],
+};
+const terrainColors = TERRAINS.map(t => new THREE.Vector3(...oklchToSrgb(...TERRAIN_TOKENS[t])));
 
 /** City area of every hex tile as a 16-bit integer texture (Regions.tileTable). */
 function tileTexture(table: Uint16Array): THREE.DataTexture {
@@ -69,6 +90,21 @@ const hexShader = /* glsl */ `
   #define TILE_TEX_WIDTH ${TILE_TEX_WIDTH}
   uniform highp sampler2D faceTex;
   uniform highp usampler2D tileTex;
+  uniform highp usampler2D tileTypeTex;
+  uniform sampler2D glyphAtlas;
+  uniform vec3 terrainColors[${TERRAINS.length}];
+  // World direction that is up on the screen, for upright glyphs
+  uniform vec3 screenUp;
+  #define ATLAS_COLUMNS ${ATLAS_COLUMNS}.0
+  #define ATLAS_ROWS ${ATLAS_ROWS}.0
+  // Tokens (tokens.css): ocean depth, ink and the resource marker (design 2b)
+  const vec3 OCEAN_DEEP = ${glslOklch(0.3, 0.06, 246)};
+  const vec3 INK = ${glslOklch(0.82, 0.04, 80)};
+  const vec3 INK_DARK = ${glslOklch(0.26, 0.03, 60)};
+  const vec3 MARKER_FILL = ${glslOklch(0.2, 0.02, 260)};
+  // Atlas cell span in tile circumradii: terrain glyph (g = 0.26 of 64 / 40) and resource icon
+  const float GLYPH_CELL = 0.832;
+  const float ICON_CELL = 0.64;
   // --hex-edge: oklch(0.22 0.02 260 / 0.35)
   const vec3 HEX_EDGE_COLOR = ${glslOklch(0.22, 0.02, 260)};
   const float HEX_EDGE_ALPHA = 0.35;
@@ -84,13 +120,16 @@ const hexShader = /* glsl */ `
   // Canonical tile id of lattice point w (sum F) of face f, as hexTiles.ts tileIdAt: one
   // negative coordinate is unfolded into the face across that edge; -1 if no tile exists
   int tileId(int f, ivec3 w) {
+    // One exit: ANGLE's HLSL backend warns about early returns here
+    int result = -1;
+    bool valid = true;
     int q = w.x < 0 ? 0 : w.y < 0 ? 1 : w.z < 0 ? 2 : -1;
     if (q >= 0) {
       int code = int(faceRow(f, 6)[q]);
       int wq = w[q];
       int wx = w[(q + 1) % 3] + wq;
       int wy = w[(q + 2) % 3] + wq;
-      if (wx < 0 || wy < 0) return -1;
+      valid = wx >= 0 && wy >= 0;
       ivec3 n = ivec3(0);
       n[(code / 16) % 4] = -wq;
       n[(code / 4) % 4] = wx;
@@ -98,23 +137,49 @@ const hexShader = /* glsl */ `
       f = code / 64;
       w = n;
     }
-    ivec3 corner = ivec3(faceRow(f, 4).xyz);
-    if (w.y == 0 && w.z == 0) return corner.x;
-    if (w.x == 0 && w.z == 0) return corner.y;
-    if (w.x == 0 && w.y == 0) return corner.z;
-    int z = w.x == 0 ? 0 : w.y == 0 ? 1 : w.z == 0 ? 2 : -1;
-    if (z >= 0) {
-      // On the edge opposite slot z: count from its lower-numbered corner
-      int a = (z + 1) % 3;
-      int b = (z + 2) % 3;
-      int hiWeight = corner[a] > corner[b] ? w[a] : w[b];
-      return EDGE_BASE + int(faceRow(f, 5)[z]) * (HEX_FI - 1) + hiWeight - 1;
+    if (valid) {
+      ivec3 corner = ivec3(faceRow(f, 4).xyz);
+      int z = w.x == 0 ? 0 : w.y == 0 ? 1 : w.z == 0 ? 2 : -1;
+      if (w.y == 0 && w.z == 0) result = corner.x;
+      else if (w.x == 0 && w.z == 0) result = corner.y;
+      else if (w.x == 0 && w.y == 0) result = corner.z;
+      else if (z >= 0) {
+        // On the edge opposite slot z: count from its lower-numbered corner
+        int a = (z + 1) % 3;
+        int b = (z + 2) % 3;
+        int hiWeight = corner[a] > corner[b] ? w[a] : w[b];
+        result = EDGE_BASE + int(faceRow(f, 5)[z]) * (HEX_FI - 1) + hiWeight - 1;
+      } else {
+        result = FACE_BASE + f * PER_FACE + (w.x - 1) * (HEX_FI - 1) - (w.x - 1) * w.x / 2 + w.y - 1;
+      }
     }
-    return FACE_BASE + f * PER_FACE + (w.x - 1) * (HEX_FI - 1) - (w.x - 1) * w.x / 2 + w.y - 1;
+    return result;
   }
 
   int tileCity(int id) {
     return int(texelFetch(tileTex, ivec2(id % TILE_TEX_WIDTH, id / TILE_TEX_WIDTH), 0).r);
+  }
+
+  int tileCodeAt(int id) {
+    return int(texelFetch(tileTypeTex, ivec2(id % TILE_TEX_WIDTH, id / TILE_TEX_WIDTH), 0).r);
+  }
+
+  // Offset on the unit sphere from the tile centre's lattice coordinates to the lattice
+  // point dl lattice units away: normalize(qc + dq) − normalize(qc) without cancellation
+  vec3 latticeLocal(int face, vec3 ucn, vec3 dl) {
+    mat3 corners = mat3(faceRow(face, 7).xyz, faceRow(face, 8).xyz, faceRow(face, 9).xyz);
+    vec3 qc = corners * ucn;
+    vec3 dq = corners * (dl / HEX_F);
+    float n0 = length(qc);
+    float n1 = length(qc + dq);
+    return dq / n1 - qc * (2.0 * dot(qc, dq) + dot(dq, dq)) / (n0 * n1 * (n0 + n1));
+  }
+
+  // Coverage of atlas cell c at uv (0..1, y up) for a cell cellPx screen pixels wide
+  float atlas(int c, vec2 uv, float cellPx) {
+    vec2 cell = vec2(float(c % int(ATLAS_COLUMNS)), float(c / int(ATLAS_COLUMNS)));
+    vec2 auv = vec2((cell.x + uv.x) / ATLAS_COLUMNS, 1.0 - (cell.y + 1.0 - uv.y) / ATLAS_ROWS);
+    return textureLod(glyphAtlas, auv, log2(max(64.0 / cellPx, 1.0))).a;
   }
 `;
 
@@ -295,6 +360,9 @@ const fragmentShader = /* glsl */ `
       vec3 hr = vec3(0.0);
       ivec3 lattice = ivec3(0);
       int latticeFace = 0;
+      int ownId = -1;
+      int nearId1 = -1;
+      int nearId2 = -1;
       if (hexFaceCount > 0) {
         float spacingPx = spacing / w;
         // Hex edges fade in at city-area zoom (a tile spacing of 3 → 5.5 % of the narrow
@@ -340,6 +408,52 @@ const fragmentShader = /* glsl */ `
           e2 = (1.0 - b2) * 0.5 * spacing;
           lattice = base + ivec3(hr);
           latticeFace = face;
+          ownId = tileId(face, lattice);
+          // The tiles across the two nearest edges (-1 beside a pentagon)
+          nearId1 = tileId(face, lattice + neighborOffset(n1));
+          nearId2 = tileId(face, lattice + neighborOffset(n2));
+        }
+      }
+
+      // ── Tile terrain at city-area zoom (STORY-023): token colour, glyph and resource ──
+      // Back to the continuous terrain once a tile fills a good part of the screen
+      float typeFade = hexFade * (1.0 - smoothstep(0.18, 0.45, spacing / w / narrowPx));
+      int code = typeFade > 0.0 && ownId >= 0 ? tileCodeAt(ownId) : 0;
+      int ttype = code & 15;
+      if (ttype > 0) {
+        float spacingPx = spacing / w;
+        vec3 tc = ttype == 1 ? mix(OCEAN_DEEP, terrainColors[0], clamp(1.0 + h / 0.5, 0.0, 1.0)) : terrainColors[ttype - 1];
+        color = mix(color, tc * (0.82 + 0.18 * max(dot(n, sunDir), 0.0)), typeFade);
+        // Coast (design: ink at 0.4) on edges between water and land tiles
+        int near1 = nearId1 >= 0 ? tileCodeAt(nearId1) & 15 : 0;
+        int near2 = nearId2 >= 0 ? tileCodeAt(nearId2) & 15 : 0;
+        float coast = 1e30;
+        if (near1 > 0 && (near1 == 1) != (ttype == 1)) coast = e1;
+        if (near2 > 0 && (near2 == 1) != (ttype == 1)) coast = min(coast, e2);
+        color = mix(color, INK, 0.4 * typeFade * (1.0 - smoothstep(0.3 * w, 0.8 * w, coast)));
+        float glyphFade = typeFade * smoothstep(18.0, 30.0, spacingPx);
+        if (glyphFade > 0.0) {
+          // Tile-local coordinates in circumradii, upright on the screen
+          float s = spacing / 1.7320508;
+          vec3 rel = vLocal - radius * latticeLocal(latticeFace, hexBary[hq].xyz, hr - hexFrac[hq].xyz);
+          vec3 up = normalize(screenUp - n * dot(screenUp, n));
+          vec2 g = vec2(dot(rel, cross(up, n)), dot(rel, up)) / s;
+          bool hasResource = (code & 16) != 0;
+          // Terrain glyph (design: stroke --ink-dark at 0.5), above the resource if there is one
+          vec2 gu = (g - vec2(0.0, hasResource ? 0.5 : 0.0)) / GLYPH_CELL + 0.5;
+          if (all(greaterThan(gu, vec2(0.0))) && all(lessThan(gu, vec2(1.0)))) {
+            color = mix(color, INK_DARK, 0.5 * glyphFade * atlas(ttype - 1, gu, GLYPH_CELL * s / w));
+          }
+          if (hasResource) {
+            // Marker (design): a dark disc of radius 0.36 with an ink ring and the ink icon
+            vec2 rc = g - vec2(0.0, -0.12);
+            float r = length(rc);
+            float onePx = w / s;
+            color = mix(color, MARKER_FILL, glyphFade * (1.0 - smoothstep(0.36 - 0.5 * onePx, 0.36 + 0.5 * onePx, r)));
+            float ink = 1.0 - smoothstep(0.5 * onePx, 1.0 * onePx, abs(r - 0.36));
+            if (r < 0.36) ink = max(ink, atlas(${TERRAINS.length} + ttype - 1, rc / ICON_CELL + 0.5, ICON_CELL * s / w));
+            color = mix(color, INK, glyphFade * ink);
+          }
         }
       }
       // --hex-edge: 0.6 px
@@ -405,11 +519,9 @@ const fragmentShader = /* glsl */ `
       vec3 tileBorders = vHint;
       ivec3 tileRegion = ivec3(-1);
       if (snapT > 0.0) {
-        int c0 = tileCity(tileId(latticeFace, lattice));
-        int id1 = tileId(latticeFace, lattice + neighborOffset(n1));
-        int id2 = tileId(latticeFace, lattice + neighborOffset(n2));
-        int c1 = id1 >= 0 ? tileCity(id1) : c0;
-        int c2 = id2 >= 0 ? tileCity(id2) : c0;
+        int c0 = tileCity(ownId);
+        int c1 = nearId1 >= 0 ? tileCity(nearId1) : c0;
+        int c2 = nearId2 >= 0 ? tileCity(nearId2) : c0;
         tileRegion = ivec3(c0 / 49, c0 / 7, c0);
         ivec3 r1 = ivec3(c1 / 49, c1 / 7, c1);
         ivec3 r2 = ivec3(c2 / 49, c2 / 7, c2);
@@ -569,6 +681,11 @@ export class TileManager {
   private readonly contextId = { value: -1 };
   private readonly faceTex = { value: faceTexture() };
   private readonly tileTex: { value: THREE.DataTexture | null } = { value: null };
+  private readonly tileTypeTex = { value: codeTexture() };
+  /** Terrain glyph and resource icon atlas (glyphAtlas.ts); set by the page, empty in tests. */
+  readonly glyphAtlas: { value: THREE.Texture } = { value: new THREE.DataTexture(new Uint8Array(4), 1, 1) };
+  /** World direction that is up on the screen. */
+  readonly screenUp = { value: new THREE.Vector3(0, 1, 0) };
   private readonly contextCenter = new THREE.Vector3();
 
   private readonly seed: number;
@@ -701,6 +818,10 @@ export class TileManager {
         ...hexUniforms(node, this.regions !== null),
         faceTex: this.faceTex,
         tileTex: this.tileTex,
+        tileTypeTex: this.tileTypeTex,
+        glyphAtlas: this.glyphAtlas,
+        terrainColors: { value: terrainColors },
+        screenUp: this.screenUp,
         focusId: this.focusId,
         contextId: this.contextId,
       },
@@ -862,6 +983,16 @@ export class TileManager {
     const R = this.radius;
     if (this.focusLevel.value >= 0) u.focusLocal.value.copy(this.focusCenter).multiplyScalar(R).sub(node.center);
     if (this.contextLevel.value >= 0) u.contextLocal.value.copy(this.contextCenter).multiplyScalar(R).sub(node.center);
+  }
+
+  /** Per-tile codes behind the code texture (terrainTypes.ts TileTypeTable fills them). */
+  get tileCodes(): Uint8Array {
+    return this.tileTypeTex.value.image.data as Uint8Array;
+  }
+
+  /** Upload the tile codes after they changed. */
+  tileCodesChanged(): void {
+    this.tileTypeTex.value.needsUpdate = true;
   }
 
   /** Tiles drawn in the last update. */
