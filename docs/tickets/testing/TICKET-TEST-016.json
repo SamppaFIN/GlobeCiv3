@@ -1,0 +1,114 @@
+{
+  "id": "TICKET-TEST-016",
+  "story": "STORY-025",
+  "implementation_ticket": "TICKET-IMPL-016",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Tiedustelijoiden kartoittamat ruudut aloitusalueen ulkopuolella näkyivät himmennettyinä kontekstin takia; pelin kaupunkialuetasolla himmennys poistettiin, koska sumu kertoo jo tuntemattoman. Mergen jälkeen GitHubin CI oli kahdesti punainen (ajot 38022394265 ja 38022462749): kellotesti luki päivät kiinteästä 3 s:n ikkunasta heti laskeutumisen jälkeen, mikä rikkoi sääntöä 5. GPU:ttomalla ajokoneella ikkunaan ei osunut yhtään framea, joten päiviä oli 0. Itse peli ei pysähdy: oikealla GPU:lla laskeutumisen jälkeen ei ollut yli 150 ms:n framevälejä, ja SwiftShaderilla pisin väli oli 1,25 s (mitattu). Testi mittaa nyt sivun sisällä sekunteja per päivä kahden päivänvaihdon framen välillä (commit 47cb994).",
+    "files_changed": [
+      "src/globe/main.ts",
+      "tests/e2e/play.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Kello: 1×, 2×, 4×, tauko ja kiinnioton raja",
+        "expected": "Päivä 1,5 s / nopeus, tauko 0 päivää, enintään 8 päivää framessa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "A*: reitti meren ympäri ja mereen",
+        "expected": "Yhtenäinen naapurireitti maata pitkin, mereen ei reittiä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksiköt: aloitus, tutkiminen 30 päivää, lippu, kerääminen ja puolustus, uudisasukkaan kävely, ilmansuunnat",
+        "expected": "Kartoitus kasvaa, lippu saavutetaan ja poistuu, kerääjä tuo kantamuksen, puolustaja on leirissä, uudisasukas paikalla",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: päivät seinäkellon mukaan (sivun sisällä mitattuna, sääntö 5)",
+        "expected": "1× 1,2–1,8 s per päivä (6 päivää), tauolla 0 päivää 3 s:ssa, 4× 0,34–0,5 s per päivä (24 päivää)",
+        "result": "CI-tilassa 1× 1,486 s ja 4× 0,378 s; neljällä loogisella ytimellä (GitHubin ajokoneen kaltainen) 1,489 s ja 0,377 s",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tiedustelijat ja mittari",
+        "expected": "Yli 30 ruutua lisää kartalle ja mittari muuttuu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valinta napauttamalla, uudisasukkaan paikka, seuraava yksikkö, Puolusta ja lippu",
+        "expected": "Valinta, tila ja toiminnot vaihtuvat, lippu asettuu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelin: HUD",
+        "expected": "Paneelit mahtuvat 390 px:iin, vievät alle 28 % korkeudesta, ja kosketuskohteet ovat vähintään 44 px",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "29/29 paikallisesti, CI-tilassa 28/29 ja 1 epävakaa (sumutesti, korjattu commitissa eec88b8)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky pelissä (Intel UHD)",
+        "expected": "Kaupunkialuetasolla vähintään 55 fps",
+        "result": "1280×800 60,3 fps ja 390×844 60,1 fps",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajot mergen db7ddd9 jälkeen",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajot 38022394265 (db7ddd9) ja 38022462749 (9804056) punaisia kellotestin takia (ks. yllä). Korjattu commitissa 47cb994. Ajo 38034382981 (b7853ec, 21,8 min): vihreä ja julkaistu.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Yksikön valinta sormella, HUD ja nopeudet toimivat",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-016-phone-day1.png",
+      "docs/screenshots/TICKET-TEST-016-phone-later.png",
+      "docs/screenshots/TICKET-TEST-016-desktop-later.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Päiväkello, tauko ja nopeudet seinäkellon mukaan",
+        "checked": true
+      },
+      {
+        "item": "Ylä-HUD ja ala-HUD designin 2b mukaan",
+        "checked": true
+      },
+      {
+        "item": "Tiedustelijat A*-reitillä sumun reunalle tai lipulle, näkösäde 2, reitti pisteviivana",
+        "checked": true
+      },
+      {
+        "item": "Kaksi tiedustelijaa ja uudisasukas kuvakkeina",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}

@@ -473,8 +473,11 @@ function updateDiscovery() {
       body: discoverySentence(d.finds),
       options: d.finds.map(kind => ({ kind, title: FINDS[kind].title, effect: FINDS[kind].effect })),
     });
-    // Bring the tile into view above the card
-    rig.flyTo(tileCenter(d.tile), rig.dist, reduceMotion() ? 0 : 0.6);
+    // Bring the tile into view above the card, unless it is there already
+    const seen = toScreen(tileCenter(d.tile));
+    if (!seen || seen[1] > window.innerHeight * 0.55 || seen[0] < 40 || seen[0] > window.innerWidth - 40) {
+      rig.flyTo(tileCenter(d.tile), rig.dist, reduceMotion() ? 0 : 0.6);
+    }
   }
   const at = toScreen(tileCenter(d.tile));
   discoveryCard.setRing(at?.[0] ?? null, at?.[1] ?? null);

@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-016",
+  "story": "STORY-025",
+  "plan": "PLAN-016",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/clock.ts",
+    "src/game/pathfinding.ts",
+    "src/game/units.ts",
+    "src/game/units.test.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/ui/nocturne.css",
+    "src/globe/levels.ts",
+    "src/globe/levels.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/play.e2e.ts",
+    "tests/e2e/start.e2e.ts"
+  ],
+  "change_summary": "Päivä vaihtuu 1,5 s / nopeus seinäkellon mukaan, ja tauko pysäyttää (kiinniotto rajattu 8 päivään framessa). Uudessa pelissä uudisasukas on laskeutumisruudussa ja kaksi tiedustelijaa sen vieressä. Yksiköt toimivat itse: ruutu, jonka liikkumiskustannus on c, vie c päivää, ja tiedustelija kartoittaa kaksi rengasta ympäriltään. Tutki kulkee lipulle tai lähimpään kartoittamattomaan ruutuun (A*), Kerää kulkee resurssiruudun ja leirin väliä, ja Puolusta palaa leiriin. Uudisasukas ehdottaa kaupungin paikkaa ympäristön tuottojen mukaan, Vaihda paikka siirtyy seuraavaan, ja Perusta kaupunki tähän kävelyttää sen paikalle. Kartalla yksiköt ovat hahmoja, valittu saa aksenttirenkaan, tiedustelijan reitti on pisteviiva ja uudisasukkaan katkoviiva kaupungin paikan ympyrään. HUD noudattaa designia 2b. Yksikkö valitaan napauttamalla (osuma-alue hahmon korkeudelta), ja yksikön nimi valitsee seuraavan ja kääntää kameran sen kohdalle. Kaupunkialueen kehys täyttää pystynäytöllä koko leveyden.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "levels.frameDistances: kaupunkialueen täyttö cityFill(aspect) (pysty 1, vaaka 0,75)",
+      "main.ts: kontekstin himmennys pois pelin kaupunkialuetasolla; tasopalkki piilossa pelissä",
+      "main.ts: onTap kokeilee ensin yksikköä ja lippua"
+    ],
+    "call_sites_found": [
+      "frameDistances (main.ts, levels.test.ts)",
+      "onTap (main.ts)",
+      "start.e2e.ts odotti tasopalkkia"
+    ],
+    "call_sites_updated": [
+      "levels.test.ts",
+      "tests/e2e/start.e2e.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Aloitustestin odotus muuttui tarkoituksella: pelin HUD (2b) korvaa tasopalkin kaupunkialuetasolla. Kaupungin perustaminen tulee STORY-028:ssa."
+  },
+  "commit": "d4169fd",
+  "progress": 100
+}

@@ -1,0 +1,49 @@
+{
+  "id": "TICKET-IMPL-017",
+  "story": "STORY-026",
+  "plan": "PLAN-017",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/progress.ts",
+    "src/game/names.ts",
+    "src/game/levelActions.test.ts",
+    "src/game/units.ts",
+    "src/game/units.test.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/levels.ts",
+    "src/globe/levels.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/unlock.e2e.ts",
+    "tests/e2e/fog.e2e.ts",
+    "tests/e2e/play.e2e.ts",
+    "src/globe/tiles.test.ts"
+  ],
+  "change_summary": "Tasot avautuvat kartoituksella (progress.ts, yksi vakio UNLOCK_SHARE = 0,6): 60 % kotiläänistä avaa läänitason ja 60 % kotivaltiosta valtiotason. Avautuessa zoom-raja kasvaa, ja näytetään kortti 5a (nipistysvihje, työpöydän vihje, Zoomaa ulos ja Myöhemmin). Miinusnäppäin zoomaa avatun tason ylös. Läänitasolla (6a) on seitsemän kaupunkialueen sirua nimineen ja tiloineen, ja alapaneelissa valitun alueen kartoitus, painotus Tutki/Asuta/Ohita ja Lähetä retkikunta. Valtiotasolla (7a) sirut ovat läänejä, ja paneelissa on valtion linja Laajentuminen/Tutkimus/Puolustus ja Tavoitteeksi. Toiminnot muuttavat pelitilaa: Ohita poistaa alueen tutkimuskohteista, Asuta tuo alueen parhaan kaupunkipaikan ensimmäiseksi, retkikunta ja tavoite asettavat lipun, Tutkimus kasvattaa näkösädettä yhdellä, Laajentuminen laajentaa kaupunkipaikkojen hakua ja Puolustus pitää tiedustelijat kotiläänissä. Nimet (names.ts) tulevat ilmansuunnasta emoalueen keskipisteestä (keskimmäinen on Keski-) ja vallitsevasta maisemasta, ja koti on Kotialue tai Kotilääni. Pelissä kamera kääntyy pohjoinen ylös. Pystynäytöllä valtio ja lääni täyttävät leveyden (regionFill), jotta 96 px:n sirut mahtuvat alueidensa päälle. Mittari seuraa seuraavaa avautumista (Lääni, sitten Valtio).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "levels.frameDistances: valtio ja lääni regionFill(aspect) (pysty 1, vaaka FILL)",
+      "main.ts lockDist(level)",
+      "GameHudState: meterName ja level; yksikköpaneeli vain kaupunkialuetasolla",
+      "Units: areaPlans, stateLine, homeProvince, sight, setAreaPlan, setStateLine, sendTo"
+    ],
+    "call_sites_found": [
+      "frameDistances (main.ts, levels.test.ts)",
+      "lockDist (main.ts resize ja laskeutuminen)",
+      "GameHud.update (main.ts updatePlay)",
+      "Units-konstruktori ja day (main.ts, units.test.ts)"
+    ],
+    "call_sites_updated": [
+      "main.ts",
+      "levels.test.ts",
+      "units.test.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Planeettataso avautuu designin mukaan vasta, kun oma valtio on vallattu, eikä valtausta ole MVP:ssä. Kaksi E2E-testiä korjattiin samalla (ks. TICKET-TEST-017)."
+  },
+  "commit": "90cb0f3, e3005f8",
+  "progress": 100
+}

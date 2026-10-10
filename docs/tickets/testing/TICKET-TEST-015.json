@@ -1,0 +1,92 @@
+{
+  "id": "TICKET-TEST-015",
+  "story": "STORY-024",
+  "implementation_ticket": "TICKET-IMPL-015",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Varjostus ja rannikon aavistus maksavat syvällä zoomissa noin 3–4 fps (mitattu poistamalla ne kokeeksi). Ne ovat designin vaatimia, joten ne pidettiin.",
+    "files_changed": [
+      "src/globe/tiles.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Kartoitus: paljastus, päällekkäinen paljastus ja osuus",
+        "expected": "Kerran kartoitettu pysyy, ja vain uudet ruudut palautetaan",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sumukartta: 2 000 suuntaa ja yhden ruudun maalaus",
+        "expected": "Suunta osuu oman suurimman komponenttinsa tahkolle, ja kymmenen ruudun päässä on yhä sumua",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: uusi peli siemenellä 42",
+        "expected": "Aloituskaupunkialueen kaikki ruudut kartoitettu, ympäröivät eivät. Läänitasolta kartoitettu kohta selvästi kirkkaampi kuin sumussa oleva saman läänin kohta.",
+        "result": "Kirkkaus 0,344 vs. 0,122",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: aloitusnäyttö ja ?free",
+        "expected": "Aloitusnäytöllä sumu päällä, mitään ei ole kartoitettu ja pallon keskusta on tumma. ?free ilman sumua.",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "25/25 paikallisesti ja 25/25 CI-tilassa (14,7 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky pelissä (Intel UHD, 1280×800)",
+        "expected": "Pelin päänäkymät 60 fps",
+        "result": "aloitusnäyttö 60,1 · kaupunkialue 60,2 · lääni 60,4 · valtio 56,8 · planeetta 60,4 fps. Syvä zoom ruudun sisällä: /8 53,9 ja /200 50,2 fps. Samassa kohdassa ilman sumua 60 fps, joten sumu maksaa siellä noin 5–10 %.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajot mergen fe0e825 jälkeen",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38020900698 (fe0e825) oli punainen: kameran tuplaklikkaustesti odotti lennon loppua 15 s, mikä ei riittänyt GPU:ttomalla ajokoneella. Korjattu commitissa 9804056 (odotus 45 s), minkä jälkeen kameratestit ovat olleet vihreitä. Ajo 38022462749 kaatui STORY-025:n kellotestiin (ks. TICKET-TEST-016). Ensimmäinen kokonaan vihreä ja julkaistu ajo: 38034382981 (b7853ec, 21,8 min).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Siluetti, sumu ja reunaviiva näkyvät, ja peli on sulava",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-015-start.png",
+      "docs/screenshots/TICKET-TEST-015-intro.png",
+      "docs/screenshots/TICKET-TEST-015-landed.png",
+      "docs/screenshots/TICKET-TEST-015-province.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Ruutukohtainen tila pelitilassa ja tekstuurissa, pysyvä",
+        "checked": true
+      },
+      {
+        "item": "Kartografi-sumu kaikilla tasoilla, mantereet aavistuvat planeetalla",
+        "checked": true
+      },
+      {
+        "item": "Laskeutumisruutu ja naapurit ensin, sitten aloituskaupunkialue",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}
