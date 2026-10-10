@@ -56,6 +56,14 @@ test('the province level opens at 60 % with the unlock card, its chips and area 
   const chips = page.locator('.chip:not([hidden])');
   await expect(chips).toHaveCount(7);
   await expect(page.locator('.chip-name', { hasText: 'Kotialue' })).toBeVisible();
+  // Every chip stays between the top panel and the area panel, where it can be tapped
+  const top = (await page.locator('.hud-top').boundingBox())!;
+  const panel = (await page.locator('.area-panel').boundingBox())!;
+  for (const b of await chips.all()) {
+    const r = (await b.boundingBox())!;
+    expect(r.y).toBeGreaterThanOrEqual(top.y + top.height);
+    expect(r.y + r.height).toBeLessThanOrEqual(panel.y);
+  }
   await page.screenshot({ path: testInfo.outputPath('province.png') });
   // Select a fogged or other area and plan it: skip, then send an expedition there
   const other = chips.filter({ hasNotText: 'Kotialue' }).first();
@@ -90,6 +98,9 @@ test('the state level opens next, with the state line and a target province', as
   await arrive(page, 1);
   await expect(page.locator('.chip:not([hidden])')).toHaveCount(7);
   await expect(page.locator('.chip-name', { hasText: 'Kotilääni' })).toBeVisible();
+  // Nothing more opens by mapping (the planet waits for a conquest): the meter shows the share only
+  await expect(page.locator('.hud-meter-value')).toHaveText(/^\d+ %$/);
+  await expect(page.locator('.hud-meter-tick')).toBeHidden();
   await page.locator('.state-panel label', { hasText: 'Puolustus' }).click();
   expect((await state(page)).stateLine).toBe('defend');
   const province = page.locator('.chip:not([hidden])').filter({ hasNotText: 'Kotilääni' }).first();

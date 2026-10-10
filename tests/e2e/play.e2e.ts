@@ -89,6 +89,16 @@ test('days pass by the wall clock, pause stops them and 4× runs four times as f
   expect(errors).toEqual([]);
 });
 
+test('while paused, tapping the chosen speed goes on', async ({ page }) => {
+  const errors = await startGame(page);
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  await expect(page.locator('.hud-day-label')).toHaveText('Tauolla');
+  await speed(page, '1×');
+  await expect(page.locator('.hud-day-label')).toHaveText('1× nopeus');
+  expect((await state(page)).paused).toBe(false);
+  expect(errors).toEqual([]);
+});
+
 test('scouts map the fog on their own and the meter follows the province', async ({ page }) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
