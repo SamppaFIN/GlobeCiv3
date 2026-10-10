@@ -29,6 +29,8 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
+import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, nextBuild, workedTiles, workedYield, CITY_RINGS, type City, type CityYield } from '../game/cities';
+import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -297,6 +299,9 @@ interface Play {
   bonuses: Map<number, Yield>;
   /** Finds kept so far. */
   found: number;
+  /** Cities in founding order, the capital first (STORY-028), and the one whose card is open. */
+  cities: City[];
+  openCity: number | null;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -348,9 +353,86 @@ function startPlay(startCity: number) {
       // Bring it into view at the current distance
       rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
     },
+    openCity: () => {
+      if (!play || !play.cities.length) return;
+      play.openCity = play.openCity === null ? 0 : (play.openCity + 1) % play.cities.length;
+    },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, hud };
+}
+
+// ─── Cities (STORY-028) ───────────────────────────
+// The settler sent to its site founds a city. A city works its centre and one tile per
+// citizen, grows and builds; what it builds joins the units.
+
+/** A worked tile's food, shields and trade: terrain, resource and an irrigated centre (Freeciv civ1), plus finds. */
+function yieldOf(id: number, centre: boolean) {
+  const terrain = terrainOf(id);
+  const y = workedYield({ terrain, resource: tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null }, centre);
+  const b = play?.bonuses.get(id);
+  return b ? { food: y.food + b.food, shield: y.shield + b.shield, trade: y.trade + b.trade } : y;
+}
+
+/** Yields of the cities in founding order; a tile is worked by the first city that takes it. */
+function cityYields(): CityYield[] {
+  if (!play) return [];
+  const taken = new Set<number>();
+  return play.cities.map(c => {
+    const y = cityYield(c, yieldOf, taken);
+    for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
+    return y;
+  });
+}
+
+function foundAt(tile: number) {
+  if (!play) return;
+  const city = foundCity(play.cities, tile);
+  reveal(tilesInRings(tile, CITY_RINGS));
+  play.openCity = city.id;
+}
+
+/** A day of every city. */
+function cityDays() {
+  if (!play) return;
+  const yields = cityYields();
+  play.cities.forEach((c, i) => {
+    const done = cityDay(c, yields[i]);
+    if (done) play!.units.spawn(done, c.tile, world);
+  });
+}
+
+const cityCard = createCityCard(hud_root, {
+  close: () => { if (play) play.openCity = null; },
+  changeBuild: () => { if (play && play.openCity !== null) nextBuild(play.cities[play.openCity]); },
+});
+
+function cityView(c: City, y: CityYield): CityView {
+  const grow = daysToGrow(c, y);
+  const ready = daysToBuild(c, y);
+  const build = BUILDS[c.build];
+  return {
+    kicker: `${c.capital ? 'Pääkaupunki' : 'Kaupunki'} · ${nameOf(2, regions.tileTable()[c.tile]).name}`,
+    name: c.name,
+    size: c.size,
+    growth: c.food / granary(c.size),
+    growText: y.surplus < 0 ? 'nälkää' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
+    yields: [y.surplus, y.shield, y.trade],
+    build: `${build.name} · ${ready === null ? 'ei tuotantoa' : ready === 0 ? `odottaa kokoa ${build.pop + 1}` : `valmis ${ready} pv`}`,
+  };
+}
+
+/** The open city's card, at the city-area level and not over a discovery. */
+function updateCityCard() {
+  if (!play) return;
+  const id = play.openCity;
+  if (id === null || viewLevel !== 3 || discoveryCard.visible) {
+    if (cityCard.visible) cityCard.hide();
+    return;
+  }
+  const view = cityView(play.cities[id], cityYields()[id]);
+  if (cityCard.visible) cityCard.update(view);
+  else cityCard.show(view);
 }
 
 // ─── Discoveries (STORY-027) ──────────────────────
@@ -374,10 +456,10 @@ function noteDiscoveries(fresh: number[]) {
     // The finder is the scout nearest to the tile
     const at = tileCenter(tile);
     let finder = 0, best = Infinity;
-    play.units.units.forEach((u, i) => {
+    for (const u of play.units.units) {
       const a = u.kind === 'scout' ? tileCenter(u.tile).angleTo(at) : Infinity;
-      if (a < best) { best = a; finder = i; }
-    });
+      if (a < best) { best = a; finder = u.id; }
+    }
     play.discoveries.push({ tile, finder, finds });
   }
 }
@@ -390,7 +472,7 @@ function updateDiscovery() {
   if (!discoveryCard.visible) {
     discoveryCard.show({
       day: clock.day,
-      kicker: `Löytö · ${play.units.units[d.finder].name}`,
+      kicker: `Löytö · ${play.units.units.find(u => u.id === d.finder)?.name ?? 'Tiedustelija'}`,
       title: nameOf(2, regions.tileTable()[d.tile]).name,
       body: discoverySentence(d.finds),
       options: d.finds.map(kind => ({ kind, title: FINDS[kind].title, effect: FINDS[kind].effect })),
@@ -540,10 +622,23 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
     play.flagTool = false;
     return true;
   }
+  const city = play.cities.find(c => {
+    const at = toScreen(tileCenter(c.tile));
+    return at !== null && Math.hypot(at[0] - x, at[1] - y) < 30;
+  });
+  // A unit standing in the tapped city does not hide it (the unit button still selects it)
   const picked = unitLayer.pick(play.units.units, camera, x, y, width, height, 22, tileSpacing());
-  if (picked === null) return false;
-  play.selected = picked;
-  return true;
+  if (picked !== null && play.units.units[picked].tile !== city?.tile) {
+    play.selected = picked;
+    return true;
+  }
+  if (city) {
+    play.openCity = city.id;
+    return true;
+  }
+  const selected = play.units.units[play.selected];
+  if (hit && selected === play.units.settler) return play.units.setSite(pointToTile(hit), world);
+  return false;
 }
 
 /** Distance between tile centres in world units near the camera target. */
@@ -552,16 +647,21 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 function updatePlay(dt: number) {
   if (!play) return;
   const days = play.discoveries.length ? 0 : clock.advance(dt);
+  const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
     scouting = true;
-    play.units.day(world);
+    const founded = play.units.day(world);
     scouting = false;
+    founded.forEach(foundAt);
+    cityDays();
     if (play.discoveries.length) {
       clock.day -= days - d - 1;
       break;
     }
   }
+  play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   updateDiscovery();
+  updateCityCard();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
     day: clock.day,
@@ -571,12 +671,14 @@ function updatePlay(dt: number) {
     meterName: play.progress.meter === 'province' ? 'Lääni' : 'Valtio',
     unlockAt: UNLOCK_SHARE,
     level: viewLevel,
-    unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind, mode: u.mode },
+    unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode },
     flagTool: play.flagTool,
+    city: play.cities[0]?.name ?? null,
   };
   play.hud.update(state);
   unitLayer.update({
     units: play.units.units,
+    cities: play.cities.map(c => c.tile),
     selected: play.selected,
     flag: play.units.flag,
     site: play.units.currentSite(),
@@ -736,6 +838,7 @@ frameStartPlanet();
       selected: play?.selected ?? null, flag: play?.units.flag ?? null, site: play?.units.currentSite() ?? null,
       openLevel: play?.progress.openLevel ?? null, areaPlans: play ? [...play.units.areaPlans] : [], stateLine: play?.units.stateLine ?? null,
       discovery: play?.discoveries[0] ?? null, found: play?.found ?? 0, bonuses: play ? [...play.bonuses] : [],
+      cities: play ? play.cities.map((c, i) => ({ ...c, yield: cityYields()[i] })) : [], openCity: play?.openCity ?? null,
     };
   },
 };

@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-019",
+  "story": "STORY-028",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Uusi puhdas moduuli src/game/cities.ts: kaupunki työstää keskustansa ja yhden ruudun asukasta kohden kahden renkaan säteeltä (Freecivin civ1 init_city_radius_sq 5 heksaruudukolla). Ruudun tuotto tulee lähdetaulukosta (maasto ja resurssi, Freeciv civ1), keskusta saa kastelun ruoan (effect_irrigation_center ja irrigation_food_incr), ja STORY-027:n löytöbonukset lisätään. Asukas syö 2 ruokaa (RS_DEFAULT_FOOD_COST), ja ruokavarasto on 20 + 10 × (koko − 1) (granary_food_ini 20 ja granary_food_inc 10, foodbox 100 %). Soturi (civ1 Militia) maksaa 10 tuotantoa, ja Uudisasukas 40 tuotantoa ja yhden asukkaan. Yksi vuoro on yksi päivä. Uudisasukas, joka lähetetään paikalleen (Perusta kaupunki tähän), perustaa kaupungin perillä ja poistuu yksiköistä. Pelaaja merkitsee paikan napauttamalla karttaa, kun uudisasukas on valittuna: maaruutu sellaisenaan, meriruudusta lähin maa. Ensimmäinen kaupunki on pääkaupunki ja saa omista nimistä ensimmäisen. Kaupunki paljastaa säteensä, näkyy kartalla talojen kuvana ja avaa kortin 8a: tunniste, nimi ja Sulje, koko ja ruokavaraston palkki (kasvaa N pv), kolme tuottoruutua (ruoan ylijäämä, tuotanto ja kauppa) sekä Rakentaa … ja Vaihda. Kortin saa uudelleen napauttamalla kaupunkia. Valmis Soturi puolustaa kaupunkia, ja uusi Uudisasukas saa omat kaupunkipaikkansa.",
+  "alternatives_considered": [
+    {
+      "name": "Kaupunkitason oma näkymä",
+      "pros": "Tilaa rakennuksille",
+      "cons": "Sääntö 1 kieltää uuden näkymän",
+      "rejected_because": "Kortti 8a samassa näkymässä riittää MVP:hen"
+    },
+    {
+      "name": "Työläiset ruoka edellä",
+      "pros": "Kasvu nopeinta",
+      "cons": "Kukkuloilla tuotanto jäi nollaan, eikä kaupunki rakentanut mitään",
+      "rejected_because": "Painotus 2 × ruoka + tuotanto + kauppa on sama kuin kaupunkipaikan arvioinnissa"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts ja cities.test.ts (uudet)",
+    "src/game/units.ts ja units.test.ts (perustaminen, spawn, setSite, Soturi)",
+    "src/ui/cityCard.ts (uusi), src/ui/hud.css ja src/ui/gameHud.ts",
+    "src/globe/unitLayer.ts (Soturi ja kaupunki kartalla)",
+    "src/globe/main.ts (kaupunkien päivä, kortti, napautus ja testikoukut)",
+    "tests/e2e/city.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Kaupunkien säännöt ja yksiköiden perustaminen yksikkötesteineen",
+      "verify": "npm test vihreä: tuotot lähdetaulukosta, kasvu, nälkä, rakentaminen ja paikan merkintä"
+    },
+    {
+      "step": 2,
+      "action": "Kartta, kortti 8a ja kytkentä peliin",
+      "verify": "Kuvat työpöydältä ja puhelimesta, ei konsolivirheitä"
+    },
+    {
+      "step": 3,
+      "action": "E2E: merkintä napauttamalla, perustaminen, kortin luvut pelitilaa vastaan, Vaihda, Sulje ja avaus kaupungista, kasvu tai valmis Soturi. Merge ja CI.",
+      "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

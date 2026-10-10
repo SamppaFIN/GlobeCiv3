@@ -43,7 +43,7 @@ const SALT = 0x2f6b1a3;
 
 export interface Discovery {
   tile: number;
-  /** Index of the scout that found it. */
+  /** Id of the scout that found it. */
   finder: number;
   finds: [FindKind, FindKind];
 }

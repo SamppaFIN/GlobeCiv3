@@ -19,9 +19,12 @@ const ACCENT_LIGHT = '#b5abfc';
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'ring' | 'flag';
+type Figure = 'scout' | 'settler' | 'warrior' | 'city' | 'ring' | 'flag';
 
-/** Simple figures drawn once: a pawn with a staff (scout) or a pack (settler), the ring and the flag. */
+/**
+ * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
+ * a shield (soldier), a city of three houses, the ring and the flag.
+ */
 function figureTexture(kind: Figure): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -40,6 +43,19 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.fillStyle = ACCENT;
     g.beginPath(); g.moveTo(52, 20); g.quadraticCurveTo(80, 10, 104, 24); g.quadraticCurveTo(80, 40, 52, 56); g.closePath(); g.fill();
     g.stroke();
+  } else if (kind === 'city') {
+    // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.beginPath(); g.ellipse(64, 112, 58, 12, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = INK_DARK;
+    g.lineWidth = 5;
+    for (const [x, y, w, h] of [[14, 70, 34, 38], [46, 50, 38, 58], [82, 72, 32, 36]]) {
+      g.fillStyle = INK_CSS;
+      g.fillRect(x, y, w, h);
+      g.strokeRect(x, y, w, h);
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.moveTo(x - 4, y); g.lineTo(x + w / 2, y - h * 0.45); g.lineTo(x + w + 4, y); g.closePath(); g.fill();
+    }
   } else {
     // Shadow at the feet, body, head; light from the top left (design)
     g.fillStyle = 'rgba(0,0,0,0.35)';
@@ -56,6 +72,11 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     if (kind === 'scout') {
       g.beginPath(); g.moveTo(92, 26); g.lineTo(84, 116); g.stroke();
     }
+    if (kind === 'warrior') {
+      g.beginPath(); g.moveTo(96, 8); g.lineTo(88, 116); g.stroke();
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.ellipse(42, 82, 14, 20, 0, 0, Math.PI * 2); g.fill();
+    }
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -71,6 +92,8 @@ function sprite(map: THREE.Texture, order: number): THREE.Sprite {
 
 export interface UnitView {
   units: readonly Unit[];
+  /** Tiles of the cities (STORY-028). */
+  cities: readonly number[];
   selected: number | null;
   flag: number | null;
   site: number | null;
@@ -85,6 +108,7 @@ export class UnitLayer {
   private readonly radius: number;
   private readonly textures: Record<Figure, THREE.CanvasTexture>;
   private readonly figures: THREE.Sprite[] = [];
+  private readonly cities: THREE.Sprite[] = [];
   private readonly ring: THREE.Sprite;
   private readonly flag: THREE.Sprite;
   private readonly paths = new THREE.Group();
@@ -95,7 +119,10 @@ export class UnitLayer {
 
   constructor(radius: number) {
     this.radius = radius;
-    this.textures = { scout: figureTexture('scout'), settler: figureTexture('settler'), ring: figureTexture('ring'), flag: figureTexture('flag') };
+    this.textures = {
+      scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'),
+      city: figureTexture('city'), ring: figureTexture('ring'), flag: figureTexture('flag'),
+    };
     this.ring = sprite(this.textures.ring, 10);
     this.ring.center.set(0.5, 0.5);
     this.flag = sprite(this.textures.flag, 11);
@@ -125,6 +152,20 @@ export class UnitLayer {
       s.scale.set(size, size, 1);
       s.visible = facing(s.position);
     });
+    // A settler that founded a city is gone: hide its figure
+    for (let i = view.units.length; i < this.figures.length; i++) this.figures[i].visible = false;
+    while (this.cities.length < view.cities.length) {
+      const s = sprite(this.textures.city, 7);
+      this.cities.push(s);
+      this.group.add(s);
+    }
+    this.cities.forEach((s, i) => {
+      s.visible = i < view.cities.length;
+      if (!s.visible) return;
+      this.at(view.cities[i], s.position);
+      s.scale.set(size * 1.25, size * 1.25, 1);
+      s.visible = facing(s.position);
+    });
     this.ring.visible = view.selected !== null;
     if (view.selected !== null) {
       this.at(view.units[view.selected].tile, this.ring.position);
@@ -152,7 +193,9 @@ export class UnitLayer {
     this.dotted.gapSize = unitScale * 0.1;
     this.dashed.dashSize = unitScale * 0.2;
     this.dashed.gapSize = unitScale * 0.12;
+    const active = view.units.find(u => u.kind === 'settler');
     for (const u of view.units) {
+      if (u.kind === 'settler' && u !== active) continue;
       const tiles = u.kind === 'settler' ? (view.founding ? [u.tile, ...u.path] : view.site !== null && view.site !== u.tile ? [u.tile, view.site] : []) : [u.tile, ...u.path];
       if (tiles.length < 2) continue;
       this.paths.add(this.line(tiles, u.kind === 'settler' ? this.dashed : this.dotted));
