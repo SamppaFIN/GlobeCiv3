@@ -32,6 +32,8 @@ export interface GameHudHandlers {
   toggleFlagTool(): void;
   found(): void;
   nextSite(): void;
+  /** Select the next unit and bring it into view. */
+  nextUnit(): void;
 }
 
 export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(state: GameHudState): void; element: HTMLElement } {
@@ -54,7 +56,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       </div>
     </section>
     <section class="hud-panel hud-bottom" aria-label="Valittu yksikkö">
-      <div class="hud-unit"><span class="hud-unit-name"></span><span class="hud-unit-status"></span></div>
+      <button class="hud-unit" type="button" aria-label="Seuraava yksikkö"><span class="hud-unit-name"></span><span class="hud-unit-status"></span></button>
       <div class="hud-row hud-scout">
         <div class="seg hud-modes" role="radiogroup" aria-label="Moodi">
           ${(Object.keys(MODE_NAMES) as Mode[]).map(m => `<label class="seg-opt"><input type="radio" name="hud-mode" value="${m}">${MODE_NAMES[m]}</label>`).join('')}
@@ -75,6 +77,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-flag').addEventListener('click', on.toggleFlagTool);
   q<HTMLButtonElement>('.hud-found').addEventListener('click', on.found);
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
+  q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
 
   let last = '';
   return {

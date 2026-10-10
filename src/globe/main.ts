@@ -316,6 +316,12 @@ function startPlay(startCity: number) {
     toggleFlagTool: () => { if (play) play.flagTool = !play.flagTool; },
     found: () => { if (play) play.units.found(world); },
     nextSite: () => { if (play) play.units.nextSite(); },
+    nextUnit: () => {
+      if (!play) return;
+      play.selected = (play.selected + 1) % play.units.units.length;
+      // Bring it into view at the current distance
+      rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+    },
   });
   // The first scout is selected, as in the design
   play = { units, selected: 1, flagTool: false, province: provinceTiles, hud };
@@ -407,7 +413,9 @@ function updateLevel() {
   const anchor = flight ? flight.point : rig.target;
   const depth = flight ? Math.min(viewLevel, flight.level) : viewLevel;
   path = regionPath(regions, anchor, depth);
-  const context = path.length ? path[path.length - 1] : null;
+  // In the game at the city-area level the fog already shows what is unknown, and the
+  // scouts' finds beyond the start area must not look dimmed: no context there
+  const context = path.length && !(screen === 'playing' && viewLevel === 3) ? path[path.length - 1] : null;
   tiles.setHighlight(
     selection ? { ...selection, center: regionCenter(regions, selection) } : null,
     context ? { ...context, center: regionCenter(regions, context) } : null,
