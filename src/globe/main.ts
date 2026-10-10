@@ -15,6 +15,7 @@ import { createStartScreen, RING_EXTENT } from '../ui/startScreen';
 import { chooseStartCity, cityTiles } from '../game/start';
 import { tileInfo, TileTypeTable } from '../game/terrainTypes';
 import { createGlyphAtlas } from './glyphAtlas';
+import { SURFACE_SIZE, type PatternData } from './surfacePatterns';
 import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
 import { GameClock, type Speed } from '../game/clock';
@@ -83,6 +84,28 @@ const tileTableStart = performance.now();
 const tiles = new TileManager(RADIUS, regions);
 console.log(`[GlobeCiv3] Hex tile table: ${(performance.now() - tileTableStart).toFixed(0)} ms`);
 tiles.glyphAtlas.value = createGlyphAtlas();
+// Surface patterns are computed in a worker once needed (a new game, or the city-area
+// level in ?free); tiles are plain until they arrive
+let surfaceRequested = false;
+function requestSurfacePatterns() {
+  if (surfaceRequested) return;
+  surfaceRequested = true;
+  const worker = new Worker(new URL('./surfaceWorker.ts', import.meta.url), { type: 'module' });
+  worker.onmessage = (e: MessageEvent<PatternData & { ms: number }>) => {
+    const { size, data, mean, std, ms } = e.data;
+    const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.generateMipmaps = true;
+    tex.needsUpdate = true;
+    tiles.surfaceTex.value = tex;
+    tiles.surfaceMean.value.set(...mean);
+    tiles.surfaceStd.value.set(...std);
+    worker.terminate();
+    console.log(`[GlobeCiv3] Surface patterns: ${ms.toFixed(0)} ms in a worker`);
+  };
+  worker.postMessage({ size: SURFACE_SIZE });
+}
 
 // ─── Tile terrain types near the view (STORY-023) ─
 // Computed a city area at a time (about 62 tiles) for the city areas around the camera
@@ -309,6 +332,7 @@ function frameStartPlanet() {
 
 function newGame() {
   if (screen !== 'start' || !startScreen) return;
+  requestSurfacePatterns();
   const seed = params.has('seed') ? Number(params.get('seed')) : crypto.getRandomValues(new Uint32Array(1))[0] >>> 1;
   const startCity = chooseStartCity(regions, seed);
   game = { seed, startCity };
@@ -811,6 +835,7 @@ function alignNorth(dt: number) {
 function updateLevel() {
   if (!rig.flying) flight = null;
   viewLevel = levelForDist(rig.dist, frames);
+  if (viewLevel === 3) requestSurfacePatterns();
   if (introTarget) selection = viewLevel < 3 ? regionPath(regions, introTarget, viewLevel + 1)[viewLevel] : null;
   if (selection && selection.level !== viewLevel) selection = null;
   // During a flight the breadcrumb and context follow the destination, never deeper
