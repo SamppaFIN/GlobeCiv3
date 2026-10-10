@@ -12,9 +12,12 @@
  *    (data/civ1/game.ruleset); on the hex grid that is two rings, 19 tiles
  *  - the centre yields food as if irrigated (data/civ1/effects.ruleset
  *    effect_irrigation_center with terrain.ruleset irrigation_food_incr)
+ *  - under Despotism, the starting government (data/civ1/nations.ruleset), a city pays
+ *    1 shield for each unit it built beyond 3 free ones (units.ruleset uk_shield,
+ *    effects.ruleset Unit_Upkeep_Free_Per_City) and 1 food for each settler (uk_food);
+ *    a unit it cannot pay for is disbanded (cities.ruleset missing_unit_upkeep)
  * One turn is one game day. Own choices: citizens work the tiles with the most
- * 2 × food + shields + trade, there is no unit upkeep yet, and a starving city shrinks
- * with an empty food box.
+ * 2 × food + shields + trade, and a starving city shrinks with an empty food box.
  */
 import { tilesInRings } from './pathfinding';
 import { tileYield, type Terrain, type TileInfo, type Yield } from './terrainTypes';
@@ -27,6 +30,13 @@ export function workedYield(info: TileInfo, centre: boolean): Yield {
   const y = tileYield(info);
   return centre ? { ...y, food: y.food + (CENTRE_IRRIGATION[info.terrain] ?? 0) } : y;
 }
+
+/** Units a city supports free of shield upkeep. */
+export const FREE_UNITS = 3;
+
+/** Units a city built and still supports, and how many of them are settlers. */
+export interface Support { units: number; settlers: number }
+const NO_SUPPORT: Support = { units: 0, settlers: 0 };
 
 /** Food a citizen eats each day. */
 export const FOOD_PER_CITIZEN = 2;
@@ -86,11 +96,12 @@ export function workedTiles(city: City, yieldOf: YieldOf, taken: ReadonlySet<num
 }
 
 export interface CityYield extends Yield {
-  /** Food left after the citizens have eaten. */
+  /** Food left after the citizens and the settlers it supports have eaten. */
   surplus: number;
 }
 
-export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<number>): CityYield {
+/** Food, shields left after unit upkeep, trade, and the food surplus. */
+export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<number>, support: Support = NO_SUPPORT): CityYield {
   const y = { food: 0, shield: 0, trade: 0 };
   for (const id of workedTiles(city, yieldOf, taken)) {
     const t = yieldOf(id, id === city.tile);
@@ -98,7 +109,23 @@ export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<numb
     y.shield += t.shield;
     y.trade += t.trade;
   }
-  return { ...y, surplus: y.food - FOOD_PER_CITIZEN * city.size };
+  return {
+    food: y.food,
+    shield: y.shield - Math.max(0, support.units - FREE_UNITS),
+    trade: y.trade,
+    surplus: y.food - FOOD_PER_CITIZEN * city.size - support.settlers,
+  };
+}
+
+/**
+ * Upkeep the city cannot pay today: 'shield' when its units cost more shields than it
+ * makes, 'food' when its food would run out while it feeds a settler. Freeciv disbands
+ * a unit then, before the city starves.
+ */
+export function shortfall(city: City, y: CityYield, support: Support): 'shield' | 'food' | null {
+  if (y.shield < 0) return 'shield';
+  if (support.settlers > 0 && city.food + y.surplus < 0) return 'food';
+  return null;
 }
 
 /** One day: the city grows or starves and builds. Returns what was completed, if anything. */

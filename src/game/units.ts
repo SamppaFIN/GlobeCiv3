@@ -44,6 +44,8 @@ export interface Unit {
   carrying: boolean;
   /** Loads brought to the camp. */
   gathered: number;
+  /** The city that built and supports the unit; the starting units have none, as in Freeciv. */
+  home: number | null;
 }
 
 /** What units need to know about the world. */
@@ -143,15 +145,26 @@ export class Units {
   }
 
   /** A new unit on a tile: a find's scout, or a city's soldier or settler (STORY-028). */
-  spawn(kind: UnitKind, tile: number, world: World): Unit {
+  spawn(kind: UnitKind, tile: number, world: World, home: number | null = null): Unit {
     const n = this.units.filter(u => u.kind === kind).length + 1;
     const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'warrior' ? `Soturi ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
     this.add(kind, name, tile);
     const u = this.units[this.units.length - 1];
+    u.home = home;
     if (kind === 'scout') world.reveal(tilesInRings(tile, this.sight));
     if (kind === 'warrior') u.mode = 'defend';
     if (kind === 'settler' && this.settler === u) this.findSites(world);
     return u;
+  }
+
+  /** A unit its city cannot pay for leaves (Freeciv's missing upkeep). */
+  disband(u: Unit, world: World) {
+    const wasActive = u === this.settler;
+    this.units.splice(this.units.indexOf(u), 1);
+    if (wasActive) {
+      this.founding = false;
+      this.findSites(world);
+    }
   }
 
   /** The player marks a city site: the tile, or the nearest land to it. */
@@ -167,7 +180,7 @@ export class Units {
   }
 
   private add(kind: UnitKind, name: string, tile: number) {
-    this.units.push({ id: this.nextId++, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0 });
+    this.units.push({ id: this.nextId++, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0, home: null });
   }
 
   /** The settler whose site is chosen (the first one), if any is left. */
