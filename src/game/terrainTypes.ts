@@ -137,7 +137,13 @@ export class TileTypeTable {
   /** Compute the codes of the given tiles of a city area once. */
   fill(city: number, tiles: readonly number[]): void {
     if (this.done.has(city)) return;
-    for (const id of tiles) this.codes[id] = tileCode(tileInfo(id));
+    for (const id of tiles) this.fillTile(id);
     this.done.add(city);
+  }
+
+  /** Compute one tile's code if missing, keeping the bits above it (bit 5: mapped). */
+  fillTile(id: number): void {
+    if (this.codes[id] & 15) return;
+    this.codes[id] = (this.codes[id] & ~31) | tileCode(tileInfo(id));
   }
 }
