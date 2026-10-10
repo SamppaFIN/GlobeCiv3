@@ -25,27 +25,65 @@ const unitOnScreen = (page: Page, index: number) => page.evaluate(i => {
   return [((p.x + 1) / 2) * innerWidth, ((1 - p.y) / 2) * innerHeight];
 }, index);
 
+/**
+ * Seconds per game day, measured inside the page between two frames where the day changed,
+ * at least `days` days apart (rule 5). Slow frames do not skew it: a slow frame adds several
+ * days at once, so the error stays under one day over the span. Also returns the frame
+ * count and the longest frame gap for the failure message.
+ */
+const secondsPerDay = (page: Page, days: number) => page.evaluate(n => new Promise<{ perDay: number; frames: number; maxGap: number }>(resolve => {
+  const w = window as any;
+  let last = w.globeGame.state.day;
+  let start: { t: number; day: number } | null = null;
+  let prev = 0, frames = 0, maxGap = 0;
+  const step = (t: number) => {
+    if (prev) maxGap = Math.max(maxGap, (t - prev) / 1000);
+    prev = t;
+    frames++;
+    const day = w.globeGame.state.day;
+    if (day !== last) {
+      last = day;
+      if (!start) start = { t, day };
+      else if (day - start.day >= n) return resolve({ perDay: (t - start.t) / 1000 / (day - start.day), frames, maxGap });
+    }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}), days);
+
 test('days pass by the wall clock, pause stops them and 4× runs four times as fast', async ({ page }) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
-  const t0 = await state(page);
-  // Measure inside the page: days over a span of wall time
-  const daysOver = (ms: number) => page.evaluate(span => new Promise<number>(resolve => {
+  // 1.5 s per day at 1×; over 6 days the measurement is within a sixth of that
+  const normal = await secondsPerDay(page, 6);
+  console.log('[clock] 1×', JSON.stringify(normal));
+  expect(normal.perDay, `s per day at 1× ${JSON.stringify(normal)}`).toBeGreaterThan(1.2);
+  expect(normal.perDay, `s per day at 1× ${JSON.stringify(normal)}`).toBeLessThan(1.8);
+
+  // Paused: no day passes over two days' worth of wall time
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  const paused = await page.evaluate(() => new Promise<number>(resolve => {
     const w = window as any;
     const d0 = w.globeGame.state.day;
-    setTimeout(() => resolve(w.globeGame.state.day - d0), span);
-  }), ms);
-  const normal = await daysOver(3000); // 1.5 s per day at 1×
-  expect(normal).toBeGreaterThanOrEqual(1);
-  expect(normal).toBeLessThanOrEqual(3);
-  await page.getByRole('button', { name: 'Tauko' }).click();
-  expect(await daysOver(2000)).toBe(0);
+    let t0 = 0, frames = 0;
+    const step = (t: number) => {
+      t0 ||= t;
+      if (++frames >= 3 && t - t0 >= 3000) resolve(w.globeGame.state.day - d0);
+      else requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }));
+  expect(paused).toBe(0);
   await expect(page.locator('.hud-day-label')).toHaveText('Tauolla');
-  await speed(page, '4×'); // choosing a speed also resumes
-  const fast = await daysOver(3000);
-  expect(fast).toBeGreaterThanOrEqual(6);
-  expect(fast).toBeLessThanOrEqual(10);
-  expect((await state(page)).day).toBeGreaterThan(t0.day);
+
+  // 4× (choosing a speed also resumes): 0.375 s per day. Below 0.34 it would be faster
+  // than 4×; the upper bound leaves room for one long frame on a GPU-less runner, where a
+  // frame catches up at most 8 days (3 s at 4×), and still fails at 2× (0.75 s)
+  await speed(page, '4×');
+  const fast = await secondsPerDay(page, 24);
+  console.log('[clock] 4×', JSON.stringify(fast));
+  expect(fast.perDay, `s per day at 4× ${JSON.stringify(fast)}`).toBeGreaterThan(0.34);
+  expect(fast.perDay, `s per day at 4× ${JSON.stringify(fast)}`).toBeLessThan(0.5);
   expect(errors).toEqual([]);
 });
 

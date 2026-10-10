@@ -10,14 +10,22 @@
  *   Kerää (gather)    to the nearest mapped resource tile and back to the camp
  *   Puolusta (defend) back to the camp, and stay
  */
-import { tileCenter } from '../globe/hexTiles';
 import { findPath, nearestTile, tilesInRings } from './pathfinding';
+import { compassIndex } from './names';
+import { tileCenter } from '../globe/hexTiles';
 
 export type UnitKind = 'scout' | 'settler';
 export type Mode = 'explore' | 'gather' | 'defend';
 export const MODE_NAMES: Record<Mode, string> = { explore: 'Tutki', gather: 'Kerää', defend: 'Puolusta' };
-/** Rings a scout maps around itself. */
+/** Rings a scout maps around itself (the state line Tutkimus adds one). */
 export const SIGHT = 2;
+
+/** A city area's emphasis at the province level (design 6a). */
+export type AreaPlan = 'explore' | 'settle' | 'skip';
+export const AREA_PLAN_NAMES: Record<AreaPlan, string> = { explore: 'Tutki', settle: 'Asuta', skip: 'Ohita' };
+/** The state line at the state level (design 7a). */
+export type StateLine = 'expand' | 'research' | 'defend';
+export const STATE_LINE_NAMES: Record<StateLine, string> = { expand: 'Laajentuminen', research: 'Tutkimus', defend: 'Puolustus' };
 
 export interface Unit {
   id: number;
@@ -45,6 +53,8 @@ export interface World {
   reveal(ids: number[]): void;
   /** Score of a city site, higher is better. */
   siteScore(id: number): number;
+  /** City area of a tile (its province is ⌊id / 7⌋). */
+  cityOf(id: number): number;
 }
 
 export class Units {
@@ -58,20 +68,63 @@ export class Units {
   site = 0;
   /** The settler is walking to the site to found the city (STORY-028 founds it). */
   founding = false;
+  /** City areas' emphasis; areas not listed are explored. */
+  readonly areaPlans = new Map<number, AreaPlan>();
+  /** The state line: Tutkimus widens sight, Laajentuminen the search for sites, Puolustus keeps scouts home. */
+  stateLine: StateLine = 'research';
+  /** The home province: Puolustus keeps exploring scouts inside it. */
+  homeProvince = -1;
 
   constructor(landing: number, world: World) {
     this.camp = landing;
+    this.homeProvince = Math.floor(world.cityOf(landing) / 7);
     const land = tilesInRings(landing, 1).filter(id => id !== landing && Number.isFinite(world.cost(id)));
     this.add('settler', 'Uudisasukas', landing);
     this.add('scout', 'Tiedustelija 1', land[0] ?? landing);
     this.add('scout', 'Tiedustelija 2', land[Math.floor(land.length / 2)] ?? landing);
-    // Candidate sites within three rings, best first
-    this.sites = tilesInRings(landing, 3)
+    this.findSites(world);
+    for (const u of this.units) if (u.kind === 'scout') world.reveal(tilesInRings(u.tile, this.sight));
+  }
+
+  get sight(): number {
+    return SIGHT + (this.stateLine === 'research' ? 1 : 0);
+  }
+
+  /**
+   * Candidate city sites around the camp, best first: within three rings (four with the
+   * state line Laajentuminen), with the best site of every area marked Asuta in front.
+   */
+  findSites(world: World) {
+    const rings = this.stateLine === 'expand' ? 4 : 3;
+    const scored = tilesInRings(this.settler.tile, rings)
       .filter(id => Number.isFinite(world.cost(id)))
       .map(id => [world.siteScore(id), id] as const)
       .sort((a, b) => b[0] - a[0] || a[1] - b[1])
       .map(([, id]) => id);
-    for (const u of this.units) if (u.kind === 'scout') world.reveal(tilesInRings(u.tile, SIGHT));
+    const settle = scored.filter(id => this.areaPlans.get(world.cityOf(id)) === 'settle');
+    this.sites = [...settle.slice(0, 1), ...scored.filter(id => id !== settle[0])];
+    this.site = 0;
+  }
+
+  setAreaPlan(city: number, plan: AreaPlan, world: World) {
+    if (plan === 'explore') this.areaPlans.delete(city);
+    else this.areaPlans.set(city, plan);
+    for (const u of this.units) if (u.kind === 'scout' && u.mode === 'explore') u.path = [];
+    if (!this.founding) this.findSites(world);
+  }
+
+  setStateLine(line: StateLine, world: World) {
+    this.stateLine = line;
+    for (const u of this.units) if (u.kind === 'scout' && u.mode === 'explore') u.path = [];
+    if (!this.founding) this.findSites(world);
+  }
+
+  /** Send the exploring scouts toward a tile (an expedition or a target province). */
+  sendTo(tile: number, world: World) {
+    if (!Number.isFinite(world.cost(tile))) return false;
+    this.flag = tile;
+    for (const u of this.units) if (u.kind === 'scout' && u.mode === 'explore') u.path = [];
+    return true;
   }
 
   private add(kind: UnitKind, name: string, tile: number) {
@@ -123,7 +176,7 @@ export class Units {
       u.tile = next;
       u.wait = world.cost(next) - 1;
       if (u.kind === 'scout') {
-        world.reveal(tilesInRings(u.tile, SIGHT));
+        world.reveal(tilesInRings(u.tile, this.sight));
         if (u.tile === this.flag) this.flag = null;
         if (u.mode === 'gather') this.atGatherStop(u);
       }
@@ -153,7 +206,12 @@ export class Units {
       if (path.length) return path;
       this.flag = null;
     }
-    return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && Number.isFinite(cost(id))));
+    // Unmapped land, not in areas marked Ohita, and inside the home province with Puolustus
+    const allowed = (id: number) => {
+      const city = world.cityOf(id);
+      return this.areaPlans.get(city) !== 'skip' && (this.stateLine !== 'defend' || Math.floor(city / 7) === this.homeProvince);
+    };
+    return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && Number.isFinite(cost(id)) && allowed(id)));
   }
 }
 
@@ -161,14 +219,7 @@ const COMPASS = ['pohjoista', 'koillista', 'itää', 'kaakkoa', 'etelää', 'lou
 
 /** Compass direction from one tile to another, in the partitive ("kohti koillista"). */
 export function directionName(from: number, to: number): string {
-  const a = tileCenter(from);
-  const b = tileCenter(to);
-  // East and north in the tangent plane at a
-  const north = a.clone().multiplyScalar(-a.y).setY(a.y * -a.y + 1).normalize();
-  const east = north.clone().cross(a).normalize();
-  const d = b.sub(a);
-  const angle = Math.atan2(d.dot(east), d.dot(north)); // clockwise from north
-  return COMPASS[(Math.round((angle / (2 * Math.PI)) * 8) + 8) % 8];
+  return COMPASS[compassIndex(tileCenter(from), tileCenter(to))];
 }
 
 /** Status line under a unit's name (design 2b). */

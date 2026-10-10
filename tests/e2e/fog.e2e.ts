@@ -82,6 +82,9 @@ test('a new game maps the start city area and leaves the rest of its province in
     w.globeCamera.dist = w.globeLevels.state.frames[2];
     w.globeCamera.apply();
     w.globeTiles.budgetMs = 1e9;
+    // Since STORY-026 the region chips sit on the sampled centres: hide the HUD before the
+    // frames settle (a screenshot style can miss a slow SwiftShader frame)
+    document.getElementById('hud')!.style.display = 'none';
     w.__stable = 0;
     const city = w.globeGame.state.startCity;
     const sibling = Math.floor(city / 7) * 7 + ((city % 7) + 1) % 7;

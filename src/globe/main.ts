@@ -23,6 +23,10 @@ import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrai
 import { unitStatus, Units, type Mode, type World } from '../game/units';
 import { UnitLayer } from './unitLayer';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
+import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
+import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, type RegionName } from '../game/names';
+import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
+import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -195,8 +199,8 @@ const spinStep = new THREE.Quaternion();
 /** Inverse of the accumulated spin, so the stars stay still while the camera orbits. */
 const spinInverse = new THREE.Quaternion();
 
-/** Largest distance that stays at the city-area view level. */
-const lockDist = () => Math.sqrt(frames[2] * frames[3]) * 0.97;
+/** Largest distance that stays at a view level (default: the city area). */
+const lockDist = (level = 3) => Math.sqrt(frames[level - 1] * frames[level]) * 0.97;
 
 const startScreen = screen === 'start' ? createStartScreen(hud, newGame) : null;
 levelBar.setVisible(screen === 'free');
@@ -271,8 +275,6 @@ function newGame() {
 // ─── Play: day clock, units and the HUD (STORY-025) ─
 // After landing, a day passes every 1.5 s / speed. Units act on their own each day;
 // the player sets scouts' modes and the flag, and the settler's city site.
-/** Share of a province that unlocks the next level (STORY-026 acts on it). */
-const UNLOCK_SHARE = 0.6;
 const clock = new GameClock();
 const unitLayer = new UnitLayer(RADIUS);
 scene.add(unitLayer.group);
@@ -280,8 +282,12 @@ interface Play {
   units: Units;
   selected: number;
   flagTool: boolean;
-  /** Tiles of the start province, for the mapping meter. */
+  /** Tiles of the home province and state, for the meter and the unlocks. */
   province: number[];
+  state: number[];
+  progress: Progress;
+  /** The province chosen as the state's target (design 7a), or -1. */
+  targetProvince: number;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -295,6 +301,7 @@ const world: World = {
   isMapped: id => mapState.isMapped(id),
   hasResource: id => (tileTypes.codes[id] & 16) !== 0,
   reveal: ids => reveal(ids),
+  cityOf: id => regions.tileTable()[id],
   // A city site is as good as the food, shields and trade within two rings (food counts twice)
   siteScore: id => tilesInRings(id, 2).reduce((sum, t) => {
     const terrain = terrainOf(t);
@@ -309,6 +316,9 @@ function startPlay(startCity: number) {
   const province = Math.floor(startCity / 7);
   const provinceTiles: number[] = [];
   for (let c = province * 7; c < province * 7 + 7; c++) provinceTiles.push(...cityTiles(regions, c));
+  const state = Math.floor(startCity / 49);
+  const stateTiles: number[] = [];
+  for (let c = state * 49; c < state * 49 + 49; c++) stateTiles.push(...cityTiles(regions, c));
   const hud = createGameHud(hud_root, {
     togglePause: () => { clock.paused = !clock.paused; },
     setSpeed: (speed: Speed) => { clock.speed = speed; clock.paused = false; },
@@ -324,8 +334,131 @@ function startPlay(startCity: number) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, hud };
 }
+
+// ─── Province and state levels (STORY-026) ────────
+// Mapping 60 % of the home province opens the province level, and 60 % of the home
+// state the state level. Each level has its own chips and actions.
+const unlockCard = createUnlockCard(hud_root, () => {
+  const to = backTarget(regions, rig.target, viewLevel, frames);
+  if (to) fly(to);
+});
+const chips = createChips(hud_root, id => {
+  const level = viewLevel as 0 | 1 | 2;
+  const ref = { level, id } as RegionRef;
+  if (sameRegion(ref, selection)) fly(diveTarget(regions, ref, frames));
+  else selection = ref;
+});
+const levelPanels = createLevelPanels(hud_root, {
+  setPlan: (plan: AreaPlan) => { const a = selectedArea(); if (play && a !== null) play.units.setAreaPlan(a, plan, world); },
+  expedition: () => { const a = selectedArea(); if (play && a !== null) play.units.sendTo(pointToTile(regions.centers[2][a]), world); },
+  setLine: (line: StateLine) => { if (play) play.units.setStateLine(line, world); },
+  setTarget: () => {
+    const p = selectedProvince();
+    if (!play || p === null) return;
+    play.targetProvince = p;
+    play.units.sendTo(pointToTile(regions.centers[1][p]), world);
+  },
+});
+
+/** Names of the 7 children of a province (areas) or a state (provinces), cached. */
+const nameCache = new Map<string, RegionName[]>();
+function childNames(level: 1 | 2, parent: number): RegionName[] {
+  const key = `${level}/${parent}`;
+  const cached = nameCache.get(key);
+  if (cached || !game) return cached ?? [];
+  // Directions within the parent: from its centre, the middle child is "Keski-"
+  const parentTile = pointToTile(regions.centers[level - 1][parent]);
+  const ids = Array.from({ length: 7 }, (_, k) => parent * 7 + k);
+  const terrainsOf = (cities: number[]) => cities.flatMap(c => cityTiles(regions, c)).map(terrainOf);
+  const dirs = ids.map((id, k) => (k === 0 ? MIDDLE : directionFrom(parentTile, pointToTile(regions.centers[level][id]))));
+  const names = level === 2
+    ? ids.map((id, k) => areaName(id === game!.startCity, dirs[k], landscapeOf(terrainsOf([id]))))
+    : ids.map((id, k) => provinceName(id === Math.floor(game!.startCity / 7), dirs[k], landscapeOf(terrainsOf(Array.from({ length: 7 }, (_, j) => id * 7 + j)))));
+  const distinct = distinctNames(names, dirs, level === 2 ? 'area' : 'province');
+  nameCache.set(key, distinct);
+  return distinct;
+}
+const nameOf = (level: 1 | 2, id: number) => childNames(level, Math.floor(id / 7))[id % 7];
+
+/** The selected area at the province level, else the area under the view. */
+function selectedArea(): number | null {
+  if (viewLevel !== 2) return null;
+  return selection?.level === 2 ? selection.id : path.length >= 2 ? regionPath(regions, rig.target, 3)[2].id : null;
+}
+function selectedProvince(): number | null {
+  if (viewLevel !== 1) return null;
+  return selection?.level === 1 ? selection.id : regionPath(regions, rig.target, 2)[1].id;
+}
+
+const tilesOfArea = new Map<number, number[]>();
+const areaShare = (city: number) => {
+  if (!tilesOfArea.has(city)) tilesOfArea.set(city, cityTiles(regions, city));
+  return mapState.share(tilesOfArea.get(city)!);
+};
+const provinceShare = (p: number) => Array.from({ length: 7 }, (_, k) => areaShare(p * 7 + k)).reduce((a, b) => a + b, 0) / 7;
+
+/** Screen position (CSS px) of a unit-sphere point, or null when behind the globe or off screen. */
+const toScreen = (v: THREE.Vector3): [number, number] | null => {
+  const world = v.clone().multiplyScalar(RADIUS);
+  if (world.dot(camera.position) < RADIUS * RADIUS) return null;
+  const p = world.project(camera);
+  if (Math.abs(p.x) > 1.1 || Math.abs(p.y) > 1.1) return null;
+  return [((p.x + 1) / 2) * window.innerWidth, ((1 - p.y) / 2) * window.innerHeight];
+};
+
+/** Chips and panels of the province and state levels, and the unlocks. */
+function updateLevels() {
+  if (!play || !game) return;
+  const opened = advance(play.progress, mapState.share(play.province), mapState.share(play.state));
+  if (opened !== null) {
+    lockedLevel = opened;
+    rig.maxDist = lockDist(opened);
+    unlockCard.show(opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : 'Valtio kartoitettu, zoomaa ulos');
+  }
+  const list: Chip[] = [];
+  if (viewLevel === 2 || viewLevel === 1) {
+    const level = viewLevel === 2 ? 2 : 1;
+    const parent = path[level - 1]?.id ?? 0;
+    for (let k = 0; k < 7; k++) {
+      const id = parent * 7 + k;
+      const at = toScreen(regions.centers[level][id]);
+      const share = level === 2 ? areaShare(id) : provinceShare(id);
+      const sub = level === 2
+        ? share === 0 ? 'Sumussa' : AREA_PLAN_NAMES[play.units.areaPlans.get(id) ?? 'explore']
+        : id === play.targetProvince ? 'Tavoite' : `Kartoitettu ${Math.round(share * 100)} %`;
+      const isSelected = selection?.level === level && selection.id === id;
+      list.push({ id, name: nameOf(level, id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
+    }
+  }
+  chips.update(list);
+  const area = selectedArea();
+  const province = selectedProvince();
+  levelPanels.update(
+    viewLevel,
+    area === null ? null : {
+      name: nameOf(2, area).name,
+      detail: `Kartoitettu ${Math.round(areaShare(area) * 100)} %`,
+      plan: play.units.areaPlans.get(area) ?? 'explore',
+      expedition: area === game.startCity ? null : nameOf(2, area).illative,
+    },
+    province === null ? null : {
+      line: play.units.stateLine,
+      name: nameOf(1, province).name,
+      detail: `Kartoitettu ${Math.round(provinceShare(province) * 100)} %`,
+      isTarget: province === play.targetProvince,
+    },
+  );
+}
+
+// "−" zooms out a level on a desktop (the unlock card's hint)
+window.addEventListener('keydown', e => {
+  if ((e.key === '-' || e.key === 'Subtract') && viewLevel > lockedLevel) {
+    const to = backTarget(regions, rig.target, viewLevel, frames);
+    if (to) fly(to);
+  }
+});
 
 /** A tap at the city-area level: a unit, or the flag's tile with the flag tool. Returns true if used. */
 function tapPlay(x: number, y: number, width: number, height: number, hit: THREE.Vector3 | null): boolean {
@@ -357,8 +490,10 @@ function updatePlay(dt: number) {
     day: clock.day,
     speed: clock.speed,
     paused: clock.paused,
-    mapped: mapState.share(play.province),
+    mapped: mapState.share(play.progress.meter === 'province' ? play.province : play.state),
+    meterName: play.progress.meter === 'province' ? 'Lääni' : 'Valtio',
     unlockAt: UNLOCK_SHARE,
+    level: viewLevel,
     unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind, mode: u.mode },
     flagTool: play.flagTool,
   };
@@ -371,6 +506,7 @@ function updatePlay(dt: number) {
     founding: play.units.founding,
     spacing: tileSpacing(),
   }, camera.position);
+  updateLevels();
 }
 
 /** Advance the start screen and the fly-in for this frame. */
@@ -400,6 +536,23 @@ function updateGameFlow(dt: number) {
   lockedLevel = 3;
   rig.maxDist = lockDist();
   startScreen?.remove();
+}
+
+/**
+ * In the game the map keeps north up (the start screen's compass has P at the top): the
+ * heading turns smoothly toward north, by the wall clock, whenever the player is not
+ * dragging. Flights and drags otherwise carry their heading along the great circle.
+ */
+function alignNorth(dt: number) {
+  if (screen === 'free' || screen === 'start' || presses.size > 0) return;
+  const t = rig.target;
+  if (Math.abs(t.y) > 0.98) return;
+  const north = new THREE.Vector3(0, 1, 0).addScaledVector(t, -t.y).normalize();
+  const heading = rig.forward.clone().addScaledVector(t, -rig.forward.dot(t)).normalize();
+  const angle = Math.atan2(heading.clone().cross(north).dot(t), heading.dot(north));
+  if (Math.abs(angle) < 1e-5) return;
+  rig.forward.applyAxisAngle(t, angle * Math.min(1, dt * 4));
+  rig.apply();
 }
 
 /** Level, breadcrumb, selection and context for this frame. */
@@ -435,6 +588,7 @@ function animate(now = performance.now()) {
   const dt = (now - lastFrame) / 1000;
   lastFrame = now;
   rig.update(dt);
+  alignNorth(dt);
   updateGameFlow(dt);
   updateLevel();
   // Light from the top left of the view (design: light from the top left), so the
@@ -462,7 +616,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   setNarrowPx();
   if (screen === 'start') frameStartPlanet();
-  if (lockedLevel === 3) rig.maxDist = lockDist();
+  if (lockedLevel > 0) rig.maxDist = lockDist(lockedLevel);
 });
 frameStartPlanet();
 
@@ -475,6 +629,8 @@ frameStartPlanet();
 (window as any).globeRegions = regions;
 (window as any).globeTileTypes = { tileInfo, codes: tileTypes.codes };
 (window as any).globeMap = { isMapped: (id: number) => mapState.isMapped(id) };
+// For tests: map tiles without waiting for the scouts
+(window as any).globeDebug = { reveal: (ids: number[]) => reveal(ids) };
 (window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
 (window as any).globeGame = {
   get state() {
@@ -483,6 +639,7 @@ frameStartPlanet();
       day: clock.day, speed: clock.speed, paused: clock.paused,
       units: play?.units.units.map(u => ({ name: u.name, kind: u.kind, tile: u.tile, mode: u.mode, path: u.path.length })) ?? [],
       selected: play?.selected ?? null, flag: play?.units.flag ?? null, site: play?.units.currentSite() ?? null,
+      openLevel: play?.progress.openLevel ?? null, areaPlans: play ? [...play.units.areaPlans] : [], stateLine: play?.units.stateLine ?? null,
     };
   },
 };

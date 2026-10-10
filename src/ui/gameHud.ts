@@ -17,9 +17,12 @@ export interface GameHudState {
   day: number;
   speed: Speed;
   paused: boolean;
-  /** Mapped share of the province (0–1) and the share that unlocks it. */
+  /** Mapped share of the region the meter shows (0–1), its name and the share that unlocks it. */
   mapped: number;
+  meterName: string;
   unlockAt: number;
+  /** View level: the unit panel shows at the city-area level (3) only. */
+  level: number;
   unit: { name: string; status: string; kind: 'scout' | 'settler'; mode: Mode } | null;
   /** The flag tool is waiting for a tap on the map. */
   flagTool: boolean;
@@ -96,8 +99,9 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       q<HTMLElement>('.hud-meter-tick').style.left = `${s.unlockAt * 100}%`;
       q<HTMLElement>('.hud-meter').setAttribute('aria-valuenow', String(pct));
       q<HTMLElement>('.hud-meter-value').textContent = `${pct} / ${Math.round(s.unlockAt * 100)} %`;
+      q<HTMLElement>('.hud-meter-name').textContent = s.meterName;
       const bottom = q<HTMLElement>('.hud-bottom');
-      bottom.hidden = !s.unit;
+      bottom.hidden = !s.unit || s.level !== 3;
       if (!s.unit) return;
       q<HTMLElement>('.hud-unit-name').textContent = s.unit.name;
       q<HTMLElement>('.hud-unit-status').textContent = s.unit.status;

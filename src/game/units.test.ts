@@ -22,6 +22,8 @@ function makeWorld(map = new MapState(), resources = new Set<number>()): World &
     hasResource: id => resources.has(id),
     reveal: ids => { map.reveal(ids); },
     siteScore: id => -tileCenter(id).angleTo(START),
+    // City areas of the test: bands of latitude, 7 to a province
+    cityOf: id => Math.floor((tileCenter(id).y + 1) * 200),
   };
 }
 
