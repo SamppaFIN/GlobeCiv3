@@ -10,6 +10,7 @@ import { children, MAX_LEVEL, tileToSphere, type Tile } from './cubeSphere';
 import { glslOklch, oklchToSrgb } from './colors';
 import { CORNERS, EDGE_BASE, FACE_ADJACENT, FACE_BASE, FACE_CENTROIDS, FACE_EDGES, FACE_INVERSES, FACES, FREQUENCY, TILE_COUNT } from './hexTiles';
 import { ATLAS_COLUMNS, ATLAS_ROWS } from './glyphAtlas';
+import { createFogTexture, FOG_UV_GLSL } from './fogMap';
 import { TERRAINS } from '../game/terrainTypes';
 import { hierarchyAt, MAX_TILE_REGIONS, Regions, type RegionEntry } from './regions';
 import { DEFAULT_SEED, heightRange, octaveSplit } from './terrain';
@@ -95,6 +96,15 @@ const hexShader = /* glsl */ `
   uniform vec3 terrainColors[${TERRAINS.length}];
   // World direction that is up on the screen, for upright glyphs
   uniform vec3 screenUp;
+  // Fog of war (STORY-024): on in the game, off in ?free. The coarse fog map is read
+  // with the pixel's world direction (tile centre + vLocal).
+  uniform float fogOn;
+  uniform sampler2D fogMap;
+  uniform vec3 tileWorldCenter;
+  ${FOG_UV_GLSL}
+  // --fog: oklch(0.18 0.02 265) at 0.88, so the terrain's hue still shows through
+  const vec3 FOG = ${glslOklch(0.18, 0.02, 265)};
+  const float FOG_OPACITY = 0.88;
   #define ATLAS_COLUMNS ${ATLAS_COLUMNS}.0
   #define ATLAS_ROWS ${ATLAS_ROWS}.0
   // Tokens (tokens.css): ocean depth, ink and the resource marker (design 2b)
@@ -333,6 +343,8 @@ const fragmentShader = /* glsl */ `
       vec3 fl = floor(q);
       h += w * prm.y * noiseCell(noiseBase[i] + ivec3(fl), q - fl, uint(prm.z));
     }
+    // Derivatives must be taken in uniform control flow
+    float heightWidth = fwidth(h);
     vec3 n = normalize(vNormal);
     vec3 color = mix(terrainColor(h, abs(n.y)), tint, tintAmount);
     color *= 0.3 + 0.7 * max(dot(n, sunDir), 0.0);
@@ -360,6 +372,7 @@ const fragmentShader = /* glsl */ `
       vec3 hr = vec3(0.0);
       ivec3 lattice = ivec3(0);
       int latticeFace = 0;
+      vec3 hexDelta = vec3(0.0);
       int ownId = -1;
       int nearId1 = -1;
       int nearId2 = -1;
@@ -406,6 +419,7 @@ const fragmentShader = /* glsl */ `
           }
           e1 = (1.0 - b1) * 0.5 * spacing;
           e2 = (1.0 - b2) * 0.5 * spacing;
+          hexDelta = d;
           lattice = base + ivec3(hr);
           latticeFace = face;
           ownId = tileId(face, lattice);
@@ -418,15 +432,19 @@ const fragmentShader = /* glsl */ `
       // ── Tile terrain at city-area zoom (STORY-023): token colour, glyph and resource ──
       // Back to the continuous terrain once a tile fills a good part of the screen
       float typeFade = hexFade * (1.0 - smoothstep(0.18, 0.45, spacing / w / narrowPx));
-      int code = typeFade > 0.0 && ownId >= 0 ? tileCodeAt(ownId) : 0;
-      int ttype = code & 15;
+      int code = ownId >= 0 ? tileCodeAt(ownId) : 0;
+      // In the game a tile shows its terrain only once mapped (bit 5)
+      bool tileMapped = fogOn < 0.5 || (code & 32) != 0;
+      int ttype = typeFade > 0.0 && tileMapped ? code & 15 : 0;
       if (ttype > 0) {
         float spacingPx = spacing / w;
         vec3 tc = ttype == 1 ? mix(OCEAN_DEEP, terrainColors[0], clamp(1.0 + h / 0.5, 0.0, 1.0)) : terrainColors[ttype - 1];
         color = mix(color, tc * (0.82 + 0.18 * max(dot(n, sunDir), 0.0)), typeFade);
-        // Coast (design: ink at 0.4) on edges between water and land tiles
-        int near1 = nearId1 >= 0 ? tileCodeAt(nearId1) & 15 : 0;
-        int near2 = nearId2 >= 0 ? tileCodeAt(nearId2) & 15 : 0;
+        // Coast (design: ink at 0.4) on edges between water and land tiles; the neighbours
+        // are looked up only within reach of an edge
+        bool nearEdge = e1 < 2.0 * w;
+        int near1 = nearEdge && nearId1 >= 0 ? tileCodeAt(nearId1) & 15 : 0;
+        int near2 = nearEdge && nearId2 >= 0 ? tileCodeAt(nearId2) & 15 : 0;
         float coast = 1e30;
         if (near1 > 0 && (near1 == 1) != (ttype == 1)) coast = e1;
         if (near2 > 0 && (near2 == 1) != (ttype == 1)) coast = min(coast, e2);
@@ -456,8 +474,32 @@ const fragmentShader = /* glsl */ `
           }
         }
       }
-      // --hex-edge: 0.6 px
-      color = mix(color, HEX_EDGE_COLOR, HEX_EDGE_ALPHA * hexFade * (1.0 - smoothstep(0.2 * w, 0.9 * w, e1)));
+      // --hex-edge: 0.6 px, only on mapped tiles (design 2b)
+      color = mix(color, HEX_EDGE_COLOR, HEX_EDGE_ALPHA * hexFade * (tileMapped ? 1.0 : 0.0) * (1.0 - smoothstep(0.2 * w, 0.9 * w, e1)));
+
+      // ── Fog of war (STORY-024, design: Kartografi) ──
+      // Far away the coarse fog map gives a soft edge; where borders follow tile edges
+      // (tiles of 4 → 8 px) each tile's own bit takes over, so the edge is exact hexes.
+      float fogAmount = 0.0;
+      float farMapped = 1.0;
+      float farWidth = 1.0;
+      if (fogOn > 0.5) {
+        farMapped = texture(fogMap, fogUv(tileWorldCenter + vLocal)).r;
+        farWidth = max(fwidth(farMapped), 1e-4);
+        float nearMapped = (code & 32) != 0 ? 1.0 : 0.0;
+        fogAmount = 1.0 - (ownId >= 0 ? mix(farMapped, nearMapped, snapT) : farMapped);
+        if (fogAmount > 0.0) {
+          vec3 fogged = mix(color, FOG, FOG_OPACITY);
+          // --fog-hatch: ink at 0.11, 0.7 px lines every 7 px at 38°, on the screen
+          float stripe = abs(fract(dot(gl_FragCoord.xy, vec2(0.788, 0.616)) / 7.0) - 0.5) * 7.0;
+          fogged = mix(fogged, INK, 0.11 * (1.0 - smoothstep(0.35, 0.85, stripe)));
+          // --fog-coast: the coastline hinted in the fog, ink at 0.4, dashed 2 / 3 px
+          float coastPx = abs(h) / max(heightWidth, 1e-9);
+          float dash = step(fract((gl_FragCoord.x + gl_FragCoord.y) / 5.0), 0.4);
+          fogged = mix(fogged, INK, 0.4 * dash * (1.0 - smoothstep(0.4, 0.9, coastPx)));
+          color = mix(color, fogged, fogAmount);
+        }
+      }
 
       // ── Region borders through the pixel (smooth great-circle arcs) ──
       // Per level (state, province, city area): the nearest region in the current slot
@@ -542,6 +584,33 @@ const fragmentShader = /* glsl */ `
       color = mix(color, borderColor, strength);
 
       // Selection and context use the tile regions once borders follow tile edges
+      if (fogOn > 0.5) {
+        // --fog-edge: ink, 1.6 px, hand-drawn. Near: the hex edges between a mapped tile and
+        // a fogged one, displaced by a wave along the edge (the same on both sides). Far:
+        // the halfway contour of the fog map.
+        float nearLine = 0.0;
+        // Only within reach of an edge (line 1.3 px plus the 1.2 px wave)
+        if (snapT > 0.0 && ownId >= 0 && e1 < 3.0 * w) {
+          bool own = (code & 32) != 0;
+          bool m1 = nearId1 >= 0 && (tileCodeAt(nearId1) & 32) != 0;
+          bool m2 = nearId2 >= 0 && (tileCodeAt(nearId2) & 32) != 0;
+          float edgeDist = 1e30;
+          int edgeDir = n1;
+          if (nearId1 >= 0 && m1 != own) edgeDist = e1;
+          if (nearId2 >= 0 && m2 != own && e2 < edgeDist) { edgeDist = e2; edgeDir = n2; }
+          if (edgeDist < 1e29) {
+            vec3 along = vec3(neighborOffset((edgeDir + 1) % 6) - neighborOffset((edgeDir + 5) % 6));
+            // Position along the edge, -1 … 1: the same seen from either tile (along is
+            // perpendicular to the neighbour direction, and both are negated from the other side)
+            float wave = cos(dot(hexDelta, along) * 6.0);
+            float offset = (own ? 1.0 : -1.0) * 1.2 * w * wave;
+            nearLine = 1.0 - smoothstep(0.8 * w, 1.3 * w, abs(edgeDist + offset));
+          }
+        }
+        float farLine = 1.0 - smoothstep(0.8, 1.6, abs(farMapped - 0.5) / farWidth);
+        color = mix(color, INK, 0.95 * mix(farLine, nearLine, snapT));
+      }
+
       bool byTile = snapT >= 0.5;
       if (contextLevel >= 0) {
         int cs = slots[contextLevel];
@@ -686,6 +755,10 @@ export class TileManager {
   readonly glyphAtlas: { value: THREE.Texture } = { value: new THREE.DataTexture(new Uint8Array(4), 1, 1) };
   /** World direction that is up on the screen. */
   readonly screenUp = { value: new THREE.Vector3(0, 1, 0) };
+  /** 1 draws the fog of war (the game), 0 not (?free). */
+  readonly fogOn = { value: 0 };
+  /** Coarse fog map (fogMap.ts): 255 where mapped. */
+  private readonly fogMap = { value: createFogTexture() };
   private readonly contextCenter = new THREE.Vector3();
 
   private readonly seed: number;
@@ -822,6 +895,9 @@ export class TileManager {
         glyphAtlas: this.glyphAtlas,
         terrainColors: { value: terrainColors },
         screenUp: this.screenUp,
+        fogOn: this.fogOn,
+        fogMap: this.fogMap,
+        tileWorldCenter: { value: node.center },
         focusId: this.focusId,
         contextId: this.contextId,
       },
@@ -988,6 +1064,16 @@ export class TileManager {
   /** Per-tile codes behind the code texture (terrainTypes.ts TileTypeTable fills them). */
   get tileCodes(): Uint8Array {
     return this.tileTypeTex.value.image.data as Uint8Array;
+  }
+
+  /** Texels of the coarse fog map (fogMap.ts paintMapped writes them). */
+  get fogData(): Uint8Array {
+    return this.fogMap.value.image.data as Uint8Array;
+  }
+
+  /** Upload the fog map after it changed. */
+  fogChanged(): void {
+    this.fogMap.value.needsUpdate = true;
   }
 
   /** Upload the tile codes after they changed. */

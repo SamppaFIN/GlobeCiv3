@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-015",
+  "story": "STORY-024",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Pelitilaan tulee uusi moduuli src/game/mapping.ts: ruutukohtainen kartoitustila (Uint8Array, 1 = kartoitettu), jota ei koskaan pyyhitä (kerran nähty pysyy). Tieto kulkee shaderille kahta reittiä. (1) Ruutukoodin bitti 5 samassa 8-bittisessä tekstuurissa kuin maasto, jolloin ruututasolla sumu ja sen reuna ovat tarkkoja heksoja. (2) Karkea sumukartta: kuution kuusi tahkoa 512 × 512 tekselin atlaksena (1,5 Mt), johon kartoitetut ruudut maalataan. Kaukaa katsottuna shaderi lukee sumukartan bilineaarisesti, jolloin reuna on pehmeä (design: sumun maski sumennettu noin 0,22 heksan kokoa), ja ruudut näkyvät vasta, kun niitä voi erottaa. Siirtymä tapahtuu samalla 4–8 px:n välillä kuin rajojen kiinnittyminen ruutuihin. Kartoittamaton piirretään Kartografi-tyylillä: --fog peittävyydellä 0,88, jolloin maaston sävy kuultaa läpi, mustevarjostus (0,7 px viivat, 7 px välein, 38°, näytön koordinaateissa) ja katkoviivainen rannikon aavistus (korkeuden nollakäyrä). Kartoitetun reunassa on käsin piirretyn oloinen musteviiva (1,6 px), jota väreilytetään paikasta riippuvalla siniaallolla. Kaukana reunaviiva on sumukartan puolivälin käyrä. Sumu on päällä vain pelissä, ei ?free-tilassa. Uudessa pelissä laskeutumisruutu ja sen 6 naapuria kartoittuvat heti lennon alussa ja koko aloituskaupunkialue laskeutuessa.",
+  "alternatives_considered": [
+    {
+      "name": "Sumu vain ruututasolla",
+      "pros": "Yksi tekstuuri riittää",
+      "cons": "Planeetta- ja valtiotasolla ruudun tunnistetta ei voi laskea (heksadataa on vasta quadtree-tasolta 4), joten aloitusnäytön siluetti ja kaukainen sumu puuttuisivat",
+      "rejected_because": "Design vaatii sumun kaikilla tasoilla"
+    },
+    {
+      "name": "Sumu kaupunkialueittain (17 738 arvoa)",
+      "pros": "Pieni data",
+      "cons": "Tiedustelijat paljastavat ruutuja, eivät kokonaisia alueita, joten reuna olisi väärässä paikassa",
+      "rejected_because": "Kartoitus on ruutukohtaista"
+    }
+  ],
+  "files_to_change": [
+    "src/game/mapping.ts (uusi) ja mapping.test.ts",
+    "src/globe/fogMap.ts (uusi): kuutiokartan tekselit ja shaderin vastine",
+    "src/game/terrainTypes.ts (koodin ylemmät bitit säilyvät täytössä)",
+    "src/globe/tiles.ts (sumu, varjostus, rannikko ja reunaviiva)",
+    "src/globe/main.ts (sumu pelissä, paljastus uudessa pelissä)",
+    "tests/e2e/fog.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Kartoitustila, sumukartan tekselit ja yksikkötestit: kerran kartoitettu pysyy, paljastus palauttaa vain uudet ruudut, tekseli osuu ruudun suuntaan",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Shaderin sumu, varjostus, rannikko ja reunaviiva sekä paljastus uudessa pelissä",
+      "verify": "Kuvat aloitusnäytöstä, lennon keskeltä ja perillä kaupunkialueelta. Intel UHD vähintään 55 fps."
+    },
+    {
+      "step": 3,
+      "action": "E2E: kartoittamaton on tumma ja kartoitettu kirkas, aloitusalue kartoittuu, ?free ilman sumua. Merge ja CI.",
+      "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

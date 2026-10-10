@@ -15,6 +15,8 @@ import { createStartScreen, RING_EXTENT } from '../ui/startScreen';
 import { chooseStartCity, cityTiles } from '../game/start';
 import { tileInfo, TileTypeTable } from '../game/terrainTypes';
 import { createGlyphAtlas } from './glyphAtlas';
+import { MapState, withNeighbors } from '../game/mapping';
+import { paintMapped } from './fogMap';
 
 // ─── Scene setup ──────────────────────────────────
 const container = document.getElementById('globe-container')!;
@@ -191,6 +193,28 @@ const lockDist = () => Math.sqrt(frames[2] * frames[3]) * 0.97;
 const startScreen = screen === 'start' ? createStartScreen(hud, newGame) : null;
 levelBar.setVisible(screen === 'free');
 
+// ─── Fog of war (STORY-024) ───────────────────────
+// In the game everything not yet mapped is fog; ?free shows the world as it is.
+const mapState = new MapState();
+tiles.fogOn.value = screen === 'free' ? 0 : 1;
+// The start screen's planet is a silhouette without borders (design 1a)
+const BORDER_STRENGTH = tiles.borderStrength.value;
+if (screen === 'start') tiles.borderStrength.value = 0;
+
+/** Map tiles: their terrain, the mapped bit and the coarse fog map, uploaded at once. */
+function reveal(ids: Iterable<number>) {
+  const fresh = mapState.reveal(ids);
+  if (!fresh.length) return;
+  const codes = tiles.tileCodes;
+  for (const id of fresh) {
+    tileTypes.fillTile(id);
+    codes[id] |= 32;
+  }
+  paintMapped(tiles.fogData, fresh);
+  tiles.tileCodesChanged();
+  tiles.fogChanged();
+}
+
 /**
  * Frame the planet between the title and the actions: radius at most 38 % of the width
  * (as in the design), ring included. The globe is centred, so the free space is used
@@ -217,6 +241,9 @@ function newGame() {
   game = { seed, startCity };
   screen = 'intro';
   introTarget = regions.centers[2][startCity].clone();
+  tiles.borderStrength.value = BORDER_STRENGTH;
+  // Storyboard 2a: the landing tile and its 6 neighbours are mapped first
+  reveal(withNeighbors(pointToTile(introTarget)));
   const reduce = reduceMotion();
   startScreen.hide(!reduce);
   if (reduce) {
@@ -251,7 +278,9 @@ function updateGameFlow(dt: number) {
     fly(leg.to, leg.durationS);
     return;
   }
-  // Landed: the city area is the game's view, and zooming out waits for the unlock (STORY-026)
+  // Landed: the start city area is mapped, it is the game's view, and zooming out
+  // waits for the unlock (STORY-026)
+  if (game) reveal(cityTiles(regions, game.startCity));
   screen = 'playing';
   introTarget = null;
   lockedLevel = 3;
@@ -329,10 +358,11 @@ frameStartPlanet();
 (window as any).globeTerrain = { terrainHeight };
 (window as any).globeRegions = regions;
 (window as any).globeTileTypes = { tileInfo, codes: tileTypes.codes };
+(window as any).globeMap = { isMapped: (id: number) => mapState.isMapped(id) };
 (window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
 (window as any).globeGame = {
   get state() {
-    return { screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist() };
+    return { screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist(), mapped: mapState.count };
   },
 };
 (window as any).globeLevels = {
