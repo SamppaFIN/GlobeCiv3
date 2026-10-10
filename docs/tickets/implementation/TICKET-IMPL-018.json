@@ -1,0 +1,46 @@
+{
+  "id": "TICKET-IMPL-018",
+  "story": "STORY-027",
+  "plan": "PLAN-018",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/discoveries.ts",
+    "src/game/discoveries.test.ts",
+    "src/game/units.ts",
+    "src/ui/discoveryCard.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/discovery.e2e.ts",
+    "tests/e2e/play.e2e.ts",
+    "tests/e2e/start.e2e.ts"
+  ],
+  "change_summary": "Noin joka 60. maaruutu on löytö (DISCOVERY_EVERY), ja löytö ja sen kaksi vaihtoehtoa tulevat hashista pelin siemenestä ja ruudun tunnuksesta. Löydöt ovat omia keksintöjä (sääntö 4): Kalaisat vedet (+2 ruokaa, vain rannikolla), Vanhat rauniot (uusi tiedustelija), Malmisuoni (+2 tuotantoa), Vanha kauppapolku (+2 kauppaa) ja Näköalapaikka (kartoittaa neljä rengasta). Löytö syntyy vain, kun tiedustelija kartoittaa ruudun päivän aikana, joten aloitus, testikoukku, näköalapaikka ja uuden tiedustelijan ensimmäinen näkymä eivät tee löytöjä. Päivät pysähtyvät löydön päivään, ja kortti 4a näyttää taukosirun, aksenttirenkaan ruudulla, löytäjän, alueen, lauseen, kaksi 64 px:n valintaa ja huomautuksen. Kamera kääntyy ruutuun vain, jos se ei näy kortin yläpuolella. Pelin HUD-paneelit piilotetaan kortin ajaksi. Valinta muuttaa pelitilaa, ja HUD kertoo sen ilmoituksella (role=status). Ruutubonukset tallentuvat STORY-028:n tuottoihin. Avautumiskortti odottaa, kunnes löytö on ratkaistu.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts reveal() palauttaa uudet ruudut",
+      "main.ts world.reveal tunnistaa löydöt päivän aikana",
+      "main.ts updatePlay: päivät pysähtyvät löytöön",
+      "main.ts updateLevels odottaa löydön ratkaisua",
+      "Units.recruit",
+      "gameHud PAUSE vietiin",
+      "testikoukut globeDebug.setDiscoveries, discoverySites ja sendTo"
+    ],
+    "call_sites_found": [
+      "reveal (aloitus, laskeutuminen, testikoukku, yksiköt)",
+      "updatePlay",
+      "play.e2e.ts ja start.e2e.ts ajavat peliä"
+    ],
+    "call_sites_updated": [
+      "main.ts",
+      "tests/e2e/play.e2e.ts",
+      "tests/e2e/start.e2e.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kello- ja yksikkötestit sekä aloitustesti kytkevät löydöt pois testikoukulla: löytö pysäyttää kellon, eivätkä ne testaa löytöjä."
+  },
+  "commit": "f3dca94, 8bca20b, 61f16ca",
+  "progress": 100
+}

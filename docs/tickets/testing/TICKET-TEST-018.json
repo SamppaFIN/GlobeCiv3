@@ -1,0 +1,100 @@
+{
+  "id": "TICKET-TEST-018",
+  "story": "STORY-027",
+  "implementation_ticket": "TICKET-IMPL-018",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Neljä löydöstä korjattiin ennen mergeä. (1) Kaksi play-testiä kaatui, koska löytö pysäyttää kellon; ne kytkevät löydöt pois. (2) CI-tilassa seuraava löytö tuli kolmen sekunnin päästä, kun testi vielä tarkisti ensimmäistä; testi kytkee myöhemmät löydöt pois ennen valintaa. (3) CI-tilassa löytö kuusi sekuntia laskeutumisen jälkeen käänsi kameran ennen aloitustestin tarkistusta; kamera kääntyy nyt vain tarvittaessa, ja aloitustesti kytkee löydöt pois laskeutuessa. (4) Aloitustestin lennon yläraja (4,5 s) mittasi framevälejä, ei lentoa (CI-tilassa 4521 ms); raja on nyt 3,1 s ja kolme sivun sisällä mitattua pisintä frameväliä (kolmas löytyi STORY-028:n CI-tilan ajosta: käännös alkaa klikkauksen jälkeisellä framella).",
+    "files_changed": [
+      "src/globe/main.ts",
+      "tests/e2e/play.e2e.ts",
+      "tests/e2e/discovery.e2e.ts",
+      "tests/e2e/start.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Tiheys ja determinismi 200 000 ruudulla siemenellä 42",
+        "expected": "Noin 1/60 ruuduista (3333 ± 250), sama tulos samalla siemenellä, kaksi eri löytöä, kaikki viisi löytöä esiintyvät",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Siemen ja rannikko",
+        "expected": "Eri siemen antaa eri ruudut, ja sisämaassa ei ole kalaisia vesiä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Valinnan vaikutukset",
+        "expected": "Bonukset kertyvät ruudulle, rauniot tuovat Tiedustelija 3:n ruutuun ja kartoittavat sen ympäriltä, näköalapaikka kartoittaa neljä rengasta",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tiedustelijat lähetetään lähimmälle löydölle nopeudella 4×",
+        "expected": "Kortti 4a (siru Peli pysähtyi · Päivä N, löytäjä, alue, lause, kaksi vähintään 64 px:n valintaa, huomautus, rengas), HUD-paneelit piilossa ja kello seis kaksi sekuntia",
+        "result": "pass (ensimmäinen löytö päivänä 4: Vanhat rauniot tai Malmisuoni)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valinta",
+        "expected": "Rauniot: yksiköitä yksi lisää ja ilmoitus Tiedustelija N liittyi joukkoon; peli jatkuu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelin (390×844)",
+        "expected": "Kortti mahtuu näytölle, valinnat vähintään 64 px ja yli 300 px leveitä, teksti ei leikkaudu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "Paikallisesti 34/34 korjausten jälkeen. CI-tilassa koko joukko ensin 32/34 (löytö- ja aloitustesti, ks. yllä); korjausten jälkeen aloitus- ja löytötestit vihreitä CI-tilassa ilman uusintaa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38038472252 (7e8fa9f, 17,4 min): vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Kortti ja valinta sormella",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-018-discovery.png",
+      "docs/screenshots/TICKET-TEST-018-after.png",
+      "docs/screenshots/TICKET-TEST-018-phone-discovery.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Löydöt deterministisesti siemenestä, peli pysähtyy kortin ajaksi",
+        "checked": true
+      },
+      {
+        "item": "Kortti 4a: rengas, alapaneeli, kaksi 64 px:n valintaa ja huomautus",
+        "checked": true
+      },
+      {
+        "item": "Valinta muuttaa pelitilaa, ja vaikutus näkyy HUDissa",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}

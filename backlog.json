@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-10T08:07:56Z",
+    "generated_at": "2026-10-10T09:44:50Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "0da3d6e",
+    "git_commit": "00ee415",
     "git_branch": "main",
     "language": "fi"
   },
@@ -134,7 +134,7 @@
         "STORY-028",
         "STORY-030"
       ],
-      "progress": 70
+      "progress": 90
     }
   ],
   "stories": [
@@ -772,17 +772,17 @@
       "depends_on": [
         "STORY-025"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Löydöt syntyvät deterministisesti siemenestä tutkituille ruuduille, ja peli pysähtyy kortin ajaksi (\"Peli pysähtyi · Päivä N\")",
         "Kortti näkymän 4a mukaan: löytöruudulla aksenttirengas, alapaneelissa otsikko, kuvaus ja kaksi 64 px:n valintaa sekä huomautus \"Valitsematta jäänyt löytö katoaa.\"",
         "Valinta muuttaa pelitilaa (esim. ruokaa tai uusi tiedustelija), ja vaikutus näkyy HUDissa"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-018",
+        "implementation": "TICKET-IMPL-018",
+        "testing": "TICKET-TEST-018"
       }
     },
     {
@@ -796,17 +796,17 @@
         "STORY-023",
         "STORY-025"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Uudisasukas perustaa kaupungin pelaajan merkitsemään ruutuun tai sen lähelle maalle",
         "Kaupungin tuotot lasketaan sen ympäröivistä ruuduista lähdetaulukon arvoilla (yksikkötesti)",
         "Kaupunkikortti näkymän 8a mukaan: koko ja kasvupalkki, kolme tuottoruutua (ruoka, tuotanto, kauppa) ja \"Rakentaa … Vaihda\""
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-019",
+        "implementation": "TICKET-IMPL-019",
+        "testing": "TICKET-TEST-019"
       }
     },
     {
@@ -1843,6 +1843,102 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-018",
+      "story": "STORY-027",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-10",
+      "approach": "Uusi puhdas moduuli src/game/discoveries.ts: noin joka 60. maaruutu on löytö (yksi vakio DISCOVERY_EVERY), ja löytö ja sen kaksi vaihtoehtoa lasketaan hashista pelin siemenestä ja ruudun tunnuksesta (sääntö 3, ei Math.random). Vaihtoehdot ovat omia keksintöjä (sääntö 4): Kalaisat vedet (+2 ruokaa ruudulle, vain rannikolla), Vanhat rauniot (uusi tiedustelija), Malmisuoni (+2 tuotantoa ruudulle), Vanha kauppapolku (+2 kauppaa ruudulle) ja Näköalapaikka (kartoittaa neljän ruudun säteeltä). Löytö syntyy vain, kun tiedustelija kartoittaa ruudun pelin aikana: aloituksen paljastus, testikoukku, näköalapaikka ja uuden tiedustelijan ensimmäinen näkymä eivät tee löytöjä, joten kortit eivät ketjuunnu. Kun löytö syntyy, päivät pysähtyvät löydön päivään, eikä kello etene ennen valintaa. Kortti noudattaa designia 4a: Peli pysähtyi · Päivä N -siru, aksenttirengas löytöruudulla (kamera kääntyy ruutuun), alapaneelissa Löytö · tiedustelijan nimi, alueen nimi, lause kahdesta löydöstä, kaksi 64 px:n valintaa ja huomautus. Pelin HUD-paneelit piilotetaan kortin ajaksi kuten designissa. Valinnan jälkeen HUD näyttää ilmoituksen (role=status), ja ruutubonukset tallentuvat pelitilaan STORY-028:n tuottoja varten. Avautumiskortti odottaa, kunnes löytö on ratkaistu.",
+      "alternatives_considered": [
+        {
+          "name": "Löydöt kaikista kartoitetuista ruuduista",
+          "pros": "Yksinkertaisempi kytkentä",
+          "cons": "Näköalapaikka ja uusi tiedustelija kartoittavat ruutuja, jolloin kortit ketjuuntuisivat, ja testikoukku avautumistesteissä avaisi kortteja",
+          "rejected_because": "Story sanoo tutkituille ruuduille: vain tiedustelijan liike tuottaa löytöjä"
+        },
+        {
+          "name": "Löytö jokaisessa uudessa kaupunkialueessa",
+          "pros": "Tasainen tahti",
+          "cons": "Ei ole ruutukohtainen, eikä löytöruutua voi merkitä",
+          "rejected_because": "Design 4a merkitsee löytöruudun aksenttirenkaalla"
+        }
+      ],
+      "files_to_change": [
+        "src/game/discoveries.ts ja discoveries.test.ts (uudet)",
+        "src/game/units.ts (recruit: uusi tiedustelija)",
+        "src/ui/discoveryCard.ts (uusi): siru, rengas, kortti ja ilmoitus",
+        "src/ui/hud.css ja src/ui/gameHud.ts (taukokuvake jaetaan)",
+        "src/globe/main.ts (tunnistus, pysähdys, valinta, testikoukut)",
+        "tests/e2e/discovery.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Löydöt ja niiden vaikutukset puhtaana logiikkana yksikkötesteineen",
+          "verify": "npm test vihreä: determinismi, tiheys, rannikkoehto ja vaikutukset"
+        },
+        {
+          "step": 2,
+          "action": "Kortti 4a, pysähdys, valinta ja ilmoitus peliin",
+          "verify": "Kuvakaappaukset työpöydältä ja puhelimesta, ei konsolivirheitä"
+        },
+        {
+          "step": 3,
+          "action": "E2E: tiedustelija lähetetään lähimmälle löydölle, peli pysähtyy, valinta muuttaa tilaa ja peli jatkuu. Merge ja CI.",
+          "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-019",
+      "story": "STORY-028",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-10",
+      "approach": "Uusi puhdas moduuli src/game/cities.ts: kaupunki työstää keskustansa ja yhden ruudun asukasta kohden kahden renkaan säteeltä (Freecivin civ1 init_city_radius_sq 5 heksaruudukolla). Ruudun tuotto tulee lähdetaulukosta (maasto ja resurssi, Freeciv civ1), keskusta saa kastelun ruoan (effect_irrigation_center ja irrigation_food_incr), ja STORY-027:n löytöbonukset lisätään. Asukas syö 2 ruokaa (RS_DEFAULT_FOOD_COST), ja ruokavarasto on 20 + 10 × (koko − 1) (granary_food_ini 20 ja granary_food_inc 10, foodbox 100 %). Soturi (civ1 Militia) maksaa 10 tuotantoa, ja Uudisasukas 40 tuotantoa ja yhden asukkaan. Yksi vuoro on yksi päivä. Uudisasukas, joka lähetetään paikalleen (Perusta kaupunki tähän), perustaa kaupungin perillä ja poistuu yksiköistä. Pelaaja merkitsee paikan napauttamalla karttaa, kun uudisasukas on valittuna: maaruutu sellaisenaan, meriruudusta lähin maa. Ensimmäinen kaupunki on pääkaupunki ja saa omista nimistä ensimmäisen. Kaupunki paljastaa säteensä, näkyy kartalla talojen kuvana ja avaa kortin 8a: tunniste, nimi ja Sulje, koko ja ruokavaraston palkki (kasvaa N pv), kolme tuottoruutua (ruoan ylijäämä, tuotanto ja kauppa) sekä Rakentaa … ja Vaihda. Kortin saa uudelleen napauttamalla kaupunkia. Valmis Soturi puolustaa kaupunkia, ja uusi Uudisasukas saa omat kaupunkipaikkansa.",
+      "alternatives_considered": [
+        {
+          "name": "Kaupunkitason oma näkymä",
+          "pros": "Tilaa rakennuksille",
+          "cons": "Sääntö 1 kieltää uuden näkymän",
+          "rejected_because": "Kortti 8a samassa näkymässä riittää MVP:hen"
+        },
+        {
+          "name": "Työläiset ruoka edellä",
+          "pros": "Kasvu nopeinta",
+          "cons": "Kukkuloilla tuotanto jäi nollaan, eikä kaupunki rakentanut mitään",
+          "rejected_because": "Painotus 2 × ruoka + tuotanto + kauppa on sama kuin kaupunkipaikan arvioinnissa"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts ja cities.test.ts (uudet)",
+        "src/game/units.ts ja units.test.ts (perustaminen, spawn, setSite, Soturi)",
+        "src/ui/cityCard.ts (uusi), src/ui/hud.css ja src/ui/gameHud.ts",
+        "src/globe/unitLayer.ts (Soturi ja kaupunki kartalla)",
+        "src/globe/main.ts (kaupunkien päivä, kortti, napautus ja testikoukut)",
+        "tests/e2e/city.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Kaupunkien säännöt ja yksiköiden perustaminen yksikkötesteineen",
+          "verify": "npm test vihreä: tuotot lähdetaulukosta, kasvu, nälkä, rakentaminen ja paikan merkintä"
+        },
+        {
+          "step": 2,
+          "action": "Kartta, kortti 8a ja kytkentä peliin",
+          "verify": "Kuvat työpöydältä ja puhelimesta, ei konsolivirheitä"
+        },
+        {
+          "step": 3,
+          "action": "E2E: merkintä napauttamalla, perustaminen, kortin luvut pelitilaa vastaan, Vaihda, Sulje ja avaus kaupungista, kasvu tai valmis Soturi. Merge ja CI.",
+          "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -2494,6 +2590,100 @@
         "notes": "Planeettataso avautuu designin mukaan vasta, kun oma valtio on vallattu, eikä valtausta ole MVP:ssä. Kaksi E2E-testiä korjattiin samalla (ks. TICKET-TEST-017)."
       },
       "commit": "90cb0f3, e3005f8",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-018",
+      "story": "STORY-027",
+      "plan": "PLAN-018",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/discoveries.ts",
+        "src/game/discoveries.test.ts",
+        "src/game/units.ts",
+        "src/ui/discoveryCard.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/discovery.e2e.ts",
+        "tests/e2e/play.e2e.ts",
+        "tests/e2e/start.e2e.ts"
+      ],
+      "change_summary": "Noin joka 60. maaruutu on löytö (DISCOVERY_EVERY), ja löytö ja sen kaksi vaihtoehtoa tulevat hashista pelin siemenestä ja ruudun tunnuksesta. Löydöt ovat omia keksintöjä (sääntö 4): Kalaisat vedet (+2 ruokaa, vain rannikolla), Vanhat rauniot (uusi tiedustelija), Malmisuoni (+2 tuotantoa), Vanha kauppapolku (+2 kauppaa) ja Näköalapaikka (kartoittaa neljä rengasta). Löytö syntyy vain, kun tiedustelija kartoittaa ruudun päivän aikana, joten aloitus, testikoukku, näköalapaikka ja uuden tiedustelijan ensimmäinen näkymä eivät tee löytöjä. Päivät pysähtyvät löydön päivään, ja kortti 4a näyttää taukosirun, aksenttirenkaan ruudulla, löytäjän, alueen, lauseen, kaksi 64 px:n valintaa ja huomautuksen. Kamera kääntyy ruutuun vain, jos se ei näy kortin yläpuolella. Pelin HUD-paneelit piilotetaan kortin ajaksi. Valinta muuttaa pelitilaa, ja HUD kertoo sen ilmoituksella (role=status). Ruutubonukset tallentuvat STORY-028:n tuottoihin. Avautumiskortti odottaa, kunnes löytö on ratkaistu.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "main.ts reveal() palauttaa uudet ruudut",
+          "main.ts world.reveal tunnistaa löydöt päivän aikana",
+          "main.ts updatePlay: päivät pysähtyvät löytöön",
+          "main.ts updateLevels odottaa löydön ratkaisua",
+          "Units.recruit",
+          "gameHud PAUSE vietiin",
+          "testikoukut globeDebug.setDiscoveries, discoverySites ja sendTo"
+        ],
+        "call_sites_found": [
+          "reveal (aloitus, laskeutuminen, testikoukku, yksiköt)",
+          "updatePlay",
+          "play.e2e.ts ja start.e2e.ts ajavat peliä"
+        ],
+        "call_sites_updated": [
+          "main.ts",
+          "tests/e2e/play.e2e.ts",
+          "tests/e2e/start.e2e.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kello- ja yksikkötestit sekä aloitustesti kytkevät löydöt pois testikoukulla: löytö pysäyttää kellon, eivätkä ne testaa löytöjä."
+      },
+      "commit": "f3dca94, 8bca20b, 61f16ca",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-019",
+      "story": "STORY-028",
+      "plan": "PLAN-019",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/units.ts",
+        "src/game/units.test.ts",
+        "src/game/discoveries.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "src/globe/unitLayer.ts",
+        "src/globe/main.ts",
+        "tests/e2e/city.e2e.ts"
+      ],
+      "change_summary": "Uudisasukas, joka lähetetään paikalleen, perustaa kaupungin perillä ja poistuu yksiköistä. Kun uudisasukas on valittuna, napautus kartalla merkitsee paikan (meriruudusta lähin maa). Kaupunki (cities.ts) työstää keskustaa ja yhtä ruutua asukasta kohden kahden renkaan säteeltä, eniten 2 × ruoka + tuotanto + kauppa antavat ruudut ensin. Tuotot ovat lähdetaulukosta (Freeciv civ1), keskusta saa kastelun ruoan, ja löytöbonukset lisätään. Asukas syö 2 ruokaa, ruokavarasto on 20 + 10 × (koko − 1), nälkä pienentää kaupunkia, Soturi maksaa 10 tuotantoa ja Uudisasukas 40 tuotantoa ja asukkaan. Lähteet ovat kommentissa. Kaupunki paljastaa säteensä ja näkyy kartalla talojen kuvana. Valmis Soturi puolustaa kaupunkia, ja uusi Uudisasukas saa omat paikkansa. Kortti 8a avautuu perustettaessa, kaupunkia napauttamalla ja HUDin kaupunkinapista (näppäimistö).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Units.settler voi puuttua",
+          "Units.day palauttaa perustetut kaupungit",
+          "Units.spawn ja setSite; yksikkötunnisteet pysyvät yksilöllisinä",
+          "UnitKind 'warrior'",
+          "UnitView.cities",
+          "GameHudState.city ja unit.kind waiting",
+          "Discovery.finder on yksikön tunniste"
+        ],
+        "call_sites_found": [
+          "Units.settler (units.ts, units.test.ts)",
+          "Units.day (main.ts, testit)",
+          "UnitLayer.update (main.ts)",
+          "GameHud.update (main.ts)"
+        ],
+        "call_sites_updated": [
+          "units.ts",
+          "units.test.ts",
+          "main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Uudisasukastesti odotti, että uudisasukas jää paikalleen; story muuttaa sen kaupungiksi, joten testi päivitettiin tarkoituksella."
+      },
+      "commit": "00ee415",
       "progress": 100
     }
   ],
@@ -4160,6 +4350,217 @@
           },
           {
             "item": "Jokaisella avatulla tasolla vähintään yksi pelitilaa muuttava toiminto",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-10"
+      }
+    },
+    {
+      "id": "TICKET-TEST-018",
+      "story": "STORY-027",
+      "implementation_ticket": "TICKET-IMPL-018",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Neljä löydöstä korjattiin ennen mergeä. (1) Kaksi play-testiä kaatui, koska löytö pysäyttää kellon; ne kytkevät löydöt pois. (2) CI-tilassa seuraava löytö tuli kolmen sekunnin päästä, kun testi vielä tarkisti ensimmäistä; testi kytkee myöhemmät löydöt pois ennen valintaa. (3) CI-tilassa löytö kuusi sekuntia laskeutumisen jälkeen käänsi kameran ennen aloitustestin tarkistusta; kamera kääntyy nyt vain tarvittaessa, ja aloitustesti kytkee löydöt pois laskeutuessa. (4) Aloitustestin lennon yläraja (4,5 s) mittasi framevälejä, ei lentoa (CI-tilassa 4521 ms); raja on nyt 3,1 s ja kolme sivun sisällä mitattua pisintä frameväliä (kolmas löytyi STORY-028:n CI-tilan ajosta: käännös alkaa klikkauksen jälkeisellä framella).",
+        "files_changed": [
+          "src/globe/main.ts",
+          "tests/e2e/play.e2e.ts",
+          "tests/e2e/discovery.e2e.ts",
+          "tests/e2e/start.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Tiheys ja determinismi 200 000 ruudulla siemenellä 42",
+            "expected": "Noin 1/60 ruuduista (3333 ± 250), sama tulos samalla siemenellä, kaksi eri löytöä, kaikki viisi löytöä esiintyvät",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Siemen ja rannikko",
+            "expected": "Eri siemen antaa eri ruudut, ja sisämaassa ei ole kalaisia vesiä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Valinnan vaikutukset",
+            "expected": "Bonukset kertyvät ruudulle, rauniot tuovat Tiedustelija 3:n ruutuun ja kartoittavat sen ympäriltä, näköalapaikka kartoittaa neljä rengasta",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tiedustelijat lähetetään lähimmälle löydölle nopeudella 4×",
+            "expected": "Kortti 4a (siru Peli pysähtyi · Päivä N, löytäjä, alue, lause, kaksi vähintään 64 px:n valintaa, huomautus, rengas), HUD-paneelit piilossa ja kello seis kaksi sekuntia",
+            "result": "pass (ensimmäinen löytö päivänä 4: Vanhat rauniot tai Malmisuoni)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valinta",
+            "expected": "Rauniot: yksiköitä yksi lisää ja ilmoitus Tiedustelija N liittyi joukkoon; peli jatkuu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E puhelin (390×844)",
+            "expected": "Kortti mahtuu näytölle, valinnat vähintään 64 px ja yli 300 px leveitä, teksti ei leikkaudu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+            "expected": "Vihreä",
+            "result": "Paikallisesti 34/34 korjausten jälkeen. CI-tilassa koko joukko ensin 32/34 (löytö- ja aloitustesti, ks. yllä); korjausten jälkeen aloitus- ja löytötestit vihreitä CI-tilassa ilman uusintaa.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38038472252 (7e8fa9f, 17,4 min): vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Puhelimella (S23 Ultra) Pagesista",
+            "expected": "Kortti ja valinta sormella",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-018-discovery.png",
+          "docs/screenshots/TICKET-TEST-018-after.png",
+          "docs/screenshots/TICKET-TEST-018-phone-discovery.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Löydöt deterministisesti siemenestä, peli pysähtyy kortin ajaksi",
+            "checked": true
+          },
+          {
+            "item": "Kortti 4a: rengas, alapaneeli, kaksi 64 px:n valintaa ja huomautus",
+            "checked": true
+          },
+          {
+            "item": "Valinta muuttaa pelitilaa, ja vaikutus näkyy HUDissa",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-10"
+      }
+    },
+    {
+      "id": "TICKET-TEST-019",
+      "story": "STORY-028",
+      "implementation_ticket": "TICKET-IMPL-019",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kukkulavaltaisella aloitusalueella ruoka edellä valitut ruudut jättivät tuotannon nollaan; painotus muutettiin samaksi kuin kaupunkipaikan arvioinnissa. Freecivin civ1-sääntöjen keskustan kastelu lisättiin. Kortin uudelleen avaus onnistui vain napauttamalla kangasta, joten HUDiin tuli kaupunkinappi (WCAG). CI-tilassa valmis Soturi seisoi kaupungissa, ja napautus valitsi sen eikä avannut korttia; kaupungissa seisova yksikkö ei enää peitä kaupunkia (testi kattaa). Aloitustestin lentoraja sai kolmannen framevälin (4096 ms, välit 433 ms).",
+        "files_changed": [
+          "src/game/cities.ts",
+          "src/ui/gameHud.ts",
+          "src/globe/main.ts",
+          "tests/e2e/start.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Tuotot lähdetaulukosta: ruohomaakeskusta ja kalainen meri, sitten metsä ja aavikot",
+            "expected": "Koko 1: 6 / 0 / 2 ja ylijäämä 4; koko 2: 7 / 2 / 2 ja 3; koko 5: 7 / 5 / 2 ja −3; kukkulakeskusta 2 ruokaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kasvu ja nälkä",
+            "expected": "Varasto 20, 30 ja 60; kasvu viidessä päivässä ylijäämällä 4; nälkä pienentää koon 5 neljään",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Rakentaminen",
+            "expected": "Soturi 5 päivässä 2 tuotannolla; Uudisasukas odottaa kokoa 2 ja vie asukkaan; ylijäävä tuotanto säilyy",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksiköt: paikan merkintä, perustaminen, Soturi ja uusi uudisasukas",
+            "expected": "Maaruutu sellaisenaan ja meriruudusta lähin maa; uudisasukas muuttuu kaupungiksi; Soturi pysyy kaupungissa; uusi uudisasukas saa paikat; tunnisteet yksilöllisiä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: napautus merkitsee paikan, Perusta kaupunki tähän, nopeus 4×",
+            "expected": "Kaupunki merkittyyn ruutuun, uudisasukas poissa, kortti 8a (Pääkaupunki · alue, Aamuranta, Koko 1, kolme tuottoa pelitilan luvuin, Rakentaa Soturi · valmis N pv)",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: Vaihda, Sulje, avaus kaupungista ja HUDin kaupunkinapista, päivät kuluvat",
+            "expected": "Rakennus vaihtuu ja palaa, kortti sulkeutuu ja aukeaa (myös näppäimistöllä HUDin kaupunkinapista), kaupunki kasvaa tai Soturi 1 valmistuu kaupunkiin, ja napautus kaupunkiin avaa kortin Soturin seistessä siinä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E puhelin (390×844)",
+            "expected": "Kortti mahtuu näytölle, napit vähintään 44 px, rakennusteksti ei leikkaudu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+            "expected": "Vihreä",
+            "result": "Paikallisesti 36/36. CI-tilassa koko joukko ensin 34/36 ja 2 epävakaata (kameratestin 30 s:n aikakatkaisu kuormassa ja aloitustestin lentoraja, molemmat läpi uusinnalla); korjausten jälkeen kaupunki- ja aloitustestit CI-tilassa ilman uusintaa.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38041039101 (00ee415, 23,6 min): vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Puhelimella (S23 Ultra) Pagesista",
+            "expected": "Perustaminen ja kortti sormella",
+            "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "known_issues": [
+          "Yksiköiden ylläpitoa (tuotanto ja ruoka) ei vielä ole.",
+          "Kun peli on tauolla, jo valitun nopeuden napautus ei jatka peliä; Jatka-nappi jatkaa.",
+          "Kameratesti (OrbitControls-rajat) ylitti 30 s:n oletusajan kuormitetussa CI-tilan ajossa ja meni uusinnalla läpi; GitHubissa se on ollut vihreä."
+        ],
+        "screenshots": [
+          "docs/screenshots/TICKET-TEST-019-city.png",
+          "docs/screenshots/TICKET-TEST-019-later.png",
+          "docs/screenshots/TICKET-TEST-019-phone-city.png"
+        ]
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Uudisasukas perustaa kaupungin merkittyyn ruutuun tai sen lähelle maalle",
+            "checked": true
+          },
+          {
+            "item": "Tuotot ympäröivistä ruuduista lähdetaulukon arvoilla (yksikkötesti)",
+            "checked": true
+          },
+          {
+            "item": "Kaupunkikortti 8a: koko ja kasvupalkki, kolme tuottoruutua, Rakentaa … Vaihda",
             "checked": true
           }
         ],

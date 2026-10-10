@@ -1,0 +1,111 @@
+{
+  "id": "TICKET-TEST-019",
+  "story": "STORY-028",
+  "implementation_ticket": "TICKET-IMPL-019",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kukkulavaltaisella aloitusalueella ruoka edellä valitut ruudut jättivät tuotannon nollaan; painotus muutettiin samaksi kuin kaupunkipaikan arvioinnissa. Freecivin civ1-sääntöjen keskustan kastelu lisättiin. Kortin uudelleen avaus onnistui vain napauttamalla kangasta, joten HUDiin tuli kaupunkinappi (WCAG). CI-tilassa valmis Soturi seisoi kaupungissa, ja napautus valitsi sen eikä avannut korttia; kaupungissa seisova yksikkö ei enää peitä kaupunkia (testi kattaa). Aloitustestin lentoraja sai kolmannen framevälin (4096 ms, välit 433 ms).",
+    "files_changed": [
+      "src/game/cities.ts",
+      "src/ui/gameHud.ts",
+      "src/globe/main.ts",
+      "tests/e2e/start.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Tuotot lähdetaulukosta: ruohomaakeskusta ja kalainen meri, sitten metsä ja aavikot",
+        "expected": "Koko 1: 6 / 0 / 2 ja ylijäämä 4; koko 2: 7 / 2 / 2 ja 3; koko 5: 7 / 5 / 2 ja −3; kukkulakeskusta 2 ruokaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kasvu ja nälkä",
+        "expected": "Varasto 20, 30 ja 60; kasvu viidessä päivässä ylijäämällä 4; nälkä pienentää koon 5 neljään",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Rakentaminen",
+        "expected": "Soturi 5 päivässä 2 tuotannolla; Uudisasukas odottaa kokoa 2 ja vie asukkaan; ylijäävä tuotanto säilyy",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksiköt: paikan merkintä, perustaminen, Soturi ja uusi uudisasukas",
+        "expected": "Maaruutu sellaisenaan ja meriruudusta lähin maa; uudisasukas muuttuu kaupungiksi; Soturi pysyy kaupungissa; uusi uudisasukas saa paikat; tunnisteet yksilöllisiä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: napautus merkitsee paikan, Perusta kaupunki tähän, nopeus 4×",
+        "expected": "Kaupunki merkittyyn ruutuun, uudisasukas poissa, kortti 8a (Pääkaupunki · alue, Aamuranta, Koko 1, kolme tuottoa pelitilan luvuin, Rakentaa Soturi · valmis N pv)",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: Vaihda, Sulje, avaus kaupungista ja HUDin kaupunkinapista, päivät kuluvat",
+        "expected": "Rakennus vaihtuu ja palaa, kortti sulkeutuu ja aukeaa (myös näppäimistöllä HUDin kaupunkinapista), kaupunki kasvaa tai Soturi 1 valmistuu kaupunkiin, ja napautus kaupunkiin avaa kortin Soturin seistessä siinä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelin (390×844)",
+        "expected": "Kortti mahtuu näytölle, napit vähintään 44 px, rakennusteksti ei leikkaudu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki E2E paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "Paikallisesti 36/36. CI-tilassa koko joukko ensin 34/36 ja 2 epävakaata (kameratestin 30 s:n aikakatkaisu kuormassa ja aloitustestin lentoraja, molemmat läpi uusinnalla); korjausten jälkeen kaupunki- ja aloitustestit CI-tilassa ilman uusintaa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38041039101 (00ee415, 23,6 min): vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Puhelimella (S23 Ultra) Pagesista",
+        "expected": "Perustaminen ja kortti sormella",
+        "result": "Ei ajettu — ei estä hyväksyntää (valtuutus). Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "known_issues": [
+      "Yksiköiden ylläpitoa (tuotanto ja ruoka) ei vielä ole.",
+      "Kun peli on tauolla, jo valitun nopeuden napautus ei jatka peliä; Jatka-nappi jatkaa.",
+      "Kameratesti (OrbitControls-rajat) ylitti 30 s:n oletusajan kuormitetussa CI-tilan ajossa ja meni uusinnalla läpi; GitHubissa se on ollut vihreä."
+    ],
+    "screenshots": [
+      "docs/screenshots/TICKET-TEST-019-city.png",
+      "docs/screenshots/TICKET-TEST-019-later.png",
+      "docs/screenshots/TICKET-TEST-019-phone-city.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Uudisasukas perustaa kaupungin merkittyyn ruutuun tai sen lähelle maalle",
+        "checked": true
+      },
+      {
+        "item": "Tuotot ympäröivistä ruuduista lähdetaulukon arvoilla (yksikkötesti)",
+        "checked": true
+      },
+      {
+        "item": "Kaupunkikortti 8a: koko ja kasvupalkki, kolme tuottoruutua, Rakentaa … Vaihda",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-10"
+  }
+}

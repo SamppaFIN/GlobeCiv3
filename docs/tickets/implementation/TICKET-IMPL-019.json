@@ -1,0 +1,48 @@
+{
+  "id": "TICKET-IMPL-019",
+  "story": "STORY-028",
+  "plan": "PLAN-019",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/units.ts",
+    "src/game/units.test.ts",
+    "src/game/discoveries.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/unitLayer.ts",
+    "src/globe/main.ts",
+    "tests/e2e/city.e2e.ts"
+  ],
+  "change_summary": "Uudisasukas, joka lähetetään paikalleen, perustaa kaupungin perillä ja poistuu yksiköistä. Kun uudisasukas on valittuna, napautus kartalla merkitsee paikan (meriruudusta lähin maa). Kaupunki (cities.ts) työstää keskustaa ja yhtä ruutua asukasta kohden kahden renkaan säteeltä, eniten 2 × ruoka + tuotanto + kauppa antavat ruudut ensin. Tuotot ovat lähdetaulukosta (Freeciv civ1), keskusta saa kastelun ruoan, ja löytöbonukset lisätään. Asukas syö 2 ruokaa, ruokavarasto on 20 + 10 × (koko − 1), nälkä pienentää kaupunkia, Soturi maksaa 10 tuotantoa ja Uudisasukas 40 tuotantoa ja asukkaan. Lähteet ovat kommentissa. Kaupunki paljastaa säteensä ja näkyy kartalla talojen kuvana. Valmis Soturi puolustaa kaupunkia, ja uusi Uudisasukas saa omat paikkansa. Kortti 8a avautuu perustettaessa, kaupunkia napauttamalla ja HUDin kaupunkinapista (näppäimistö).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Units.settler voi puuttua",
+      "Units.day palauttaa perustetut kaupungit",
+      "Units.spawn ja setSite; yksikkötunnisteet pysyvät yksilöllisinä",
+      "UnitKind 'warrior'",
+      "UnitView.cities",
+      "GameHudState.city ja unit.kind waiting",
+      "Discovery.finder on yksikön tunniste"
+    ],
+    "call_sites_found": [
+      "Units.settler (units.ts, units.test.ts)",
+      "Units.day (main.ts, testit)",
+      "UnitLayer.update (main.ts)",
+      "GameHud.update (main.ts)"
+    ],
+    "call_sites_updated": [
+      "units.ts",
+      "units.test.ts",
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Uudisasukastesti odotti, että uudisasukas jää paikalleen; story muuttaa sen kaupungiksi, joten testi päivitettiin tarkoituksella."
+  },
+  "commit": "00ee415",
+  "progress": 100
+}
