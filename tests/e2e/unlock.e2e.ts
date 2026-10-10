@@ -36,6 +36,25 @@ const arrive = (page: Page, level: number) => page.waitForFunction(l => {
   return s.level === l && !s.flying;
 }, level, { timeout: 20_000 });
 
+/**
+ * Wait for the first frame at a level and return, from that frame, the chips' boxes and the
+ * free band between the top panel and the visible bottom panel (a later frame could hide
+ * a frame where they disagree; on CI one frame can take a second).
+ */
+const arriveWithChips = (page: Page, level: number) => page.evaluate(l => new Promise<{ chips: { top: number; bottom: number }[]; top: number; bottom: number }>(resolve => {
+  const step = () => {
+    const s = (window as any).globeLevels.state;
+    if (s.level !== l || s.flying) return requestAnimationFrame(step);
+    const chips = [...document.querySelectorAll('.chip:not([hidden])')].map(c => c.getBoundingClientRect());
+    resolve({
+      chips: chips.map(r => ({ top: r.top, bottom: r.bottom })),
+      top: document.querySelector('.hud-top')!.getBoundingClientRect().bottom,
+      bottom: document.querySelector('.level-bottom:not([hidden])')!.getBoundingClientRect().top,
+    });
+  };
+  requestAnimationFrame(step);
+}), level);
+
 test('the province level opens at 60 % with the unlock card, its chips and area actions', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
@@ -49,21 +68,21 @@ test('the province level opens at 60 % with the unlock card, its chips and area 
   await expect(page.getByRole('heading', { name: 'Lääni kartoitettu, zoomaa ulos' })).toBeVisible();
   expect((await state(page)).openLevel).toBe(2);
   await page.screenshot({ path: testInfo.outputPath('unlock-card.png') });
+  const arrived = arriveWithChips(page, 2);
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
-  await arrive(page, 2);
+  // From the first frame on, every chip stays between the top panel and the area panel,
+  // where it can be tapped
+  const first = await arrived;
+  expect(first.chips).toHaveLength(7);
+  for (const r of first.chips) {
+    expect(r.top).toBeGreaterThanOrEqual(first.top);
+    expect(r.bottom).toBeLessThanOrEqual(first.bottom);
+  }
 
   // Seven named chips, home among them, and the area panel
   const chips = page.locator('.chip:not([hidden])');
   await expect(chips).toHaveCount(7);
   await expect(page.locator('.chip-name', { hasText: 'Kotialue' })).toBeVisible();
-  // Every chip stays between the top panel and the area panel, where it can be tapped
-  const top = (await page.locator('.hud-top').boundingBox())!;
-  const panel = (await page.locator('.area-panel').boundingBox())!;
-  for (const b of await chips.all()) {
-    const r = (await b.boundingBox())!;
-    expect(r.y).toBeGreaterThanOrEqual(top.y + top.height);
-    expect(r.y + r.height).toBeLessThanOrEqual(panel.y);
-  }
   await page.screenshot({ path: testInfo.outputPath('province.png') });
   // Select a fogged or other area and plan it: skip, then send an expedition there
   const other = chips.filter({ hasNotText: 'Kotialue' }).first();

@@ -593,12 +593,6 @@ function updateLevels() {
       list.push({ id, name: nameOf(level, id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
     }
   }
-  const topPanel = hud_root.querySelector<HTMLElement>('.hud-top');
-  const bottomPanel = hud_root.querySelector<HTMLElement>('.level-bottom:not([hidden])');
-  chips.update(list, {
-    top: topPanel && !topPanel.hidden ? topPanel.getBoundingClientRect().bottom : 0,
-    bottom: bottomPanel ? bottomPanel.getBoundingClientRect().top : window.innerHeight,
-  });
   const area = selectedArea();
   const province = selectedProvince();
   levelPanels.update(
@@ -616,6 +610,13 @@ function updateLevels() {
       isTarget: province === play.targetProvince,
     },
   );
+  // After the panels, so that a panel shown in this frame already bounds the chips
+  const topPanel = hud_root.querySelector<HTMLElement>('.hud-top');
+  const bottomPanel = hud_root.querySelector<HTMLElement>('.level-bottom:not([hidden])');
+  chips.update(list, {
+    top: topPanel && !topPanel.hidden ? topPanel.getBoundingClientRect().bottom : 0,
+    bottom: bottomPanel ? bottomPanel.getBoundingClientRect().top : window.innerHeight,
+  });
 }
 
 // "−" zooms out a level on a desktop (the unlock card's hint)
