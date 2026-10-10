@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-017",
+  "story": "STORY-026",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-10",
+  "approach": "Uusi moduuli src/game/progress.ts pitää kirjaa avatuista tasoista: peli alkaa kaupunkialuetasolta, ja 60 % kartoitettu kotilääni avaa läänitason, samoin 60 % kotivaltiosta valtiotason (yksi vakio UNLOCK_SHARE). Avautuessa kameran zoom-raja kasvaa, ja näytetään designin kortti 5a: Uusi taso avautui, nipistysvihje (animaatio, vähennetyllä liikkeellä paikallaan), työpöydän vihje (rulla tai −) sekä Zoomaa ulos ja Myöhemmin. Miinusnäppäin zoomaa tason ylös, kun se on auki. Läänitasolla (6a) kartalla on seitsemän kaupunkialueen sirua nimineen; sirun napautus valitsee alueen, ja toinen napautus sukeltaa sisään kuten STORY-029:ssä. Alapaneelissa on alueen nimi, kartoitusosuus, painotus Tutki/Asuta/Ohita ja Lähetä retkikunta. Valtiotasolla (7a) sirut ovat läänejä, ja paneelissa on valtion linja Laajentuminen/Tutkimus/Puolustus sekä tavoitelääni. Toiminnot muuttavat pelitilaa yksiköiden logiikassa: Ohita poistaa alueen tutkimuskohteista, Asuta tuo alueen parhaan kaupunkipaikan ensimmäiseksi, retkikunta ja tavoite asettavat lipun, Tutkimus kasvattaa näkösädettä, Laajentuminen laajentaa kaupunkipaikkojen hakua ja Puolustus pitää tiedustelijat kotiläänissä. Nimet syntyvät alueen paikasta emoalueessaan (ilmansuunta emon keskipisteestä, keskimmäinen Keski-) ja vallitsevasta maisemasta, ja koti on Kotialue tai Kotilääni. Pelissä kartta pysyy pohjoinen ylhäällä, joten nimet ja ilmansuunnat vastaavat näkymää.",
+  "alternatives_considered": [
+    {
+      "name": "Nimien suunta kotialueesta",
+      "pros": "Kertoo, missä alue on kotiin nähden",
+      "cons": "Kaksi saman läänin aluetta voi saada saman suunnan ja maiseman, jolloin nimet toistuvat",
+      "rejected_because": "Emon keskipisteestä mitattuna kuusi reunalasta ovat 60° välein eivätkä koskaan jaa suuntaa (testattu kuvasta)"
+    },
+    {
+      "name": "Planeettataso auki 60 %:lla valtiosta",
+      "pros": "Kaikki tasot auki MVP:ssä",
+      "cons": "Design avaa planeetan vasta, kun oma valtio on vallattu, eikä valtausta ole MVP:ssä",
+      "rejected_because": "Design. Planeetta odottaa valtausta MVP:n jälkeen."
+    }
+  ],
+  "files_to_change": [
+    "src/game/progress.ts, src/game/names.ts ja levelActions.test.ts (uudet)",
+    "src/game/units.ts (alueiden painotus, retkikunta, valtion linja)",
+    "src/ui/levelUi.ts (uusi): kortti 5a, sirut ja paneelit",
+    "src/ui/gameHud.ts ja hud.css",
+    "src/globe/main.ts (avautuminen, lukko, sirut, pohjoinen ylös, miinusnäppäin, testikoukku)",
+    "tests/e2e/unlock.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Avautuminen, nimet ja tasotoiminnot yksiköiden logiikassa yksikkötesteineen",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Kortti, sirut, paneelit ja kytkentä peliin",
+      "verify": "Kuvat kortista, läänitasolta ja valtiotasolta. Ei konsolivirheitä."
+    },
+    {
+      "step": 3,
+      "action": "E2E: avautuminen tasan 60 %:ssa, sirut, painotus, retkikunta, raja, miinusnäppäin, valtion linja ja tavoite. Merge ja CI.",
+      "verify": "Kaikki vihreitä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}
