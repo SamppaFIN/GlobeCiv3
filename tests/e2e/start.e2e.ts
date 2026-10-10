@@ -45,12 +45,45 @@ test.describe('on a phone', () => {
     expect(ring.width).toBeCloseTo((340 / 140) * r, 0);
     // The level bar waits for the game
     await expect(page.locator('.level-bar')).toBeHidden();
-    // The planet turns slowly
-    const t0 = await page.evaluate(() => (window as any).globeCamera.target.toArray());
-    await page.waitForTimeout(500);
-    const turned = await page.evaluate(t => (window as any).globeCamera.target.angleTo((window as any).globeCamera.target.clone().fromArray(t)), t0);
-    expect(turned).toBeGreaterThan(0.01);
+    // The planet turns slowly, a turn in 80 s: the rate around the spin axis measured inside
+    // the page over a second and three frames (rule 5; a fixed wait saw one slow CI frame)
+    const rate = await page.evaluate(() => new Promise<number>(resolve => {
+      const w = window as any;
+      const azimuth = () => Math.atan2(w.globeCamera.target.x, w.globeCamera.target.z);
+      let t0 = 0, a0 = 0, frames = 0;
+      const step = (t: number) => {
+        if (!t0) { t0 = t; a0 = azimuth(); }
+        else if (++frames >= 3 && t - t0 >= 1000) {
+          const turned = Math.abs(Math.atan2(Math.sin(azimuth() - a0), Math.cos(azimuth() - a0)));
+          return resolve(turned / ((t - t0) / 1000));
+        }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }));
+    expect(rate).toBeGreaterThan(((2 * Math.PI) / 80) * 0.8);
+    expect(rate).toBeLessThan(((2 * Math.PI) / 80) * 1.2);
     await page.screenshot({ path: testInfo.outputPath('start-phone.png') });
+    expect(errors).toEqual([]);
+  });
+
+  test('a finger turns the planet, the surface staying under it', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const errors = await openGame(page, '?seed=42');
+    const centre = await page.evaluate(() => (window as any).globeCamera.target.toArray());
+    // A real touch through the DevTools protocol (the browser makes the pointer events)
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: string, x?: number, y?: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: x === undefined ? [] : [{ x, y }] });
+    await touch('touchStart', 195, 422);
+    for (let k = 1; k <= 6; k++) await touch('touchMove', 195 - 7 * k, 422 + 5 * k);
+    await touch('touchEnd');
+    const at = await page.evaluate(p => {
+      const w = window as any;
+      const v = w.globeCamera.target.clone().fromArray(p).normalize().multiplyScalar(w.globeCamera.R).project(w.globeCamera.camera);
+      return [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight];
+    }, centre);
+    expect(Math.abs(at[0] - (195 - 42))).toBeLessThan(3);
+    expect(Math.abs(at[1] - (422 + 30))).toBeLessThan(3);
     expect(errors).toEqual([]);
   });
 });

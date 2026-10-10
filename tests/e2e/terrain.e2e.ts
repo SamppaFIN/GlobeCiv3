@@ -128,8 +128,9 @@ test('at city-area zoom the surface patterns shade the tiles, without changing t
     w.globeCamera.apply();
     w.globeTiles.budgetMs = 1e9;
   });
-  // The patterns are computed in a worker once the city-area level is reached
+  // The patterns are computed in a worker once the city-area level is reached, then fade in
   await surfaced;
+  await page.waitForFunction(() => (window as any).globeTiles.surfaceIn.value === 1, null, { timeout: 20_000 });
   const settle = () => page.waitForFunction(() => {
     const w = window as any;
     const st = w.globeTiles.lastStats;

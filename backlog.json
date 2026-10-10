@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-10T11:32:17Z",
+    "generated_at": "2026-10-10T16:06:11Z",
     "generated_by": "init-project v1.0",
     "git_commit": "c332daa",
     "git_branch": "main",
@@ -132,9 +132,10 @@
         "STORY-026",
         "STORY-027",
         "STORY-028",
-        "STORY-030"
+        "STORY-030",
+        "STORY-031"
       ],
-      "progress": 90
+      "progress": 91
     }
   ],
   "stories": [
@@ -858,6 +859,30 @@
         "testing": null
       },
       "scope": "post-mvp"
+    },
+    {
+      "id": "STORY-031",
+      "epic": "EPIC-006",
+      "title": "Aloitusnäytön pyöritys, ruutujen pintakuviot ja viimeistely",
+      "type": "story",
+      "narrative": "Pelaajana haluan pyörittää planeettaa aloitusnäytöllä ja nähdä ruuduilla maaston pinnan, jotta maailma tuntuu kosketeltavalta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-021",
+        "STORY-023"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Aloitusnäytön planeetta kääntyy vedolla (hiiri ja kosketus) niin, että tartuttu kohta pysyy osoittimen alla, ja nuolinäppäimillä. Hidas pyöriminen jatkuu irrotuksen jälkeen.",
+        "Kaupunkialuetasolla ruuduilla on maastonsa pintakuvio: oma vesi sekä Assets-shadereista pelto, metsä ja korkokuva. Värit tulevat tokeneista, ja jokaisessa ruudussa on oma ote.",
+        "Kuvioiden laskenta ei pysäytä pääsäiettä, ja kuviot tulevat esiin pehmeästi. Niiden kustannus on mitattu."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-020",
+        "implementation": "TICKET-IMPL-020",
+        "testing": "TICKET-TEST-020"
+      }
     }
   ],
   "plans": [
@@ -1939,6 +1964,57 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-020",
+      "story": "STORY-031",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-10",
+      "approach": "Aloitusnäytön kerros ottaa vedon itse (se estää muun syötteen pallolle tarkoituksella): vedon alussa haetaan pallon kohta osoittimen alta, ja jokaisella liikkeellä kamerarigiä kierretään niin, että sama kohta on taas osoittimen alla, kuten pelin omassa vedossa. Pallon ohi alkanut veto ja nuolinäppäimet kääntävät pikselien mukaan. Tähtitaivas kääntyy vastakkaiseen suuntaan kuten hitaassa pyörimisessä. Pintakuviot ovat yhdessä RGBA-tekstuurissa (vesi, pelto, metsä ja korkokuva). Tile-shader ottaa värin tokeneista ja käyttää kuviota vain valona ja varjona, ruudun tunnisteen hashista valitulla otteella. Vesi on oma, ja muut on siirretty Assets-shadereista JavaScriptiksi, ja ne lasketaan Web Workerissa, kun uusi peli alkaa tai näkymä saavuttaa kaupunkialuetason. Saapuessaan kuviot häivytetään esiin 0,6 s:ssa.",
+      "alternatives_considered": [
+        {
+          "name": "Kuviot shaderina GPU:lla",
+          "pros": "Laskenta itsessään 25 ms",
+          "cons": "Direct3D-käännös pysäytti pääsäikeen noin 1,8 s:ksi, myös compileAsyncilla",
+          "rejected_because": "Pitkä tehtävä latauksessa (mitattu)"
+        },
+        {
+          "name": "Valmiiksi lasketut kuvat repossa",
+          "pros": "Ei ajonaikaista kustannusta",
+          "cons": "Binääri repoon, joka pitää laskea uudelleen kuvion muuttuessa",
+          "rejected_because": "Sääntö 3: generoitu sisältö on funktio"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/main.ts",
+        "src/ui/hud.css",
+        "src/globe/surfacePatterns.ts ja surfacePatterns.test.ts (uudet)",
+        "src/globe/surfaceWorker.ts (uusi)",
+        "src/globe/tiles.ts",
+        "tests/e2e/start.e2e.ts",
+        "tests/e2e/terrain.e2e.ts",
+        "README.md",
+        "public/icons.svg (poisto)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Aloitusnäytön veto ja nuolinäppäimet",
+          "verify": "E2E: kohta osoittimen alla 3 px:n tarkkuudella hiirellä ja kosketuksella"
+        },
+        {
+          "step": 2,
+          "action": "Pintakuviot workerissa ja tile-shaderissa",
+          "verify": "E2E: kuviot varjostavat ruutuja muuttamatta sävyä; pitkät tehtävät ja fps mitattu"
+        },
+        {
+          "step": 3,
+          "action": "Viimeistely: pehmeä esiintulo, README ja käyttämätön icons.svg pois",
+          "verify": "Kaikki testit vihreinä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -2684,6 +2760,47 @@
         "notes": "Uudisasukastesti odotti, että uudisasukas jää paikalleen; story muuttaa sen kaupungiksi, joten testi päivitettiin tarkoituksella."
       },
       "commit": "00ee415",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-020",
+      "story": "STORY-031",
+      "plan": "PLAN-020",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/main.ts",
+        "src/ui/hud.css",
+        "src/globe/surfacePatterns.ts",
+        "src/globe/surfacePatterns.test.ts",
+        "src/globe/surfaceWorker.ts",
+        "src/globe/tiles.ts",
+        "tests/e2e/start.e2e.ts",
+        "tests/e2e/terrain.e2e.ts",
+        "README.md",
+        "public/icons.svg"
+      ],
+      "change_summary": "Aloitusnäytön planeetta kääntyy vedolla ja nuolinäppäimillä, ja tartuttu kohta pysyy osoittimen alla. Ruuduilla on kaupunkialuetasolla maastonsa pintakuvio valona ja varjona tokenvärin päällä. Vesi on oma (merikarttojen aallonharjat), ja pelto ilman kiinteää jokea, metsä ja korkokuva on siirretty Assets-shadereista. Kuviot lasketaan Web Workerissa, kun uusi peli alkaa tai näkymä saavuttaa kaupunkialuetason, ja ne häivytetään esiin 0,6 s:ssa. globeTiles.surfaceOn kytkee ne pois. README kuvaa pelin nykytilan ja ohjauksen, ja Viten käyttämätön icons.svg poistettiin.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "tiles.ts: surfaceTex, surfaceMean, surfaceStd, surfaceOn, surfaceIn ja surfaceOf; ruudun paikalliset koordinaatit lasketaan kerran merkeille ja kuviolle",
+          "main.ts: turnStartPlanet ja orbitStart, requestSurfacePatterns"
+        ],
+        "call_sites_found": [
+          "aloitusnäytön kerros (startScreen.element)",
+          "tile-shaderin STORY-023:n ruutulohko",
+          "terrain.e2e.ts värivertailu"
+        ],
+        "call_sites_updated": [
+          "main.ts",
+          "tiles.ts",
+          "tests/e2e/terrain.e2e.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Värivertailutesti ajetaan ilman kuvioita, koska se testaa tokenvärejä, ja kuvioilla on oma testinsä. src/spike jää vielä: bench-skripti ja STORY-006:n tarkkuusmittaus käyttävät sitä, joten se poistetaan STORY-006:n yhteydessä."
+      },
+      "commit": "7b25613, 66d6426, polish/finishing",
       "progress": 100
     }
   ],
@@ -4574,6 +4691,102 @@
           },
           {
             "item": "Kaupunkikortti 8a: koko ja kasvupalkki, kolme tuottoruutua, Rakentaa … Vaihda",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-10"
+      }
+    },
+    {
+      "id": "TICKET-TEST-020",
+      "story": "STORY-031",
+      "implementation_ticket": "TICKET-IMPL-020",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Viisi löydöstä korjattiin matkalla. (1) Pikseleihin suhteutettu kierto jätti kohdan noin 10 px osoittimesta, koska perspektiivi; veto käyttää nyt tartuttua kohtaa. (2) Kuvioshaderin käännös pysäytti pääsäikeen noin 1,8 s:ksi, joten laskenta siirtyi workeriin. (3) Korkokuva saturoi 11 % tavuista, ja vaihtelu puristettiin. (4) CI-tilan puolikkaalla pikselisuhteella ruutu oli alle kuvion häivytysrajan, joten testi katsoo puolelta etäisyydeltä. (5) Aloitusnäytön hitaan pyörimisen testi odotti kiinteät 500 ms (vastoin sääntöä 5) ja oli CI-tilassa epävakaa; se mittaa nyt nopeuden sivun sisällä sekunnin ja kolmen framen yli.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "src/globe/surfacePatterns.ts",
+          "tests/e2e/terrain.e2e.ts",
+          "tests/e2e/start.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844 kosketus) ja CI-tilassa (SwiftShader). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "E2E: veto hiirellä keskeltä 60 px oikealle ja 30 px alas (vähennetty liike)",
+            "expected": "Keskellä ollut pinnan kohta on osoittimen alla alle 3 px:n tarkkuudella; nuolinäppäin kääntää; Uusi peli alkaa",
+            "result": "pass (paikallisesti ja CI-tilassa)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E puhelin: oikea kosketusveto DevTools-protokollan kautta",
+            "expected": "Kohta sormen alla alle 3 px:n tarkkuudella",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: kuvioiden laskenta",
+            "expected": "Sama tulos joka kerta, jokaisella kanavalla vaihtelua, alle 10 % saturoituu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kuviot päällä ja pois samasta näkymästä",
+            "expected": "Yli 30 % pikseleistä muuttuu, sävy pysyy (alle 0,02)",
+            "result": "75 % muuttui, sävysiirtymä 0,0014 (paikallisesti ja CI-tilassa)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tokenvärit ilman kuvioita",
+            "expected": "Yli 95 % maaruuduista vastaa tyyppinsä tokenia",
+            "result": "76 / 76",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pääsäie latauksessa (pitkät tehtävät, Intel UHD)",
+            "expected": "Ei uutta pitkää tehtävää",
+            "result": "Ilman kuvioita yksi 2190 ms:n latausta, workerilla 2214 ms. Shaderina oli lisäksi 1768 ms:n tehtävä. Worker laskee noin 1,4 s pääsäikeen ulkopuolella.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Suorituskyky: kuviot päällä ja pois samassa istunnossa, kuusi vuoroa (Intel UHD, toinen selain kuormitti GPU:ta)",
+            "expected": "Kustannus raportoidaan",
+            "result": "Mediaanit 38,4 ja 40,7 fps, noin 6 %. Absoluuttiset luvut eivät ole vertailukelpoisia kuormituksen takia.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajot",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Aloitusnäytön pyöritys: ajo 38050511254 (7b25613, 24,1 min). Pintakuviot: ajo 38052417726 (66d6426, 18,0 min). Molemmat vihreitä ja julkaistu.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Puhelimella (S23 Ultra) Pagesista",
+            "expected": "Pyöritys sormella ja kuviot laskeutumisen jälkeen, peli sulava",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Aloitusnäytön planeetta pyörii vedolla ja nuolinäppäimillä",
+            "checked": true
+          },
+          {
+            "item": "Pintakuviot kaupunkialuetasolla, värit tokeneista",
+            "checked": true
+          },
+          {
+            "item": "Laskenta ei pysäytä pääsäiettä, kustannus mitattu",
             "checked": true
           }
         ],

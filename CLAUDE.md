@@ -70,10 +70,10 @@
       "requirement": "Assets-kansion merishaderi on johdettu Seascapesta (CC BY-NC-SA 3.0), eikä sitä commitoida eikä käytetä"
     },
     {
-      "name": "public/favicon.svg (oma pallo-ikoni, STORY-003) ja public/icons.svg (Viten pohjan jäänne, ei käytössä)",
-      "source": "Oma ja Viten projektipohja",
-      "license": "Oma: GPL-3.0-or-later. icons.svg: MIT (Vite)",
-      "requirement": "icons.svg poistetaan tai korvataan ennen kuin peli jaetaan muille"
+      "name": "public/favicon.svg (oma pallo-ikoni, STORY-003)",
+      "source": "Oma",
+      "license": "GPL-3.0-or-later",
+      "requirement": "Ei erillisiä vaatimuksia. Viten pohjan käyttämätön icons.svg poistettiin 2026-10-10."
     }
   ],
   "deliverables_owner": "Sami omistaa koodin, pelisuunnittelun ja dokumentaation."
@@ -287,13 +287,13 @@ hakemisto.
     { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012", "STORY-019"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] },
-    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030"] }
+    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030", "STORY-031"] }
   ],
-  "stories_total": 30,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014", "PLAN-015", "PLAN-016", "PLAN-017", "PLAN-018", "PLAN-019"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014", "TICKET-IMPL-015", "TICKET-IMPL-016", "TICKET-IMPL-017", "TICKET-IMPL-018", "TICKET-IMPL-019"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014", "TICKET-TEST-015", "TICKET-TEST-016", "TICKET-TEST-017", "TICKET-TEST-018", "TICKET-TEST-019"],
-  "next": "Samin puhelintestit Pagesista; sitten STORY-030 (MVP:n jälkeen)"
+  "stories_total": 31,
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014", "PLAN-015", "PLAN-016", "PLAN-017", "PLAN-018", "PLAN-019", "PLAN-020"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014", "TICKET-IMPL-015", "TICKET-IMPL-016", "TICKET-IMPL-017", "TICKET-IMPL-018", "TICKET-IMPL-019", "TICKET-IMPL-020"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014", "TICKET-TEST-015", "TICKET-TEST-016", "TICKET-TEST-017", "TICKET-TEST-018", "TICKET-TEST-019", "TICKET-TEST-020"],
+  "next": "Samin puhelintestit Pagesista; sitten STORY-006 (tarkkuus pääpelissä, jonka jälkeen src/spike poistetaan) ja STORY-030 (MVP:n jälkeen)"
 }
 ```
 
@@ -403,6 +403,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-10 | Yksiköiden ylläpito lisättiin Freecivin civ1-sääntöjen mukaan (despotismi on aloitushallinto): kaupunki maksaa rakentamistaan yksiköistä kolmen ilmaisen jälkeen 1 tuotannon kustakin ja uudisasukkaasta 1 ruoan, ja yksikkö, jota se ei pysty maksamaan, lähtee ennen kuin kaupunki näkee nälkää. Aloitusyksiköillä ei ole kotikaupunkia. | TICKET-TEST-019:n tunnettu puute, sääntö 4 | Linssi (Samin valtuutuksella) |
 | 2026-10-10 | Aloitusnäytön planeetta on pyöritettävissä: vedettäessä tartuttu pinnan kohta pysyy osoittimen alla (kuten pelin vedossa), ja nuolinäppäimet kääntävät sitä. Hidas pyöriminen jatkuu irrotuksen jälkeen, ja tähdet pysyvät paikallaan. | Samin pyyntö | Sami |
 | 2026-10-10 | Ruuduilla on pintakuviot kaupunkialuetasolla: oma vesi (merikarttojen aallonharjat) sekä Assets-shadereista siirretyt pelto, metsä ja korkokuva. Värit tulevat tokeneista, ja kuvio antaa vain valoa ja varjoa, ja jokaisessa ruudussa on oma otteensa. Kuviot lasketaan Web Workerissa, koska shaderin käännös olisi pysäyttänyt pääsäikeen noin 1,8 s:ksi. Kustannus on noin 6 % (A/B samassa istunnossa). | Sami: jos lisenssi estää, tehdään oma, kunhan jotain on. Seascape (CC BY-NC-SA) ei sovi GPL v3:een. | Sami |
+| 2026-10-10 | STORY-031 hyväksyttiin (aloitusnäytön pyöritys, pintakuviot ja viimeistely: kuvioiden pehmeä esiintulo, README ja käyttämätön icons.svg pois). src/spike poistetaan vasta STORY-006:n jälkeen eikä STORY-008:n, kuten aiemmin päätettiin, koska bench-skripti ja tarkkuusmittaus käyttävät sitä. | TICKET-TEST-020 | Linssi (Samin valtuutuksella) |
 
 ### Avoimet kysymykset
 

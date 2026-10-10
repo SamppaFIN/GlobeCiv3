@@ -105,6 +105,7 @@ const hexShader = /* glsl */ `
   uniform sampler2D glyphAtlas;
   uniform vec3 terrainColors[${TERRAINS.length}];
   uniform float surfaceOn;
+  uniform float surfaceIn;
   uniform sampler2D surfaceTex;
   uniform vec4 surfaceMean;
   uniform vec4 surfaceStd;
@@ -465,7 +466,7 @@ const fragmentShader = /* glsl */ `
         if (near2 > 0 && (near2 == 1) != (ttype == 1)) coast = min(coast, e2);
         color = mix(color, INK, 0.4 * typeFade * (1.0 - smoothstep(0.3 * w, 0.8 * w, coast)));
         float glyphFade = typeFade * smoothstep(18.0, 30.0, spacingPx);
-        float surfaceFade = surfaceOn * typeFade * smoothstep(24.0, 48.0, spacingPx);
+        float surfaceFade = surfaceOn * surfaceIn * typeFade * smoothstep(24.0, 48.0, spacingPx);
         // Tile-local coordinates in circumradii, upright on the screen
         float s = spacing / 1.7320508;
         vec2 g = vec2(0.0);
@@ -795,6 +796,8 @@ export class TileManager {
   readonly surfaceMean = { value: new THREE.Vector4(0.5, 0.5, 0.5, 0.5) };
   /** 1 draws the surface patterns, 0 not (a switch for slow devices and measurements). */
   readonly surfaceOn = { value: 1 };
+  /** Fades the patterns in when they arrive from the worker (0–1). */
+  readonly surfaceIn = { value: 1 };
   readonly surfaceStd = { value: new THREE.Vector4(1, 1, 1, 1) };
   /** World direction that is up on the screen. */
   readonly screenUp = { value: new THREE.Vector3(0, 1, 0) };
@@ -938,6 +941,7 @@ export class TileManager {
         glyphAtlas: this.glyphAtlas,
         terrainColors: { value: terrainColors },
         surfaceOn: this.surfaceOn,
+        surfaceIn: this.surfaceIn,
         surfaceTex: this.surfaceTex,
         surfaceMean: this.surfaceMean,
         surfaceStd: this.surfaceStd,
