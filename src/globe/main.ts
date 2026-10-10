@@ -57,7 +57,10 @@ rig.apply();
 attachInput(renderer.domElement, rig);
 
 // ─── Surface (cube-sphere quadtree) ───────────────
+// Builds the tile table (city area of each of the ~1.09 M hex tiles) once, as a texture
+const tileTableStart = performance.now();
 const tiles = new TileManager(RADIUS, regions);
+console.log(`[GlobeCiv3] Hex tile table: ${(performance.now() - tileTableStart).toFixed(0)} ms`);
 scene.add(tiles.group);
 const setNarrowPx = () => {
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
@@ -143,8 +146,8 @@ function updateLevel() {
   path = regionPath(regions, anchor, depth);
   const context = path.length ? path[path.length - 1] : null;
   tiles.setHighlight(
-    selection ? { level: selection.level, center: regionCenter(regions, selection) } : null,
-    context ? { level: context.level, center: regionCenter(regions, context) } : null,
+    selection ? { ...selection, center: regionCenter(regions, selection) } : null,
+    context ? { ...context, center: regionCenter(regions, context) } : null,
   );
   levelBar.update({ level: viewLevel, path, selection });
 }

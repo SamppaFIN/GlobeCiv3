@@ -51,13 +51,14 @@ export function levelForDist(dist: number, frames: readonly number[]): ViewLevel
   return level as ViewLevel;
 }
 
-/** Regions containing a point, from the state down: depth 1 gives the state only, 3 all three. */
-export function regionPath(regions: Regions, p: THREE.Vector3, depth: number): RegionRef[] {
-  const path: RegionRef[] = [];
-  if (depth >= 1) path.push({ level: 0, id: regions.stateOf(p) });
-  if (depth >= 2) path.push({ level: 1, id: regions.provinceOf(p) });
-  if (depth >= 3) path.push({ level: 2, id: regions.cityOf(p) });
-  return path;
+/**
+ * Regions containing a point, from the state down: depth 1 gives the state only, 3 all
+ * three. A point belongs to the regions of its hex tile's centre, as the borders are drawn.
+ */
+export function regionPath(regions: Regions, point: THREE.Vector3, depth: number): RegionRef[] {
+  const city = regions.cityOfTile(point);
+  const ids = [Math.floor(city / (CHILDREN * CHILDREN)), Math.floor(city / CHILDREN), city];
+  return ids.slice(0, depth).map((id, level) => ({ level: level as RegionLevel, id }));
 }
 
 /** The region a tap selects at a view level, or null at the city-area level (tiles come later). */

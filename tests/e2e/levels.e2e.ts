@@ -21,9 +21,10 @@ const levelState = (page: Page) => page.evaluate(() => {
 /** Region of a view level under a client pixel, computed apart from the game's tap handling. */
 const regionUnder = (page: Page, x: number, y: number, level: number) => page.evaluate(([cx, cy, lv]) => {
   const w = window as any;
-  const p = w.globeCamera.raycast({ x: (cx / innerWidth) * 2 - 1, y: -((cy / innerHeight) * 2 - 1) });
-  const r = w.globeRegions;
-  return { level: lv, id: lv === 0 ? r.stateOf(p) : lv === 1 ? r.provinceOf(p) : r.cityOf(p) } as Ref;
+  const hit = w.globeCamera.raycast({ x: (cx / innerWidth) * 2 - 1, y: -((cy / innerHeight) * 2 - 1) });
+  // A point belongs to the regions of its hex tile (the tile table)
+  const city = w.globeRegions.cityOfTile(hit);
+  return { level: lv, id: lv === 0 ? Math.floor(city / 49) : lv === 1 ? Math.floor(city / 7) : city } as Ref;
 }, [x, y, level] as const);
 
 /** Angle between the camera target and a region centre. */
