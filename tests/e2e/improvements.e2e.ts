@@ -8,10 +8,11 @@ async function startGame(page: Page): Promise<string[]> {
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
   await page.goto('./?seed=42');
   await ready;
+  // Discoveries and site offers stop the game; this test is about improvements
+  // Before the game starts: a slow runner passes days before the first check
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
-  // Discoveries and site offers stop the game; this test is about improvements
-  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Tauko' }).click();
   return errors;
 }

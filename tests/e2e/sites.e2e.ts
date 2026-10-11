@@ -8,10 +8,11 @@ async function startGame(page: Page): Promise<string[]> {
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
   await page.goto('./?seed=42');
   await ready;
+  // Only site offers stop the game here
+  // Before the game starts: a slow runner passes days before the first check
+  await page.evaluate(() => { const d = (window as any).globeDebug; d.setDiscoveries(false); d.setSiteOffers(true); });
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
-  // Only site offers stop the game here
-  await page.evaluate(() => { const d = (window as any).globeDebug; d.setDiscoveries(false); d.setSiteOffers(true); });
   return errors;
 }
 
@@ -66,9 +67,12 @@ test('a scout suggests a good city site; the settler founds the city there, and 
   // The settler walks there and founds the city on the suggested tile
   await page.waitForFunction(() => (window as any).globeGame.state.cities.length === 1, null, { timeout: 120_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
-  expect((await state(page)).cities[0].tile).toBe(offer.tile);
-  // Its label is on the map; after the card is closed, the label opens it again
-  const label = page.getByRole('button', { name: 'Kaupunki Aamuranta, koko 1' });
+  const founded = (await state(page)).cities[0];
+  expect(founded.tile).toBe(offer.tile);
+  // Its label is on the map; after the card is closed, the label opens it again. A slow
+  // runner passes days before the pause, so the city may have grown already
+  testInfo.annotations.push({ type: 'city', description: `size ${founded.size} on day ${(await state(page)).day}` });
+  const label = page.getByRole('button', { name: `Kaupunki Aamuranta, koko ${founded.size}` });
   await page.getByRole('button', { name: 'Sulje' }).click();
   await expect(label).toBeVisible();
   await label.click();

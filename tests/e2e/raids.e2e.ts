@@ -8,10 +8,11 @@ async function startGame(page: Page): Promise<string[]> {
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
   await page.goto('./?seed=42');
   await ready;
+  // Discoveries, site offers and raids by chance stop the game; this test calls the raid itself
+  // Before the game starts: a slow runner passes days before the first check
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
-  // Discoveries, site offers and raids by chance stop the game; this test calls the raid itself
-  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Tauko' }).click();
   return errors;
 }
@@ -70,10 +71,14 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   // The game stands still while the card waits
   expect(await daysOver(page, 2000)).toBe(0);
 
-  // Rakenna soturi: the capital builds one
+  // Rakenna soturi: the capital builds one (on a slow runner it may be done already, and
+  // the capital gone on to settlers)
+  const soldiers = (await state(page)).units.filter((u: any) => u.kind === 'warrior').length;
   await card.getByRole('button', { name: /Rakenna soturi/ }).click();
   await expect(card).toBeHidden();
-  expect((await state(page)).cities[0].build).toBe('warrior');
+  await expect(page.getByRole('status')).toHaveText('Aamuranta rakentaa soturin');
+  const built = await state(page);
+  expect(built.cities[0].build === 'warrior' || built.units.filter((u: any) => u.kind === 'warrior').length > soldiers).toBe(true);
 
   // The band comes near: the bandits and their way are on the map
   await page.waitForFunction(() => {

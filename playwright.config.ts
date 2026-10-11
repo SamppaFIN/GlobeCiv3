@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const CI = !!process.env.CI;
-// Not 3000 (Sami's dev server) or 4173 (manual vite preview)
-const PORT = 4175;
+// Not 3000 (Sami's dev server) or 4173 (manual vite preview); E2E_PORT when another project holds it
+const PORT = Number(process.env.E2E_PORT) || 4175;
 
 export default defineConfig({
   testDir: 'tests/e2e',
