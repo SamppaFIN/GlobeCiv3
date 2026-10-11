@@ -11,10 +11,12 @@
  *   Puolusta (defend) back to the camp, and stay
  *
  * A settler sent to its site founds a city there (STORY-028); cities add soldiers and
- * settlers. Soldiers stay in their city.
+ * settlers. Soldiers stay in their city. A settler set to Kehitä improves the land around
+ * its city: it walks to the most worthwhile job and works it for the job's days (STORY-033).
  */
 import { findPath, nearestTile, tilesInRings } from './pathfinding';
 import { compassIndex } from './names';
+import { IMPROVEMENT_NAMES, type ImprovementKind, type Job } from './improvements';
 import { tileCenter } from '../globe/hexTiles';
 
 export type UnitKind = 'scout' | 'settler' | 'warrior';
@@ -22,6 +24,10 @@ export type Mode = 'explore' | 'gather' | 'defend';
 export const MODE_NAMES: Record<Mode, string> = { explore: 'Tutki', gather: 'Kerää', defend: 'Puolusta' };
 /** Rings a scout maps around itself (the state line Tutkimus adds one). */
 export const SIGHT = 2;
+
+/** A settler founds a city (Asuta) or improves land (Kehitä). */
+export type SettlerTask = 'found' | 'improve';
+export const TASK_NAMES: Record<SettlerTask, string> = { found: 'Asuta', improve: 'Kehitä' };
 
 /** A city area's emphasis at the province level (design 6a). */
 export type AreaPlan = 'explore' | 'settle' | 'skip';
@@ -46,6 +52,9 @@ export interface Unit {
   gathered: number;
   /** The city that built and supports the unit; the starting units have none, as in Freeciv. */
   home: number | null;
+  /** A settler's task, and the improvement it is on with the days of work left. */
+  task: SettlerTask;
+  job: (Job & { left: number }) | null;
 }
 
 /** What units need to know about the world. */
@@ -60,6 +69,10 @@ export interface World {
   siteScore(id: number): number;
   /** City area of a tile (its province is ⌊id / 7⌋). */
   cityOf(id: number): number;
+  /** A settler's next job improving land, or null (STORY-033). */
+  nextJob?(u: Unit): Job | null;
+  /** A settler finished an improvement. */
+  improve?(tile: number, kind: ImprovementKind): void;
 }
 
 export class Units {
@@ -180,12 +193,12 @@ export class Units {
   }
 
   private add(kind: UnitKind, name: string, tile: number) {
-    this.units.push({ id: this.nextId++, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0, home: null });
+    this.units.push({ id: this.nextId++, kind, name, tile, mode: 'explore', path: [], wait: 0, carrying: false, gathered: 0, home: null, task: 'found', job: null });
   }
 
-  /** The settler whose site is chosen (the first one), if any is left. */
+  /** The settler whose site is chosen: the first set to found cities, if any. */
   get settler(): Unit | undefined {
-    return this.units.find(u => u.kind === 'settler');
+    return this.units.find(u => u.kind === 'settler' && u.task === 'found');
   }
 
   setMode(unit: Unit, mode: Mode) {
@@ -205,11 +218,22 @@ export class Units {
     if (this.settler) this.settler.path = [];
   }
 
+  /** A settler founds cities or improves land; the change drops the work it is on. */
+  setTask(u: Unit, task: SettlerTask, world: World) {
+    if (u === this.settler && task === 'improve') this.founding = false;
+    u.task = task;
+    u.job = null;
+    u.path = [];
+    if (!this.founding) this.findSites(world);
+  }
+
   /** Send the settler to the chosen site. */
   found(world: World) {
     const site = this.currentSite();
     const settler = this.settler;
     if (site === null || !settler) return;
+    settler.task = 'found';
+    settler.job = null;
     this.founding = true;
     settler.path = findPath(settler.tile, site, id => world.cost(id)) ?? [];
   }
@@ -224,6 +248,7 @@ export class Units {
     const founded: number[] = [];
     for (const u of this.units) {
       if (u.wait > 0) { u.wait--; continue; }
+      if (u.kind === 'settler' && u.task === 'improve' && this.work(u, world)) continue;
       if (!u.path.length && u.kind === 'scout') u.path = this.plan(u, world);
       const next = u.path[0];
       if (next === undefined || !Number.isFinite(world.cost(next))) { u.path = []; continue; }
@@ -235,7 +260,7 @@ export class Units {
         if (u.tile === this.flag) this.flag = null;
         if (u.mode === 'gather') this.atGatherStop(u);
       }
-      if (u.kind === 'settler' && !u.path.length) this.camp = u.tile;
+      if (u.kind === 'settler' && u.task === 'found' && !u.path.length) this.camp = u.tile;
     }
     // The founding settler at its site becomes the city
     const settler = this.settler;
@@ -246,6 +271,25 @@ export class Units {
       this.findSites(world);
     }
     return founded;
+  }
+
+  /**
+   * A day of an improving settler: take the next job and walk to it, or work it. Returns
+   * true when the day was spent working or idle (false: it walks a step).
+   */
+  private work(u: Unit, world: World): boolean {
+    if (!u.job) {
+      const job = world.nextJob?.(u) ?? null;
+      if (!job) return true;
+      u.path = u.tile === job.tile ? [] : findPath(u.tile, job.tile, id => world.cost(id)) ?? [];
+      if (u.tile !== job.tile && !u.path.length) return true;
+      u.job = { ...job, left: job.days };
+    }
+    if (u.path.length) return false;
+    if (--u.job.left > 0) return true;
+    world.improve?.(u.job.tile, u.job.kind);
+    u.job = null;
+    return true;
   }
 
   private atGatherStop(u: Unit) {
@@ -289,6 +333,11 @@ export function directionName(from: number, to: number): string {
 /** Status line under a unit's name (design 2b). */
 export function unitStatus(units: Units, u: Unit, world: World, terrainName: (id: number) => string): string {
   if (u.kind === 'warrior') return 'Puolustaa kaupunkia';
+  if (u.kind === 'settler' && u.task === 'improve') {
+    if (!u.job) return 'Kehittää · ei työtä lähellä';
+    const name = IMPROVEMENT_NAMES[u.job.kind].toLowerCase();
+    return u.path.length ? `Kehittää · kohti: ${name}` : `Kehittää · ${name}, ${u.job.left} pv`;
+  }
   if (u.kind === 'settler' && u !== units.settler) return 'Odottaa · seuraava uudisasukas';
   if (u.kind === 'settler') {
     const site = units.currentSite();
