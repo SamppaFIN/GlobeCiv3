@@ -20,7 +20,9 @@ import { projectionErrorPx } from './precision';
 import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
 import { GameClock, type Speed } from '../game/clock';
-import { tilesInRings } from '../game/pathfinding';
+import { findPath, tilesInRings } from '../game/pathfinding';
+import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
+import { createCityLabels } from '../ui/cityLabels';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type World } from '../game/units';
 import { UnitLayer } from './unitLayer';
@@ -386,6 +388,12 @@ interface Play {
   /** Cities in founding order, the capital first (STORY-028), and the one whose card is open. */
   cities: City[];
   openCity: number | null;
+  /** City sites a scout suggests, the shown one first; every site ever suggested; the day of the last (STORY-032). */
+  offers: { tile: number; finder: number }[];
+  offered: number[];
+  lastOfferDay: number;
+  /** A site waiting for the settler the capital is building. */
+  pendingSite: number | null;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -398,6 +406,8 @@ const terrainOf = (id: number): Terrain => {
 let scouting = false;
 /** Tests of the clock and the units turn discoveries off (they stop the game). */
 let discoveriesOn = true;
+/** Site offers stop the game too; tests of other things turn them off with discoveries. */
+let siteOffersOn = true;
 const world: World = {
   cost: id => (terrainOf(id) === 'ocean' ? Infinity : TERRAIN_RULES[terrainOf(id)].move),
   isMapped: id => mapState.isMapped(id),
@@ -443,7 +453,7 @@ function startPlay(startCity: number) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, hud };
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
@@ -492,9 +502,96 @@ function cityDays() {
       play!.units.disband(own[own.length - 1], world);
       yields = cityYields();
     }
+    const size = c.size;
     const done = cityDay(c, yields[i]);
-    if (done) play!.units.spawn(done, c.tile, world, c.id);
+    if (c.size > size) discoveryCard.notice(`${c.name} kasvoi kokoon ${c.size}`);
+    if (!done) return;
+    play!.units.spawn(done, c.tile, world, c.id);
+    discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
   });
+  // A suggested site waiting for a settler gets the first free one
+  const free = idleSettler();
+  if (free && play.pendingSite !== null) {
+    play.units.setSite(play.pendingSite, world);
+    play.units.found(world);
+    play.pendingSite = null;
+    discoveryCard.notice(`${free.name} lähti kaupunkipaikalle`);
+  }
+}
+
+// ─── City sites and labels (STORY-032) ────────────
+// A scout that maps a good site (sites.ts) suggests building a city there; the card stops
+// the game like a discovery. Cities have their names on the map.
+
+/** Scout nearest to a tile: the one that found it. */
+function finderOf(tile: number): number {
+  const at = tileCenter(tile);
+  let finder = 0, best = Infinity;
+  for (const u of play!.units.units) {
+    const a = u.kind === 'scout' ? tileCenter(u.tile).angleTo(at) : Infinity;
+    if (a < best) { best = a; finder = u.id; }
+  }
+  return finder;
+}
+
+/** A settler free to go: the active one, unless it is already on its way to found a city. */
+const idleSettler = () => (play && !play.units.founding ? play.units.settler ?? null : null);
+
+function noteSiteOffer(fresh: number[]) {
+  if (!play || !siteOffersOn || play.offers.length || clock.day - play.lastOfferDay < OFFER_EVERY_DAYS) return;
+  // Only when the city could be built: a free settler, or a city to build one (one waiting site at a time)
+  if (play.pendingSite !== null || (!idleSettler() && !play.cities.length)) return;
+  const site = play.units.settler ? play.units.currentSite() : null;
+  const taken = [...play.cities.map(c => c.tile), ...play.offered, ...(site !== null ? [site] : []), ...(play.pendingSite !== null ? [play.pendingSite] : [])];
+  const isLand = (id: number) => Number.isFinite(world.cost(id));
+  const tile = fresh.find(id => goodSite(id, world.siteScore, isLand, taken));
+  if (tile === undefined) return;
+  play.offers.push({ tile, finder: finderOf(tile) });
+  play.offered.push(tile);
+  play.lastOfferDay = clock.day;
+}
+
+/** Food, shields and trade within a city's two rings of a site. */
+function siteYield(tile: number) {
+  return tilesInRings(tile, CITY_RINGS).reduce((sum, id) => {
+    const y = yieldOf(id, id === tile);
+    return { food: sum.food + y.food, shield: sum.shield + y.shield, trade: sum.trade + y.trade };
+  }, { food: 0, shield: 0, trade: 0 });
+}
+
+/** The card's choice on a site: build there (index 0) or later. */
+function chooseSite(index: number) {
+  if (!play) return;
+  const o = play.offers.shift();
+  discoveryCard.hide();
+  if (!o || index !== 0) return;
+  const settler = idleSettler();
+  if (settler) {
+    play.units.setSite(o.tile, world);
+    play.units.found(world);
+    play.selected = play.units.units.indexOf(settler);
+    discoveryCard.notice(`${settler.name} lähti perustamaan kaupunkia`);
+  } else if (play.cities.length) {
+    play.cities[0].build = 'settler';
+    play.pendingSite = o.tile;
+    discoveryCard.notice(`${play.cities[0].name} rakentaa uudisasukkaan kaupunkipaikalle`);
+  }
+}
+
+const cityLabels = createCityLabels(hud_root, id => {
+  if (!play) return;
+  play.openCity = id;
+  // From the province or state level, fly to the city
+  if (viewLevel !== 3) fly({ point: tileCenter(play.cities[id].tile), dist: frames[3], level: 3 });
+});
+
+function updateCityLabels() {
+  if (!play) return;
+  cityLabels.update(viewLevel === 0 ? [] : play.cities.map(c => {
+    const at = toScreen(tileCenter(c.tile));
+    // Above the city's houses at the city-area level, on the city further out
+    return { id: c.id, name: c.name, size: c.size, x: at?.[0] ?? null, y: at ? at[1] - (viewLevel === 3 ? 48 : 0) : null };
+  }));
 }
 
 const cityCard = createCityCard(hud_root, {
@@ -535,6 +632,10 @@ function updateCityCard() {
 // stops the game; the player keeps one of two finds.
 const discoveryCard = createDiscoveryCard(hud_root, index => {
   if (!play) return;
+  if (shownCard === 'site') {
+    chooseSite(index);
+    return;
+  }
   const d = play.discoveries.shift();
   if (!d) return;
   discoveryCard.hide();
@@ -543,8 +644,8 @@ const discoveryCard = createDiscoveryCard(hud_root, index => {
 });
 
 function noteDiscoveries(fresh: number[]) {
-  if (!play || !game || !discoveriesOn) return;
-  for (const tile of fresh) {
+  if (!play || !game) return;
+  for (const tile of discoveriesOn ? fresh : []) {
     if (!Number.isFinite(world.cost(tile))) continue;
     const finds = discoveryAt(game.seed, tile, neighbors(tile).some(n => terrainOf(n) === 'ocean'));
     if (!finds) continue;
@@ -557,14 +658,51 @@ function noteDiscoveries(fresh: number[]) {
     }
     play.discoveries.push({ tile, finder, finds });
   }
+  noteSiteOffer(fresh);
+}
+
+/** Which card is shown: a discovery's or a site offer's. */
+let shownCard: 'find' | 'site' | null = null;
+
+function updateSiteOffer() {
+  if (!play) return;
+  const o = play.offers[0];
+  if (!o) return;
+  if (!discoveryCard.visible) {
+    shownCard = 'site';
+    const settler = idleSettler();
+    const y = siteYield(o.tile);
+    const days = settler ? Units.days(findPath(settler.tile, o.tile, id => world.cost(id)) ?? [], world) : 0;
+    discoveryCard.show({
+      day: clock.day,
+      kicker: `Kaupunkipaikka · ${play.units.units.find(u => u.id === o.finder)?.name ?? 'Tiedustelija'}`,
+      title: nameOf(2, regions.tileTable()[o.tile]).name,
+      body: `Tiedustelija löysi hyvän paikan kaupungille. Kahden renkaan säteellä on ruokaa ${y.food}, tuotantoa ${y.shield} ja kauppaa ${y.trade}.`,
+      options: [
+        { kind: 'site', title: 'Rakenna kaupunki tänne', effect: settler ? `${settler.name} lähtee matkaan · ${days} pv` : `${play.cities[0]?.name ?? 'Kaupunki'} rakentaa uudisasukkaan, joka lähtee tänne` },
+        { kind: 'later', title: 'Myöhemmin', effect: 'Tiedustelija jatkaa tutkimista' },
+      ],
+      note: 'Kaupunki työstää ruutuja kahden renkaan säteellä.',
+    });
+    const seen = toScreen(tileCenter(o.tile));
+    if (!seen || seen[1] > window.innerHeight * 0.55 || seen[0] < 40 || seen[0] > window.innerWidth - 40) {
+      rig.flyTo(tileCenter(o.tile), rig.dist, reduceMotion() ? 0 : 0.6);
+    }
+  }
+  const at = toScreen(tileCenter(o.tile));
+  discoveryCard.setRing(at?.[0] ?? null, at?.[1] ?? null);
 }
 
 /** Show the first waiting discovery and keep its ring on the tile. */
 function updateDiscovery() {
   if (!play) return;
   const d = play.discoveries[0];
-  if (!d) return;
+  if (!d) {
+    updateSiteOffer();
+    return;
+  }
   if (!discoveryCard.visible) {
+    shownCard = 'find';
     discoveryCard.show({
       day: clock.day,
       kicker: `Löytö · ${play.units.units.find(u => u.id === d.finder)?.name ?? 'Tiedustelija'}`,
@@ -747,7 +885,7 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 
 function updatePlay(dt: number) {
   if (!play) return;
-  const days = play.discoveries.length ? 0 : clock.advance(dt);
+  const days = play.discoveries.length || play.offers.length ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
     scouting = true;
@@ -755,13 +893,14 @@ function updatePlay(dt: number) {
     scouting = false;
     founded.forEach(foundAt);
     cityDays();
-    if (play.discoveries.length) {
+    if (play.discoveries.length || play.offers.length) {
       clock.day -= days - d - 1;
       break;
     }
   }
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   updateDiscovery();
+  updateCityLabels();
   updateCityCard();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
@@ -945,7 +1084,16 @@ frameStartPlanet();
     return sites.slice(0, count);
   },
   sendTo: (tile: number) => play?.units.sendTo(tile, world) ?? false,
-  setDiscoveries: (on: boolean) => { discoveriesOn = on; },
+  /** Discoveries and site offers both stop the game: off together, site offers back on alone. */
+  setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; },
+  setSiteOffers: (on: boolean) => { siteOffersOn = on; },
+  /** Unmapped good city sites near the camp, nearest first (STORY-032). */
+  goodSites: (count: number) => {
+    if (!play) return [];
+    const isLand = (id: number) => Number.isFinite(world.cost(id));
+    const taken = [...play.cities.map(c => c.tile), ...(play.units.currentSite() !== null ? [play.units.currentSite()!] : [])];
+    return tilesInRings(play.units.camp, 24).filter(id => !mapState.isMapped(id) && goodSite(id, world.siteScore, isLand, taken)).slice(0, count);
+  },
 };
 (window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
 (window as any).globeGame = {
@@ -957,6 +1105,7 @@ frameStartPlanet();
       selected: play?.selected ?? null, flag: play?.units.flag ?? null, site: play?.units.currentSite() ?? null,
       openLevel: play?.progress.openLevel ?? null, areaPlans: play ? [...play.units.areaPlans] : [], stateLine: play?.units.stateLine ?? null,
       discovery: play?.discoveries[0] ?? null, found: play?.found ?? 0, bonuses: play ? [...play.bonuses] : [],
+      offer: play?.offers[0] ?? null, offered: play?.offered ?? [], pendingSite: play?.pendingSite ?? null, founding: play?.units.founding ?? false,
       cities: play ? play.cities.map((c, i) => ({ ...c, yield: cityYields()[i] })) : [], openCity: play?.openCity ?? null,
     };
   },
