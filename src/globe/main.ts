@@ -26,6 +26,7 @@ import { createCityLabels } from '../ui/cityLabels';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
+import { banditWins, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { UnitLayer } from './unitLayer';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
@@ -397,6 +398,9 @@ interface Play {
   pendingSite: number | null;
   /** Irrigation, mines and roads the settlers built (STORY-033). */
   improvements: Improvements;
+  /** Bandits on their way to a city, and whether their card waits to be answered (STORY-034). */
+  raids: Raids;
+  raidAlert: boolean;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -411,6 +415,8 @@ let scouting = false;
 let discoveriesOn = true;
 /** Site offers stop the game too; tests of other things turn them off with discoveries. */
 let siteOffersOn = true;
+/** Raids as well (STORY-034). */
+let raidsOn = true;
 const world: World = {
   cost: id => (terrainOf(id) === 'ocean' ? Infinity : TERRAIN_RULES[terrainOf(id)].move),
   isMapped: id => mapState.isMapped(id),
@@ -463,7 +469,7 @@ function startPlay(startCity: number) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, hud };
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
@@ -686,6 +692,10 @@ const discoveryCard = createDiscoveryCard(hud_root, index => {
     chooseSite(index);
     return;
   }
+  if (shownCard === 'raid') {
+    chooseRaid(index);
+    return;
+  }
   const d = play.discoveries.shift();
   if (!d) return;
   discoveryCard.hide();
@@ -711,13 +721,16 @@ function noteDiscoveries(fresh: number[]) {
   noteSiteOffer(fresh);
 }
 
-/** Which card is shown: a discovery's or a site offer's. */
-let shownCard: 'find' | 'site' | null = null;
+/** Which card is shown: a discovery's, a site offer's or a raid's. */
+let shownCard: 'find' | 'site' | 'raid' | null = null;
 
 function updateSiteOffer() {
   if (!play) return;
   const o = play.offers[0];
-  if (!o) return;
+  if (!o) {
+    updateRaidAlert();
+    return;
+  }
   if (!discoveryCard.visible) {
     shownCard = 'site';
     const settler = idleSettler();
@@ -768,6 +781,96 @@ function updateDiscovery() {
   }
   const at = toScreen(tileCenter(d.tile));
   discoveryCard.setRing(at?.[0] ?? null, at?.[1] ?? null);
+}
+
+// ─── Raids (STORY-034) ────────────────────────────
+// From day 60 bandits rise 5 to 8 tiles from a city and march on it (raids.ts). Their
+// first sight stops the game; the soldiers in the city fight them one by one.
+
+/** Soldiers in the city on a tile. */
+const soldiersIn = (tile: number) => (play ? play.units.units.filter(u => u.kind === 'warrior' && u.tile === tile) : []);
+
+const raidWorld: RaidWorld = {
+  cost: id => world.cost(id),
+  terrainOf,
+  defenders: tile => soldiersIn(tile).length,
+  loseDefender: tile => {
+    const soldiers = soldiersIn(tile);
+    play!.units.disband(soldiers[soldiers.length - 1], world);
+  },
+  plunder: tile => {
+    const c = play!.cities.find(x => x.tile === tile)!;
+    c.food = 0;
+    c.shields = 0;
+    if (c.size > 1) c.size--;
+  },
+  roll: k => raidRoll(game!.seed, clock.day, k + 1),
+};
+
+const RAID_NOTICES: Record<RaidEvent, string> = { repelled: 'Soturi torjui rosvon', won: 'Rosvo kaatoi soturin', plundered: 'Rosvot ryöstivät kaupungin' };
+
+/** A day of the band, then perhaps a new uprising against a city. */
+function raidDay() {
+  if (!play || !game) return;
+  const band = play.raids.band;
+  const city = band && play.cities.find(c => c.tile === band.city);
+  const events = play.raids.day(raidWorld);
+  if (city && events.length) discoveryCard.notice(`${events.map(e => RAID_NOTICES[e]).join(' · ')} · ${city.name}`);
+  if (play.raids.band || !raidsOn || !play.cities.length || !uprising(game.seed, clock.day, play.cities.length)) return;
+  startRaid(play.cities[Math.floor(raidRoll(game.seed, clock.day, 100) * play.cities.length)]);
+}
+
+/** One or two bandits set off toward a city from known land 5 to 8 tiles away. */
+function startRaid(c: City): boolean {
+  if (!play || !game) return false;
+  const isLand = (id: number) => Number.isFinite(world.cost(id));
+  const from = raidStart(c.tile, raidRoll(game.seed, clock.day, 101), id => mapState.isMapped(id), isLand);
+  const size = 1 + Math.floor(raidRoll(game.seed, clock.day, 102) * 2);
+  if (from === null || !play.raids.start(c.tile, from, size, id => world.cost(id))) return false;
+  play.raidAlert = true;
+  return true;
+}
+
+/** The card on a band's first sight: build a soldier, or trust the defence. */
+function updateRaidAlert() {
+  const band = play?.raids.band;
+  if (!play || !band || !play.raidAlert) return;
+  const lead = band.bandits[0].tile;
+  if (!discoveryCard.visible) {
+    shownCard = 'raid';
+    const c = play.cities.find(x => x.tile === band.city)!;
+    const soldiers = soldiersIn(c.tile).length;
+    const ready = daysToBuild({ ...c, build: 'warrior' }, cityYields()[play.cities.indexOf(c)]);
+    const n = band.bandits.length;
+    discoveryCard.show({
+      day: clock.day,
+      kicker: `Uhka · ${c.name}`,
+      title: 'Rosvoja liikkeellä',
+      body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. Kaupungissa on ${soldiers ? `${soldiers} soturi${soldiers === 1 ? '' : 'a'}` : 'ei sotureita'}.`,
+      options: [
+        { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
+        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
+      ],
+      note: 'Ryöstö vie kaupungin varastot ja asukkaan.',
+    });
+    const seen = toScreen(tileCenter(lead));
+    if (!seen || seen[1] > window.innerHeight * 0.55 || seen[0] < 40 || seen[0] > window.innerWidth - 40) {
+      rig.flyTo(tileCenter(lead), rig.dist, reduceMotion() ? 0 : 0.6);
+    }
+  }
+  const at = toScreen(tileCenter(lead));
+  discoveryCard.setRing(at?.[0] ?? null, at?.[1] ?? null);
+}
+
+function chooseRaid(index: number) {
+  if (!play) return;
+  play.raidAlert = false;
+  discoveryCard.hide();
+  const band = play.raids.band;
+  const c = band && play.cities.find(x => x.tile === band.city);
+  if (index !== 0 || !c) return;
+  c.build = 'warrior';
+  discoveryCard.notice(`${c.name} rakentaa soturin`);
 }
 
 // ─── Province and state levels (STORY-026) ────────
@@ -935,7 +1038,7 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 
 function updatePlay(dt: number) {
   if (!play) return;
-  const days = play.discoveries.length || play.offers.length ? 0 : clock.advance(dt);
+  const days = play.discoveries.length || play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
     scouting = true;
@@ -943,7 +1046,8 @@ function updatePlay(dt: number) {
     scouting = false;
     founded.forEach(foundAt);
     cityDays();
-    if (play.discoveries.length || play.offers.length) {
+    raidDay();
+    if (play.discoveries.length || play.offers.length || play.raidAlert) {
       clock.day -= days - d - 1;
       break;
     }
@@ -974,6 +1078,7 @@ function updatePlay(dt: number) {
     site: play.units.currentSite(),
     founding: play.units.founding,
     improvements: play.improvements.entries(),
+    bandits: play.raids.band?.bandits ?? [],
     spacing: tileSpacing(),
   }, camera.position);
   updateLevels();
@@ -1144,8 +1249,11 @@ frameStartPlanet();
   /** A tile's yield when worked, and the tiles each city works. */
   yieldOf: (id: number) => yieldOf(id, false),
   worked: () => workedByCity(),
-  /** Discoveries and site offers both stop the game: off together, site offers back on alone. */
-  setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; },
+  /** Discoveries, site offers and raids all stop the game: off together, site offers or raids back on alone. */
+  setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; raidsOn = on; },
+  setRaids: (on: boolean) => { raidsOn = on; },
+  /** Bandits set off toward a city now (STORY-034). */
+  raidNow: (city: number) => (play ? startRaid(play.cities[city]) : false),
   setSiteOffers: (on: boolean) => { siteOffersOn = on; },
   /** Unmapped good city sites near the camp, nearest first (STORY-032). */
   goodSites: (count: number) => {
@@ -1168,6 +1276,8 @@ frameStartPlanet();
       offer: play?.offers[0] ?? null, offered: play?.offered ?? [], pendingSite: play?.pendingSite ?? null, founding: play?.units.founding ?? false,
       cities: play ? play.cities.map((c, i) => ({ ...c, yield: cityYields()[i] })) : [], openCity: play?.openCity ?? null,
       improvements: play?.improvements.entries() ?? [],
+      raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
+      raidAlert: play?.raidAlert ?? false,
     };
   },
 };
