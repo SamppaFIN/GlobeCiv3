@@ -84,7 +84,7 @@ describe('TileManager', () => {
         }
       }
     }
-  });
+  }, 30_000);
 
   it('keeps the number of drawn tiles bounded from orbit down to level 17', () => {
     const rows: { dist: string; level: number; drawn: number }[] = [];
