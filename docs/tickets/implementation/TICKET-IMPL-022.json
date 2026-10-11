@@ -1,0 +1,37 @@
+{
+  "id": "TICKET-IMPL-022",
+  "story": "STORY-032",
+  "plan": "PLAN-022",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/sites.ts",
+    "src/game/sites.test.ts",
+    "src/ui/cityLabels.ts",
+    "src/ui/discoveryCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/sites.e2e.ts"
+  ],
+  "change_summary": "Tiedustelija ehdottaa kaupunkia, kun se kartoittaa hyvän paikan. Kortti näyttää paikan ruoan, tuotannon ja kaupan kahden renkaan säteellä ja tarjoaa vaihtoehdot Rakenna kaupunki tänne ja Myöhemmin. Ehdotus pysäyttää pelin kuten löytö, ja niitä tulee enintään yksi kymmenessä päivässä, ja vain kun kaupungin voi rakentaa. Valinta lähettää vapaan uudisasukkaan, tai pääkaupunki rakentaa uudisasukkaan, joka lähtee paikalle heti vapaana. Matkalla olevaa uudisasukasta ei käännetä. Kaupungeilla on nimilappu (nimi ja koko) kartalla, ja lappu avaa kaupunkikortin (kauempaa se lentää kaupunkiin). HUD kertoo, kun kaupunki kasvaa tai rakentaa yksikön.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "discoveryCard: ChoiceKind (site, later), DiscoveryView.note",
+      "main.ts: Play.offers, offered, lastOfferDay ja pendingSite; noteSiteOffer, chooseSite, updateSiteOffer, idleSettler; kello odottaa myös ehdotusta",
+      "globeDebug.setDiscoveries kytkee myös ehdotukset; uudet setSiteOffers ja goodSites"
+    ],
+    "call_sites_found": [
+      "löytökortin valinta",
+      "updatePlay-päiväsilmukka",
+      "testit, jotka kytkevät löydöt pois"
+    ],
+    "call_sites_updated": [
+      "main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Testit, jotka kytkevät löydöt pois (kello, yksiköt, aloitus ja kaupunki), kytkevät samalla ehdotukset pois, koska nekin pysäyttävät pelin."
+  },
+  "commit": "18ab2ce",
+  "progress": 100
+}

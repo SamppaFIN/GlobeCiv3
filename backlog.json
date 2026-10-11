@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-10T16:06:11Z",
+    "generated_at": "2026-10-11T10:54:51Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "c332daa",
+    "git_commit": "18ab2ce",
     "git_branch": "main",
     "language": "fi"
   },
@@ -65,13 +65,13 @@
       "title": "Saumaton kamera",
       "icon": "🔭",
       "description": "Pelaaja zoomaa jatkuvasti planeetalta pinnalle ilman leikkauksia, värinää tai syvyysvirheitä.",
-      "status": "in_progress",
+      "status": "done",
       "stories": [
         "STORY-005",
         "STORY-006",
         "STORY-007"
       ],
-      "progress": 67
+      "progress": 100
     },
     {
       "id": "EPIC-003",
@@ -133,9 +133,10 @@
         "STORY-027",
         "STORY-028",
         "STORY-030",
-        "STORY-031"
+        "STORY-031",
+        "STORY-032"
       ],
-      "progress": 91
+      "progress": 92
     }
   ],
   "stories": [
@@ -268,18 +269,18 @@
       "depends_on": [
         "STORY-005"
       ],
-      "status": "todo",
+      "status": "done",
       "acceptance_criteria": [
         "Near ja far päivittyvät korkeuden mukaan, eikä z-fightingia näy millään tasolla",
         "Syvimmällä tasolla paikallaan olevan kameran kuvassa ei näy värinää (kuvakaappausvertailu kahdesta peräkkäisestä framesta)",
         "Tähtitausta piirretään omana passinaan, eikä se leikkaudu",
         "Tarkkuusratkaisu on testattu kaikilla 17 tasolla, vaikka MVP:n sisältö päättyy tasolle noin 12"
       ],
-      "progress": 0,
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-021",
+        "implementation": "TICKET-IMPL-021",
+        "testing": "TICKET-TEST-021"
       }
     },
     {
@@ -882,6 +883,30 @@
         "plan": "PLAN-020",
         "implementation": "TICKET-IMPL-020",
         "testing": "TICKET-TEST-020"
+      }
+    },
+    {
+      "id": "STORY-032",
+      "epic": "EPIC-006",
+      "title": "Tiedustelija ehdottaa kaupunkipaikkaa, ja kaupungit näkyvät kartalla",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että tiedustelija ehdottaa kaupunkia hyvälle paikalle ja että löydän kaupunkini kartalta, jotta kaupunkien rakentaminen on pelin keskiössä eikä pelkkää tutkimista.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-027",
+        "STORY-028"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Kun tiedustelija kartoittaa hyvän kaupunkipaikan (maan pistemäärän yläneljännes, paras kahden renkaan säteellä ja vähintään neljän renkaan päässä kaupungeista ja muista paikoista), peli pysähtyy ja kortti ehdottaa: Rakenna kaupunki tänne / Myöhemmin. Ehdotuksia tulee enintään yksi kymmenessä päivässä.",
+        "Rakenna kaupunki tänne lähettää vapaan uudisasukkaan tai, jos vapaata ei ole, pääkaupunki rakentaa uudisasukkaan, joka lähtee paikalle. Matkalla olevaa uudisasukasta ei käännetä.",
+        "Kaupungilla on nimi ja koko kartalla kaupunkialue-, lääni- ja valtiotasolla, ja nimilappu avaa kaupunkikortin. HUD kertoo, kun kaupunki kasvaa tai valmistaa yksikön."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-022",
+        "implementation": "TICKET-IMPL-022",
+        "testing": "TICKET-TEST-022"
       }
     }
   ],
@@ -2015,6 +2040,91 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-021",
+      "story": "STORY-006",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-11",
+      "approach": "Pääpelin tarkkuusratkaisu on jo paikallaan: ruutujen verteksit ovat suhteessa ruudun keskipisteeseen, ja three.js laskee näkymä × malli -matriisin CPU:lla float64:nä (tiles.ts). Near ja far seuraavat korkeutta (camera.ts), ja tähtitaivas piirretään omana passinaan omalla kamerallaan. Story todennetaan mittaamalla: STORY-004:n tarkkuusmittari siirretään spikestä pääpeliin (src/globe/precision.ts), ja E2E-testi puolittaa kameran etäisyyden planeetalta syvimmälle tasolle. Jokaisella askeleella mitataan jokaisen piirretyn ruudun projektiovirhe float64-tarkkaan projektioon verrattuna, near ja far sekä far/near-suhde. Syvimmällä tasolla verrataan kahta peräkkäistä kuvaa, ja planeetalla lasketaan tähtiä. Sen jälkeen spike, spike.html ja bench-skripti poistetaan.",
+      "alternatives_considered": [
+        {
+          "name": "Logaritminen syvyyspuskuri",
+          "pros": "Suuri syvyysalue",
+          "cons": "Muutos kaikkiin shadereihin, eikä mittaus osoita tarvetta (far/near enintään 913)",
+          "rejected_because": "Mittaus ennen optimointia"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/precision.ts (uusi)",
+        "src/globe/tiles.ts (drawnNodes)",
+        "src/globe/main.ts (testikoukku globePrecision)",
+        "tests/e2e/precision.e2e.ts (uusi)",
+        "src/spike, spike.html, scripts/bench.mjs (poisto)",
+        "vite.config.ts",
+        "tests/e2e/smoke.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Tarkkuusmittari pääpeliin ja testikoukku",
+          "verify": "Tyypit ja build"
+        },
+        {
+          "step": 2,
+          "action": "E2E planeetalta tasolle 17",
+          "verify": "Paikallisesti ja CI-tilassa vihreä, luvut kirjattu"
+        },
+        {
+          "step": 3,
+          "action": "Spike pois",
+          "verify": "Build ilman spike.html:ää, kaikki testit vihreinä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-022",
+      "story": "STORY-032",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-11",
+      "approach": "Samin palaute: pelkkä tutkiminen on tylsää, kaupunki jää taka-alalle eikä sitä löydä. Hyvän kaupunkipaikan sääntö on puhdas funktio (src/game/sites.ts): pistemäärä on sama kuin uudisasukkaan paikkojen arvioinnissa, raja on maaruutujen yläneljännes (mitattu 3 000 maaruudusta: mediaani 61, yläneljännes 75 ja ylin kymmenys 83), paikka on paras kahden renkaan säteellä, ja väli kaupunkeihin ja muihin paikkoihin on neljä rengasta. Tiedustelijan kartoittama hyvä paikka avaa löytökortin kaltaisen ehdotuksen, joka pysäyttää pelin. Valinta lähettää vapaan uudisasukkaan tai pyytää pääkaupunkia rakentamaan sellaisen. Kaupungeille tulee nimilaput kartalle ja HUD-ilmoitukset kasvusta ja valmistuneista yksiköistä.",
+      "alternatives_considered": [
+        {
+          "name": "Raja ylin kymmenys (83)",
+          "pros": "Harvemmat ja paremmat ehdotukset",
+          "cons": "Kukkulavaltaisilla alueilla ehdotusta ei ehkä tule lainkaan",
+          "rejected_because": "Ehdotusten pitää näkyä alkupelissä; väli ja jäähtymisaika rajaavat tiheyttä"
+        }
+      ],
+      "files_to_change": [
+        "src/game/sites.ts ja sites.test.ts (uudet)",
+        "src/ui/cityLabels.ts (uusi)",
+        "src/ui/discoveryCard.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/sites.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Hyvän paikan sääntö yksikkötesteineen",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 2,
+          "action": "Ehdotuskortti, valinta, nimilaput ja HUD-ilmoitukset",
+          "verify": "E2E: ehdotus, perustaminen, nimilappu ja pääkaupungin uudisasukas"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -2801,6 +2911,87 @@
         "notes": "Värivertailutesti ajetaan ilman kuvioita, koska se testaa tokenvärejä, ja kuvioilla on oma testinsä. src/spike jää vielä: bench-skripti ja STORY-006:n tarkkuusmittaus käyttävät sitä, joten se poistetaan STORY-006:n yhteydessä."
       },
       "commit": "7b25613, 66d6426, polish/finishing",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-021",
+      "story": "STORY-006",
+      "plan": "PLAN-021",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/precision.ts",
+        "src/globe/tiles.ts",
+        "src/globe/main.ts",
+        "tests/e2e/precision.e2e.ts",
+        "src/ui/levelUi.ts",
+        "src/ui/levelUi.test.ts",
+        "src/ui/hud.css",
+        "vite.config.ts",
+        "tests/e2e/smoke.e2e.ts",
+        "docs/spikes/STORY-004-tulokset.md",
+        "src/spike (poistettu)",
+        "spike.html (poistettu)",
+        "scripts/bench.mjs (poistettu)"
+      ],
+      "change_summary": "Tarkkuusmittari siirtyi spikestä pääpeliin (src/globe/precision.ts), ja testikoukku globePrecision mittaa kaikki piirretyt ruudut. E2E-testi kulkee planeetalta tasolle 17. Spike, spike.html ja bench-skripti poistettiin, ja niiden historia on gitissä (98d0314). Matkalla korjattiin läänin sirujen kaksi vikaa. (1) Paneelin reunalle pidätetyt sirut saattoivat peittää toisensa; sijoittelu on nyt puhdas funktio layoutChips, ja pidätetty siru siirtyy reunasta poispäin. (2) tokens.css:n vähennetyn liikkeen sääntö antaa jokaiselle ominaisuudelle 0,01 ms:n transition, jolloin siru jäi framen jälkeen; siruilta transitio on poistettu.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "TileManager.drawnNodes",
+          "createChips: sijoittelu layoutChipsin kautta",
+          ".chip transition-property none"
+        ],
+        "call_sites_found": [
+          "createChips (main.ts updateLevels)",
+          "smoke.e2e.ts spike-testi",
+          "vite.config.ts spike-syöte"
+        ],
+        "call_sites_updated": [
+          "tests/e2e/smoke.e2e.ts",
+          "vite.config.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Spiken cubeSphere-testi poistui spiken mukana; pääpelin cubeSphere.test.ts jää."
+      },
+      "commit": "1e3f388",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-022",
+      "story": "STORY-032",
+      "plan": "PLAN-022",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/sites.ts",
+        "src/game/sites.test.ts",
+        "src/ui/cityLabels.ts",
+        "src/ui/discoveryCard.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/sites.e2e.ts"
+      ],
+      "change_summary": "Tiedustelija ehdottaa kaupunkia, kun se kartoittaa hyvän paikan. Kortti näyttää paikan ruoan, tuotannon ja kaupan kahden renkaan säteellä ja tarjoaa vaihtoehdot Rakenna kaupunki tänne ja Myöhemmin. Ehdotus pysäyttää pelin kuten löytö, ja niitä tulee enintään yksi kymmenessä päivässä, ja vain kun kaupungin voi rakentaa. Valinta lähettää vapaan uudisasukkaan, tai pääkaupunki rakentaa uudisasukkaan, joka lähtee paikalle heti vapaana. Matkalla olevaa uudisasukasta ei käännetä. Kaupungeilla on nimilappu (nimi ja koko) kartalla, ja lappu avaa kaupunkikortin (kauempaa se lentää kaupunkiin). HUD kertoo, kun kaupunki kasvaa tai rakentaa yksikön.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "discoveryCard: ChoiceKind (site, later), DiscoveryView.note",
+          "main.ts: Play.offers, offered, lastOfferDay ja pendingSite; noteSiteOffer, chooseSite, updateSiteOffer, idleSettler; kello odottaa myös ehdotusta",
+          "globeDebug.setDiscoveries kytkee myös ehdotukset; uudet setSiteOffers ja goodSites"
+        ],
+        "call_sites_found": [
+          "löytökortin valinta",
+          "updatePlay-päiväsilmukka",
+          "testit, jotka kytkevät löydöt pois"
+        ],
+        "call_sites_updated": [
+          "main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Testit, jotka kytkevät löydöt pois (kello, yksiköt, aloitus ja kaupunki), kytkevät samalla ehdotukset pois, koska nekin pysäyttävät pelin."
+      },
+      "commit": "18ab2ce",
       "progress": 100
     }
   ],
@@ -4793,6 +4984,186 @@
         "decision": "accepted",
         "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-10"
+      }
+    },
+    {
+      "id": "TICKET-TEST-021",
+      "story": "STORY-006",
+      "implementation_ticket": "TICKET-IMPL-021",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Tarkkuudessa ei löytynyt vikaa. Sirujen kaksi vikaa löytyivät koko joukon ajosta: (1) kaksi paneelin reunalle pidätettyä sirua saattoi osua päällekkäin (yksikkötesti toistaa: vanha sääntö kaatuu kahdessa kolmesta tapauksesta), ja (2) vähennetyn liikkeen 0,01 ms:n transitio jätti sirun framen jälkeen, kun leveyden luku pakotti tyylin laskemaan ennen siirtoa (ensimmäisen framen testi näki sirun yläreunassa).",
+        "files_changed": [
+          "src/ui/levelUi.ts",
+          "src/ui/levelUi.test.ts",
+          "src/ui/hud.css"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader, pikselisuhde 0,5). Vitest. GitHub Actions.",
+        "tooling": "Playwright 1.64.0, Vitest 5.0.3",
+        "cases": [
+          {
+            "steps": "E2E: kamera planeetan kehyksestä (4 × frames[0]) puolittaen tasolle 17, jokainen piirretty ruutu mitataan",
+            "expected": "Projektiovirhe alle 0,5 px jokaisella tasolla, tasot 1–17 piirretty, syvin taso 17",
+            "result": "Kamerasuhteellinen virhe enintään 0,06 px (kauimmainen ruutu syvimmällä askeleella), tavallisesti noin 0,0001 px. Naiivi float32 olisi syvimmällä enintään 15 284 px pielessä.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Near ja far jokaisella askeleella",
+            "expected": "Pinta near- ja far-tason välissä, far/near alle 10⁵ (24-bittinen syvyyspuskuri, ei z-fightingia)",
+            "result": "far/near 2–913",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaksi peräkkäistä kuvaa syvimmällä tasolla paikallaan olevalla kameralla",
+            "expected": "Identtiset",
+            "result": "Identtiset (paikallisesti ja CI-tilassa)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Tähtitausta planeetan kehyksessä",
+            "expected": "Oma passi omalla kamerallaan (near 1, far 200, tähdet säteellä 50–80), tähdet näkyvät planeetan ulkopuolella",
+            "result": "Kirkkaita tähtipikseleitä kulmissa yli kynnyksen",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: sirujen sijoittelu (layoutChips)",
+            "expected": "Sirut alueillaan vapaalla kaistalla; reunalle pidätetyt eivät peitä toisiaan eivätkä alueellaan olevaa",
+            "result": "pass (vanha sääntö kaatuu kahdessa testissä kolmesta)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti ja CI-tilassa",
+            "expected": "Vihreä",
+            "result": "Paikallisesti kaikki vihreänä; CI-tilassa precision.e2e (4,1 min √2-askelilla, puolitusaskelilla puolet), unlock ja smoke vihreänä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38129138633 (c82e9ad) oli punainen: merge jäi vajaaksi, koska git add kaatui jo poistettuun polkuun, ja vite.config viittasi yhä poistettuun spike.html:ään. Korjattu commitissa 1e3f388: ajo 38129297959 (15,1 min) vihreä ja julkaistu.",
+            "outcome": "pass"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Near ja far päivittyvät korkeuden mukaan, eikä z-fightingia ole millään tasolla",
+            "checked": true
+          },
+          {
+            "item": "Syvimmällä tasolla ei värinää (kaksi peräkkäistä kuvaa)",
+            "checked": true
+          },
+          {
+            "item": "Tähtitausta omana passinaan, ei leikkaudu",
+            "checked": true
+          },
+          {
+            "item": "Testattu kaikilla 17 tasolla",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-11"
+      }
+    },
+    {
+      "id": "TICKET-TEST-022",
+      "story": "STORY-032",
+      "implementation_ticket": "TICKET-IMPL-022",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus Samin palautteesta. Ensimmäinen E2E-ajo löysi suunnitteluvirheen: kymmenen päivän päästä tullut toinen ehdotus pysäytti pelin, kun uudisasukas oli vielä matkalla, ja valinta olisi kääntänyt sen. Ehdotus tulee nyt vain, kun kaupungin voi rakentaa (vapaa uudisasukas tai kaupunki, joka rakentaa sellaisen), eikä matkalla olevaa uudisasukasta käännetä.",
+        "files_changed": [
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: hyvän paikan sääntö",
+            "expected": "Paras paikka kelpaa, naapuri jolla on sitä pienempi pistemäärä ei, alle rajan ja meri eivät; kaupunki kolmen renkaan päässä estää, neljän ei",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Mittaus: pistemäärien jakauma 3 000 maaruudusta",
+            "expected": "Raja kirjataan lähteineen",
+            "result": "min 0, alaneljännes 49, mediaani 61, yläneljännes 75, ylin kymmenys 83, ylin 5 % 92, paras 112",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tiedustelijat lähimmälle hyvälle paikalle nopeudella 4×",
+            "expected": "Kortti (Kaupunkipaikka · Tiedustelija N, alue, tuotot, Rakenna kaupunki tänne · N pv, Myöhemmin, huomautus), kello seis",
+            "result": "pass (ehdotus päivänä 9)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: Rakenna kaupunki tänne",
+            "expected": "Uudisasukas valittu, matkalla paikalle, ilmoitus, kaupunki perustetaan ehdotettuun ruutuun",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: nimilappu",
+            "expected": "Kaupunki Aamuranta, koko 1 näkyy kartalla ja avaa kortin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: seuraava ehdotus ilman vapaata uudisasukasta",
+            "expected": "Aamuranta rakentaa uudisasukkaan paikalle: rakennus vaihtuu uudisasukkaaseen ja paikka odottaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti ja CI-tilassa",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 19 tiedostoa ja E2E 41/41 paikallisesti; sites, city ja discovery CI-tilassa 5/5",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38130868440 (18ab2ce, 42,9 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Kaupungin rakentaminen nousee esiin, kaupungin löytää",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Tiedustelija ehdottaa hyvää kaupunkipaikkaa, peli pysähtyy",
+            "checked": true
+          },
+          {
+            "item": "Valinta lähettää uudisasukkaan tai pääkaupunki rakentaa sellaisen",
+            "checked": true
+          },
+          {
+            "item": "Nimilaput kartalla ja HUD-ilmoitukset",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-11"
       }
     }
   ]

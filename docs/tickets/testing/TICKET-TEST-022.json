@@ -1,0 +1,93 @@
+{
+  "id": "TICKET-TEST-022",
+  "story": "STORY-032",
+  "implementation_ticket": "TICKET-IMPL-022",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus Samin palautteesta. Ensimmäinen E2E-ajo löysi suunnitteluvirheen: kymmenen päivän päästä tullut toinen ehdotus pysäytti pelin, kun uudisasukas oli vielä matkalla, ja valinta olisi kääntänyt sen. Ehdotus tulee nyt vain, kun kaupungin voi rakentaa (vapaa uudisasukas tai kaupunki, joka rakentaa sellaisen), eikä matkalla olevaa uudisasukasta käännetä.",
+    "files_changed": [
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: hyvän paikan sääntö",
+        "expected": "Paras paikka kelpaa, naapuri jolla on sitä pienempi pistemäärä ei, alle rajan ja meri eivät; kaupunki kolmen renkaan päässä estää, neljän ei",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Mittaus: pistemäärien jakauma 3 000 maaruudusta",
+        "expected": "Raja kirjataan lähteineen",
+        "result": "min 0, alaneljännes 49, mediaani 61, yläneljännes 75, ylin kymmenys 83, ylin 5 % 92, paras 112",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tiedustelijat lähimmälle hyvälle paikalle nopeudella 4×",
+        "expected": "Kortti (Kaupunkipaikka · Tiedustelija N, alue, tuotot, Rakenna kaupunki tänne · N pv, Myöhemmin, huomautus), kello seis",
+        "result": "pass (ehdotus päivänä 9)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: Rakenna kaupunki tänne",
+        "expected": "Uudisasukas valittu, matkalla paikalle, ilmoitus, kaupunki perustetaan ehdotettuun ruutuun",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: nimilappu",
+        "expected": "Kaupunki Aamuranta, koko 1 näkyy kartalla ja avaa kortin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: seuraava ehdotus ilman vapaata uudisasukasta",
+        "expected": "Aamuranta rakentaa uudisasukkaan paikalle: rakennus vaihtuu uudisasukkaaseen ja paikka odottaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 19 tiedostoa ja E2E 41/41 paikallisesti; sites, city ja discovery CI-tilassa 5/5",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38130868440 (18ab2ce, 42,9 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Kaupungin rakentaminen nousee esiin, kaupungin löytää",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tiedustelija ehdottaa hyvää kaupunkipaikkaa, peli pysähtyy",
+        "checked": true
+      },
+      {
+        "item": "Valinta lähettää uudisasukkaan tai pääkaupunki rakentaa sellaisen",
+        "checked": true
+      },
+      {
+        "item": "Nimilaput kartalla ja HUD-ilmoitukset",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-11"
+  }
+}

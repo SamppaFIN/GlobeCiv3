@@ -1,0 +1,87 @@
+{
+  "id": "TICKET-TEST-021",
+  "story": "STORY-006",
+  "implementation_ticket": "TICKET-IMPL-021",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Tarkkuudessa ei löytynyt vikaa. Sirujen kaksi vikaa löytyivät koko joukon ajosta: (1) kaksi paneelin reunalle pidätettyä sirua saattoi osua päällekkäin (yksikkötesti toistaa: vanha sääntö kaatuu kahdessa kolmesta tapauksesta), ja (2) vähennetyn liikkeen 0,01 ms:n transitio jätti sirun framen jälkeen, kun leveyden luku pakotti tyylin laskemaan ennen siirtoa (ensimmäisen framen testi näki sirun yläreunassa).",
+    "files_changed": [
+      "src/ui/levelUi.ts",
+      "src/ui/levelUi.test.ts",
+      "src/ui/hud.css"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader, pikselisuhde 0,5). Vitest. GitHub Actions.",
+    "tooling": "Playwright 1.64.0, Vitest 5.0.3",
+    "cases": [
+      {
+        "steps": "E2E: kamera planeetan kehyksestä (4 × frames[0]) puolittaen tasolle 17, jokainen piirretty ruutu mitataan",
+        "expected": "Projektiovirhe alle 0,5 px jokaisella tasolla, tasot 1–17 piirretty, syvin taso 17",
+        "result": "Kamerasuhteellinen virhe enintään 0,06 px (kauimmainen ruutu syvimmällä askeleella), tavallisesti noin 0,0001 px. Naiivi float32 olisi syvimmällä enintään 15 284 px pielessä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Near ja far jokaisella askeleella",
+        "expected": "Pinta near- ja far-tason välissä, far/near alle 10⁵ (24-bittinen syvyyspuskuri, ei z-fightingia)",
+        "result": "far/near 2–913",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaksi peräkkäistä kuvaa syvimmällä tasolla paikallaan olevalla kameralla",
+        "expected": "Identtiset",
+        "result": "Identtiset (paikallisesti ja CI-tilassa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Tähtitausta planeetan kehyksessä",
+        "expected": "Oma passi omalla kamerallaan (near 1, far 200, tähdet säteellä 50–80), tähdet näkyvät planeetan ulkopuolella",
+        "result": "Kirkkaita tähtipikseleitä kulmissa yli kynnyksen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: sirujen sijoittelu (layoutChips)",
+        "expected": "Sirut alueillaan vapaalla kaistalla; reunalle pidätetyt eivät peitä toisiaan eivätkä alueellaan olevaa",
+        "result": "pass (vanha sääntö kaatuu kahdessa testissä kolmesta)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti ja CI-tilassa",
+        "expected": "Vihreä",
+        "result": "Paikallisesti kaikki vihreänä; CI-tilassa precision.e2e (4,1 min √2-askelilla, puolitusaskelilla puolet), unlock ja smoke vihreänä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38129138633 (c82e9ad) oli punainen: merge jäi vajaaksi, koska git add kaatui jo poistettuun polkuun, ja vite.config viittasi yhä poistettuun spike.html:ään. Korjattu commitissa 1e3f388: ajo 38129297959 (15,1 min) vihreä ja julkaistu.",
+        "outcome": "pass"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Near ja far päivittyvät korkeuden mukaan, eikä z-fightingia ole millään tasolla",
+        "checked": true
+      },
+      {
+        "item": "Syvimmällä tasolla ei värinää (kaksi peräkkäistä kuvaa)",
+        "checked": true
+      },
+      {
+        "item": "Tähtitausta omana passinaan, ei leikkaudu",
+        "checked": true
+      },
+      {
+        "item": "Testattu kaikilla 17 tasolla",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-11"
+  }
+}

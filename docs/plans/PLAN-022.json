@@ -1,0 +1,42 @@
+{
+  "id": "PLAN-022",
+  "story": "STORY-032",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-11",
+  "approach": "Samin palaute: pelkkä tutkiminen on tylsää, kaupunki jää taka-alalle eikä sitä löydä. Hyvän kaupunkipaikan sääntö on puhdas funktio (src/game/sites.ts): pistemäärä on sama kuin uudisasukkaan paikkojen arvioinnissa, raja on maaruutujen yläneljännes (mitattu 3 000 maaruudusta: mediaani 61, yläneljännes 75 ja ylin kymmenys 83), paikka on paras kahden renkaan säteellä, ja väli kaupunkeihin ja muihin paikkoihin on neljä rengasta. Tiedustelijan kartoittama hyvä paikka avaa löytökortin kaltaisen ehdotuksen, joka pysäyttää pelin. Valinta lähettää vapaan uudisasukkaan tai pyytää pääkaupunkia rakentamaan sellaisen. Kaupungeille tulee nimilaput kartalle ja HUD-ilmoitukset kasvusta ja valmistuneista yksiköistä.",
+  "alternatives_considered": [
+    {
+      "name": "Raja ylin kymmenys (83)",
+      "pros": "Harvemmat ja paremmat ehdotukset",
+      "cons": "Kukkulavaltaisilla alueilla ehdotusta ei ehkä tule lainkaan",
+      "rejected_because": "Ehdotusten pitää näkyä alkupelissä; väli ja jäähtymisaika rajaavat tiheyttä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/sites.ts ja sites.test.ts (uudet)",
+    "src/ui/cityLabels.ts (uusi)",
+    "src/ui/discoveryCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/sites.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Hyvän paikan sääntö yksikkötesteineen",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 2,
+      "action": "Ehdotuskortti, valinta, nimilaput ja HUD-ilmoitukset",
+      "verify": "E2E: ehdotus, perustaminen, nimilappu ja pääkaupungin uudisasukas"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

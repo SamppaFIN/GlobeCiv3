@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-021",
+  "story": "STORY-006",
+  "plan": "PLAN-021",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/precision.ts",
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "tests/e2e/precision.e2e.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/levelUi.test.ts",
+    "src/ui/hud.css",
+    "vite.config.ts",
+    "tests/e2e/smoke.e2e.ts",
+    "docs/spikes/STORY-004-tulokset.md",
+    "src/spike (poistettu)",
+    "spike.html (poistettu)",
+    "scripts/bench.mjs (poistettu)"
+  ],
+  "change_summary": "Tarkkuusmittari siirtyi spikestä pääpeliin (src/globe/precision.ts), ja testikoukku globePrecision mittaa kaikki piirretyt ruudut. E2E-testi kulkee planeetalta tasolle 17. Spike, spike.html ja bench-skripti poistettiin, ja niiden historia on gitissä (98d0314). Matkalla korjattiin läänin sirujen kaksi vikaa. (1) Paneelin reunalle pidätetyt sirut saattoivat peittää toisensa; sijoittelu on nyt puhdas funktio layoutChips, ja pidätetty siru siirtyy reunasta poispäin. (2) tokens.css:n vähennetyn liikkeen sääntö antaa jokaiselle ominaisuudelle 0,01 ms:n transition, jolloin siru jäi framen jälkeen; siruilta transitio on poistettu.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "TileManager.drawnNodes",
+      "createChips: sijoittelu layoutChipsin kautta",
+      ".chip transition-property none"
+    ],
+    "call_sites_found": [
+      "createChips (main.ts updateLevels)",
+      "smoke.e2e.ts spike-testi",
+      "vite.config.ts spike-syöte"
+    ],
+    "call_sites_updated": [
+      "tests/e2e/smoke.e2e.ts",
+      "vite.config.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Spiken cubeSphere-testi poistui spiken mukana; pääpelin cubeSphere.test.ts jää."
+  },
+  "commit": "1e3f388",
+  "progress": 100
+}

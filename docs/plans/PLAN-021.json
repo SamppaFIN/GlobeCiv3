@@ -1,0 +1,43 @@
+{
+  "id": "PLAN-021",
+  "story": "STORY-006",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-11",
+  "approach": "Pääpelin tarkkuusratkaisu on jo paikallaan: ruutujen verteksit ovat suhteessa ruudun keskipisteeseen, ja three.js laskee näkymä × malli -matriisin CPU:lla float64:nä (tiles.ts). Near ja far seuraavat korkeutta (camera.ts), ja tähtitaivas piirretään omana passinaan omalla kamerallaan. Story todennetaan mittaamalla: STORY-004:n tarkkuusmittari siirretään spikestä pääpeliin (src/globe/precision.ts), ja E2E-testi puolittaa kameran etäisyyden planeetalta syvimmälle tasolle. Jokaisella askeleella mitataan jokaisen piirretyn ruudun projektiovirhe float64-tarkkaan projektioon verrattuna, near ja far sekä far/near-suhde. Syvimmällä tasolla verrataan kahta peräkkäistä kuvaa, ja planeetalla lasketaan tähtiä. Sen jälkeen spike, spike.html ja bench-skripti poistetaan.",
+  "alternatives_considered": [
+    {
+      "name": "Logaritminen syvyyspuskuri",
+      "pros": "Suuri syvyysalue",
+      "cons": "Muutos kaikkiin shadereihin, eikä mittaus osoita tarvetta (far/near enintään 913)",
+      "rejected_because": "Mittaus ennen optimointia"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/precision.ts (uusi)",
+    "src/globe/tiles.ts (drawnNodes)",
+    "src/globe/main.ts (testikoukku globePrecision)",
+    "tests/e2e/precision.e2e.ts (uusi)",
+    "src/spike, spike.html, scripts/bench.mjs (poisto)",
+    "vite.config.ts",
+    "tests/e2e/smoke.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Tarkkuusmittari pääpeliin ja testikoukku",
+      "verify": "Tyypit ja build"
+    },
+    {
+      "step": 2,
+      "action": "E2E planeetalta tasolle 17",
+      "verify": "Paikallisesti ja CI-tilassa vihreä, luvut kirjattu"
+    },
+    {
+      "step": 3,
+      "action": "Spike pois",
+      "verify": "Build ilman spike.html:ää, kaikki testit vihreinä"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,6 +1,6 @@
 # CLAUDE.md — GlobeCiv3
 
-> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · päivitetty 2026-10-10
+> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · päivitetty 2026-10-11
 > Lue tämä kokonaan ennen ensimmäistä vastausta jokaisessa uudessa keskustelussa.
 > Osiot 1–11 syntyivät haastattelusta. Osiot 12 ja 13 kasvavat projektin mukana —
 > päivitä päivämäärä aina, kun muutat tiedostoa.
@@ -283,17 +283,17 @@ hakemisto.
   "source": "backlog.json",
   "epics": [
     { "id": "EPIC-001", "icon": "🧱", "title": "Perusta kuntoon", "status": "done", "stories": ["STORY-001", "STORY-002", "STORY-003", "STORY-004"] },
-    { "id": "EPIC-002", "icon": "🔭", "title": "Saumaton kamera", "status": "in_progress", "stories": ["STORY-005", "STORY-006", "STORY-007"] },
+    { "id": "EPIC-002", "icon": "🔭", "title": "Saumaton kamera", "status": "done", "stories": ["STORY-005", "STORY-006", "STORY-007"] },
     { "id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012", "STORY-019"] },
     { "id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-014", "STORY-015", "STORY-016"] },
     { "id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-017", "STORY-018", "STORY-020"] },
-    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030", "STORY-031"] }
+    { "id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-030", "STORY-031", "STORY-032"] }
   ],
-  "stories_total": 31,
-  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014", "PLAN-015", "PLAN-016", "PLAN-017", "PLAN-018", "PLAN-019", "PLAN-020"],
-  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014", "TICKET-IMPL-015", "TICKET-IMPL-016", "TICKET-IMPL-017", "TICKET-IMPL-018", "TICKET-IMPL-019", "TICKET-IMPL-020"],
-  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014", "TICKET-TEST-015", "TICKET-TEST-016", "TICKET-TEST-017", "TICKET-TEST-018", "TICKET-TEST-019", "TICKET-TEST-020"],
-  "next": "Samin puhelintestit Pagesista; sitten STORY-006 (tarkkuus pääpelissä, jonka jälkeen src/spike poistetaan) ja STORY-030 (MVP:n jälkeen)"
+  "stories_total": 32,
+  "plans": ["PLAN-001", "PLAN-002", "PLAN-003", "PLAN-004", "PLAN-005", "PLAN-006", "PLAN-007", "PLAN-008", "PLAN-009", "PLAN-010", "PLAN-011", "PLAN-012", "PLAN-013", "PLAN-014", "PLAN-015", "PLAN-016", "PLAN-017", "PLAN-018", "PLAN-019", "PLAN-020", "PLAN-021", "PLAN-022"],
+  "implementation_tickets": ["TICKET-IMPL-001", "TICKET-IMPL-002", "TICKET-IMPL-003", "TICKET-IMPL-004", "TICKET-IMPL-005", "TICKET-IMPL-006", "TICKET-IMPL-007", "TICKET-IMPL-008", "TICKET-IMPL-009", "TICKET-IMPL-010", "TICKET-IMPL-011", "TICKET-IMPL-012", "TICKET-IMPL-013", "TICKET-IMPL-014", "TICKET-IMPL-015", "TICKET-IMPL-016", "TICKET-IMPL-017", "TICKET-IMPL-018", "TICKET-IMPL-019", "TICKET-IMPL-020", "TICKET-IMPL-021", "TICKET-IMPL-022"],
+  "testing_tickets": ["TICKET-TEST-001", "TICKET-TEST-002", "TICKET-TEST-003", "TICKET-TEST-004", "TICKET-TEST-005", "TICKET-TEST-006", "TICKET-TEST-007", "TICKET-TEST-008", "TICKET-TEST-009", "TICKET-TEST-010", "TICKET-TEST-011", "TICKET-TEST-012", "TICKET-TEST-013", "TICKET-TEST-014", "TICKET-TEST-015", "TICKET-TEST-016", "TICKET-TEST-017", "TICKET-TEST-018", "TICKET-TEST-019", "TICKET-TEST-020", "TICKET-TEST-021", "TICKET-TEST-022"],
+  "next": "Samin puhelintestit Pagesista; sitten STORY-030 (MVP:n jälkeen)"
 }
 ```
 
@@ -404,6 +404,8 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 | 2026-10-10 | Aloitusnäytön planeetta on pyöritettävissä: vedettäessä tartuttu pinnan kohta pysyy osoittimen alla (kuten pelin vedossa), ja nuolinäppäimet kääntävät sitä. Hidas pyöriminen jatkuu irrotuksen jälkeen, ja tähdet pysyvät paikallaan. | Samin pyyntö | Sami |
 | 2026-10-10 | Ruuduilla on pintakuviot kaupunkialuetasolla: oma vesi (merikarttojen aallonharjat) sekä Assets-shadereista siirretyt pelto, metsä ja korkokuva. Värit tulevat tokeneista, ja kuvio antaa vain valoa ja varjoa, ja jokaisessa ruudussa on oma otteensa. Kuviot lasketaan Web Workerissa, koska shaderin käännös olisi pysäyttänyt pääsäikeen noin 1,8 s:ksi. Kustannus on noin 6 % (A/B samassa istunnossa). | Sami: jos lisenssi estää, tehdään oma, kunhan jotain on. Seascape (CC BY-NC-SA) ei sovi GPL v3:een. | Sami |
 | 2026-10-10 | STORY-031 hyväksyttiin (aloitusnäytön pyöritys, pintakuviot ja viimeistely: kuvioiden pehmeä esiintulo, README ja käyttämätön icons.svg pois). src/spike poistetaan vasta STORY-006:n jälkeen eikä STORY-008:n, kuten aiemmin päätettiin, koska bench-skripti ja tarkkuusmittaus käyttävät sitä. | TICKET-TEST-020 | Linssi (Samin valtuutuksella) |
+| 2026-10-11 | STORY-006 hyväksyttiin, ja EPIC-002 on valmis. Pääpelin tarkkuus on mitattu tasoilla 1–17: kamerasuhteellinen projektiovirhe on enintään 0,06 px, far/near enintään 913, ja syvimmällä tasolla kaksi peräkkäistä kuvaa ovat identtiset. Logaritmista syvyyspuskuria ei tarvita. Spike, spike.html ja bench-skripti poistettiin, ja mittari on nyt tiedostossa src/globe/precision.ts. | TICKET-TEST-021 | Linssi (Samin valtuutuksella) |
+| 2026-10-11 | STORY-032 hyväksyttiin: tiedustelija ehdottaa kaupunkia hyvälle paikalle (maan pistemäärän yläneljännes eli vähintään 75, paras kahden renkaan säteellä, neljän renkaan väli, enintään yksi ehdotus kymmenessä päivässä). Valinta lähettää vapaan uudisasukkaan tai pyytää pääkaupunkia rakentamaan sellaisen. Kaupungeilla on nimilaput kartalla, ja HUD kertoo kasvusta ja valmistuneista yksiköistä. | Samin palaute: pelkkä tutkiminen on tylsää, kaupunki jää taka-alalle eikä sitä löydä. Samin toive: hyvästä paikasta ehdotus. | Sami |
 
 ### Avoimet kysymykset
 
