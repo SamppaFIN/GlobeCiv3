@@ -24,7 +24,8 @@ import { findPath, tilesInRings } from '../game/pathfinding';
 import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
-import { unitStatus, Units, type Mode, type World } from '../game/units';
+import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
+import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
 import { UnitLayer } from './unitLayer';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
@@ -394,6 +395,8 @@ interface Play {
   lastOfferDay: number;
   /** A site waiting for the settler the capital is building. */
   pendingSite: number | null;
+  /** Irrigation, mines and roads the settlers built (STORY-033). */
+  improvements: Improvements;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -424,6 +427,12 @@ const world: World = {
     const res = tileTypes.codes[t] & 16 ? RESOURCES[rule.resource] : { food: 0, shield: 0, trade: 0 };
     return sum + 2 * (rule.food + res.food) + rule.shield + res.shield + rule.trade + res.trade;
   }, 0),
+  nextJob: u => nextJob(u),
+  improve: (tile, kind) => {
+    if (!play) return;
+    play.improvements.add(tile, kind);
+    discoveryCard.notice(`${IMPROVEMENT_NAMES[kind]} valmis · ${TERRAIN_RULES[terrainOf(tile)].name.toLowerCase()}`);
+  },
 };
 
 function startPlay(startCity: number) {
@@ -438,6 +447,7 @@ function startPlay(startCity: number) {
     togglePause: () => { clock.paused = !clock.paused; },
     setSpeed: (speed: Speed) => { clock.speed = speed; clock.paused = false; },
     setMode: (mode: Mode) => { if (play) play.units.setMode(play.units.units[play.selected], mode); },
+    setTask: (task: SettlerTask) => { if (play) play.units.setTask(play.units.units[play.selected], task, world); },
     toggleFlagTool: () => { if (play) play.flagTool = !play.flagTool; },
     found: () => { if (play) play.units.found(world); },
     nextSite: () => { if (play) play.units.nextSite(); },
@@ -453,19 +463,23 @@ function startPlay(startCity: number) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), hud };
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
 // The settler sent to its site founds a city. A city works its centre and one tile per
 // citizen, grows and builds; what it builds joins the units.
 
-/** A worked tile's food, shields and trade: terrain, resource and an irrigated centre (Freeciv civ1), plus finds. */
+const NO_YIELD: Yield = { food: 0, shield: 0, trade: 0 };
+
+/** A worked tile's food, shields and trade: terrain, resource, an irrigated centre and improvements (Freeciv civ1), plus finds. */
 function yieldOf(id: number, centre: boolean) {
   const terrain = terrainOf(id);
   const y = workedYield({ terrain, resource: tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null }, centre);
-  const b = play?.bonuses.get(id);
-  return b ? { food: y.food + b.food, shield: y.shield + b.shield, trade: y.trade + b.trade } : y;
+  const b = play?.bonuses.get(id) ?? NO_YIELD;
+  const imp = play?.improvements.yieldOf(id, terrain) ?? NO_YIELD;
+  // The centre's irrigation is counted already
+  return { food: y.food + b.food + (centre ? 0 : imp.food), shield: y.shield + b.shield + imp.shield, trade: y.trade + b.trade + imp.trade };
 }
 
 /** Units a city built and still supports. */
@@ -483,6 +497,32 @@ function cityYields(): CityYield[] {
     for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
     return y;
   });
+}
+
+/** Tiles each city works (or would, with `extra` citizens), in founding order; a tile is worked by the first city that takes it. */
+function workedByCity(extra = 0): number[][] {
+  const taken = new Set<number>();
+  return play ? play.cities.map(c => {
+    const worked = workedTiles({ ...c, size: c.size + extra }, yieldOf, taken);
+    for (const t of worked) taken.add(t);
+    return worked;
+  }) : [];
+}
+
+/**
+ * A settler's next improvement (STORY-033): for its own city, or the nearest one, the most
+ * worthwhile on a tile the city works, else on the two it works next as it grows. Not on the
+ * centre, and not where another settler is working.
+ */
+function nextJob(u: Unit) {
+  if (!play || !play.cities.length) return null;
+  const at = tileCenter(u.tile);
+  const nearest = play.cities.reduce((a, b) => (tileCenter(b.tile).angleTo(at) < tileCenter(a.tile).angleTo(at) ? b : a));
+  const city = play.cities.find(c => c.id === u.home) ?? nearest;
+  const busy = new Set(play.units.units.flatMap(o => (o !== u && o.job ? [o.job.tile] : [])));
+  const jobIn = (tiles: number[]) => bestJob(tiles.filter(t => t !== city.tile && !busy.has(t)), play!.improvements, terrainOf, neighbors, id => terrainOf(id) === 'ocean');
+  const i = play.cities.indexOf(city);
+  return jobIn(workedByCity()[i]) ?? jobIn(workedByCity(2)[i]);
 }
 
 function foundAt(tile: number) {
@@ -512,8 +552,7 @@ function cityDays() {
   // A suggested site waiting for a settler gets the first free one
   const free = idleSettler();
   if (free && play.pendingSite !== null) {
-    play.units.setSite(play.pendingSite, world);
-    play.units.found(world);
+    sendSettler(free, play.pendingSite);
     play.pendingSite = null;
     discoveryCard.notice(`${free.name} lähti kaupunkipaikalle`);
   }
@@ -534,8 +573,20 @@ function finderOf(tile: number): number {
   return finder;
 }
 
-/** A settler free to go: the active one, unless it is already on its way to found a city. */
-const idleSettler = () => (play && !play.units.founding ? play.units.settler ?? null : null);
+/** A settler free to go: the active one, unless it is already on its way to found a city; with none, one improving land. */
+function idleSettler(): Unit | null {
+  if (!play) return null;
+  const active = play.units.settler;
+  if (active) return play.units.founding ? null : active;
+  return play.units.units.find(u => u.kind === 'settler') ?? null;
+}
+
+/** Send a free settler to found a city on a site; it stops improving land. */
+function sendSettler(settler: Unit, tile: number) {
+  play!.units.setTask(settler, 'found', world);
+  play!.units.setSite(tile, world);
+  play!.units.found(world);
+}
 
 function noteSiteOffer(fresh: number[]) {
   if (!play || !siteOffersOn || play.offers.length || clock.day - play.lastOfferDay < OFFER_EVERY_DAYS) return;
@@ -567,8 +618,7 @@ function chooseSite(index: number) {
   if (!o || index !== 0) return;
   const settler = idleSettler();
   if (settler) {
-    play.units.setSite(o.tile, world);
-    play.units.found(world);
+    sendSettler(settler, o.tile);
     play.selected = play.units.units.indexOf(settler);
     discoveryCard.notice(`${settler.name} lähti perustamaan kaupunkia`);
   } else if (play.cities.length) {
@@ -911,7 +961,7 @@ function updatePlay(dt: number) {
     meterName: play.progress.meter === 'province' ? 'Lääni' : 'Valtio',
     unlockAt: play.progress.meter === 'done' ? null : UNLOCK_SHARE,
     level: viewLevel,
-    unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode },
+    unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null },
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
   };
@@ -923,6 +973,7 @@ function updatePlay(dt: number) {
     flag: play.units.flag,
     site: play.units.currentSite(),
     founding: play.units.founding,
+    improvements: play.improvements.entries(),
     spacing: tileSpacing(),
   }, camera.position);
   updateLevels();
@@ -1084,6 +1135,15 @@ frameStartPlanet();
     return sites.slice(0, count);
   },
   sendTo: (tile: number) => play?.units.sendTo(tile, world) ?? false,
+  /** A settler from a city, as if the city had built it (STORY-033). */
+  spawnSettler: (city: number) => {
+    if (!play) return null;
+    const c = play.cities[city];
+    return play.units.spawn('settler', c.tile, world, c.id).name;
+  },
+  /** A tile's yield when worked, and the tiles each city works. */
+  yieldOf: (id: number) => yieldOf(id, false),
+  worked: () => workedByCity(),
   /** Discoveries and site offers both stop the game: off together, site offers back on alone. */
   setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; },
   setSiteOffers: (on: boolean) => { siteOffersOn = on; },
@@ -1101,12 +1161,13 @@ frameStartPlanet();
     return {
       screen, seed: game?.seed ?? null, startCity: game?.startCity ?? null, lockedLevel, lockDist: lockDist(), mapped: mapState.count,
       day: clock.day, speed: clock.speed, paused: clock.paused,
-      units: play?.units.units.map(u => ({ name: u.name, kind: u.kind, tile: u.tile, mode: u.mode, path: u.path.length })) ?? [],
+      units: play?.units.units.map(u => ({ name: u.name, kind: u.kind, tile: u.tile, mode: u.mode, path: u.path.length, task: u.task, job: u.job })) ?? [],
       selected: play?.selected ?? null, flag: play?.units.flag ?? null, site: play?.units.currentSite() ?? null,
       openLevel: play?.progress.openLevel ?? null, areaPlans: play ? [...play.units.areaPlans] : [], stateLine: play?.units.stateLine ?? null,
       discovery: play?.discoveries[0] ?? null, found: play?.found ?? 0, bonuses: play ? [...play.bonuses] : [],
       offer: play?.offers[0] ?? null, offered: play?.offered ?? [], pendingSite: play?.pendingSite ?? null, founding: play?.units.founding ?? false,
       cities: play ? play.cities.map((c, i) => ({ ...c, yield: cityYields()[i] })) : [], openCity: play?.openCity ?? null,
+      improvements: play?.improvements.entries() ?? [],
     };
   },
 };

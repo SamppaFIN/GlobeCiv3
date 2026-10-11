@@ -185,3 +185,32 @@ describe('cities and units (STORY-028)', () => {
     expect(new Set(units.units.map(u => u.id)).size).toBe(units.units.length);
   });
 });
+
+describe('improving settlers (STORY-033)', () => {
+  it('walk to the jobs the world gives, work them for their days, then wait for more', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    const target = tilesInRings(START_TILE, 2).filter(id => !tilesInRings(START_TILE, 1).includes(id) && Number.isFinite(world.cost(id)))[0];
+    const jobs = [{ tile: target, kind: 'road' as const, days: 3 }];
+    const done: [number, string][] = [];
+    world.nextJob = () => jobs.shift() ?? null;
+    world.improve = (tile, kind) => { done.push([tile, kind]); };
+    const settler = units.settler!;
+    units.setTask(settler, 'improve', world);
+    const statuses: string[] = [];
+    for (let d = 0; d < 12; d++) {
+      units.day(world);
+      statuses.push(unitStatus(units, settler, world, () => 'Ruohomaa'));
+    }
+    expect(done).toEqual([[target, 'road']]);
+    expect(settler.tile).toBe(target);
+    expect(statuses).toContain('Kehittää · tie, 2 pv');
+    expect(statuses.at(-1)).toBe('Kehittää · ei työtä lähellä');
+    // The camp stays where it was; an improving settler does not choose sites until set back
+    expect(units.camp).toBe(START_TILE);
+    expect(units.settler).toBeUndefined();
+    units.setTask(settler, 'found', world);
+    expect([units.settler, settler.job]).toEqual([settler, null]);
+    expect(units.sites.length).toBeGreaterThan(0);
+  });
+});

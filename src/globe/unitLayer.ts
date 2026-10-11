@@ -2,24 +2,28 @@
  * unitLayer.ts — units on the map (design 2b): a figure at each unit's tile centre,
  * an accent ring at the selected unit's feet, scout paths as dotted ink, the settler's
  * way as an accent dash to a dashed circle at the city site, and the exploration flag.
+ * Improvements (STORY-033): roads as ink ribbons between tile centres, irrigation and mines
+ * as marks beside the tile centre.
  *
  * Every object sits at a tile centre with its geometry relative to it, so the float64
  * object matrix keeps positions exact at deep zoom (as the surface tiles do).
  */
 import * as THREE from 'three';
-import { tileCenter } from './hexTiles';
+import { neighbors, tileCenter } from './hexTiles';
 import { oklchToSrgb } from './colors';
 import type { Unit } from '../game/units';
+import type { ImprovementKind } from '../game/improvements';
 
 const INK = new THREE.Color().setRGB(...oklchToSrgb(0.82, 0.04, 80), THREE.SRGBColorSpace);
 const INK_DARK = `rgb(${oklchToSrgb(0.26, 0.03, 60).map(v => Math.round(v * 255)).join(',')})`;
 const INK_CSS = `rgb(${oklchToSrgb(0.82, 0.04, 80).map(v => Math.round(v * 255)).join(',')})`;
 const ACCENT = '#9184d9';
 const ACCENT_LIGHT = '#b5abfc';
+const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 255)).join(',')})`;
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'city' | 'ring' | 'flag';
+type Figure = 'scout' | 'settler' | 'warrior' | 'city' | 'ring' | 'flag' | 'irrigation' | 'mine';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -43,6 +47,22 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.fillStyle = ACCENT;
     g.beginPath(); g.moveTo(52, 20); g.quadraticCurveTo(80, 10, 104, 24); g.quadraticCurveTo(80, 40, 52, 56); g.closePath(); g.fill();
     g.stroke();
+  } else if (kind === 'irrigation') {
+    // Three furrows of water, outlined in dark ink
+    g.lineWidth = 16;
+    g.strokeStyle = INK_DARK;
+    for (const y of [40, 64, 88]) { g.beginPath(); g.moveTo(24, y + 10); g.lineTo(104, y - 10); g.stroke(); }
+    g.lineWidth = 8;
+    g.strokeStyle = WATER_CSS;
+    for (const y of [40, 64, 88]) { g.beginPath(); g.moveTo(24, y + 10); g.lineTo(104, y - 10); g.stroke(); }
+  } else if (kind === 'mine') {
+    // A dark heap with a light pick
+    g.fillStyle = INK_DARK;
+    g.beginPath(); g.moveTo(10, 112); g.quadraticCurveTo(64, 20, 118, 112); g.closePath(); g.fill();
+    g.strokeStyle = INK_CSS;
+    g.lineWidth = 8;
+    g.beginPath(); g.moveTo(46, 100); g.lineTo(80, 50); g.stroke();
+    g.beginPath(); g.moveTo(58, 46); g.quadraticCurveTo(82, 38, 98, 58); g.stroke();
   } else if (kind === 'city') {
     // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs
     g.fillStyle = 'rgba(0,0,0,0.35)';
@@ -99,6 +119,8 @@ export interface UnitView {
   site: number | null;
   /** The settler is on its way to the site: its path is drawn. */
   founding: boolean;
+  /** Tiles with improvements, and what (STORY-033). */
+  improvements: readonly (readonly [number, readonly ImprovementKind[]])[];
   /** Distance between tile centres in world units, for sizes. */
   spacing: number;
 }
@@ -109,6 +131,9 @@ export class UnitLayer {
   private readonly textures: Record<Figure, THREE.CanvasTexture>;
   private readonly figures: THREE.Sprite[] = [];
   private readonly cities: THREE.Sprite[] = [];
+  private readonly marks: THREE.Sprite[] = [];
+  private readonly roads = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(INK_DARK), depthTest: false, side: THREE.DoubleSide }));
+  private lastRoads = '';
   private readonly ring: THREE.Sprite;
   private readonly flag: THREE.Sprite;
   private readonly paths = new THREE.Group();
@@ -122,13 +147,15 @@ export class UnitLayer {
     this.textures = {
       scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'),
       city: figureTexture('city'), ring: figureTexture('ring'), flag: figureTexture('flag'),
+      irrigation: figureTexture('irrigation'), mine: figureTexture('mine'),
     };
+    this.roads.renderOrder = 6;
     this.ring = sprite(this.textures.ring, 10);
     this.ring.center.set(0.5, 0.5);
     this.flag = sprite(this.textures.flag, 11);
     this.site = new THREE.LineLoop(new THREE.BufferGeometry(), this.dashed);
     this.site.renderOrder = 9;
-    this.group.add(this.paths, this.site, this.ring, this.flag);
+    this.group.add(this.roads, this.paths, this.site, this.ring, this.flag);
   }
 
   /** World position of a tile centre, lifted a little. */
@@ -176,12 +203,62 @@ export class UnitLayer {
       this.at(view.flag, this.flag.position);
       this.flag.scale.set(size * 0.8, size * 0.8, 1);
     }
+    this.updateImprovements(view, size, facing);
     this.updatePaths(view);
+  }
+
+  /** Irrigation and mine marks at the lower right of their tiles, and the road ribbons. */
+  private updateImprovements(view: UnitView, size: number, facing: (p: THREE.Vector3) => boolean): void {
+    const marked = view.improvements.flatMap(([tile, kinds]) => kinds.filter(k => k !== 'road').map(k => [tile, k] as const));
+    while (this.marks.length < marked.length) {
+      const s = sprite(this.textures.irrigation, 7);
+      s.center.set(-0.25, 1.1);
+      this.marks.push(s);
+      this.group.add(s);
+    }
+    this.marks.forEach((s, i) => {
+      s.visible = i < marked.length;
+      if (!s.visible) return;
+      s.material.map = this.textures[marked[i][1] as Figure];
+      this.at(marked[i][0], s.position);
+      s.scale.set(size * 0.42, size * 0.42, 1);
+      s.visible = facing(s.position);
+    });
+    const roads = view.improvements.filter(([, kinds]) => kinds.includes('road')).map(([tile]) => tile);
+    const key = JSON.stringify([roads, view.cities, view.spacing.toPrecision(3)]);
+    if (key === this.lastRoads) return;
+    this.lastRoads = key;
+    this.roads.geometry.dispose();
+    this.roads.geometry = new THREE.BufferGeometry();
+    if (!roads.length) return;
+    // A road joins its neighbours with roads or cities; alone, it heads toward the nearest city
+    const linked = new Set([...roads, ...view.cities]);
+    const segments: [number, number, number][] = [];
+    for (const t of roads) {
+      const near = neighbors(t);
+      const ends = near.filter(n => linked.has(n) && (view.cities.includes(n) || n > t));
+      for (const n of ends) segments.push([t, n, 1]);
+      if (near.some(n => linked.has(n)) || !view.cities.length) continue;
+      const toward = (n: number) => Math.min(...view.cities.map(c => tileCenter(c).angleTo(tileCenter(n))));
+      segments.push([t, near.reduce((a, b) => (toward(b) < toward(a) ? b : a)), 0.5]);
+    }
+    const origin = this.at(roads[0]);
+    const half = view.spacing * 0.035;
+    const pts: number[] = [];
+    for (const [a, b, part] of segments) {
+      const p = this.at(a).sub(origin);
+      const q = this.at(b).sub(origin).sub(p).multiplyScalar(part).add(p);
+      const side = q.clone().sub(p).cross(this.at(a)).normalize().multiplyScalar(half);
+      const [p1, p2, q1, q2] = [p.clone().add(side), p.clone().sub(side), q.clone().add(side), q.clone().sub(side)];
+      for (const v of [p1, p2, q1, q1, p2, q2]) pts.push(v.x, v.y, v.z);
+    }
+    this.roads.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    this.roads.position.copy(origin);
   }
 
   /** Rebuild the path lines when they change (paths change once a day at most). */
   private updatePaths(view: UnitView): void {
-    const key = JSON.stringify([view.units.map(u => [u.tile, u.kind === 'settler' && !view.founding ? [] : u.path]), view.site, view.spacing.toPrecision(3)]);
+    const key = JSON.stringify([view.units.map(u => [u.tile, u.kind === 'settler' && u.task === 'found' && !view.founding ? [] : u.path]), view.site, view.spacing.toPrecision(3)]);
     if (key === this.lastPaths) return;
     this.lastPaths = key;
     for (const child of [...this.paths.children]) {
@@ -193,12 +270,13 @@ export class UnitLayer {
     this.dotted.gapSize = unitScale * 0.1;
     this.dashed.dashSize = unitScale * 0.2;
     this.dashed.gapSize = unitScale * 0.12;
-    const active = view.units.find(u => u.kind === 'settler');
+    const active = view.units.find(u => u.kind === 'settler' && u.task === 'found');
     for (const u of view.units) {
-      if (u.kind === 'settler' && u !== active) continue;
-      const tiles = u.kind === 'settler' ? (view.founding ? [u.tile, ...u.path] : view.site !== null && view.site !== u.tile ? [u.tile, view.site] : []) : [u.tile, ...u.path];
+      const founder = u.kind === 'settler' && u.task === 'found';
+      if (founder && u !== active) continue;
+      const tiles = founder ? (view.founding ? [u.tile, ...u.path] : view.site !== null && view.site !== u.tile ? [u.tile, view.site] : []) : [u.tile, ...u.path];
       if (tiles.length < 2) continue;
-      this.paths.add(this.line(tiles, u.kind === 'settler' ? this.dashed : this.dotted));
+      this.paths.add(this.line(tiles, founder ? this.dashed : this.dotted));
     }
     // The city site: a dashed circle in the tangent plane
     this.site.visible = view.site !== null;

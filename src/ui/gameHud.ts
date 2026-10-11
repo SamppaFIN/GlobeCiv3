@@ -3,10 +3,11 @@
  *
  * Top: pause / play, speed 1× / 2× / 4×, "Päivä N" with the speed, and the province's
  * mapping meter with a tick at the unlock share. Bottom: the selected unit's name and
- * status; a scout's mode and the flag tool, or the settler's city site actions.
+ * status; a scout's mode and the flag tool, or a settler's task (found cities or improve
+ * land, STORY-033) and the city site actions.
  */
 import { SPEEDS, type Speed } from '../game/clock';
-import { MODE_NAMES, type Mode, type UnitKind } from '../game/units';
+import { MODE_NAMES, TASK_NAMES, type Mode, type SettlerTask, type UnitKind } from '../game/units';
 
 // Phosphor icons (MIT): play, pause, flag
 const PLAY = '<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg>';
@@ -26,8 +27,8 @@ export interface GameHudState {
   unlockAt: number | null;
   /** View level: the unit panel shows at the city-area level (3) only. */
   level: number;
-  /** 'waiting': a settler behind the one choosing a site, without actions. */
-  unit: { name: string; status: string; kind: UnitKind | 'waiting'; mode: Mode } | null;
+  /** 'waiting': a settler without the site actions (behind the one choosing a site, or improving land). */
+  unit: { name: string; status: string; kind: UnitKind | 'waiting'; mode: Mode; task: SettlerTask | null } | null;
   /** The flag tool is waiting for a tap on the map. */
   flagTool: boolean;
   /** The first city's name: the city button opens the city cards (STORY-028). */
@@ -38,6 +39,7 @@ export interface GameHudHandlers {
   togglePause(): void;
   setSpeed(speed: Speed): void;
   setMode(mode: Mode): void;
+  setTask(task: SettlerTask): void;
   toggleFlagTool(): void;
   found(): void;
   nextSite(): void;
@@ -75,6 +77,11 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         </div>
         <button class="btn btn-primary hud-icon hud-flag" type="button" aria-label="Lippu: aseta tutkimuskohde">${FLAG}</button>
       </div>
+      <div class="hud-row hud-task">
+        <div class="seg hud-tasks" role="radiogroup" aria-label="Tehtävä">
+          ${(Object.keys(TASK_NAMES) as SettlerTask[]).map(t => `<label class="seg-opt"><input type="radio" name="hud-task" value="${t}">${TASK_NAMES[t]}</label>`).join('')}
+        </div>
+      </div>
       <div class="hud-row hud-settler">
         <button class="btn btn-primary hud-found" type="button">Perusta kaupunki tähän</button>
         <button class="btn btn-secondary hud-next-site" type="button">Vaihda paikka</button>
@@ -90,6 +97,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
     i.addEventListener('click', () => on.setSpeed(Number(i.value) as Speed));
   });
   el.querySelectorAll<HTMLInputElement>('input[name="hud-mode"]').forEach(i => i.addEventListener('change', () => on.setMode(i.value as Mode)));
+  el.querySelectorAll<HTMLInputElement>('input[name="hud-task"]').forEach(i => i.addEventListener('change', () => on.setTask(i.value as SettlerTask)));
   q<HTMLButtonElement>('.hud-flag').addEventListener('click', on.toggleFlagTool);
   q<HTMLButtonElement>('.hud-found').addEventListener('click', on.found);
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
@@ -126,6 +134,8 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       q<HTMLElement>('.hud-unit-name').textContent = s.unit.name;
       q<HTMLElement>('.hud-unit-status').textContent = s.unit.status;
       q<HTMLElement>('.hud-scout').hidden = s.unit.kind !== 'scout';
+      q<HTMLElement>('.hud-task').hidden = s.unit.task === null;
+      el.querySelectorAll<HTMLInputElement>('input[name="hud-task"]').forEach(i => { i.checked = i.value === s.unit!.task; });
       q<HTMLElement>('.hud-settler').hidden = s.unit.kind !== 'settler';
       el.querySelectorAll<HTMLInputElement>('input[name="hud-mode"]').forEach(i => { i.checked = i.value === s.unit!.mode; });
       q<HTMLElement>('.hud-flag').classList.toggle('hud-active', s.flagTool);

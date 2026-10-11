@@ -75,15 +75,17 @@ describe('cities', () => {
     expect(shortfall(c, hungry, settlers)).toBeNull();
   });
 
-  it('build a 10-shield Soturi, and an Uudisasukas for 40 shields and a citizen', () => {
+  it('build a 10-shield Soturi, then go on to an Uudisasukas for 40 shields and a citizen', () => {
     const c = city(2);
     const y = cityYield(c, yieldOf); // 2 shields a day
     expect(daysToBuild(c, y)).toBe(5);
     const done = Array.from({ length: 5 }, () => cityDay(c, { ...y, surplus: 0 }));
     expect(done).toEqual([null, null, null, null, 'warrior']);
-    expect(c.shields).toBe(0);
+    // One soldier is enough: the city goes on to settlers by itself (own rule); Vaihda switches
+    expect([c.shields, c.build]).toEqual([0, 'settler']);
     nextBuild(c);
-    expect(c.build).toBe('settler');
+    expect(c.build).toBe('warrior');
+    nextBuild(c);
     expect(BUILDS.settler).toEqual({ name: 'Uudisasukas', cost: 40, pop: 1 });
     // A size-1 city waits with the shields until it can spare a citizen
     c.size = 1;

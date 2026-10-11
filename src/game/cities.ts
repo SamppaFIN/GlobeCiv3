@@ -144,7 +144,11 @@ export function cityDay(city: City, y: CityYield): Build | null {
   if (city.shields < build.cost || city.size <= build.pop) return null;
   city.shields -= build.cost;
   city.size -= build.pop;
-  return city.build;
+  const done = city.build;
+  // Own rule (STORY-033): after a soldier the city goes on to settlers. In Freeciv the build
+  // repeats, and a city left alone built soldiers until their upkeep took all its shields.
+  if (done === 'warrior') city.build = 'settler';
+  return done;
 }
 
 /** Days until the city grows, or null if it does not. */
