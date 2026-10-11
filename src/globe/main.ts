@@ -807,7 +807,15 @@ const raidWorld: RaidWorld = {
   roll: k => raidRoll(game!.seed, clock.day, k + 1),
 };
 
-const RAID_NOTICES: Record<RaidEvent, string> = { repelled: 'Soturi torjui rosvon', won: 'Rosvo kaatoi soturin', plundered: 'Rosvot ryöstivät kaupungin' };
+/** The day's fights in a few words: "Rosvo kaatoi soturin · Soturit torjuivat 2 rosvoa". */
+function raidNotice(events: RaidEvent[]): string {
+  const n = (e: RaidEvent) => events.filter(x => x === e).length;
+  return [
+    n('won') === 1 ? 'Rosvo kaatoi soturin' : n('won') ? `Rosvot kaatoivat ${n('won')} soturia` : '',
+    n('repelled') === 1 ? 'Soturi torjui rosvon' : n('repelled') ? `Soturit torjuivat ${n('repelled')} rosvoa` : '',
+    n('plundered') ? 'Rosvot ryöstivät kaupungin' : '',
+  ].filter(Boolean).join(' · ');
+}
 
 /** A day of the band, then perhaps a new uprising against a city. */
 function raidDay() {
@@ -815,7 +823,7 @@ function raidDay() {
   const band = play.raids.band;
   const city = band && play.cities.find(c => c.tile === band.city);
   const events = play.raids.day(raidWorld);
-  if (city && events.length) discoveryCard.notice(`${events.map(e => RAID_NOTICES[e]).join(' · ')} · ${city.name}`);
+  if (city && events.length) discoveryCard.notice(`${raidNotice(events)} · ${city.name}`);
   if (play.raids.band || !raidsOn || !play.cities.length || !uprising(game.seed, clock.day, play.cities.length)) return;
   startRaid(play.cities[Math.floor(raidRoll(game.seed, clock.day, 100) * play.cities.length)]);
 }
@@ -846,7 +854,7 @@ function updateRaidAlert() {
       day: clock.day,
       kicker: `Uhka · ${c.name}`,
       title: 'Rosvoja liikkeellä',
-      body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. Kaupungissa on ${soldiers ? `${soldiers} soturi${soldiers === 1 ? '' : 'a'}` : 'ei sotureita'}.`,
+      body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
       options: [
         { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
         { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },

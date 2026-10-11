@@ -149,7 +149,7 @@ export class UnitLayer {
   private readonly cities: THREE.Sprite[] = [];
   private readonly marks: THREE.Sprite[] = [];
   private readonly bandits: THREE.Sprite[] = [];
-  private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false, transparent: true, opacity: 0.9 });
+  private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false });
   private readonly roads = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(INK_DARK), depthTest: false, side: THREE.DoubleSide }));
   private lastRoads = '';
   private readonly ring: THREE.Sprite;
@@ -230,6 +230,8 @@ export class UnitLayer {
       s.visible = i < view.bandits.length;
       if (!s.visible) return;
       this.at(view.bandits[i].tile, s.position);
+      // Bandits on one tile stand side by side
+      s.center.x = 0.5 + 0.4 * view.bandits.slice(0, i).filter(b => b.tile === view.bandits[i].tile).length;
       s.scale.set(size, size, 1);
       s.visible = facing(s.position);
     });
@@ -298,8 +300,8 @@ export class UnitLayer {
     const unitScale = view.spacing;
     this.dotted.dashSize = unitScale * 0.06;
     this.dotted.gapSize = unitScale * 0.1;
-    this.rusty.dashSize = unitScale * 0.06;
-    this.rusty.gapSize = unitScale * 0.1;
+    this.rusty.dashSize = unitScale * 0.16;
+    this.rusty.gapSize = unitScale * 0.08;
     this.dashed.dashSize = unitScale * 0.2;
     this.dashed.gapSize = unitScale * 0.12;
     const active = view.units.find(u => u.kind === 'settler' && u.task === 'found');

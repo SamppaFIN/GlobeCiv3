@@ -58,7 +58,7 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   const card = page.getByRole('dialog', { name: 'Rosvoja liikkeellä' });
   await expect(card).toBeVisible();
   await expect(card.locator('.discovery-kicker')).toHaveText('Uhka · Aamuranta');
-  await expect(card.locator('.discovery-body')).toHaveText(/^(Rosvo|2 rosvoa) on matkalla kohti kaupunkia ja perillä noin \d+ päivässä\. Kaupungissa on (ei sotureita|\d+ soturia?)\.$/);
+  await expect(card.locator('.discovery-body')).toHaveText(/^(Rosvo|2 rosvoa) on matkalla kohti kaupunkia ja perillä noin \d+ päivässä\. Kaupungissa (ei ole sotureita|on \d+ soturia?)\.$/);
   await expect(card.locator('.discovery-option-title')).toHaveText(['Rakenna soturi', 'Luota puolustukseen']);
   await expect(card.locator('.discovery-option-effect').last()).toHaveText(/^(Soturi voittaa rosvon \d+ %:n todennäköisyydellä|Ilman soturia rosvot ryöstävät kaupungin)$/);
   const s = await state(page);
@@ -88,6 +88,6 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   await page.waitForFunction(() => (window as any).globeGame.state.raid === null, null, { timeout: 90_000 });
   const notices: string[] = await page.evaluate(() => (window as any).notices.filter((n: string) => /rosvo/i.test(n)));
   testInfo.annotations.push({ type: 'raid', description: notices.join(' | ') });
-  expect(notices.at(-1)).toMatch(/(Soturi torjui rosvon|Rosvot ryöstivät kaupungin) · Aamuranta$/);
+  expect(notices.at(-1)).toMatch(/(Soturi torjui rosvon|Soturit torjuivat \d rosvoa|Rosvot ryöstivät kaupungin) · Aamuranta$/);
   expect(errors).toEqual([]);
 });
