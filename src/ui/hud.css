@@ -220,3 +220,19 @@
 .city-change { min-height: var(--touch-target); flex: none; }
 #hud.city-open .hud-bottom { display: none; }
 #hud.discovering .city-card { display: none; }
+
+/* City labels on the map (STORY-032): name and size, easy to find and to tap */
+.city-labels { position: absolute; inset: 0; pointer-events: none; }
+.city-label {
+  position: absolute; left: 0; top: 0; min-height: var(--touch-target); padding: 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--ink); border-radius: 999px; background: color-mix(in srgb, var(--c-bg) 85%, transparent);
+  color: var(--c-text); font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap;
+  cursor: pointer; pointer-events: auto; transition-property: none;
+}
+.city-label[hidden] { display: none; }
+.city-label-size {
+  min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  background: var(--ink); color: var(--c-bg); font-size: 12px; font-variant-numeric: tabular-nums;
+}
+#hud.discovering .city-labels { display: none; }

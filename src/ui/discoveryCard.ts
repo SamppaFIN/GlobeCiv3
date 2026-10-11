@@ -3,13 +3,19 @@
  *
  * While the card is open the game stands still: a chip says "Peli pysähtyi · Päivä N",
  * an accent ring marks the tile, and the bottom sheet offers two finds. After the choice
- * a notice (role=status) tells what changed.
+ * a notice (role=status) tells what changed. The same card suggests a good city site
+ * (STORY-032).
  */
 import type { FindKind } from '../game/discoveries';
 import { PAUSE } from './gameHud';
 
-// Find icons on a 24 px grid in ink (fish and ruins as in design 4a)
-const ICONS: Record<FindKind, string> = {
+/** What a choice on the card is: a find, or building a city at a suggested site or later. */
+export type ChoiceKind = FindKind | 'site' | 'later';
+
+// Icons on a 24 px grid in ink (fish and ruins as in design 4a; the others are own)
+const ICONS: Record<ChoiceKind, string> = {
+  site: '<path d="M3 20 H21 M5 20 V12 L9 9 L13 12 V20 M13 20 V8 L17 5 L21 8 V20 M8 15 H10 M16 12 H18" stroke-linejoin="round" stroke-linecap="round"/>',
+  later: '<circle cx="12" cy="12" r="8"/><path d="M12 7 V12 L15.5 14" stroke-linecap="round"/>',
   fish: '<path d="M3 12 Q11 5 17 12 Q11 19 3 12 Z M17 12 L21 8 V16 Z" stroke-linejoin="round"/>',
   ruins: '<path d="M4 20 H20 M6 20 V9 M10 20 V12 M14 20 V7 M18 20 V11 M5 9 H8 M13 7 H16" stroke-linecap="round"/>',
   ore: '<path d="M4 19 L8 9 L13 5 L19 9 L20 19 Z M8 15 L12 12 L16 14" stroke-linejoin="round" stroke-linecap="round"/>',
@@ -24,7 +30,9 @@ export interface DiscoveryView {
   /** The city area's name. */
   title: string;
   body: string;
-  options: { kind: FindKind; title: string; effect: string }[];
+  options: { kind: ChoiceKind; title: string; effect: string }[];
+  /** Under the choices; a discovery's by default. */
+  note?: string;
 }
 
 export interface DiscoveryCard {
@@ -71,6 +79,7 @@ export function createDiscoveryCard(root: HTMLElement, onChoose: (index: number)
       q<HTMLElement>('.discovery-kicker').textContent = view.kicker;
       q<HTMLElement>('.discovery-title').textContent = view.title;
       q<HTMLElement>('.discovery-body').textContent = view.body;
+      q<HTMLElement>('.discovery-note').textContent = view.note ?? 'Valitsematta jäänyt löytö katoaa.';
       const options = q<HTMLElement>('.discovery-options');
       options.replaceChildren(...view.options.map((o, i) => {
         const b = document.createElement('button');
