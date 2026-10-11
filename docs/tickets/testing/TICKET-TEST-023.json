@@ -1,0 +1,105 @@
+{
+  "id": "TICKET-TEST-023",
+  "story": "STORY-033",
+  "implementation_ticket": "TICKET-IMPL-023",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Katseluajo (90 päivää nopeudella 4× siemenellä 42) löysi kolme vikaa. 1) Kukkuloilla työ olisi korvannut kaivoksen kastelulla ja sitten taas kaivoksella, koska vain kaivoksen tekeminen kastellulle ruudulle oli estetty. Korjattu testi edellä. 2) Työt levisivät koko kahden renkaan alueelle: kuudesta kaivoksesta vain yksi oli ruudulla, jota kaupunki työsti. Työt rajataan nyt työstettyihin ruutuihin ja kahteen seuraavaan. 3) Kaupunki rakensi sotureita loputtomiin (yhdeksän 90 päivässä), kunnes ylläpito vei kaiken tuotannon, ja kaivokset eivät näkyneet missään. Kaupunki rakentaa nyt soturin jälkeen uudisasukkaita.",
+    "files_changed": [
+      "src/game/improvements.ts",
+      "src/game/cities.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: tuotot ja päivät",
+        "expected": "Freecivin civ1-luvut: ruohomaan kastelu +1 ruoka, kukkuloiden kaivos +3, tasangon tie +1 kauppa, metsän tie 0; päivät 5, 10, 10 ja 6",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: kastelun vesisääntö, kastelun ja kaivoksen ristiriita, paras työ",
+        "expected": "Kastelu vain meren tai kastellun naapurin vieressä; uudempi korvaa vanhemman; paras työ tie, kastelu, kaivos ja lopuksi ei mitään",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: työ ei korvaa kaivosta eikä kastelua",
+        "expected": "Kaivoksen ja meren vieressä olevalle kukkulalle ei tule kastelua",
+        "result": "Ensin punainen (kastelu valittiin), korjauksen jälkeen pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: uudisasukas Kehitä-tilassa",
+        "expected": "Kävelee työhön, tekee sen päivissä, ottaa seuraavan; leiri ei liiku; Asuta palauttaa paikat",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: soturin jälkeen uudisasukas",
+        "expected": "Valmis soturi vaihtaa rakennuksen uudisasukkaaseen, Vaihda takaisin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: pääkaupunki, uusi uudisasukas, Kehitä",
+        "expected": "Asuta valittuna ja paikkatoiminnot näkyvät; Kehitä piilottaa ne; tila Kehittää · …; valmis työ lisää ruudulle lähdetaulukon tuoton; Asuta palauttaa toiminnot",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Katseluajo 90 päivää (kuvakaappaus läheltä)",
+        "expected": "Merkit luettavia, tuotanto näkyy kaupungissa",
+        "result": "Ennen korjauksia 6 kaivosta, 9 soturia ja tuotanto 0. Korjausten jälkeen 3 kaivosta työstetyillä ja seuraavilla ruuduilla, 1 soturi ja tuotanto +7.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 20 tiedostoa (104 testiä) ja E2E 42/42 paikallisesti",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38137580803 (343bf3d, 23 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Uudisasukkaalle on mielekästä tekemistä, ja parannukset näkyvät",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Asuta ja Kehitä HUDissa; Kehitä tekee töitä itse",
+        "checked": true
+      },
+      {
+        "item": "Parannukset lisäävät civ1-tuotot kaupungille",
+        "checked": true
+      },
+      {
+        "item": "Parannukset näkyvät kartalla",
+        "checked": true
+      },
+      {
+        "item": "Kaupunki ei rakenna sotureita loputtomiin",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-11"
+  }
+}

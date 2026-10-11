@@ -1,0 +1,61 @@
+{
+  "id": "PLAN-023",
+  "story": "STORY-033",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-11",
+  "approach": "Samin palaute STORY-032:n alla oli, että kaupungin rakentaminen jää taka-alalle. Sami antoi jatkon Linssin valittavaksi, ja Linssi valitsi maanparannukset, koska ne antavat uudisasukkaalle tekemistä kaupunkien välissä ja näkyvät kartalla. Säännöt ovat puhdasta logiikkaa (src/game/improvements.ts), ja luvut tulevat Freecivin civ1-sääntösarjasta (terrain.ruleset ja actions.ruleset, commit 75451811f4). Uudisasukas toimii autonomisesti kuten muut yksiköt: Kehitä-tilassa se ottaa kannattavimman työn (2 × ruoka + tuotanto + kauppa työpäivää kohden) kaupungin työstämistä ruuduista tai kahdesta seuraavasta, joita kaupunki työstää kasvaessaan.",
+  "alternatives_considered": [
+    {
+      "name": "Pelaaja valitsee ruudun ja parannuksen itse (Civ I)",
+      "pros": "Täysi hallinta",
+      "cons": "Puhelimella monta napautusta per työ",
+      "rejected_because": "Pelin konsepti on autonomiset yksiköt ja kerroskohtaiset toiminnot (pelin kulku, 2026-10-09)"
+    },
+    {
+      "name": "Työt kaikkiin kaupungin kahden renkaan ruutuihin",
+      "pros": "Uudisasukas ei jää toimettomaksi",
+      "cons": "Katseluajo: 90 päivässä kuusi kaivosta, joista vain yksi työstetyllä ruudulla",
+      "rejected_because": "Työ, joka ei näy kaupungin tuotoissa, ei ole pelaajalle mitään"
+    },
+    {
+      "name": "Tiet nopeuttavat liikettä",
+      "pros": "Civ I:n tapa",
+      "cons": "Liike lasketaan kokonaisina päivinä",
+      "rejected_because": "Myöhemmin, kun liike on tarkempi; nyt tie antaa kauppaa"
+    }
+  ],
+  "files_to_change": [
+    "src/game/improvements.ts ja improvements.test.ts (uudet)",
+    "src/game/units.ts ja units.test.ts",
+    "src/game/cities.ts ja cities.test.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/improvements.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Freecivin civ1-luvut",
+      "verify": "Lähde kirjattu koodiin"
+    },
+    {
+      "step": 2,
+      "action": "Säännöt puhtaana logiikkana yksikkötesteineen",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 3,
+      "action": "Uudisasukkaan Kehitä-tila, merkinnät kartalle ja HUD",
+      "verify": "E2E ja kuvakaappaukset"
+    },
+    {
+      "step": 4,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

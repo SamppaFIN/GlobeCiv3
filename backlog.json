@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-11T10:54:51Z",
+    "generated_at": "2026-10-11T12:24:07Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "18ab2ce",
+    "git_commit": "343bf3d",
     "git_branch": "main",
     "language": "fi"
   },
@@ -134,7 +134,8 @@
         "STORY-028",
         "STORY-030",
         "STORY-031",
-        "STORY-032"
+        "STORY-032",
+        "STORY-033"
       ],
       "progress": 92
     }
@@ -907,6 +908,31 @@
         "plan": "PLAN-022",
         "implementation": "TICKET-IMPL-022",
         "testing": "TICKET-TEST-022"
+      }
+    },
+    {
+      "id": "STORY-033",
+      "epic": "EPIC-006",
+      "title": "Uudisasukas kehittää maata: kastelu, kaivos ja tie",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että uudisasukas voi kehittää kaupunkini ympäristöä, jotta kaupungilla on muutakin tekemistä kuin kasvaa ja jotta näen kartalla oman kädenjälkeni.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-028",
+        "STORY-032"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Uudisasukkaalla on tehtävä Asuta tai Kehitä. Kehitä-tilassa se valitsee itse kannattavimman työn kotikaupunkinsa (tai lähimmän kaupungin) työstämistä ruuduista tai kahdesta seuraavasta, kävelee sinne ja tekee työn Freecivin civ1-sääntöjen päivissä.",
+        "Kastelu (+1 ruoka, vaatii meren tai kastellun naapurin), kaivos (+1 tai +3 tuotantoa) ja tie (+1 kauppa) lisäävät ruudun tuottoa civ1-lukujen mukaan, ja kaupunki laskee ne mukaan. Työ ei koskaan korvaa kaivosta kastelulla eikä kastelua kaivoksella.",
+        "Parannukset näkyvät kartalla: tiet ovat nauhoja ruutujen välillä, ja kastelu ja kaivos ovat merkkejä. HUD kertoo valmistumisesta, ja Asuta palauttaa kaupunkipaikan toiminnot.",
+        "Kaupunki rakentaa soturin jälkeen uudisasukkaita (oma sääntö), joten yksin jätetty kaupunki ei hukkaa tuotantoaan sotureiden ylläpitoon."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-023",
+        "implementation": "TICKET-IMPL-023",
+        "testing": "TICKET-TEST-023"
       }
     }
   ],
@@ -2125,6 +2151,67 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-023",
+      "story": "STORY-033",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-11",
+      "approach": "Samin palaute STORY-032:n alla oli, että kaupungin rakentaminen jää taka-alalle. Sami antoi jatkon Linssin valittavaksi, ja Linssi valitsi maanparannukset, koska ne antavat uudisasukkaalle tekemistä kaupunkien välissä ja näkyvät kartalla. Säännöt ovat puhdasta logiikkaa (src/game/improvements.ts), ja luvut tulevat Freecivin civ1-sääntösarjasta (terrain.ruleset ja actions.ruleset, commit 75451811f4). Uudisasukas toimii autonomisesti kuten muut yksiköt: Kehitä-tilassa se ottaa kannattavimman työn (2 × ruoka + tuotanto + kauppa työpäivää kohden) kaupungin työstämistä ruuduista tai kahdesta seuraavasta, joita kaupunki työstää kasvaessaan.",
+      "alternatives_considered": [
+        {
+          "name": "Pelaaja valitsee ruudun ja parannuksen itse (Civ I)",
+          "pros": "Täysi hallinta",
+          "cons": "Puhelimella monta napautusta per työ",
+          "rejected_because": "Pelin konsepti on autonomiset yksiköt ja kerroskohtaiset toiminnot (pelin kulku, 2026-10-09)"
+        },
+        {
+          "name": "Työt kaikkiin kaupungin kahden renkaan ruutuihin",
+          "pros": "Uudisasukas ei jää toimettomaksi",
+          "cons": "Katseluajo: 90 päivässä kuusi kaivosta, joista vain yksi työstetyllä ruudulla",
+          "rejected_because": "Työ, joka ei näy kaupungin tuotoissa, ei ole pelaajalle mitään"
+        },
+        {
+          "name": "Tiet nopeuttavat liikettä",
+          "pros": "Civ I:n tapa",
+          "cons": "Liike lasketaan kokonaisina päivinä",
+          "rejected_because": "Myöhemmin, kun liike on tarkempi; nyt tie antaa kauppaa"
+        }
+      ],
+      "files_to_change": [
+        "src/game/improvements.ts ja improvements.test.ts (uudet)",
+        "src/game/units.ts ja units.test.ts",
+        "src/game/cities.ts ja cities.test.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/improvements.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Freecivin civ1-luvut",
+          "verify": "Lähde kirjattu koodiin"
+        },
+        {
+          "step": 2,
+          "action": "Säännöt puhtaana logiikkana yksikkötesteineen",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 3,
+          "action": "Uudisasukkaan Kehitä-tila, merkinnät kartalle ja HUD",
+          "verify": "E2E ja kuvakaappaukset"
+        },
+        {
+          "step": 4,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -2992,6 +3079,52 @@
         "notes": "Testit, jotka kytkevät löydöt pois (kello, yksiköt, aloitus ja kaupunki), kytkevät samalla ehdotukset pois, koska nekin pysäyttävät pelin."
       },
       "commit": "18ab2ce",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-023",
+      "story": "STORY-033",
+      "plan": "PLAN-023",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/improvements.ts",
+        "src/game/improvements.test.ts",
+        "src/game/units.ts",
+        "src/game/units.test.ts",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/improvements.e2e.ts"
+      ],
+      "change_summary": "Uudisasukkaalla on tehtävä Asuta tai Kehitä (HUD:n valitsin). Kehitä-tilassa se valitsee kannattavimman työn kotikaupunkinsa (tai lähimmän kaupungin) työstämistä ruuduista tai kahdesta seuraavasta, kävelee sinne ja tekee työn civ1-päivissä: kastelu +1 ruoka (5 pv, kukkulat 10, vaatii meren tai kastellun naapurin), kaivos +1 tai +3 tuotantoa (5–10 pv) ja tie +1 kauppa (2 pv). Kaupunki laskee parannukset tuottoihinsa, eikä keskustan oma kastelu tuplaannu. Tiet piirretään nauhoina ruutujen välille, ja kastelu ja kaivos ovat merkkejä ruudun keskipisteen vieressä. HUD kertoo valmistumisesta. Kaupunkiehdotus ottaa Kehitä-tilassa olevan uudisasukkaan, jos Asuta-tilassa ei ole ketään. Kaupunki rakentaa soturin jälkeen uudisasukkaita.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Unit.task ja Unit.job; Units.setTask; Units.settler on ensimmäinen Asuta-tilassa oleva uudisasukas",
+          "World.nextJob ja World.improve (valinnaiset)",
+          "cityDay: valmis soturi vaihtaa rakennuksen uudisasukkaaseen",
+          "UnitView.improvements",
+          "GameHudState.unit.task ja GameHudHandlers.setTask",
+          "main.ts: Play.improvements, yieldOf, workedByCity, nextJob, idleSettler, sendSettler",
+          "globeDebug.spawnSettler, yieldOf ja worked; globeGame.state.improvements sekä yksiköiden task ja job"
+        ],
+        "call_sites_found": [
+          "Units.settler: findSites, setSite, found, nextSite, unitStatus, unitLayer.updatePaths, main.ts (HUD, idleSettler, noteSiteOffer)",
+          "cityDay: main.ts cityDays",
+          "yieldOf: cityYields, siteYield, workedByCity"
+        ],
+        "call_sites_updated": [
+          "src/globe/unitLayer.ts",
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kaupunkitestin rakennusjärjestys muuttui tarkoituksella: soturin jälkeen rakennus on uudisasukas, ja Vaihda vaihtaa takaisin soturiin."
+      },
+      "commit": "343bf3d",
       "progress": 100
     }
   ],
@@ -5158,6 +5291,111 @@
           },
           {
             "item": "Nimilaput kartalla ja HUD-ilmoitukset",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-11"
+      }
+    },
+    {
+      "id": "TICKET-TEST-023",
+      "story": "STORY-033",
+      "implementation_ticket": "TICKET-IMPL-023",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Katseluajo (90 päivää nopeudella 4× siemenellä 42) löysi kolme vikaa. 1) Kukkuloilla työ olisi korvannut kaivoksen kastelulla ja sitten taas kaivoksella, koska vain kaivoksen tekeminen kastellulle ruudulle oli estetty. Korjattu testi edellä. 2) Työt levisivät koko kahden renkaan alueelle: kuudesta kaivoksesta vain yksi oli ruudulla, jota kaupunki työsti. Työt rajataan nyt työstettyihin ruutuihin ja kahteen seuraavaan. 3) Kaupunki rakensi sotureita loputtomiin (yhdeksän 90 päivässä), kunnes ylläpito vei kaiken tuotannon, ja kaivokset eivät näkyneet missään. Kaupunki rakentaa nyt soturin jälkeen uudisasukkaita.",
+        "files_changed": [
+          "src/game/improvements.ts",
+          "src/game/cities.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: tuotot ja päivät",
+            "expected": "Freecivin civ1-luvut: ruohomaan kastelu +1 ruoka, kukkuloiden kaivos +3, tasangon tie +1 kauppa, metsän tie 0; päivät 5, 10, 10 ja 6",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: kastelun vesisääntö, kastelun ja kaivoksen ristiriita, paras työ",
+            "expected": "Kastelu vain meren tai kastellun naapurin vieressä; uudempi korvaa vanhemman; paras työ tie, kastelu, kaivos ja lopuksi ei mitään",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: työ ei korvaa kaivosta eikä kastelua",
+            "expected": "Kaivoksen ja meren vieressä olevalle kukkulalle ei tule kastelua",
+            "result": "Ensin punainen (kastelu valittiin), korjauksen jälkeen pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: uudisasukas Kehitä-tilassa",
+            "expected": "Kävelee työhön, tekee sen päivissä, ottaa seuraavan; leiri ei liiku; Asuta palauttaa paikat",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: soturin jälkeen uudisasukas",
+            "expected": "Valmis soturi vaihtaa rakennuksen uudisasukkaaseen, Vaihda takaisin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: pääkaupunki, uusi uudisasukas, Kehitä",
+            "expected": "Asuta valittuna ja paikkatoiminnot näkyvät; Kehitä piilottaa ne; tila Kehittää · …; valmis työ lisää ruudulle lähdetaulukon tuoton; Asuta palauttaa toiminnot",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Katseluajo 90 päivää (kuvakaappaus läheltä)",
+            "expected": "Merkit luettavia, tuotanto näkyy kaupungissa",
+            "result": "Ennen korjauksia 6 kaivosta, 9 soturia ja tuotanto 0. Korjausten jälkeen 3 kaivosta työstetyillä ja seuraavilla ruuduilla, 1 soturi ja tuotanto +7.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 20 tiedostoa (104 testiä) ja E2E 42/42 paikallisesti",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38137580803 (343bf3d, 23 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Uudisasukkaalle on mielekästä tekemistä, ja parannukset näkyvät",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Asuta ja Kehitä HUDissa; Kehitä tekee töitä itse",
+            "checked": true
+          },
+          {
+            "item": "Parannukset lisäävät civ1-tuotot kaupungille",
+            "checked": true
+          },
+          {
+            "item": "Parannukset näkyvät kartalla",
+            "checked": true
+          },
+          {
+            "item": "Kaupunki ei rakenna sotureita loputtomiin",
             "checked": true
           }
         ],
