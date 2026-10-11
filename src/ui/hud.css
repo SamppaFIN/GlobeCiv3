@@ -128,6 +128,9 @@
   color: var(--c-text); font: inherit; cursor: pointer; pointer-events: auto;
 }
 .chip[hidden] { display: none; }
+/* Placed every frame, so never a transition: the reduced-motion rule in tokens.css gives every
+   property a 0.01 ms transition, which made a chip lag a frame behind its region */
+.chip { transition-property: none; }
 .chip-name { max-width: 100%; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip-sub { font-size: 11px; color: var(--c-muted); white-space: nowrap; }
 .chip-selected { border-color: var(--c-accent-light); box-shadow: 0 0 0 1px var(--c-accent), 0 0 14px color-mix(in srgb, var(--c-accent) 55%, transparent); }

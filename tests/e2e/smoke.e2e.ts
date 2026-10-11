@@ -28,16 +28,3 @@ test('main game renders the hex globe without console errors', async ({ page }, 
   await page.screenshot({ path: testInfo.outputPath('globe.png') });
   expect(errors).toEqual([]);
 });
-
-test('zoom prototype settles at a mid level without console errors', async ({ page }, testInfo) => {
-  const errors = collectErrors(page);
-  await page.goto('spike.html?dist=0.04');
-  const handle = await page.waitForFunction(() => (window as unknown as { __ready?: unknown }).__ready, null, {
-    timeout: 30_000,
-  });
-  const ready = (await handle.jsonValue()) as { level: number; drawn: number };
-  expect(ready.level).toBeGreaterThanOrEqual(6);
-  expect(ready.drawn).toBeGreaterThan(0);
-  await page.screenshot({ path: testInfo.outputPath('spike.png') });
-  expect(errors).toEqual([]);
-});

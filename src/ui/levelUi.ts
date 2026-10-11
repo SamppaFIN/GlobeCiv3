@@ -58,6 +58,28 @@ export interface Chip {
 /** Half a chip's height (44 px, design 96 × 44) and a 4 px margin. */
 const CHIP_HALF = 26;
 
+/** A chip to place: its region's screen position and its width, in CSS pixels. */
+export interface ChipPlace { x: number; y: number; w: number }
+
+/**
+ * The chips' vertical positions: on their regions, but within the free band between the
+ * HUD panels, where they can be tapped.
+ */
+export function layoutChips(chips: readonly ChipPlace[], free: { top: number; bottom: number }): number[] {
+  const ys = chips.map(c => Math.min(Math.max(c.y, free.top + CHIP_HALF), free.bottom - CHIP_HALF));
+  // A chip held at an edge could land on another chip there: it steps away from the
+  // edge a chip's height at a time
+  const placed = chips.map((_, i) => i).filter(i => ys[i] === chips[i].y);
+  chips.forEach((c, i) => {
+    if (ys[i] === c.y) return;
+    const away = ys[i] <= free.top + CHIP_HALF ? 1 : -1;
+    const covers = () => placed.some(j => Math.abs(chips[j].x - c.x) < (chips[j].w + c.w) / 2 + 4 && Math.abs(ys[j] - ys[i]) < 2 * CHIP_HALF);
+    for (let k = 0; k < chips.length && covers(); k++) ys[i] += away * 2 * CHIP_HALF;
+    placed.push(i);
+  });
+  return ys;
+}
+
 /** Region chips over the map (design 6a, 7a). Tapping one selects it; tapping it again dives in. */
 export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }): void } {
   const layer = document.createElement('div');
@@ -76,19 +98,23 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
         layer.appendChild(b);
         pool.push(b);
       }
+      const shown: { b: HTMLButtonElement; x: number; y: number }[] = [];
       pool.forEach((b, i) => {
         const c = chips[i];
         b.hidden = !c || c.x === null || c.y === null;
         if (!c || b.hidden) return;
         b.dataset.id = String(c.id);
-        // Centred on the region, whatever the chip's width, but not under a panel
-        const y = Math.min(Math.max(c.y!, free.top + CHIP_HALF), free.bottom - CHIP_HALF);
-        b.style.transform = `translate(${c.x!.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`;
         b.classList.toggle('chip-selected', c.selected);
         b.setAttribute('aria-pressed', String(c.selected));
         b.querySelector('.chip-name')!.textContent = c.name;
         b.querySelector('.chip-sub')!.textContent = c.sub;
+        shown.push({ b, x: c.x!, y: c.y! });
       });
+      // Widths matter only when a chip is held at an edge (reading them costs a layout)
+      const held = shown.some(c => c.y < free.top + CHIP_HALF || c.y > free.bottom - CHIP_HALF);
+      const ys = layoutChips(shown.map(c => ({ x: c.x, y: c.y, w: held ? c.b.offsetWidth : 0 })), free);
+      // Centred on the region, whatever the chip's width
+      shown.forEach((c, i) => { c.b.style.transform = `translate(${c.x.toFixed(1)}px, ${ys[i].toFixed(1)}px) translate(-50%, -50%)`; });
     },
   };
 }

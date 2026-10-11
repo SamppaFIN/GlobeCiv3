@@ -16,6 +16,7 @@ import { chooseStartCity, cityTiles } from '../game/start';
 import { tileInfo, TileTypeTable } from '../game/terrainTypes';
 import { createGlyphAtlas } from './glyphAtlas';
 import { SURFACE_SIZE, type PatternData } from './surfacePatterns';
+import { projectionErrorPx } from './precision';
 import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
 import { GameClock, type Speed } from '../game/clock';
@@ -906,6 +907,22 @@ frameStartPlanet();
 (window as any).globeNodes = nodes;
 (window as any).globeCamera = rig;
 (window as any).globeTiles = tiles;
+// For tests (STORY-006): the deepest drawn tile, its screen error and the depth range
+(window as any).globePrecision = () => {
+  camera.updateMatrixWorld();
+  let rtc = 0, naive = 0, level = 0;
+  const levels = new Set<number>();
+  for (const node of tiles.drawnNodes()) {
+    if (!node.mesh) continue;
+    node.mesh.updateMatrixWorld();
+    const err = projectionErrorPx(node, camera, RADIUS, renderer.domElement.clientWidth, renderer.domElement.clientHeight);
+    rtc = Math.max(rtc, err.rtc);
+    naive = Math.max(naive, err.naive);
+    level = Math.max(level, node.tile.level);
+    levels.add(node.tile.level);
+  }
+  return { level, levels: [...levels], rtc, naive, near: camera.near, far: camera.far, altitude: camera.position.length() - RADIUS };
+};
 (window as any).globeTerrain = { terrainHeight };
 (window as any).globeRegions = regions;
 (window as any).globeTileTypes = { tileInfo, codes: tileTypes.codes };

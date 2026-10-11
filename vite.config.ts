@@ -10,11 +10,9 @@ export default defineConfig({
     target: 'esnext',
     outDir: 'dist',
     assetsDir: 'assets',
-    // spike.html is the STORY-004 prototype; it only exists on the spike branch
     rolldownOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
-        spike: fileURLToPath(new URL('./spike.html', import.meta.url)),
       },
     },
   },

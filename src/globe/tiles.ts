@@ -1138,6 +1138,11 @@ export class TileManager {
     return this.drawn.map(n => n.tile);
   }
 
+  /** Tiles drawn in the last update, for precision measurements. */
+  drawnNodes(): readonly TileNode[] {
+    return this.drawn;
+  }
+
   /** Drawn tile with the highest level, for precision measurements. */
   deepestDrawn(): TileNode | null {
     let best: TileNode | null = null;

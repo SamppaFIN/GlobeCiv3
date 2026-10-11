@@ -3,6 +3,10 @@
 > Mitattu 2026-10-09. Suunnitelma: PLAN-003. Prototyyppi on kansiossa `src/spike` ja
 > sivulla [spike.html](https://samppafin.github.io/GlobeCiv3/spike.html). Pääpeli ei käytä sitä,
 > ja se poistetaan, kun tuotantoversiot korvaavat sen (STORY-008).
+>
+> **Poistettu 2026-10-11** STORY-006:n jälkeen: pääpelin tarkkuus on mitattu tasoilla 1–17
+> (tests/e2e/precision.e2e.ts), ja tarkkuusmittari siirtyi tiedostoon src/globe/precision.ts.
+> Prototyyppi, spike.html ja bench-skripti löytyvät git-historiasta (commit 98d0314).
 
 ## Yhteenveto
 
