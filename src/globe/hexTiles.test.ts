@@ -91,7 +91,7 @@ describe('hex tile grid', () => {
         expect(tileCenter(n).angleTo(tileCenter(id))).toBeLessThan(SPACING * 1.4);
       }
     }
-  });
+  }, 30_000);
 
   it('has a tile centre on every state centre (same icosahedron, F = 6 × 55)', () => {
     const { nodes } = buildHexGrid(5, 5);

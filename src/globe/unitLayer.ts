@@ -3,7 +3,8 @@
  * an accent ring at the selected unit's feet, scout paths as dotted ink, the settler's
  * way as an accent dash to a dashed circle at the city site, and the exploration flag.
  * Improvements (STORY-033): roads as ink ribbons between tile centres, irrigation and mines
- * as marks beside the tile centre.
+ * as marks beside the tile centre. Bandits (STORY-034) are rust-red figures with their way
+ * to the city as a rust dotted line.
  *
  * Every object sits at a tile centre with its geometry relative to it, so the float64
  * object matrix keeps positions exact at deep zoom (as the surface tiles do).
@@ -13,17 +14,19 @@ import { neighbors, tileCenter } from './hexTiles';
 import { oklchToSrgb } from './colors';
 import type { Unit } from '../game/units';
 import type { ImprovementKind } from '../game/improvements';
+import type { Bandit } from '../game/raids';
 
 const INK = new THREE.Color().setRGB(...oklchToSrgb(0.82, 0.04, 80), THREE.SRGBColorSpace);
 const INK_DARK = `rgb(${oklchToSrgb(0.26, 0.03, 60).map(v => Math.round(v * 255)).join(',')})`;
 const INK_CSS = `rgb(${oklchToSrgb(0.82, 0.04, 80).map(v => Math.round(v * 255)).join(',')})`;
 const ACCENT = '#9184d9';
 const ACCENT_LIGHT = '#b5abfc';
+const RUST = `rgb(${oklchToSrgb(0.6, 0.15, 35).map(v => Math.round(v * 255)).join(',')})`;
 const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 255)).join(',')})`;
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'city' | 'ring' | 'flag' | 'irrigation' | 'mine';
+type Figure = 'scout' | 'settler' | 'warrior' | 'city' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -63,6 +66,17 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.lineWidth = 8;
     g.beginPath(); g.moveTo(46, 100); g.lineTo(80, 50); g.stroke();
     g.beginPath(); g.moveTo(58, 46); g.quadraticCurveTo(82, 38, 98, 58); g.stroke();
+  } else if (kind === 'bandit') {
+    // A hooded figure with a club, in rust
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.beginPath(); g.ellipse(64, 116, 28, 8, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = RUST;
+    g.strokeStyle = INK_DARK;
+    g.lineWidth = 5;
+    g.beginPath(); g.moveTo(44, 114); g.lineTo(50, 58); g.quadraticCurveTo(64, 46, 78, 58); g.lineTo(84, 114); g.closePath(); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(48, 50); g.quadraticCurveTo(64, 8, 80, 50); g.closePath(); g.fill(); g.stroke();
+    g.lineWidth = 9;
+    g.beginPath(); g.moveTo(90, 100); g.lineTo(104, 34); g.stroke();
   } else if (kind === 'city') {
     // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs
     g.fillStyle = 'rgba(0,0,0,0.35)';
@@ -121,6 +135,8 @@ export interface UnitView {
   founding: boolean;
   /** Tiles with improvements, and what (STORY-033). */
   improvements: readonly (readonly [number, readonly ImprovementKind[]])[];
+  /** Bandits on their way to a city (STORY-034). */
+  bandits: readonly Bandit[];
   /** Distance between tile centres in world units, for sizes. */
   spacing: number;
 }
@@ -132,6 +148,8 @@ export class UnitLayer {
   private readonly figures: THREE.Sprite[] = [];
   private readonly cities: THREE.Sprite[] = [];
   private readonly marks: THREE.Sprite[] = [];
+  private readonly bandits: THREE.Sprite[] = [];
+  private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false });
   private readonly roads = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(INK_DARK), depthTest: false, side: THREE.DoubleSide }));
   private lastRoads = '';
   private readonly ring: THREE.Sprite;
@@ -147,7 +165,7 @@ export class UnitLayer {
     this.textures = {
       scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'),
       city: figureTexture('city'), ring: figureTexture('ring'), flag: figureTexture('flag'),
-      irrigation: figureTexture('irrigation'), mine: figureTexture('mine'),
+      irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };
     this.roads.renderOrder = 6;
     this.ring = sprite(this.textures.ring, 10);
@@ -203,6 +221,20 @@ export class UnitLayer {
       this.at(view.flag, this.flag.position);
       this.flag.scale.set(size * 0.8, size * 0.8, 1);
     }
+    while (this.bandits.length < view.bandits.length) {
+      const s = sprite(this.textures.bandit, 12);
+      this.bandits.push(s);
+      this.group.add(s);
+    }
+    this.bandits.forEach((s, i) => {
+      s.visible = i < view.bandits.length;
+      if (!s.visible) return;
+      this.at(view.bandits[i].tile, s.position);
+      // Bandits on one tile stand side by side
+      s.center.x = 0.5 + 0.4 * view.bandits.slice(0, i).filter(b => b.tile === view.bandits[i].tile).length;
+      s.scale.set(size, size, 1);
+      s.visible = facing(s.position);
+    });
     this.updateImprovements(view, size, facing);
     this.updatePaths(view);
   }
@@ -258,7 +290,7 @@ export class UnitLayer {
 
   /** Rebuild the path lines when they change (paths change once a day at most). */
   private updatePaths(view: UnitView): void {
-    const key = JSON.stringify([view.units.map(u => [u.tile, u.kind === 'settler' && u.task === 'found' && !view.founding ? [] : u.path]), view.site, view.spacing.toPrecision(3)]);
+    const key = JSON.stringify([view.units.map(u => [u.tile, u.kind === 'settler' && u.task === 'found' && !view.founding ? [] : u.path]), view.bandits.map(b => [b.tile, b.path]), view.site, view.spacing.toPrecision(3)]);
     if (key === this.lastPaths) return;
     this.lastPaths = key;
     for (const child of [...this.paths.children]) {
@@ -268,6 +300,8 @@ export class UnitLayer {
     const unitScale = view.spacing;
     this.dotted.dashSize = unitScale * 0.06;
     this.dotted.gapSize = unitScale * 0.1;
+    this.rusty.dashSize = unitScale * 0.16;
+    this.rusty.gapSize = unitScale * 0.08;
     this.dashed.dashSize = unitScale * 0.2;
     this.dashed.gapSize = unitScale * 0.12;
     const active = view.units.find(u => u.kind === 'settler' && u.task === 'found');
@@ -278,6 +312,9 @@ export class UnitLayer {
       if (tiles.length < 2) continue;
       this.paths.add(this.line(tiles, founder ? this.dashed : this.dotted));
     }
+    // A band walks one way: draw the first bandit's
+    const lead = view.bandits[0];
+    if (lead?.path.length) this.paths.add(this.line([lead.tile, ...lead.path], this.rusty));
     // The city site: a dashed circle in the tangent plane
     this.site.visible = view.site !== null;
     if (view.site !== null) {
