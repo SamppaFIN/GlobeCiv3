@@ -176,6 +176,23 @@
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 0 0 1px var(--c-divider), 0 16px 40px rgba(0, 0, 0, 0.65); pointer-events: auto;
 }
+.city-food, .city-area { font-size: 12px; color: var(--c-muted); }
+.city-hint { font-size: 12px; color: var(--c-accent-text); }
+.city-hint[hidden] { display: none; }
+.city-focus-row { display: flex; flex-direction: column; gap: 6px; }
+.city-focus { display: flex; }
+.city-focus .seg-opt { flex: 1; min-height: var(--touch-target); justify-content: center; padding: 0 6px; }
+/* What the open city's tiles bring in (STORY-039) */
+.tile-yields { position: absolute; inset: 0; pointer-events: none; }
+.tile-yield {
+  position: absolute; left: 0; top: 0; display: flex; gap: 4px; padding: 2px 6px; border-radius: 999px;
+  background: color-mix(in srgb, #161826 82%, transparent); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.tile-yield[hidden] { display: none; }
+.tile-yield-centre { box-shadow: 0 0 0 1px var(--color-accent); }
+.tile-yield-n { display: inline-flex; align-items: center; gap: 1px; }
+.tile-yield svg { width: 13px; height: 13px; }
+#hud.discovering .tile-yields { display: none; }
 .discovery-head { display: flex; flex-direction: column; gap: 4px; }
 .discovery-kicker { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-accent-text); }
 .discovery-title { margin: 0; font-size: 22px; font-weight: 500; line-height: 1.2; }
@@ -210,6 +227,8 @@
   border-radius: var(--radius-lg); background: color-mix(in srgb, var(--c-surface) 94%, transparent);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 0 0 1px var(--c-divider), 0 16px 40px rgba(0, 0, 0, 0.65); pointer-events: auto;
+  /* At most a little over half the screen, so the city and its tiles stay in view above it (STORY-039) */
+  max-height: 55dvh; overflow-y: auto; overscroll-behavior: contain;
 }
 .city-card[hidden] { display: none; }
 .city-head { display: flex; align-items: flex-start; gap: 10px; }

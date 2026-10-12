@@ -62,8 +62,8 @@ async function foundCapital(page: Page): Promise<number> {
 const signed = (n: number) => (n < 0 ? `−${-n}` : `+${n}`);
 
 /** The city card's builds (STORY-037): a choice of both, each with its cost, purpose and time. */
-const BUILD_NAMES = { warrior: 'Soturi', settler: 'Uudisasukas' };
-const buildOption = (card: ReturnType<Page['getByRole']>, build: 'warrior' | 'settler') =>
+const BUILD_NAMES = { warrior: 'Soturi', settler: 'Uudisasukas', coinage: 'Kultaa' };
+const buildOption = (card: ReturnType<Page['getByRole']>, build: keyof typeof BUILD_NAMES) =>
   card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio', { name: new RegExp(`^${BUILD_NAMES[build]}`) });
 
 test('the settler founds the capital on the tapped tile; the city card shows its size, yields and build', async ({ page }, testInfo) => {
@@ -83,10 +83,10 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   await expect(card.locator('.city-yield-n')).toHaveText([signed(city.yield.surplus), signed(city.yield.shield), signed(city.yield.trade)]);
   await expect(card.locator('.city-yield-label')).toHaveText(['Ruoka', 'Tuotanto', 'Kauppa']);
   await expect(card.locator('.city-grow')).toHaveText(/^(kasvaa \d+ pv|ei kasva|nälkää)$/);
-  // Both builds to choose from; a Soturi first (a slow runner may have finished it before
-  // the pause, and the city gone on to settlers)
-  // Two units and three buildings (STORY-038)
-  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(5);
+  // The builds to choose from; a Soturi first (a slow runner may have finished it before
+  // the pause, and the city gone on to gold)
+  // Two units, three buildings (STORY-038) and Kultaa (STORY-039)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(6);
   await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');
   await expect(buildOption(card, 'settler')).toContainText('40 tuotantoa ja 1 asukas · Perustaa uuden kaupungin tai kehittää maata');
   await expect(buildOption(card, 'warrior')).toContainText(/(valmis \d+ pv|valmis huomenna|ei tuotantoa)/);
@@ -152,7 +152,8 @@ test.describe('on a phone', () => {
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(390);
     expect(box.y + box.height).toBeLessThanOrEqual(844);
-    for (const b of [...await card.getByRole('button').all(), ...await card.getByRole('radio').all()]) {
+    // Buttons, the builds and the focus labels (its radio inputs are hidden inside them)
+    for (const b of [...await card.getByRole('button').all(), ...await card.locator('.city-build').all(), ...await card.locator('.city-focus .seg-opt').all()]) {
       const r = (await b.boundingBox())!;
       expect(r.height).toBeGreaterThanOrEqual(43.5);
       expect(r.width).toBeGreaterThanOrEqual(43.5);

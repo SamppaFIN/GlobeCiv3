@@ -3,7 +3,8 @@
  * an accent ring at the selected unit's feet, scout paths as dotted ink, the settler's
  * way as an accent dash to a dashed circle at the city site, and the exploration flag.
  * Improvements (STORY-033): roads as ink ribbons between tile centres, irrigation and mines
- * as marks beside the tile centre. Bandits (STORY-034) are rust-red figures with their way
+ * as marks beside the tile centre. Each city's area has an accent border along the tile
+ * edges, which grows with the city (STORY-039). Bandits (STORY-034) are rust-red figures with their way
  * to the city as a rust dotted line.
  *
  * Every object sits at a tile centre with its geometry relative to it, so the float64
@@ -11,6 +12,7 @@
  */
 import * as THREE from 'three';
 import { neighbors, tileCenter } from './hexTiles';
+import { tilesInRings } from '../game/pathfinding';
 import { oklchToSrgb } from './colors';
 import type { Unit } from '../game/units';
 import type { ImprovementKind } from '../game/improvements';
@@ -137,6 +139,8 @@ export interface UnitView {
   improvements: readonly (readonly [number, readonly ImprovementKind[]])[];
   /** Bandits on their way to a city (STORY-034). */
   bandits: readonly Bandit[];
+  /** Cities' areas: the centre tile and the rings around it (STORY-039). */
+  areas: readonly { centre: number; rings: number }[];
   /** Distance between tile centres in world units, for sizes. */
   spacing: number;
 }
@@ -152,6 +156,8 @@ export class UnitLayer {
   private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false });
   private readonly roads = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(INK_DARK), depthTest: false, side: THREE.DoubleSide }));
   private lastRoads = '';
+  private readonly borders = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(ACCENT_LIGHT), depthTest: false, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
+  private lastBorders = '';
   private readonly ring: THREE.Sprite;
   private readonly flag: THREE.Sprite;
   private readonly paths = new THREE.Group();
@@ -168,12 +174,13 @@ export class UnitLayer {
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };
     this.roads.renderOrder = 6;
+    this.borders.renderOrder = 5;
     this.ring = sprite(this.textures.ring, 10);
     this.ring.center.set(0.5, 0.5);
     this.flag = sprite(this.textures.flag, 11);
     this.site = new THREE.LineLoop(new THREE.BufferGeometry(), this.dashed);
     this.site.renderOrder = 9;
-    this.group.add(this.roads, this.paths, this.site, this.ring, this.flag);
+    this.group.add(this.borders, this.roads, this.paths, this.site, this.ring, this.flag);
   }
 
   /** World position of a tile centre, lifted a little. */
@@ -235,8 +242,45 @@ export class UnitLayer {
       s.scale.set(size, size, 1);
       s.visible = facing(s.position);
     });
+    this.updateBorders(view);
     this.updateImprovements(view, size, facing);
     this.updatePaths(view);
+  }
+
+  /**
+   * The edge between an area's tile and a tile outside it runs between two corners; a
+   * corner is where three tiles meet, the normalised sum of their centres.
+   */
+  private updateBorders(view: UnitView): void {
+    const key = JSON.stringify([view.areas, view.spacing.toPrecision(3)]);
+    if (key === this.lastBorders) return;
+    this.lastBorders = key;
+    this.borders.geometry.dispose();
+    this.borders.geometry = new THREE.BufferGeometry();
+    if (!view.areas.length) return;
+    const origin = this.at(view.areas[0].centre);
+    const half = view.spacing * 0.025;
+    const pts: number[] = [];
+    const corner = (a: number, b: number, c: number) =>
+      tileCenter(a).add(tileCenter(b)).add(tileCenter(c)).normalize().multiplyScalar(this.radius * (1 + 2e-6)).sub(origin);
+    for (const area of view.areas) {
+      const inside = new Set(tilesInRings(area.centre, area.rings));
+      for (const t of inside) {
+        const around = neighbors(t);
+        for (const n of around) {
+          if (inside.has(n)) continue;
+          const common = neighbors(n).filter(m => around.includes(m));
+          if (common.length !== 2) continue;
+          const p = corner(t, n, common[0]);
+          const q = corner(t, n, common[1]);
+          const side = q.clone().sub(p).cross(p.clone().add(origin)).normalize().multiplyScalar(half);
+          const [p1, p2, q1, q2] = [p.clone().add(side), p.clone().sub(side), q.clone().add(side), q.clone().sub(side)];
+          for (const v of [p1, p2, q1, q1, p2, q2]) pts.push(v.x, v.y, v.z);
+        }
+      }
+    }
+    this.borders.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    this.borders.position.copy(origin);
   }
 
   /** Irrigation and mine marks at the lower right of their tiles, and the road ribbons. */

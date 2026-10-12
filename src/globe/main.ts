@@ -23,6 +23,7 @@ import { GameClock, type Speed } from '../game/clock';
 import { findPath, tilesInRings } from '../game/pathfinding';
 import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
+import { createTileYields } from '../ui/tileYields';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
@@ -39,7 +40,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { BUILDS, buy, buyCost, cityDay, cityGold, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Support } from '../game/cities';
+import { BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -694,10 +695,13 @@ function cityDays() {
     const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i]));
     play!.gold = paid.treasury;
     if (paid.sold.length) discoveryCard.notice(`Kulta loppui: ${c.name} myi ${paid.sold.map(b => BUILDS[b].name.toLowerCase()).join(' ja ')}`);
-    if (c.size > size) discoveryCard.notice(`${c.name} kasvoi kokoon ${c.size}`);
+    if (c.size > size) {
+      discoveryCard.notice(`${c.name} kasvoi kokoon ${c.size}${cityRings(c.size) > cityRings(size) ? ', ja sen alue laajeni' : ''}`);
+      moment('city', c.tile);
+    }
     if (!done) return;
     if (isBuilding(done)) moment('city', c.tile);
-    else play!.units.spawn(done, c.tile, world, c.id);
+    else if (done === 'warrior' || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
   });
   // A suggested site waiting for a settler gets the first free one
@@ -786,6 +790,9 @@ const cityLabels = createCityLabels(hud_root, id => {
   if (viewLevel !== 3) fly({ point: tileCenter(play.cities[id].tile), dist: frames[3], level: 3 });
 });
 
+// What the open city's tiles bring in, over the map and under the card (STORY-039)
+const tileYields = createTileYields(hud_root);
+
 function updateCityLabels() {
   if (!play) return;
   cityLabels.update(viewLevel === 0 ? [] : play.cities.map(c => {
@@ -798,6 +805,7 @@ function updateCityLabels() {
 const cityCard = createCityCard(hud_root, {
   close: () => { if (play) play.openCity = null; },
   // Shields in store are kept: both builds are units, so Freeciv has no change penalty
+  setFocus: (focus: Focus) => { if (play && play.openCity !== null) play.cities[play.openCity].focus = focus; },
   setBuild: (build: Build) => { if (play && play.openCity !== null) play.cities[play.openCity].build = build; },
   buy: () => {
     if (!play || play.openCity === null) return;
@@ -812,13 +820,28 @@ const cityCard = createCityCard(hud_root, {
 /** What each build does, for the city card (STORY-037, buildings STORY-038). */
 const BUILD_PURPOSE: Record<Build, string> = {
   warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
+  coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
 };
 
 function cityView(c: City, y: CityYield): CityView {
   const grow = daysToGrow(c, y);
   const price = buyCost(c);
+  const settlers = supportOf(c).settlers;
+  const rings = cityRings(c.size);
+  const nextSize = rings === 1 ? 2 : rings === 2 ? 5 : null;
+  // How to grow faster, when it is slow
+  const ways = [
+    ...(c.focus !== 'food' ? ['valitse Ruoka'] : []),
+    'kastele peltoja (uudisasukas: Kehitä)',
+    ...(c.buildings.includes('granary') ? [] : ['rakenna viljavarasto']),
+    ...(settlers ? [`uudisasukkaat syövät ${settlers} ruokaa: lähetä ne perustamaan kaupunkeja`] : []),
+  ];
   return {
+    foodText: `Ruokaa ${y.food} · asukkaat syövät ${2 * c.size}${settlers ? ` · uudisasukkaat ${settlers}` : ''} · varastossa ${c.food}/${granary(c.size)}`,
+    focus: c.focus,
+    areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
+    hint: y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
     gold: play?.gold ?? 0,
     income: cityGold(c, y) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
     buy: price ? { name: BUILDS[c.build].name, price, can: price <= (play?.gold ?? 0) } : null,
@@ -834,8 +857,8 @@ function cityView(c: City, y: CityYield): CityView {
       const ready = daysToBuild({ ...c, build: kind }, y);
       return {
         kind, name: b.name, selected: kind === c.build,
-        cost: `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
+        eta: kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -847,11 +870,42 @@ function updateCityCard() {
   const id = play.openCity;
   if (id === null || viewLevel !== 3 || discoveryCard.visible) {
     if (cityCard.visible) cityCard.hide();
+    tileYields.update([]);
     return;
   }
-  const view = cityView(play.cities[id], cityYields()[id]);
+  const c = play.cities[id];
+  const view = cityView(c, cityYields()[id]);
   if (cityCard.visible) cityCard.update(view);
-  else cityCard.show(view);
+  else {
+    cityCard.show(view);
+    framing = c.tile;
+  }
+  // After a flight to the city, not during it
+  if (framing !== null && !rig.flying) {
+    keepAboveCard(framing);
+    framing = null;
+  }
+  tileYields.update(workedByCity()[id].map(t => {
+    const at = toScreen(tileCenter(t));
+    const y = yieldOf(t, t === c.tile);
+    return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
+  }));
+}
+
+/** A city to bring above its card once the camera is still. */
+let framing: number | null = null;
+
+/**
+ * Move the view so that a city stands midway between the top panel and the card: the
+ * point now on the screen where the city should move from becomes the centre.
+ */
+function keepAboveCard(tile: number) {
+  const at = toScreen(tileCenter(tile));
+  if (!at) return;
+  const top = document.querySelector('.hud-top')?.getBoundingClientRect().bottom ?? 0;
+  const goal = [window.innerWidth / 2, (top + cityCard.top()) / 2];
+  const centre = rig.raycast(ndcAt(window.innerWidth / 2 - (goal[0] - at[0]), window.innerHeight / 2 - (goal[1] - at[1])));
+  if (centre) rig.flyTo(centre.normalize(), rig.dist, reduceMotion() ? 0 : 0.4);
 }
 
 // ─── Discoveries (STORY-027) ──────────────────────
@@ -1272,6 +1326,7 @@ function updatePlay(dt: number) {
     founding: play.units.founding,
     improvements: play.improvements.entries(),
     bandits: play.raids.band?.bandits ?? [],
+    areas: play.cities.map(c => ({ centre: c.tile, rings: cityRings(c.size) })),
     spacing: tileSpacing(),
   }, camera.position);
   updateLevels();
@@ -1488,7 +1543,7 @@ frameStartPlanet();
       openLevel: play?.progress.openLevel ?? null, areaPlans: play ? [...play.units.areaPlans] : [], stateLine: play?.units.stateLine ?? null,
       discovery: play?.discoveries[0] ?? null, found: play?.found ?? 0, bonuses: play ? [...play.bonuses] : [],
       offer: play?.offers[0] ?? null, offered: play?.offered ?? [], pendingSite: play?.pendingSite ?? null, founding: play?.units.founding ?? false,
-      cities: play ? play.cities.map((c, i) => ({ ...c, yield: cityYields()[i] })) : [], openCity: play?.openCity ?? null,
+      cities: play ? play.cities.map((c, i) => ({ ...c, yield: cityYields()[i], rings: cityRings(c.size), worked: workedByCity()[i] })) : [], openCity: play?.openCity ?? null,
       improvements: play?.improvements.entries() ?? [],
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
