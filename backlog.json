@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T13:23:10Z",
+    "generated_at": "2026-10-12T17:29:59Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "4aedb59",
+    "git_commit": "dbcd21a",
     "git_branch": "main",
     "language": "fi"
   },
@@ -140,9 +140,10 @@
         "STORY-035",
         "STORY-036",
         "STORY-037",
-        "STORY-038"
+        "STORY-038",
+        "STORY-039"
       ],
-      "progress": 94
+      "progress": 95
     }
   ],
   "stories": [
@@ -1063,6 +1064,32 @@
         "plan": "PLAN-028",
         "implementation": "TICKET-IMPL-028",
         "testing": "TICKET-TEST-028"
+      }
+    },
+    {
+      "id": "STORY-039",
+      "epic": "EPIC-006",
+      "title": "Kaupungin kasvu, alue ja tuotot näkyviin",
+      "type": "story",
+      "narrative": "Pelaajana haluan ymmärtää, miten kaupunki kasvaa, nähdä sen rajojen kasvavan ja nähdä, mitä kansalaiset alueelta keräävät.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-028",
+        "STORY-038"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Kaupunkikortti kertoo, mihin ruoka menee (asukkaat syövät 2, uudisasukkaat 1, varasto), ja antaa hitaassa kasvussa vihjeen, miten kasvua nopeutetaan.",
+        "Pelaaja valitsee, mitä kansalaiset työstävät: Ruoka, Tasapaino tai Tuotanto.",
+        "Kaupungin alue kasvaa koon mukana (1 rengas koossa 1, 2 koossa 2–4, 3 koosta 5, oma sääntö) ja piirtyy kartalle rajana ruutujen reunoja pitkin. Kasvu näkyy hetkenä ja ilmoituksena.",
+        "Kun kortti on auki, jokaisen työstetyn ruudun päällä näkyy sen ruoka, tuotanto ja kauppa, ja kaupunki on kortin yläpuolella näkyvissä.",
+        "Kaupunki ei jää kasvuansaan: soturin tai rakennuksen jälkeen se tekee tuotannosta kultaa (Kultaa) eikä uudisasukkaita."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-029",
+        "implementation": "TICKET-IMPL-029",
+        "testing": "TICKET-TEST-029"
       }
     }
   ],
@@ -2622,6 +2649,60 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-029",
+      "story": "STORY-039",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Samin pelitesti: \"Kaupunki ei kasva, ei ole oikein käsitystä miten sen saa kasvamaan. Haluan nähdä myös kaupungin rajojen kasvavan ja nähdä mitä kaikkea kansalaiset alueelta keräävät.\" Testi toisti ansan: soturin jälkeen kaupunki rakensi uudisasukkaan, joka vei asukkaan seuraavassa kasvussa. Lisäksi joutilas uudisasukas söi kaupungin ruoan, joten ylijäämä oli 0 (päivä 326, koko 1). Oletus vaihdettiin Freecivin classic-sääntöjoukon Coinageen (data/classic/buildings.ruleset, commit 27a6a0c1): tuotanto muuttuu kullaksi, jolloin kaupunki kasvaa rauhassa ja kassa karttuu ostoja varten. Kortti selittää ruoan kulun ja kasvun keinot, painotus ohjaa ruutujen valintaa, alue kasvaa koon mukana ja näkyy rajana, ja työstettyjen ruutujen tuotot näkyvät kartalla.",
+      "alternatives_considered": [
+        {
+          "name": "Kiinteä alue (Civ I: 21 ruutua)",
+          "pros": "Uskollinen",
+          "cons": "Raja ei kasva",
+          "rejected_because": "Sami haluaa nähdä rajojen kasvavan"
+        },
+        {
+          "name": "Freeciv civ2civ3: alue kasvaa koossa 8 ja 16",
+          "pros": "Lähteellinen",
+          "cons": "Ensimmäinen kasvu vasta koossa 8",
+          "rejected_because": "Kasvun pitää näkyä heti alkupelissä"
+        },
+        {
+          "name": "Pelaaja valitsee työstettävät ruudut yksitellen (Civ I)",
+          "pros": "Täysi hallinta",
+          "cons": "Puhelimella työläs",
+          "rejected_because": "Painotus riittää ja sopii autonomiseen peliin"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts ja cities.test.ts",
+        "src/game/save.ts ja save.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityCard.ts, tileYields.ts (uusi), hud.css",
+        "tests/e2e/growth.e2e.ts (uusi), city.e2e.ts, buildings.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Alue koon mukaan, painotus ja Kultaa yksikkötesteineen",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Kortin kasvutiedot, raja kartalle, ruutujen tuotot, kaupunki kortin yläpuolelle",
+          "verify": "E2E ja kuvat, myös puhelimella"
+        },
+        {
+          "step": 3,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3741,6 +3822,50 @@
         "notes": "Kasvun ruoka muuttui: ylijäämä säilyy (Freeciv). Aiempi kasvutesti pysyi ennallaan, koska siinä laatikko täyttyi tasan."
       },
       "commit": "4aedb59",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-029",
+      "story": "STORY-039",
+      "plan": "PLAN-029",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/tileYields.ts",
+        "src/ui/hud.css",
+        "tests/e2e/growth.e2e.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/buildings.e2e.ts"
+      ],
+      "change_summary": "cities.ts: cityRings(size), Focus ja painotetut ruutuvalinnat (Ruoka 4×ruoka, Tasapaino 2×ruoka, Tuotanto 3×tuotanto) sekä Kultaa (coinage: tuotanto kullaksi, ei valmistu eikä sitä voi ostaa). Soturin tai rakennuksen jälkeen rakennus on Kultaa. Kaupunkikortissa on ruoan kulku, painotusvalitsin (Kansalaiset työstävät), alueen tieto ja kasvuvihje. Kortti on enintään 55 % näytön korkeudesta ja vierittyy, ja kamera siirtää kaupungin kortin yläpuolelle, kun kortti aukeaa (lennon jälkeen). tileYields piirtää työstettyjen ruutujen tuotot, ja unitLayer kaupunkien alueiden rajat ruutujen reunoja pitkin. Kasvusta tulee hetki ja ilmoitus, joka kertoo myös alueen laajenemisesta.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "cities.ts: City.focus, Build coinage, cityRings, FOCUS_NAMES, workedTiles, cityDay, cityGold, daysToBuild, buyCost",
+          "save.ts: focus ja coinage (vanhat tallennukset: Tasapaino)",
+          "CityView: foodText, focus, areaText, hint; CityCard.top; setFocus",
+          "UnitView.areas",
+          "main.ts: cityView, updateCityCard, keepAboveCard, tileYields, cityDays (kasvun hetki), debugin rings ja worked"
+        ],
+        "call_sites_found": [
+          "workedTiles: cityYield, workedByCity, nextJob",
+          "cityDay: cityDays",
+          "CITY_RINGS: perustamisen paljastus ja paikan arvio (2 rengasta, ennallaan)"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Sääntömuutokset: alue kasvaa koon mukana, ja soturin tai rakennuksen jälkeen tulee Kultaa (ennen uudisasukas). Testit päivitettiin näihin tarkoituksella."
+      },
+      "commit": "dbcd21a",
       "progress": 100
     }
   ],
@@ -6555,6 +6680,106 @@
           },
           {
             "item": "Osto Freecivin hinnalla",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-029",
+      "story": "STORY-039",
+      "implementation_ticket": "TICKET-IMPL-029",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Samin pelitesti: kaupunki ei kasvanut. E2E toisti syyn: soturin jälkeen kaupunki rakensi uudisasukkaan, joka vei asukkaan ensimmäisessä kasvussa, ja joutilas uudisasukas söi ruoan (päivä 326, koko 1, ruokaa 3, syöjiä 2 + 1). Korjaus: Kultaa oletuksena. Muut löydöt: kortin korkeusraja meni ensin löytökorttiin (sama varjorivi), joten se siirrettiin kaupunkikorttiin. Alueen testissä oletettiin koko 30 alueen rajaksi, vaikka koko 30 työstää 31 ruutua; testi muutettiin kokoon 40. Puhelintesti mittasi painotuksen piilotetut radio-inputit; mittaus rajattiin labeleihin.",
+        "files_changed": [
+          "src/game/cities.ts",
+          "src/ui/hud.css",
+          "src/game/cities.test.ts",
+          "tests/e2e/city.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: alue koon mukaan",
+            "expected": "Renkaat 1, 2, 2, 3, 3 kooille 1, 2, 4, 5, 12; koko 1 työstää ensimmäisen renkaan ruutua; koko 40 työstää kaikki 37",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: painotus",
+            "expected": "Ruoka ja Tasapaino valitsevat kalavedet, Tuotanto metsän",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: Kultaa",
+            "expected": "Ei valmistu eikä kerää varastoa; tuotanto + kauppa kullaksi; ei ostettavissa; soturin ja rakennuksen jälkeen Kultaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kortti, painotus, ruutujen tuotot ja kasvu",
+            "expected": "Ruoan kulku vastaa tilaa; Alue 1 rengas · laajenee koossa 2; Tasapaino valittuna; kaksi tuottomerkkiä; painotus vaihtuu; kasvu kokoon 2 → Alue 2 rengasta ja merkki lisää",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E puhelimella",
+            "expected": "Kortti enintään 56 % korkeudesta; kaupungin keskusmerkki yläpaneelin ja kortin välissä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kuvakaappaukset",
+            "expected": "Raja ja tuotot näkyvät, kasvuilmoitus",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 23 tiedostoa (127 testiä); E2E 51/52 rinnakkain, ja kameran lentotesti meni yksinään läpi 7/7 (kuorma); growth, city, buildings ja improvements CI-tilassa 7/7",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38280216861 (dbcd21a, 37 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Kasvu on ymmärrettävää, raja kasvaa ja tuotot näkyvät",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kortti selittää kasvun ja antaa painotuksen",
+            "checked": true
+          },
+          {
+            "item": "Alue kasvaa ja näkyy rajana",
+            "checked": true
+          },
+          {
+            "item": "Ruutujen tuotot näkyvät",
+            "checked": true
+          },
+          {
+            "item": "Kasvuansa korjattu (Kultaa)",
             "checked": true
           }
         ],

@@ -1,0 +1,100 @@
+{
+  "id": "TICKET-TEST-029",
+  "story": "STORY-039",
+  "implementation_ticket": "TICKET-IMPL-029",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Samin pelitesti: kaupunki ei kasvanut. E2E toisti syyn: soturin jälkeen kaupunki rakensi uudisasukkaan, joka vei asukkaan ensimmäisessä kasvussa, ja joutilas uudisasukas söi ruoan (päivä 326, koko 1, ruokaa 3, syöjiä 2 + 1). Korjaus: Kultaa oletuksena. Muut löydöt: kortin korkeusraja meni ensin löytökorttiin (sama varjorivi), joten se siirrettiin kaupunkikorttiin. Alueen testissä oletettiin koko 30 alueen rajaksi, vaikka koko 30 työstää 31 ruutua; testi muutettiin kokoon 40. Puhelintesti mittasi painotuksen piilotetut radio-inputit; mittaus rajattiin labeleihin.",
+    "files_changed": [
+      "src/game/cities.ts",
+      "src/ui/hud.css",
+      "src/game/cities.test.ts",
+      "tests/e2e/city.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: alue koon mukaan",
+        "expected": "Renkaat 1, 2, 2, 3, 3 kooille 1, 2, 4, 5, 12; koko 1 työstää ensimmäisen renkaan ruutua; koko 40 työstää kaikki 37",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: painotus",
+        "expected": "Ruoka ja Tasapaino valitsevat kalavedet, Tuotanto metsän",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: Kultaa",
+        "expected": "Ei valmistu eikä kerää varastoa; tuotanto + kauppa kullaksi; ei ostettavissa; soturin ja rakennuksen jälkeen Kultaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kortti, painotus, ruutujen tuotot ja kasvu",
+        "expected": "Ruoan kulku vastaa tilaa; Alue 1 rengas · laajenee koossa 2; Tasapaino valittuna; kaksi tuottomerkkiä; painotus vaihtuu; kasvu kokoon 2 → Alue 2 rengasta ja merkki lisää",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelimella",
+        "expected": "Kortti enintään 56 % korkeudesta; kaupungin keskusmerkki yläpaneelin ja kortin välissä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset",
+        "expected": "Raja ja tuotot näkyvät, kasvuilmoitus",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 23 tiedostoa (127 testiä); E2E 51/52 rinnakkain, ja kameran lentotesti meni yksinään läpi 7/7 (kuorma); growth, city, buildings ja improvements CI-tilassa 7/7",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38280216861 (dbcd21a, 37 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Kasvu on ymmärrettävää, raja kasvaa ja tuotot näkyvät",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kortti selittää kasvun ja antaa painotuksen",
+        "checked": true
+      },
+      {
+        "item": "Alue kasvaa ja näkyy rajana",
+        "checked": true
+      },
+      {
+        "item": "Ruutujen tuotot näkyvät",
+        "checked": true
+      },
+      {
+        "item": "Kasvuansa korjattu (Kultaa)",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

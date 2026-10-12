@@ -1,0 +1,54 @@
+{
+  "id": "PLAN-029",
+  "story": "STORY-039",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Samin pelitesti: \"Kaupunki ei kasva, ei ole oikein käsitystä miten sen saa kasvamaan. Haluan nähdä myös kaupungin rajojen kasvavan ja nähdä mitä kaikkea kansalaiset alueelta keräävät.\" Testi toisti ansan: soturin jälkeen kaupunki rakensi uudisasukkaan, joka vei asukkaan seuraavassa kasvussa. Lisäksi joutilas uudisasukas söi kaupungin ruoan, joten ylijäämä oli 0 (päivä 326, koko 1). Oletus vaihdettiin Freecivin classic-sääntöjoukon Coinageen (data/classic/buildings.ruleset, commit 27a6a0c1): tuotanto muuttuu kullaksi, jolloin kaupunki kasvaa rauhassa ja kassa karttuu ostoja varten. Kortti selittää ruoan kulun ja kasvun keinot, painotus ohjaa ruutujen valintaa, alue kasvaa koon mukana ja näkyy rajana, ja työstettyjen ruutujen tuotot näkyvät kartalla.",
+  "alternatives_considered": [
+    {
+      "name": "Kiinteä alue (Civ I: 21 ruutua)",
+      "pros": "Uskollinen",
+      "cons": "Raja ei kasva",
+      "rejected_because": "Sami haluaa nähdä rajojen kasvavan"
+    },
+    {
+      "name": "Freeciv civ2civ3: alue kasvaa koossa 8 ja 16",
+      "pros": "Lähteellinen",
+      "cons": "Ensimmäinen kasvu vasta koossa 8",
+      "rejected_because": "Kasvun pitää näkyä heti alkupelissä"
+    },
+    {
+      "name": "Pelaaja valitsee työstettävät ruudut yksitellen (Civ I)",
+      "pros": "Täysi hallinta",
+      "cons": "Puhelimella työläs",
+      "rejected_because": "Painotus riittää ja sopii autonomiseen peliin"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts ja cities.test.ts",
+    "src/game/save.ts ja save.test.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityCard.ts, tileYields.ts (uusi), hud.css",
+    "tests/e2e/growth.e2e.ts (uusi), city.e2e.ts, buildings.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Alue koon mukaan, painotus ja Kultaa yksikkötesteineen",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Kortin kasvutiedot, raja kartalle, ruutujen tuotot, kaupunki kortin yläpuolelle",
+      "verify": "E2E ja kuvat, myös puhelimella"
+    },
+    {
+      "step": 3,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-029",
+  "story": "STORY-039",
+  "plan": "PLAN-029",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/tileYields.ts",
+    "src/ui/hud.css",
+    "tests/e2e/growth.e2e.ts",
+    "tests/e2e/city.e2e.ts",
+    "tests/e2e/buildings.e2e.ts"
+  ],
+  "change_summary": "cities.ts: cityRings(size), Focus ja painotetut ruutuvalinnat (Ruoka 4×ruoka, Tasapaino 2×ruoka, Tuotanto 3×tuotanto) sekä Kultaa (coinage: tuotanto kullaksi, ei valmistu eikä sitä voi ostaa). Soturin tai rakennuksen jälkeen rakennus on Kultaa. Kaupunkikortissa on ruoan kulku, painotusvalitsin (Kansalaiset työstävät), alueen tieto ja kasvuvihje. Kortti on enintään 55 % näytön korkeudesta ja vierittyy, ja kamera siirtää kaupungin kortin yläpuolelle, kun kortti aukeaa (lennon jälkeen). tileYields piirtää työstettyjen ruutujen tuotot, ja unitLayer kaupunkien alueiden rajat ruutujen reunoja pitkin. Kasvusta tulee hetki ja ilmoitus, joka kertoo myös alueen laajenemisesta.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "cities.ts: City.focus, Build coinage, cityRings, FOCUS_NAMES, workedTiles, cityDay, cityGold, daysToBuild, buyCost",
+      "save.ts: focus ja coinage (vanhat tallennukset: Tasapaino)",
+      "CityView: foodText, focus, areaText, hint; CityCard.top; setFocus",
+      "UnitView.areas",
+      "main.ts: cityView, updateCityCard, keepAboveCard, tileYields, cityDays (kasvun hetki), debugin rings ja worked"
+    ],
+    "call_sites_found": [
+      "workedTiles: cityYield, workedByCity, nextJob",
+      "cityDay: cityDays",
+      "CITY_RINGS: perustamisen paljastus ja paikan arvio (2 rengasta, ennallaan)"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Sääntömuutokset: alue kasvaa koon mukana, ja soturin tai rakennuksen jälkeen tulee Kultaa (ennen uudisasukas). Testit päivitettiin näihin tarkoituksella."
+  },
+  "commit": "dbcd21a",
+  "progress": 100
+}
