@@ -1,0 +1,118 @@
+{
+  "id": "TICKET-TEST-025",
+  "story": "STORY-035",
+  "implementation_ticket": "TICKET-IMPL-025",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. E2E löysi vian: pelisilmukan aikana lisätty pulssi poistui samassa framessa, koska sen alku otettiin performance.now():sta ja framen aika rAF-aikaleimasta, joka on hieman aiempi. Ikä oli negatiivinen, ja pulseLook palautti null. Ikä rajataan nyt nollaan. Ensimmäisessä kuvassa kaivon hehku oli tasainen violetti kiekko; nyt valo kyllästyy ja ydin on lähes valkoinen kuten galleriassa. Ensimmäinen CI-ajo (38212454624, edeec75) oli punainen vanhan testin kilpailutilanteesta: GPU:ton ajokone ehti valmistaa pääkaupungin Soturin ennen kuin testi pysäytti pelin, ja kaupunki oli siirtynyt uudisasukkaisiin (STORY-033:n sääntö), joten kortti ei näyttänyt Soturia. Lisäksi kaksi play-testiä oli flaky: napautus osui uudisasukkaan viereen kävelleeseen tiedustelijaan, ja nopeusvalinnan teksti ei ehtinyt päivittyä 5 s:ssa. Korjaukset: rakennus luetaan tilasta, napautus odottaa tiedustelijoiden lähtöä, ja nopeustekstille annetaan 15 s.",
+    "files_changed": [
+      "src/globe/pulses.ts",
+      "src/globe/gravityWell.ts",
+      "tests/e2e/city.e2e.ts",
+      "tests/e2e/play.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader, pikselisuhde 0,5). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: kaivon kasvu, hiipuminen ja seuraaminen",
+        "expected": "Yli 0,7 0,25 s:ssa, yli 0,99 sekunnissa, alle 0,3 0,25 s irrotuksesta ja 0 lopuksi; liukuu uuteen painallukseen, uusi kaivo alkaa painalluksesta",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: pulssin kulku",
+        "expected": "Hehku ja kaksi rengasta kasvavat ja hiipuvat, poissa 1,6 s:ssa; vähennetyllä liikkeellä vain hehku samankokoisena; tason avautuminen suurempi kuin kaupunki, kaupunki suurempi kuin parannus",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: painallus aloitusnäytöllä",
+        "expected": "Valo painalluskohdassa nousee, kaivo seuraa osoitinta, valo palaa ennalleen irrotuksen jälkeen, pallon pyörittäminen luo kaivon",
+        "result": "pass (valo 0,0 → 211,6 / 255)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: pelissä painallus pallolla ja avaruudessa",
+        "expected": "Pallolla ei kaivoa, avaruudessa kaivo",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kaupungin ja rosvojen hetket",
+        "expected": "Kaupungin pulssi kestää 1,6 s (mitattu sivun sisällä), rosvopulssi rosvon ruudulla",
+        "result": "pass (1,61 s, pisin frame 100 ms)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: kaivo aloitusnäytöllä, pulssit planeetta-, lääni- ja ruututasolla sekä kaupungin perustaminen",
+        "expected": "Näkyvät ja samankokoiset kaikilla tasoilla",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Suorituskyky: aloitusnäyttö A/B samassa istunnossa (Chrome, Intel UHD, 1280×800, 5 s rAF-laskenta, kolme kierrosta)",
+        "expected": "Ei mitattavaa heikkenemistä",
+        "result": "main 28,4–30,5 fps levossa ja 35,2–36,0 painaessa; STORY-035 28,5–31,3 ja 35,4–37,9 kaivon kanssa. Absoluuttiset luvut ovat aiempaa 60 fps:ää alempia molemmissa, koska muut ohjelmat kuormittivat GPU:ta.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 22 tiedostoa (115 testiä); E2E 46/46; tuntumatestit CI-tilassa 3/3",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ensimmäinen CI-ajo",
+        "expected": "Vihreä",
+        "result": "Ajo 38212454624 (edeec75) punainen: city-testi oletti rakennukseksi Soturin; kaksi play-testiä flaky",
+        "outcome": "fail"
+      },
+      {
+        "steps": "city ja play CI-tilassa korjausten jälkeen",
+        "expected": "Vihreä",
+        "result": "7/7",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo korjausten jälkeen",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38216180697 (b8fbe4d, 36 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Tuntuu gallerialta, ja kartta pysyy luettavana",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Painovoimakaivo aloitusnäytöllä ja avaruudessa",
+        "checked": true
+      },
+      {
+        "item": "Hetket hehkuvat kaikilla zoom-tasoilla",
+        "checked": true
+      },
+      {
+        "item": "Vähennetty liike huomioitu",
+        "checked": true
+      },
+      {
+        "item": "Ei mitattavaa suorituskykykustannusta",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

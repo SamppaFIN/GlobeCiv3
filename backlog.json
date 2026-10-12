@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T05:18:19Z",
+    "generated_at": "2026-10-12T07:48:49Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "b590ac5",
+    "git_commit": "b8fbe4d",
     "git_branch": "main",
     "language": "fi"
   },
@@ -136,7 +136,8 @@
         "STORY-031",
         "STORY-032",
         "STORY-033",
-        "STORY-034"
+        "STORY-034",
+        "STORY-035"
       ],
       "progress": 93
     }
@@ -959,6 +960,32 @@
         "plan": "PLAN-024",
         "implementation": "TICKET-IMPL-024",
         "testing": "TICKET-TEST-024"
+      }
+    },
+    {
+      "id": "STORY-035",
+      "epic": "EPIC-006",
+      "title": "Tuntuma: painovoimakaivo ja hehkuvat hetket",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että peli tuntuu elävältä kosketukselle ja että tärkeät hetket hehkuvat, kuten Samin shader-galleriassa, ilman että Kartografi-kartta katoaa.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-021",
+        "STORY-032",
+        "STORY-034"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Painallus aloitusnäytöllä tai pelissä avaruudessa pallon vieressä luo painovoimakaivon: tähdet kiertyvät sisään, ja osoittimen alle kertyy valkoytiminen hehku, joka voimistuu painaessa, seuraa osoitinta ja hiipuu irrotettaessa. Painallus pallon pinnalla pelissä ei luo kaivoa.",
+        "Uusi kaupunki, löytö tai kaupunkiehdotus, rosvojen ilmaantuminen, taistelu kaupungilla, tason avautuminen ja valmis maanparannus lähettävät ruudultaan hehkun ja kaksi valorengasta, jotka ovat samankokoisia näytöllä kaikilla zoom-tasoilla ja kestävät 1,6 s seinäkelloa.",
+        "Vähennetyllä liikkeellä tähdet eivät liiku eivätkä renkaat laajene; vain hehku näkyy ja hiipuu.",
+        "Suorituskyky ei heikkene mitattavasti."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-025",
+        "implementation": "TICKET-IMPL-025",
+        "testing": "TICKET-TEST-025"
       }
     }
   ],
@@ -2296,6 +2323,68 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-025",
+      "story": "STORY-035",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Sami jakoi shader-gallerian (8 animoitua shaderia, painallus luo painovoimakaivon) ja sanoi, että pelin pitää tuntua jokseenkin siltä joka kerta. Kysymykseen \"miten pitkälle\" Sami valitsi vaihtoehdon Kosketus ja hetket: Kartografi-kartta säilyy, ja painallus sekä pelin tärkeät hetket saavat gallerian tunnun. Kaivo on puhdas tila (src/globe/gravityWell.ts), ja se vaikuttaa tähtien verteksishaderiin ja koko näytön hehkukerrokseen. Hetket ovat näytöllä vakiokokoisia sprite-pulsseja ruuduilla (src/globe/pulses.ts). Shaderit ovat omia; galleriasta ei kopioitu koodia, koska sen alkuperä ja lisenssi ovat tuntemattomat.",
+      "alternatives_considered": [
+        {
+          "name": "Vain aloitusnäyttö",
+          "pros": "Pienin muutos",
+          "cons": "Pelin aikana ei tuntumaa",
+          "rejected_because": "Sami valitsi Kosketus ja hetket"
+        },
+        {
+          "name": "Koko ilme uusiksi neonhehkuun",
+          "pros": "Lähin galleriaa",
+          "cons": "Kumoaa Kartografi-päätöksen (2026-10-10)",
+          "rejected_because": "Sami valitsi Kosketus ja hetket"
+        },
+        {
+          "name": "Kaivo myös kartan päällä pelissä",
+          "pros": "Tuntuma joka painalluksella",
+          "cons": "Hehku peittäisi kartan, jota pelaaja vetää ja napauttaa",
+          "rejected_because": "Kartta pysyy luettavana; kaivo syntyy avaruudesta"
+        },
+        {
+          "name": "Värinä (navigator.vibrate) hetkissä",
+          "pros": "Kosketus puhelimessa",
+          "cons": "Chrome estää ilman käyttäjän elettä ja kirjaa siitä konsoliin",
+          "rejected_because": "Myöhemmin, jos Sami haluaa"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/gravityWell.ts, pulses.ts ja feel.test.ts (uudet)",
+        "src/globe/main.ts",
+        "tests/e2e/feel.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Kaivo ja pulssit puhtaana logiikkana",
+          "verify": "Yksikkötestit"
+        },
+        {
+          "step": 2,
+          "action": "Tähtishaderi, hehkukerros ja osoitin",
+          "verify": "E2E-valomittaus ja kuvakaappaukset"
+        },
+        {
+          "step": 3,
+          "action": "Hetket pelin tapahtumiin",
+          "verify": "E2E ja kuvat kolmella zoom-tasolla"
+        },
+        {
+          "step": 4,
+          "action": "Mittaus, merge, CI ja hyväksyntä",
+          "verify": "A/B samassa istunnossa; vihreä CI"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3249,6 +3338,40 @@
         "notes": "Testit, jotka kytkevät löydöt pois, kytkevät samalla rosvot pois. Rosvot tarvitsevat kaupungin, joten testit ilman kaupunkia eivät kohtaa niitä. hexTiles-naapuritestille annettiin muiden raskaiden testien 30 s:n aikaraja."
       },
       "commit": "b590ac5",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-025",
+      "story": "STORY-035",
+      "plan": "PLAN-025",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/gravityWell.ts",
+        "src/globe/pulses.ts",
+        "src/globe/feel.test.ts",
+        "src/globe/main.ts",
+        "tests/e2e/feel.e2e.ts"
+      ],
+      "change_summary": "Tähdet piirretään omalla shaderilla pyöreinä pisteinä. Painovoimakaivo vetää niitä sisään ja kiertää ne itsensä ympäri, ja lähellä kaivoa ne kirkastuvat kohti aksenttiväriä. Hehku on koko näytön kerros kaiken päällä: valo lisätään, ja kyllästyvä käyrä tekee ytimestä lähes valkoisen ja reunasta violetin. Kaivo seuraa osoitinta (10/s) ja voimistuu painaessa (6/s). Pulssit ovat sprite-kerroksia ilman etäisyysskaalausta, joten ne ovat samankokoisia näytöllä kaikilla tasoilla. Väreinä ovat Kartografin aksentti, kulta ja ruoste.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "main.ts: tähtien materiaali, well, wellU, glowScene, wellAt, wellPointer, pulses, moment; animate päivittää kaivon ja pulssit ja piirtää hehkun",
+          "foundAt, world.improve, updateSiteOffer, updateDiscovery, updateRaidAlert, raidDay ja updateLevels lähettävät hetken",
+          "window.globeFeel (testeille)"
+        ],
+        "call_sites_found": [
+          "canvasin ja aloitusnäytön osoitintapahtumat",
+          "animaatiosilmukka"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kaivo pelissä vain avaruudesta, jottei hehku peitä vedettävää karttaa. Gallerian koodia ei käytetty."
+      },
+      "commit": "b8fbe4d",
       "progress": 100
     }
   ],
@@ -5649,6 +5772,124 @@
         "decision": "accepted",
         "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-11"
+      }
+    },
+    {
+      "id": "TICKET-TEST-025",
+      "story": "STORY-035",
+      "implementation_ticket": "TICKET-IMPL-025",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. E2E löysi vian: pelisilmukan aikana lisätty pulssi poistui samassa framessa, koska sen alku otettiin performance.now():sta ja framen aika rAF-aikaleimasta, joka on hieman aiempi. Ikä oli negatiivinen, ja pulseLook palautti null. Ikä rajataan nyt nollaan. Ensimmäisessä kuvassa kaivon hehku oli tasainen violetti kiekko; nyt valo kyllästyy ja ydin on lähes valkoinen kuten galleriassa. Ensimmäinen CI-ajo (38212454624, edeec75) oli punainen vanhan testin kilpailutilanteesta: GPU:ton ajokone ehti valmistaa pääkaupungin Soturin ennen kuin testi pysäytti pelin, ja kaupunki oli siirtynyt uudisasukkaisiin (STORY-033:n sääntö), joten kortti ei näyttänyt Soturia. Lisäksi kaksi play-testiä oli flaky: napautus osui uudisasukkaan viereen kävelleeseen tiedustelijaan, ja nopeusvalinnan teksti ei ehtinyt päivittyä 5 s:ssa. Korjaukset: rakennus luetaan tilasta, napautus odottaa tiedustelijoiden lähtöä, ja nopeustekstille annetaan 15 s.",
+        "files_changed": [
+          "src/globe/pulses.ts",
+          "src/globe/gravityWell.ts",
+          "tests/e2e/city.e2e.ts",
+          "tests/e2e/play.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa (SwiftShader, pikselisuhde 0,5). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: kaivon kasvu, hiipuminen ja seuraaminen",
+            "expected": "Yli 0,7 0,25 s:ssa, yli 0,99 sekunnissa, alle 0,3 0,25 s irrotuksesta ja 0 lopuksi; liukuu uuteen painallukseen, uusi kaivo alkaa painalluksesta",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: pulssin kulku",
+            "expected": "Hehku ja kaksi rengasta kasvavat ja hiipuvat, poissa 1,6 s:ssa; vähennetyllä liikkeellä vain hehku samankokoisena; tason avautuminen suurempi kuin kaupunki, kaupunki suurempi kuin parannus",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: painallus aloitusnäytöllä",
+            "expected": "Valo painalluskohdassa nousee, kaivo seuraa osoitinta, valo palaa ennalleen irrotuksen jälkeen, pallon pyörittäminen luo kaivon",
+            "result": "pass (valo 0,0 → 211,6 / 255)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: pelissä painallus pallolla ja avaruudessa",
+            "expected": "Pallolla ei kaivoa, avaruudessa kaivo",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kaupungin ja rosvojen hetket",
+            "expected": "Kaupungin pulssi kestää 1,6 s (mitattu sivun sisällä), rosvopulssi rosvon ruudulla",
+            "result": "pass (1,61 s, pisin frame 100 ms)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kuvakaappaukset: kaivo aloitusnäytöllä, pulssit planeetta-, lääni- ja ruututasolla sekä kaupungin perustaminen",
+            "expected": "Näkyvät ja samankokoiset kaikilla tasoilla",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Suorituskyky: aloitusnäyttö A/B samassa istunnossa (Chrome, Intel UHD, 1280×800, 5 s rAF-laskenta, kolme kierrosta)",
+            "expected": "Ei mitattavaa heikkenemistä",
+            "result": "main 28,4–30,5 fps levossa ja 35,2–36,0 painaessa; STORY-035 28,5–31,3 ja 35,4–37,9 kaivon kanssa. Absoluuttiset luvut ovat aiempaa 60 fps:ää alempia molemmissa, koska muut ohjelmat kuormittivat GPU:ta.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 22 tiedostoa (115 testiä); E2E 46/46; tuntumatestit CI-tilassa 3/3",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ensimmäinen CI-ajo",
+            "expected": "Vihreä",
+            "result": "Ajo 38212454624 (edeec75) punainen: city-testi oletti rakennukseksi Soturin; kaksi play-testiä flaky",
+            "outcome": "fail"
+          },
+          {
+            "steps": "city ja play CI-tilassa korjausten jälkeen",
+            "expected": "Vihreä",
+            "result": "7/7",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo korjausten jälkeen",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38216180697 (b8fbe4d, 36 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Tuntuu gallerialta, ja kartta pysyy luettavana",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Painovoimakaivo aloitusnäytöllä ja avaruudessa",
+            "checked": true
+          },
+          {
+            "item": "Hetket hehkuvat kaikilla zoom-tasoilla",
+            "checked": true
+          },
+          {
+            "item": "Vähennetty liike huomioitu",
+            "checked": true
+          },
+          {
+            "item": "Ei mitattavaa suorituskykykustannusta",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
       }
     }
   ]

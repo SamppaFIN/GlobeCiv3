@@ -1,0 +1,62 @@
+{
+  "id": "PLAN-025",
+  "story": "STORY-035",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Sami jakoi shader-gallerian (8 animoitua shaderia, painallus luo painovoimakaivon) ja sanoi, että pelin pitää tuntua jokseenkin siltä joka kerta. Kysymykseen \"miten pitkälle\" Sami valitsi vaihtoehdon Kosketus ja hetket: Kartografi-kartta säilyy, ja painallus sekä pelin tärkeät hetket saavat gallerian tunnun. Kaivo on puhdas tila (src/globe/gravityWell.ts), ja se vaikuttaa tähtien verteksishaderiin ja koko näytön hehkukerrokseen. Hetket ovat näytöllä vakiokokoisia sprite-pulsseja ruuduilla (src/globe/pulses.ts). Shaderit ovat omia; galleriasta ei kopioitu koodia, koska sen alkuperä ja lisenssi ovat tuntemattomat.",
+  "alternatives_considered": [
+    {
+      "name": "Vain aloitusnäyttö",
+      "pros": "Pienin muutos",
+      "cons": "Pelin aikana ei tuntumaa",
+      "rejected_because": "Sami valitsi Kosketus ja hetket"
+    },
+    {
+      "name": "Koko ilme uusiksi neonhehkuun",
+      "pros": "Lähin galleriaa",
+      "cons": "Kumoaa Kartografi-päätöksen (2026-10-10)",
+      "rejected_because": "Sami valitsi Kosketus ja hetket"
+    },
+    {
+      "name": "Kaivo myös kartan päällä pelissä",
+      "pros": "Tuntuma joka painalluksella",
+      "cons": "Hehku peittäisi kartan, jota pelaaja vetää ja napauttaa",
+      "rejected_because": "Kartta pysyy luettavana; kaivo syntyy avaruudesta"
+    },
+    {
+      "name": "Värinä (navigator.vibrate) hetkissä",
+      "pros": "Kosketus puhelimessa",
+      "cons": "Chrome estää ilman käyttäjän elettä ja kirjaa siitä konsoliin",
+      "rejected_because": "Myöhemmin, jos Sami haluaa"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/gravityWell.ts, pulses.ts ja feel.test.ts (uudet)",
+    "src/globe/main.ts",
+    "tests/e2e/feel.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Kaivo ja pulssit puhtaana logiikkana",
+      "verify": "Yksikkötestit"
+    },
+    {
+      "step": 2,
+      "action": "Tähtishaderi, hehkukerros ja osoitin",
+      "verify": "E2E-valomittaus ja kuvakaappaukset"
+    },
+    {
+      "step": 3,
+      "action": "Hetket pelin tapahtumiin",
+      "verify": "E2E ja kuvat kolmella zoom-tasolla"
+    },
+    {
+      "step": 4,
+      "action": "Mittaus, merge, CI ja hyväksyntä",
+      "verify": "A/B samassa istunnossa; vihreä CI"
+    }
+  ],
+  "status": "approved"
+}
