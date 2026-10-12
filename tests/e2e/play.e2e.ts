@@ -95,7 +95,8 @@ test('while paused, tapping the chosen speed goes on', async ({ page }) => {
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(page.locator('.hud-day-label')).toHaveText('Tauolla');
   await speed(page, '1×');
-  await expect(page.locator('.hud-day-label')).toHaveText('1× nopeus');
+  // The HUD shows it on the next frame, which can take seconds on a GPU-less runner
+  await expect(page.locator('.hud-day-label')).toHaveText('1× nopeus', { timeout: 15_000 });
   expect((await state(page)).paused).toBe(false);
   expect(errors).toEqual([]);
 });
@@ -115,6 +116,13 @@ test('scouts map the fog on their own and the meter follows the province', async
 test('a tap on the map selects a unit; modes, the flag and the settler act', async ({ page }) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
+  // Let the scouts walk off first: a scout next to the settler could be the figure nearest the tap
+  await page.waitForFunction(() => {
+    const w = window as any;
+    const units = w.globeGame.state.units;
+    const at = w.globeHexTiles.tileCenter(units[0].tile);
+    return units.slice(1).every((u: any) => w.globeHexTiles.tileCenter(u.tile).angleTo(at) > 0.0034 * 2.5);
+  }, null, { timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(page.locator('.hud-unit-name')).toHaveText('Tiedustelija 1');
   // Tap the settler's figure (a little above its feet)
