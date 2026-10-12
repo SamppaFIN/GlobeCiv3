@@ -15,6 +15,7 @@ import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
 import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './units';
 import type { Progress } from './progress';
+import { ADVANCE_LIST, TAX_RATES, type Advance } from './science';
 
 export const SAVE_VERSION = 1;
 
@@ -66,6 +67,9 @@ export interface SaveData {
   raidAlert: boolean;
   /** The treasury (STORY-038); a save from before it has the start gold. */
   gold: number;
+  /** Advances, research and the tax rate (STORY-040); saves from before have none and half. */
+  research: { known: Advance[]; target: Advance | null; bulbs: number };
+  tax: number;
 }
 
 /** Ranges the save is checked against. */
@@ -77,7 +81,7 @@ const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const FINDS: readonly FindKind[] = ['fish', 'ruins', 'ore', 'trail', 'lookout'];
-const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market'];
+const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library'];
 const BUILDS: readonly Build[] = ['warrior', 'settler', ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
@@ -180,7 +184,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           size: int(c.size, 'size', 1, 1000), food: int(c.food, 'food', 0, MAX_INT), shields: int(c.shields, 'shields', 0, MAX_INT),
           build: oneOf(c.build, BUILDS, 'build'),
           // Saves from before STORY-038 have no buildings; each building is there once
-          buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), 3))],
+          buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), BUILDINGS.length))],
           // Saves from before STORY-039 have no focus
           focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
         };
@@ -211,6 +215,15 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       },
       raidAlert: bool(s.raidAlert, 'raid alert'),
       gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),
+      research: s.research === undefined ? { known: [], target: null, bulbs: 0 } : (() => {
+        const r = obj(s.research, 'research');
+        return {
+          known: [...new Set(list(r.known, 'known', a => oneOf(a, ADVANCE_LIST, 'advance'), ADVANCE_LIST.length))],
+          target: orNull(r.target, a => oneOf(a, ADVANCE_LIST, 'target')),
+          bulbs: int(r.bulbs, 'bulbs'),
+        };
+      })(),
+      tax: s.tax === undefined ? 50 : oneOf(s.tax, TAX_RATES, 'tax'),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;

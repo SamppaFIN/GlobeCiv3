@@ -35,17 +35,22 @@ test('trade is gold; gold buys a granary, which the card lists and the city pays
   const card = page.getByRole('dialog', { name: 'Aamuranta' });
   await expect(card).toBeVisible();
 
-  // The treasury, and six builds: two units, three buildings with their upkeep, and Kultaa
+  // The treasury, and seven builds: two units, four buildings with their upkeep, and Kultaa
   const s = await state(page);
   await expect(card.locator('.city-gold')).toHaveText(new RegExp(`^Kassa ${s.gold} kultaa · [+−]\\d+/pv$`));
   const builds = card.getByRole('radiogroup', { name: 'Rakenna' });
-  await expect(builds.getByRole('radio')).toHaveCount(6);
+  await expect(builds.getByRole('radio')).toHaveCount(7);
   const granary = builds.getByRole('radio', { name: /^Viljavarasto/ });
   await expect(granary).toContainText('60 tuotantoa, 1 kulta/pv · Säilyttää puolet ruoasta, kun kaupunki kasvaa');
   await expect(builds.getByRole('radio', { name: /^Muuri/ })).toContainText('120 tuotantoa, 2 kultaa/pv · Soturit kolminkertaisesti vahvempia rosvoja vastaan');
   await expect(builds.getByRole('radio', { name: /^Tori/ })).toContainText('80 tuotantoa, 1 kulta/pv · Kaupasta 50 % enemmän kultaa');
 
   // The granary: too dear for the treasury at first, then bought
+  // A granary waits for Keramiikka (STORY-040)
+  await expect(granary).toBeDisabled();
+  await expect(granary).toContainText('vaatii: Keramiikka');
+  await page.evaluate(() => (window as any).globeDebug.learn('pottery'));
+  await expect(granary).toBeEnabled();
   await granary.click();
   await expect(granary).toBeChecked();
   const buyButton = card.locator('.city-buy');
@@ -69,7 +74,7 @@ test('trade is gold; gold buys a granary, which the card lists and the city pays
   await page.waitForFunction(() => (window as any).globeGame.state.cities[0].buildings.includes('granary'), null, { timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(card.locator('.city-buildings')).toHaveText('Rakennukset: Viljavarasto');
-  await expect(builds.getByRole('radio')).toHaveCount(5);
+  await expect(builds.getByRole('radio')).toHaveCount(6);
   await expect(builds.getByRole('radio', { name: /^Viljavarasto/ })).toHaveCount(0);
   const after = await state(page);
   expect(after.cities[0].build).toBe('coinage');

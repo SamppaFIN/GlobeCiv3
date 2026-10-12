@@ -51,15 +51,16 @@ describe('cities', () => {
     expect(workedTiles(c, yieldOf)).toEqual([START, OCEAN_FISH]);
     c.focus = 'production';
     expect(workedTiles(c, yieldOf)).toEqual([START, FOREST]);
-    expect(cityYield(c, yieldOf)).toEqual({ food: 4, shield: 2, trade: 0, surplus: 2 });
+    expect(cityYield(c, yieldOf)).toEqual({ food: 4, shield: 2, trade: 1, surplus: 2 });
   });
 
   it('yield the source table values of the worked tiles, less 2 food per citizen', () => {
-    // The grassland centre is irrigated: 3 food; the ocean with fish 3 food and 2 trade
-    expect(cityYield(city(1), yieldOf)).toEqual({ food: 6, shield: 0, trade: 2, surplus: 4 });
-    expect(cityYield(city(2), yieldOf)).toEqual({ food: 7, shield: 2, trade: 2, surplus: 3 });
+    // The grassland centre is irrigated and has a road (STORY-040): 3 food and 1 trade; the
+    // ocean with fish 3 food and 2 trade
+    expect(cityYield(city(1), yieldOf)).toEqual({ food: 6, shield: 0, trade: 3, surplus: 4 });
+    expect(cityYield(city(2), yieldOf)).toEqual({ food: 7, shield: 2, trade: 3, surplus: 3 });
     // Three desert tiles more: shields only, and the citizens go hungry
-    expect(cityYield(city(5), yieldOf)).toEqual({ food: 7, shield: 5, trade: 2, surplus: -3 });
+    expect(cityYield(city(5), yieldOf)).toEqual({ food: 7, shield: 5, trade: 3, surplus: -3 });
     expect(workedYield({ terrain: 'hills', resource: null }, true).food).toBe(2);
     expect(workedYield({ terrain: 'forest', resource: null }, true).food).toBe(1);
   });
@@ -79,9 +80,9 @@ describe('cities', () => {
   });
 
   it('pay upkeep under Despotism: three units free, a shield for each beyond, a food for each settler', () => {
-    const c = city(2); // 7 food, 2 shields, 2 trade, surplus 3
-    expect(cityYield(c, yieldOf, undefined, { units: 3, settlers: 0 })).toEqual({ food: 7, shield: 2, trade: 2, surplus: 3 });
-    expect(cityYield(c, yieldOf, undefined, { units: 5, settlers: 2 })).toEqual({ food: 7, shield: 0, trade: 2, surplus: 1 });
+    const c = city(2); // 7 food, 2 shields, 3 trade, surplus 3
+    expect(cityYield(c, yieldOf, undefined, { units: 3, settlers: 0 })).toEqual({ food: 7, shield: 2, trade: 3, surplus: 3 });
+    expect(cityYield(c, yieldOf, undefined, { units: 5, settlers: 2 })).toEqual({ food: 7, shield: 0, trade: 3, surplus: 1 });
     const six = { units: 6, settlers: 0 };
     expect(shortfall(c, cityYield(c, yieldOf, undefined, six), six)).toBe('shield');
     // Out of food with settlers to feed: a settler leaves before the city starves

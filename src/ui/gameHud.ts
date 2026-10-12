@@ -38,6 +38,8 @@ export interface GameHudState {
   city: string | null;
   /** Discoveries waiting for the player (STORY-037). */
   finds: number;
+  /** No advance is being researched though one could be (STORY-040). */
+  chooseResearch: boolean;
 }
 
 export interface GameHudHandlers {
@@ -54,6 +56,8 @@ export interface GameHudHandlers {
   openCity(): void;
   /** Open the oldest waiting discovery. */
   openFind(): void;
+  /** Open the science card. */
+  openResearch(): void;
 }
 
 export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(state: GameHudState): void; element: HTMLElement } {
@@ -77,7 +81,10 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       </div>
     </section>
     <section class="hud-panel hud-bottom" aria-label="Valittu yksikkö">
-      <button class="btn btn-primary hud-finds" type="button" hidden></button>
+      <div class="hud-pills">
+        <button class="btn btn-primary hud-pill hud-finds" type="button" hidden></button>
+        <button class="btn btn-primary hud-pill hud-research" type="button" hidden>${SPARK}<span>Valitse tutkimus</span></button>
+      </div>
       <button class="hud-unit" type="button" aria-label="Seuraava yksikkö"><span class="hud-unit-name"></span><span class="hud-unit-status"></span></button>
       <div class="hud-row hud-scout">
         <div class="seg hud-modes" role="radiogroup" aria-label="Moodi">
@@ -112,6 +119,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openCity);
   q<HTMLButtonElement>('.hud-finds').addEventListener('click', on.openFind);
+  q<HTMLButtonElement>('.hud-research').addEventListener('click', on.openResearch);
 
   let last = '';
   return {
@@ -140,6 +148,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       const finds = q<HTMLButtonElement>('.hud-finds');
       finds.hidden = s.finds === 0;
       finds.innerHTML = `${SPARK}<span>${s.finds === 1 ? 'Löytö odottaa' : `${s.finds} löytöä odottaa`}</span>`;
+      q<HTMLElement>('.hud-research').hidden = !s.chooseResearch;
       const bottom = q<HTMLElement>('.hud-bottom');
       bottom.hidden = !s.unit || s.level !== 3;
       if (!s.unit) return;
