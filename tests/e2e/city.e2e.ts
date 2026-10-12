@@ -111,11 +111,16 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   const [cx, cy] = await onScreen(page, city.tile);
   await page.mouse.click(cx, cy - 10);
   await expect(card).toBeVisible();
-  // Without a pointer: the HUD's city button opens it from the keyboard
+  // Without a pointer: the list (STORY-042) opens it from the keyboard
   await card.getByRole('button', { name: 'Sulje' }).click();
   await expect(card).toBeHidden();
-  await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).focus();
+  await page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' }).focus();
   await page.keyboard.press('Enter');
+  const list = page.getByRole('dialog', { name: 'Luettelo' });
+  await expect(list).toBeVisible();
+  await list.getByRole('button', { name: /^Aamuranta/ }).focus();
+  await page.keyboard.press('Enter');
+  await expect(list).toBeHidden();
   await expect(card).toBeVisible();
 
   // Days go on (4× is still chosen): the city grows or its Soturi is ready
@@ -159,10 +164,10 @@ test.describe('on a phone', () => {
       expect(r.width).toBeGreaterThanOrEqual(43.5);
     }
     for (const b of await card.locator('.city-build').all()) expect(await b.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-    // The top panel still fits with the city button
+    // The top panel still fits with the list button
     const top = (await page.locator('.hud-top').boundingBox())!;
     expect(top.x + top.width).toBeLessThanOrEqual(390);
-    const cityButton = (await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).boundingBox())!;
+    const cityButton = (await page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' }).boundingBox())!;
     expect(cityButton.width).toBeGreaterThanOrEqual(43.5);
     expect(await page.locator('.hud-day').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('city-phone.png') });

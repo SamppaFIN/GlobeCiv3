@@ -92,6 +92,7 @@
 #hud.research-open .hud-bottom { display: none; }
 .city-build:disabled { opacity: 0.55; cursor: default; }
 .city-research { min-height: var(--touch-target); }
+.list-rows { display: flex; flex-direction: column; gap: 6px; }
 .hud-row[hidden] { display: none; }
 .hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
 .hud-city[hidden] { display: none; }

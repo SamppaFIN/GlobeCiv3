@@ -3,7 +3,8 @@
  *
  * Top: pause / play, speed 1× / 2× / 4×, "Päivä N" with the speed, and the province's
  * mapping meter with a tick at the unlock share. Bottom: the selected unit's name and
- * status; a scout's mode and the flag tool, or a settler's task (found cities or improve
+ * status; a scout's mode and the flag tool, or a settler's task. The list button opens the
+ * cities and units (STORY-042); a settler's task (found cities or improve
  * land, STORY-033) and the city site actions.
  */
 import { SPEEDS, type Speed } from '../game/clock';
@@ -17,8 +18,8 @@ const FLAG = '<svg width="20" height="20" viewBox="0 0 256 256" fill="currentCol
 // A four-pointed spark (own icon) for the waiting discoveries
 const SPARK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 C13 8 16 11 22 12 C16 13 13 16 12 22 C11 16 8 13 2 12 C8 11 11 8 12 2 Z"/></svg>';
 
-// A house (own icon) for the city button
-const CITY = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 L12 4 L21 11 M5 10 V20 H19 V10 M10 20 V14 H14 V20"/></svg>';
+// A list (own icon) for the list of cities and units (STORY-042)
+const LIST = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6 H20 M9 12 H20 M9 18 H20"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>';
 
 export interface GameHudState {
   day: number;
@@ -54,8 +55,8 @@ export interface GameHudHandlers {
   nextSite(): void;
   /** Select the next unit and bring it into view. */
   nextUnit(): void;
-  /** Open a city's card, the next one on each press. */
-  openCity(): void;
+  /** Open the list of cities and units (STORY-042). */
+  openList(): void;
   /** Open the oldest waiting discovery. */
   openFind(): void;
   /** Open the science card. */
@@ -74,7 +75,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         <div class="seg hud-speed" role="radiogroup" aria-label="Nopeus">
           ${SPEEDS.map(s => `<label class="seg-opt"><input type="radio" name="hud-speed" value="${s}">${s}×</label>`).join('')}
         </div>
-        <button class="btn btn-secondary hud-icon hud-city" type="button" hidden>${CITY}</button>
+        <button class="btn btn-secondary hud-icon hud-city" type="button" aria-label="Luettelo: kaupungit ja yksiköt">${LIST}</button>
         <div class="hud-spacer"></div>
         <div class="hud-day"><span class="hud-day-n"></span><span class="hud-day-label"></span></div>
       </div>
@@ -122,7 +123,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-found').addEventListener('click', on.found);
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
-  q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openCity);
+  q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openList);
   q<HTMLButtonElement>('.hud-finds').addEventListener('click', on.openFind);
   q<HTMLButtonElement>('.hud-research').addEventListener('click', on.openResearch);
   q<HTMLButtonElement>('.hud-goal').addEventListener('click', on.goalHint);
@@ -152,9 +153,6 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       goal.hidden = !s.goal;
       if (s.goal) goal.innerHTML = `<span class="hud-goal-label">Tavoite</span><span class="hud-goal-text"></span><span class="hud-goal-reward">+${s.goal.reward} kultaa</span>`;
       if (s.goal) goal.querySelector('.hud-goal-text')!.textContent = s.goal.text;
-      const city = q<HTMLElement>('.hud-city');
-      city.hidden = !s.city;
-      if (s.city) city.setAttribute('aria-label', `Kaupunki: ${s.city}`);
       const finds = q<HTMLButtonElement>('.hud-finds');
       finds.hidden = s.finds === 0;
       finds.innerHTML = `${SPARK}<span>${s.finds === 1 ? 'Löytö odottaa' : `${s.finds} löytöä odottaa`}</span>`;

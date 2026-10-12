@@ -25,6 +25,7 @@ import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
+import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
 import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
@@ -534,6 +535,9 @@ interface Play {
   researchOpen: boolean;
   /** The current goal (STORY-041). */
   goal: number;
+  /** The list of cities and units is open, and which tab (STORY-042). */
+  listOpen: boolean;
+  listTab: ListTab;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -600,13 +604,15 @@ function startPlay(startCity: number, saved?: SaveData) {
     openFind: () => { if (play && play.discoveries.length) play.findOpen = true; },
     openResearch: () => { if (play) play.researchOpen = true; },
     goalHint: () => { if (play && GOALS[play.goal]) discoveryCard.notice(GOALS[play.goal].hint); },
-    openCity: () => {
-      if (!play || !play.cities.length) return;
-      play.openCity = play.openCity === null ? 0 : (play.openCity + 1) % play.cities.length;
+    openList: () => {
+      if (!play) return;
+      play.listOpen = !play.listOpen;
+      play.openCity = null;
+      play.researchOpen = false;
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, goal: 0, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -897,7 +903,7 @@ function cityView(c: City, y: CityYield): CityView {
 function updateCityCard() {
   if (!play) return;
   const id = play.openCity;
-  if (id === null || viewLevel !== 3 || discoveryCard.visible || researchCard.visible) {
+  if (id === null || viewLevel !== 3 || discoveryCard.visible || researchCard.visible || listCard.visible) {
     if (cityCard.visible) cityCard.hide();
     tileYields.update([]);
     return;
@@ -919,6 +925,56 @@ function updateCityCard() {
     const y = yieldOf(t, t === c.tile);
     return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
   }));
+}
+
+// ─── The list of cities and units (STORY-042) ─────
+const KIND_NAMES: Record<string, string> = { scout: 'tiedustelija', settler: 'uudisasukas', warrior: 'soturi' };
+
+const listCard = createListCard(hud_root, {
+  close: () => { if (play) play.listOpen = false; },
+  tab: (tab: ListTab) => { if (play) play.listTab = tab; },
+  city: (id: number) => {
+    if (!play) return;
+    play.listOpen = false;
+    rig.flyTo(tileCenter(play.cities[id].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+    play.openCity = id;
+  },
+  unit: (index: number) => {
+    if (!play) return;
+    play.listOpen = false;
+    play.selected = index;
+    rig.flyTo(tileCenter(play.units.units[index].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+  },
+});
+
+function listView(): ListView {
+  const yields = cityYields();
+  return {
+    tab: play!.listTab,
+    cities: play!.cities.map((c, i) => {
+      const y = yields[i];
+      const ready = daysToBuild(c, y);
+      const when = c.build === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : ready === 0 ? 'valmis huomenna' : `${ready} pv`;
+      return {
+        id: c.id, name: c.name, size: `Koko ${c.size}`,
+        line: [`${BUILDS[c.build].name} · ${when}`, `ruokaa ${y.surplus < 0 ? '−' : '+'}${Math.abs(y.surplus)}`, ...(c.buildings.length ? [c.buildings.map(b => BUILDS[b].name).join(', ')] : [])].join(' · '),
+      };
+    }),
+    units: play!.units.units.map((u, index) => ({
+      index, name: u.name, kind: KIND_NAMES[u.kind],
+      line: unitStatus(play!.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name),
+    })),
+  };
+}
+
+function updateListCard() {
+  if (!play || !play.listOpen || viewLevel !== 3 || discoveryCard.visible) {
+    if (listCard.visible) listCard.hide();
+    return;
+  }
+  const view = listView();
+  if (listCard.visible) listCard.update(view);
+  else listCard.show(view);
 }
 
 // ─── Goals (STORY-041) ────────────────────────────
@@ -990,7 +1046,7 @@ function researchView(): ResearchView {
 }
 
 function updateResearchCard() {
-  if (!play || !play.researchOpen || viewLevel !== 3 || discoveryCard.visible) {
+  if (!play || !play.researchOpen || viewLevel !== 3 || discoveryCard.visible || listCard.visible) {
     if (researchCard.visible) researchCard.hide();
     return;
   }
@@ -1407,6 +1463,7 @@ function updatePlay(dt: number) {
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   updateDiscovery();
   updateCityLabels();
+  updateListCard();
   updateCityCard();
   updateResearchCard();
   checkGoals();
