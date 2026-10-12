@@ -68,14 +68,21 @@
 .hud-top { top: max(32px, calc(env(safe-area-inset-top) + 8px)); }
 .hud-bottom, .level-bottom { bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px)); padding: 8px; }
 .hud-row { display: flex; align-items: center; gap: 8px; }
-/* Waiting discoveries (STORY-037): a pill just above the unit panel */
-.hud-finds {
-  position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+/* Waiting discoveries (STORY-037) and science to choose (STORY-040): pills just above the unit panel */
+.hud-pills {
+  position: absolute; bottom: calc(100% + 10px); left: 0; right: 0;
+  display: flex; justify-content: center; gap: 8px; pointer-events: none;
+}
+.hud-pill {
+  pointer-events: auto;
   min-height: var(--touch-target); padding: 0 16px; gap: 8px; border-radius: 999px; white-space: nowrap;
   color: var(--c-accent-text); background: var(--c-hud); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
 }
-.hud-finds[hidden] { display: none; }
+.hud-pill[hidden] { display: none; }
+#hud.research-open .hud-bottom { display: none; }
+.city-build:disabled { opacity: 0.55; cursor: default; }
+.city-research { min-height: var(--touch-target); }
 .hud-row[hidden] { display: none; }
 .hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
 .hud-city[hidden] { display: none; }

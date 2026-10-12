@@ -19,16 +19,22 @@
  * One turn is one game day. Own choices: citizens work the tiles with the most
  * 2 × food + shields + trade, and a starving city shrinks with an empty food box.
  */
+import { improvementYield } from './improvements';
+import { splitTrade } from './science';
 import { tilesInRings } from './pathfinding';
 import { tileYield, type Terrain, type TileInfo, type Yield } from './terrainTypes';
 
 /** Extra food on a city centre: irrigation_food_incr of the terrains that can be irrigated. */
 export const CENTRE_IRRIGATION: Partial<Record<Terrain, number>> = { desert: 1, grassland: 1, hills: 1, plains: 1 };
 
-/** A worked tile's yield; the centre gets its irrigation. */
+/**
+ * A worked tile's yield; the centre gets its irrigation, and its road: Freeciv civ1 has a
+ * road on every city centre (terrain.ruleset extra Road, flag AlwaysOnCityCenter, commit
+ * 63c099a4), +1 trade on desert, grassland and plains (STORY-040).
+ */
 export function workedYield(info: TileInfo, centre: boolean): Yield {
   const y = tileYield(info);
-  return centre ? { ...y, food: y.food + (CENTRE_IRRIGATION[info.terrain] ?? 0) } : y;
+  return centre ? { ...y, food: y.food + (CENTRE_IRRIGATION[info.terrain] ?? 0), trade: y.trade + improvementYield('road', info.terrain).trade } : y;
 }
 
 /** Units a city supports free of shield upkeep. */
@@ -63,12 +69,12 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * Buildings (STORY-038), Freeciv civ1 buildings.ruleset (commit 27a6a0c1): build_cost and
  * upkeep in gold a day. A granary keeps half of the new food box when the city grows
  * (effects.ruleset Growth_Food 50), walls give defenders +200 % (Defend_Bonus 200, and no
- * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50). Own: no tech is
- * needed yet (Pottery, Masonry and Currency in Civ I).
+ * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
+ * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market'] as const;
+export const BUILDINGS = ['granary', 'walls', 'market', 'library'] as const;
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1 };
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -83,6 +89,7 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
   market: { name: 'Tori', cost: 80, pop: 0 },
+  library: { name: 'Kirjasto', cost: 80, pop: 0 },
   coinage: { name: 'Kultaa', cost: 0, pop: 0 },
 };
 
@@ -200,13 +207,15 @@ export function cityDay(city: City, y: CityYield): Build | null {
 }
 
 /**
- * Gold a city brings a day: its trade, +50 % with a marketplace, and its shields while it
- * makes gold (Kultaa). Own simplification: all
- * trade is gold while there is no science (Freeciv civ1 caps the tax rate at 60 % under
- * Despotism).
+ * Gold a city brings a day: the tax rate's share of its trade, +50 % with a marketplace,
+ * and its shields while it makes gold (Kultaa).
  */
-export const cityGold = (city: City, y: Yield) =>
-  Math.floor(y.trade * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
+export const cityGold = (city: City, y: Yield, tax = 100) =>
+  Math.floor(splitTrade(y.trade, tax).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
+
+/** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040). */
+export const cityScience = (city: City, y: Yield, tax: number) =>
+  Math.floor(splitTrade(y.trade, tax).science * (city.buildings.includes('library') ? 1.5 : 1));
 
 /**
  * Pay a city's building upkeep from the treasury. When it would fall below zero, buildings

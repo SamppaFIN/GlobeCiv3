@@ -24,6 +24,8 @@ import { findPath, tilesInRings } from '../game/pathfinding';
 import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
+import { createResearchCard, type ResearchView } from '../ui/researchCard';
+import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
@@ -40,7 +42,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -442,6 +444,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
+    research: play.research.save(), tax: play.tax,
   };
 }
 
@@ -524,6 +527,10 @@ interface Play {
   raidAlert: boolean;
   /** The treasury: trade comes in as gold, and buildings and buying cost it (STORY-038). */
   gold: number;
+  /** Advances known and researched, and the share of trade that becomes gold (STORY-040). */
+  research: Research;
+  tax: number;
+  researchOpen: boolean;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -588,13 +595,14 @@ function startPlay(startCity: number, saved?: SaveData) {
       rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
     },
     openFind: () => { if (play && play.discoveries.length) play.findOpen = true; },
+    openResearch: () => { if (play) play.researchOpen = true; },
     openCity: () => {
       if (!play || !play.cities.length) return;
       play.openCity = play.openCity === null ? 0 : (play.openCity + 1) % play.cities.length;
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -602,6 +610,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     discoveries: saved.discoveries, bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
     improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
+    research: new Research(saved.research), tax: saved.tax,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -615,8 +624,10 @@ function startPlay(startCity: number, saved?: SaveData) {
 
 const NO_YIELD: Yield = { food: 0, shield: 0, trade: 0 };
 
-/** Gold at the start: Freeciv GAME_DEFAULT_GOLD (common/game.h). */
+/** Gold at the start: Freeciv GAME_DEFAULT_GOLD (common/game.h); the civ1 ruleset's own setting is 0. */
 const START_GOLD = 50;
+/** Half the trade is gold at the start (own; Freeciv's player default is all science). */
+const START_TAX = 50;
 
 /** A worked tile's food, shields and trade: terrain, resource, an irrigated centre and improvements (Freeciv civ1), plus finds. */
 function yieldOf(id: number, centre: boolean) {
@@ -624,8 +635,8 @@ function yieldOf(id: number, centre: boolean) {
   const y = workedYield({ terrain, resource: tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null }, centre);
   const b = play?.bonuses.get(id) ?? NO_YIELD;
   const imp = play?.improvements.yieldOf(id, terrain) ?? NO_YIELD;
-  // The centre's irrigation is counted already
-  return { food: y.food + b.food + (centre ? 0 : imp.food), shield: y.shield + b.shield + imp.shield, trade: y.trade + b.trade + imp.trade };
+  // The centre's irrigation and road are counted already
+  return { food: y.food + b.food + (centre ? 0 : imp.food), shield: y.shield + b.shield + imp.shield, trade: y.trade + b.trade + (centre ? 0 : imp.trade) };
 }
 
 /** Units a city built and still supports. */
@@ -692,7 +703,7 @@ function cityDays() {
     const size = c.size;
     const done = cityDay(c, yields[i]);
     // Trade comes in as gold, and the buildings' upkeep goes out (STORY-038)
-    const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i]));
+    const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i], play!.tax));
     play!.gold = paid.treasury;
     if (paid.sold.length) discoveryCard.notice(`Kulta loppui: ${c.name} myi ${paid.sold.map(b => BUILDS[b].name.toLowerCase()).join(' ja ')}`);
     if (c.size > size) {
@@ -704,6 +715,13 @@ function cityDays() {
     else if (done === 'warrior' || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
   });
+  // The cities' science; an advance learned opens what needs it (STORY-040)
+  const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], play!.tax), 0));
+  if (learned) {
+    const opens = (Object.keys(NEEDS) as (keyof typeof NEEDS)[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
+    discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
+    if (play.cities[0]) moment('unlock', play.cities[0].tile);
+  }
   // A suggested site waiting for a settler gets the first free one
   const free = idleSettler();
   if (free && play.pendingSite !== null) {
@@ -806,7 +824,11 @@ const cityCard = createCityCard(hud_root, {
   close: () => { if (play) play.openCity = null; },
   // Shields in store are kept: both builds are units, so Freeciv has no change penalty
   setFocus: (focus: Focus) => { if (play && play.openCity !== null) play.cities[play.openCity].focus = focus; },
-  setBuild: (build: Build) => { if (play && play.openCity !== null) play.cities[play.openCity].build = build; },
+  setBuild: (build: Build) => {
+    if (!play || play.openCity === null || (isBuilding(build) && !play.research.known.has(NEEDS[build]))) return;
+    play.cities[play.openCity].build = build;
+  },
+  openResearch: () => { if (play) play.researchOpen = true; },
   buy: () => {
     if (!play || play.openCity === null) return;
     const c = play.cities[play.openCity];
@@ -821,6 +843,7 @@ const cityCard = createCityCard(hud_root, {
 const BUILD_PURPOSE: Record<Build, string> = {
   warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
   coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
+  library: 'Tieteeseen 50 % lisää',
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
 };
 
@@ -843,7 +866,8 @@ function cityView(c: City, y: CityYield): CityView {
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
     hint: y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
     gold: play?.gold ?? 0,
-    income: cityGold(c, y) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
+    income: cityGold(c, y, play?.tax ?? 100) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
+    research: researchLine(),
     buy: price ? { name: BUILDS[c.build].name, price, can: price <= (play?.gold ?? 0) } : null,
     buildings: c.buildings.map(b => BUILDS[b].name),
     kicker: `${c.capital ? 'Pääkaupunki' : 'Kaupunki'} · ${nameOf(2, regions.tileTable()[c.tile]).name}`,
@@ -855,10 +879,11 @@ function cityView(c: City, y: CityYield): CityView {
     builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind))).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
+      const locked = isBuilding(kind) && !play!.research.known.has(NEEDS[kind]);
       return {
-        kind, name: b.name, selected: kind === c.build,
+        kind, name: b.name, selected: kind === c.build, locked,
         cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        eta: locked && isBuilding(kind) ? `vaatii: ${ADVANCES[NEEDS[kind]].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -868,7 +893,7 @@ function cityView(c: City, y: CityYield): CityView {
 function updateCityCard() {
   if (!play) return;
   const id = play.openCity;
-  if (id === null || viewLevel !== 3 || discoveryCard.visible) {
+  if (id === null || viewLevel !== 3 || discoveryCard.visible || researchCard.visible) {
     if (cityCard.visible) cityCard.hide();
     tileYields.update([]);
     return;
@@ -890,6 +915,63 @@ function updateCityCard() {
     const y = yieldOf(t, t === c.tile);
     return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
   }));
+}
+
+// ─── Science (STORY-040) ──────────────────────────
+// Trade splits into gold and science by the tax rate; science brings advances, and
+// advances open buildings. The science card chooses the next advance and the rate.
+
+/** Science and gold a day from all cities. */
+function scienceRates() {
+  if (!play) return { science: 0, gold: 0 };
+  const yields = cityYields();
+  return {
+    science: play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], play!.tax), 0),
+    gold: play.cities.reduce((sum, c, i) => sum + cityGold(c, yields[i], play!.tax) - c.buildings.reduce((u, b) => u + UPKEEP[b], 0), 0),
+  };
+}
+
+function researchLine(): string {
+  const r = play!.research;
+  return r.target ? `Tutkimus: ${ADVANCES[r.target].name} ${Math.min(r.bulbs, r.cost)}/${r.cost}` : 'Tutkimus: valitse seuraava';
+}
+
+const researchCard = createResearchCard(hud_root, {
+  close: () => { if (play) play.researchOpen = false; },
+  choose: (advance: Advance) => { if (play && play.research.available().includes(advance)) play.research.target = advance; },
+  setTax: (tax: number) => { if (play) play.tax = tax; },
+});
+
+function researchView(): ResearchView {
+  const r = play!.research;
+  const rates = scienceRates();
+  const days = r.target && rates.science > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / rates.science)) : null;
+  // What an advance opens: the buildings that need it, and the advances that need it
+  const opens = (a: Advance) => [
+    ...(Object.keys(NEEDS) as (keyof typeof NEEDS)[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
+    ...(Object.keys(ADVANCES) as Advance[]).filter(n => ADVANCES[n].needs.includes(a)).map(n => `tutkimuksen ${ADVANCES[n].name}`),
+  ];
+  return {
+    rates: `Tiedettä +${rates.science}/pv · kultaa ${rates.gold < 0 ? '−' : '+'}${Math.abs(rates.gold)}/pv`,
+    current: r.target
+      ? `Tutkitaan: ${ADVANCES[r.target].name} · ${Math.min(r.bulbs, r.cost)}/${r.cost}${days ? ` · valmis ${days} pv` : ''}`
+      : 'Valitse, mitä tutkitaan. Tiede kertyy odottamaan.',
+    progress: r.cost ? r.bulbs / r.cost : 0,
+    hint: rates.science > 0 ? null : 'Tiedettä ei tule: tiede syntyy kaupasta. Kauppaa tuovat tiet ruoho-, tasanko- ja aavikkomaalla (uudisasukas: Kehitä) ja meriruudut; pienempi kullan osuus siirtää kauppaa tieteeseen.',
+    options: r.available().map(a => ({ advance: a, name: ADVANCES[a].name, cost: `${r.cost} tiedettä`, opens: `Avaa: ${opens(a).join(', ')}`, selected: a === r.target })),
+    tax: play!.tax,
+    known: r.known.size ? `Tunnetut: ${[...r.known].map(a => ADVANCES[a].name).join(', ')}` : 'Ei vielä keksintöjä',
+  };
+}
+
+function updateResearchCard() {
+  if (!play || !play.researchOpen || viewLevel !== 3 || discoveryCard.visible) {
+    if (researchCard.visible) researchCard.hide();
+    return;
+  }
+  const view = researchView();
+  if (researchCard.visible) researchCard.update(view);
+  else researchCard.show(view);
 }
 
 /** A city to bring above its card once the camera is still. */
@@ -1301,6 +1383,7 @@ function updatePlay(dt: number) {
   updateDiscovery();
   updateCityLabels();
   updateCityCard();
+  updateResearchCard();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
     day: clock.day,
@@ -1314,6 +1397,7 @@ function updatePlay(dt: number) {
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
     finds: play.discoveries.length,
+    chooseResearch: play.cities.length > 0 && play.research.target === null && play.research.available().length > 0 && !play.researchOpen,
   };
   play.hud.update(state);
   void autosave();
@@ -1499,6 +1583,9 @@ frameStartPlanet();
     return sites.slice(0, count);
   },
   sendTo: (tile: number) => play?.units.sendTo(tile, world) ?? false,
+  /** Learn an advance, or add bulbs (STORY-040). */
+  learn: (advance: Advance) => { play?.research.known.add(advance); },
+  addBulbs: (n: number) => { if (play) play.research.bulbs += n; },
   /** Set the treasury (STORY-038). */
   setGold: (gold: number) => { if (play) play.gold = gold; },
   /** Save now (STORY-036); resolves to whether the browser stored it. */
@@ -1548,6 +1635,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null,
     };
   },
 };
