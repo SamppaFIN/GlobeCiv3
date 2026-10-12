@@ -4,7 +4,8 @@
  * Kicker (capital or city, and the area), the name and a close button; the size with
  * the food box as a bar and the days to grow; food, shields and trade a day; and the
  * builds to choose from, each with its cost, what it does and when it would be ready
- * (STORY-037: "Vaihda" did not tell what the city can build).
+ * (STORY-037: "Vaihda" did not tell what the city can build); the treasury, buying the
+ * build and the buildings in the city (STORY-038).
  */
 import type { Build } from '../game/cities';
 
@@ -30,6 +31,13 @@ export interface CityView {
   yields: [number, number, number];
   /** Every build: "Soturi", "10 tuotantoa", what it does, "valmis 5 pv", and the one chosen. */
   builds: { kind: Build; name: string; cost: string; purpose: string; eta: string; selected: boolean }[];
+  /** The treasury, and what this city adds to it a day (its gold less its upkeep). */
+  gold: number;
+  income: number;
+  /** The rest of the build for gold, or null when nothing is missing. */
+  buy: { name: string; price: number; can: boolean } | null;
+  /** Names of the buildings in the city. */
+  buildings: string[];
 }
 
 export interface CityCard {
@@ -39,7 +47,7 @@ export interface CityCard {
   readonly visible: boolean;
 }
 
-export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(build: Build): void }): CityCard {
+export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(build: Build): void; buy(): void }): CityCard {
   const el = document.createElement('section');
   el.className = 'city-card';
   el.setAttribute('role', 'dialog');
@@ -58,13 +66,17 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     <div class="city-yields">
       ${LABELS.map((label, i) => `<div class="city-yield">${ICONS[i]}<span class="city-yield-n"></span><span class="city-yield-label">${label}</span></div>`).join('')}
     </div>
+    <span class="city-buildings"></span>
     <div class="city-builds" role="radiogroup" aria-labelledby="city-builds-label">
-      <span id="city-builds-label" class="city-build-label">Rakenna</span>
-    </div>`;
+      <span class="city-builds-head"><span id="city-builds-label" class="city-build-label">Rakenna</span><span class="city-gold"></span></span>
+    </div>
+    <button class="btn btn-secondary city-buy" type="button"></button>`;
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
   const builds = q('.city-builds');
+  const buyButton = q<HTMLButtonElement>('.city-buy');
+  buyButton.addEventListener('click', on.buy);
   let last = '';
   const update = (v: CityView) => {
     const key = JSON.stringify(v);
@@ -81,7 +93,17 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
       const y = v.yields[i];
       n.textContent = y < 0 ? `−${-y}` : `+${y}`;
     });
-    // One button per build, made once; a tap chooses it
+    q('.city-gold').textContent = `Kassa ${v.gold} kultaa · ${v.income < 0 ? '−' : '+'}${Math.abs(v.income)}/pv`;
+    const buildings = q('.city-buildings');
+    buildings.hidden = !v.buildings.length;
+    buildings.textContent = `Rakennukset: ${v.buildings.join(', ')}`;
+    buyButton.hidden = !v.buy;
+    if (v.buy) {
+      buyButton.textContent = v.buy.can ? `Osta ${v.buy.name.toLowerCase()} · ${v.buy.price} kultaa` : `Osta ${v.buy.name.toLowerCase()} · ${v.buy.price} kultaa (kassassa ${v.gold})`;
+      buyButton.disabled = !v.buy.can;
+    }
+    // One button per build, made once; a tap chooses it. A building once built leaves the list
+    builds.querySelectorAll<HTMLButtonElement>('.city-build').forEach((opt, i) => { if (i >= v.builds.length) opt.remove(); });
     v.builds.forEach((b, i) => {
       let opt = builds.querySelectorAll<HTMLButtonElement>('.city-build')[i];
       if (!opt) {
@@ -90,9 +112,10 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
         opt.className = 'city-build';
         opt.setAttribute('role', 'radio');
         opt.innerHTML = '<span class="city-build-top"><span class="city-build-name"></span><span class="city-build-eta"></span></span><span class="city-build-info"></span>';
-        opt.addEventListener('click', () => on.setBuild(b.kind));
+        opt.addEventListener('click', () => on.setBuild(opt!.dataset.kind as Build));
         builds.appendChild(opt);
       }
+      opt.dataset.kind = b.kind;
       opt.setAttribute('aria-checked', String(b.selected));
       opt.querySelector('.city-build-name')!.textContent = b.name;
       opt.querySelector('.city-build-eta')!.textContent = b.eta;

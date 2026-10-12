@@ -9,7 +9,7 @@
  * else makes the whole save invalid. Nothing in it is ever run as code.
  */
 import { SPEEDS, type Speed } from './clock';
-import type { City, Build } from './cities';
+import type { City, Build, Building } from './cities';
 import type { Discovery, FindKind, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
@@ -64,6 +64,8 @@ export interface SaveData {
   improvements: [number, ImprovementKind[]][];
   raids: RaidsSave;
   raidAlert: boolean;
+  /** The treasury (STORY-038); a save from before it has the start gold. */
+  gold: number;
 }
 
 /** Ranges the save is checked against. */
@@ -75,7 +77,10 @@ const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const FINDS: readonly FindKind[] = ['fish', 'ruins', 'ore', 'trail', 'lookout'];
-const BUILDS: readonly Build[] = ['warrior', 'settler'];
+const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market'];
+const BUILDS: readonly Build[] = ['warrior', 'settler', ...BUILDINGS];
+/** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
+const START_GOLD = 50;
 const IMPROVEMENTS: readonly ImprovementKind[] = ['irrigation', 'mine', 'road'];
 const METERS: readonly Progress['meter'][] = ['province', 'state', 'done'];
 /** Bounds on list lengths and numbers, far above anything a game reaches. */
@@ -173,6 +178,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           id: int(c.id, 'city id', 0, 10_000), name: str(c.name, 'city name'), tile: tile(c.tile), capital: bool(c.capital, 'capital'),
           size: int(c.size, 'size', 1, 1000), food: int(c.food, 'food', 0, MAX_INT), shields: int(c.shields, 'shields', 0, MAX_INT),
           build: oneOf(c.build, BUILDS, 'build'),
+          // Saves from before STORY-038 have no buildings; each building is there once
+          buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), 3))],
         };
       }, 10_000),
       offers: list(s.offers, 'offers', v => {
@@ -200,6 +207,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         nextId: int(r.nextId, 'bandit next id'),
       },
       raidAlert: bool(s.raidAlert, 'raid alert'),
+      gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;
