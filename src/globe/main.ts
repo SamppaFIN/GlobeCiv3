@@ -28,6 +28,8 @@ import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World }
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
 import { banditWins, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { UnitLayer } from './unitLayer';
+import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
+import { PulseLayer, type PulseKind } from './pulses';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, type RegionName } from '../game/names';
@@ -158,8 +160,16 @@ for (let i = 0; i < 2000; i++) {
   starsPos.push(r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi));
 }
 starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsPos, 3));
-const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
+// A press makes a gravity well: the stars swirl in and a glow gathers (STORY-035)
+const well = newWell();
+const wellU = wellUniforms();
+const starsMat = starMaterial(wellU, 0.15);
 starScene.add(new THREE.Points(starsGeo, starsMat));
+const glowScene = new THREE.Scene();
+glowScene.add(glowMesh(wellU));
+const glowCamera = new THREE.Camera();
+/** View units of a CSS pixel position: NDC with x scaled by the aspect ratio. */
+const wellAt = (x: number, y: number): [number, number] => [((x / window.innerWidth) * 2 - 1) * camera.aspect, 1 - (y / window.innerHeight) * 2];
 
 // ─── View levels: a tap selects a region, a second tap dives into it ─
 // The level follows from the camera distance, so wheel, pinch and taps agree.
@@ -192,11 +202,26 @@ function onTap(clientX: number, clientY: number) {
 // A tap is one pointer that goes down and up within 8 px and 500 ms; drags and pinches are not taps
 const presses = new Map<number, { x: number; y: number; t: number }>();
 let pinched = false;
+let wellPointer: number | null = null;
 renderer.domElement.addEventListener('pointerdown', e => {
   presses.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
   if (presses.size > 1) pinched = true;
+  if (presses.size > 1) {
+    wellPointer = null;
+    releaseWell(well);
+  } else if (!rig.raycast(ndcAt(e.clientX, e.clientY))) {
+    wellPointer = e.pointerId;
+    pressWell(well, ...wellAt(e.clientX, e.clientY));
+  }
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (e.pointerId === wellPointer) moveWell(well, ...wellAt(e.clientX, e.clientY));
 });
 const release = (e: PointerEvent, tap: boolean) => {
+  if (e.pointerId === wellPointer) {
+    wellPointer = null;
+    releaseWell(well);
+  }
   const press = presses.get(e.pointerId);
   presses.delete(e.pointerId);
   const wasPinch = pinched;
@@ -273,17 +298,24 @@ if (startScreen) {
     if ((e.target as Element).closest('button')) return;
     last = [e.clientX, e.clientY];
     grabbed = rig.raycast(ndcAt(e.clientX, e.clientY))?.normalize() ?? null;
+    pressWell(well, ...wellAt(e.clientX, e.clientY));
     try { el.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ }
   });
   el.addEventListener('pointermove', e => {
     if (!last || screen !== 'start') return;
+    moveWell(well, ...wellAt(e.clientX, e.clientY));
     const under = grabbed && rig.raycast(ndcAt(e.clientX, e.clientY));
     // Orbit so that the ray through the pointer meets the grabbed point again
     if (grabbed && under) orbitStart(new THREE.Quaternion().setFromUnitVectors(under.normalize(), grabbed));
     else turnStartPlanet(e.clientX - last[0], e.clientY - last[1]);
     last = [e.clientX, e.clientY];
   });
-  for (const type of ['pointerup', 'pointercancel'] as const) el.addEventListener(type, () => { last = grabbed = null; });
+  for (const type of ['pointerup', 'pointercancel'] as const) {
+    el.addEventListener(type, () => {
+      last = grabbed = null;
+      releaseWell(well);
+    });
+  }
   window.addEventListener('keydown', e => {
     const step = startRadiusPx * 0.15;
     const turn = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
@@ -371,6 +403,10 @@ function newGame() {
 const clock = new GameClock();
 const unitLayer = new UnitLayer(RADIUS);
 scene.add(unitLayer.group);
+// The game's moments glow out from their tiles (STORY-035)
+const pulses = new PulseLayer(RADIUS);
+scene.add(pulses.group);
+const moment = (kind: PulseKind, tile: number) => pulses.add(kind, tile, performance.now());
 interface Play {
   units: Units;
   selected: number;
@@ -437,6 +473,7 @@ const world: World = {
   improve: (tile, kind) => {
     if (!play) return;
     play.improvements.add(tile, kind);
+    moment('improve', tile);
     discoveryCard.notice(`${IMPROVEMENT_NAMES[kind]} valmis · ${TERRAIN_RULES[terrainOf(tile)].name.toLowerCase()}`);
   },
 };
@@ -534,6 +571,7 @@ function nextJob(u: Unit) {
 function foundAt(tile: number) {
   if (!play) return;
   const city = foundCity(play.cities, tile);
+  moment('city', tile);
   reveal(tilesInRings(tile, CITY_RINGS));
   play.openCity = city.id;
 }
@@ -733,6 +771,7 @@ function updateSiteOffer() {
   }
   if (!discoveryCard.visible) {
     shownCard = 'site';
+    moment('find', o.tile);
     const settler = idleSettler();
     const y = siteYield(o.tile);
     const days = settler ? Units.days(findPath(settler.tile, o.tile, id => world.cost(id)) ?? [], world) : 0;
@@ -766,6 +805,7 @@ function updateDiscovery() {
   }
   if (!discoveryCard.visible) {
     shownCard = 'find';
+    moment('find', d.tile);
     discoveryCard.show({
       day: clock.day,
       kicker: `Löytö · ${play.units.units.find(u => u.id === d.finder)?.name ?? 'Tiedustelija'}`,
@@ -823,7 +863,10 @@ function raidDay() {
   const band = play.raids.band;
   const city = band && play.cities.find(c => c.tile === band.city);
   const events = play.raids.day(raidWorld);
-  if (city && events.length) discoveryCard.notice(`${raidNotice(events)} · ${city.name}`);
+  if (city && events.length) {
+    discoveryCard.notice(`${raidNotice(events)} · ${city.name}`);
+    moment(events.includes('plundered') || events.includes('won') ? 'raid' : 'victory', city.tile);
+  }
   if (play.raids.band || !raidsOn || !play.cities.length || !uprising(game.seed, clock.day, play.cities.length)) return;
   startRaid(play.cities[Math.floor(raidRoll(game.seed, clock.day, 100) * play.cities.length)]);
 }
@@ -846,6 +889,7 @@ function updateRaidAlert() {
   const lead = band.bandits[0].tile;
   if (!discoveryCard.visible) {
     shownCard = 'raid';
+    moment('raid', lead);
     const c = play.cities.find(x => x.tile === band.city)!;
     const soldiers = soldiersIn(c.tile).length;
     const ready = daysToBuild({ ...c, build: 'warrior' }, cityYields()[play.cities.indexOf(c)]);
@@ -960,6 +1004,7 @@ function updateLevels() {
     lockedLevel = opened;
     rig.maxDist = lockDist(opened);
     unlockCard.show(opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : 'Valtio kartoitettu, zoomaa ulos');
+    moment('unlock', play.cities[0]?.tile ?? pointToTile(rig.target));
   }
   const list: Chip[] = [];
   if (viewLevel === 2 || viewLevel === 1) {
@@ -1166,6 +1211,7 @@ const lightY = new THREE.Vector3();
 const lightZ = new THREE.Vector3();
 const lightBasis = camera.matrixWorld;
 let lastFrame = performance.now();
+const bufferSize = new THREE.Vector2();
 function animate(now = performance.now()) {
   requestAnimationFrame(animate);
   // Real elapsed time, not clamped: a 1 s flight must last 1 s even when frames are slow
@@ -1185,10 +1231,19 @@ function animate(now = performance.now()) {
   updatePlay(dt);
   tiles.update(camera, renderer.domElement.clientHeight, dt);
   starCamera.quaternion.copy(spinInverse).multiply(camera.quaternion);
+  stepWell(well, dt);
+  wellU.wellPos.value.set(well.x, well.y);
+  wellU.wellG.value = well.g;
+  wellU.wellBend.value = reduceMotion() ? 0 : 1;
+  wellU.aspect.value = camera.aspect;
+  wellU.time.value = now / 1000;
+  starsMat.uniforms.scale.value = renderer.getDrawingBufferSize(bufferSize).y / 2;
+  pulses.update(now, camera, renderer.domElement.clientHeight, reduceMotion());
   renderer.clear();
   renderer.render(starScene, starCamera);
   renderer.clearDepth();
   renderer.render(scene, camera);
+  if (well.g > 0) renderer.render(glowScene, glowCamera);
 }
 animate();
 
@@ -1272,6 +1327,12 @@ frameStartPlanet();
   },
 };
 (window as any).globeHexTiles = { pointToTile, tileCenter, neighbors };
+// For tests (STORY-035): the well, the pulses, and a pulse at the view's centre
+(window as any).globeFeel = {
+  get well() { return { ...well }; },
+  get pulses() { return pulses.state; },
+  pulse: (kind: PulseKind) => moment(kind, pointToTile(rig.target)),
+};
 (window as any).globeGame = {
   get state() {
     return {
