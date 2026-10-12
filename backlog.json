@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T12:06:51Z",
+    "generated_at": "2026-10-12T12:43:27Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "c3bfa9b",
+    "git_commit": "ecfe45f",
     "git_branch": "main",
     "language": "fi"
   },
@@ -138,7 +138,8 @@
         "STORY-033",
         "STORY-034",
         "STORY-035",
-        "STORY-036"
+        "STORY-036",
+        "STORY-037"
       ],
       "progress": 94
     }
@@ -1012,6 +1013,30 @@
         "plan": "PLAN-026",
         "implementation": "TICKET-IMPL-026",
         "testing": "TICKET-TEST-026"
+      }
+    },
+    {
+      "id": "STORY-037",
+      "epic": "EPIC-006",
+      "title": "Löydöt odottavat, ja kaupunki näyttää rakennukset",
+      "type": "story",
+      "narrative": "Pelaajana haluan päättää itse, milloin avaan löydöt, ja nähdä, mitä kaupunki voi rakentaa, jotta voin hoitaa kaupunkia, vaikka tiedustelijoita on paljon.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-027",
+        "STORY-028"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Löytö ei pysäytä peliä eikä avaa korttia itsestään. Löytäjän ilmoitus ja hetken pulssi kertovat siitä, ja yksikköpaneelin yläpuolella on Löytö odottaa -pilleri (tai N löytöä odottaa).",
+        "Pilleri avaa vanhimman löydön kortin. Kortti pysäyttää pelin vain avattuna, ja sen Myöhemmin-vaihtoehto sulkee kortin ja säilyttää löydön.",
+        "Kaupunkikortti näyttää molemmat rakennukset valintana: nimi, hinta, mitä rakennus tekee ja milloin se olisi valmis (tai että se vaatii suuremman koon). Napautus valitsee rakennuksen."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-027",
+        "implementation": "TICKET-IMPL-027",
+        "testing": "TICKET-TEST-027"
       }
     }
   ],
@@ -2464,6 +2489,54 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-027",
+      "story": "STORY-037",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Samin pelitesti: \"jos vain valitsee pelkkiä tutkijoita, niin aina on joku löydös kesken ja ei pääse esim. kaupunkia säätämään. Kaupungissa oli epäselvää mitä pystyn rakentamaan.\" Löydöt jonoutuvat kuten ennenkin, mutta eivät pysäytä peliä. Ne odottavat HUDissa, kunnes pelaaja avaa ne, ja kortti pysäyttää pelin vain avattuna (design 4a säilyy). Kaupunkiehdotukset ja rosvot pysäyttävät pelin edelleen, koska ne ovat harvinaisia ja kiireellisiä. Kaupunkikortin Vaihda-nappi korvataan valinnalla, joka näyttää molemmat rakennukset.",
+      "alternatives_considered": [
+        {
+          "name": "Löytöjen väli (esim. yksi kymmenessä päivässä)",
+          "pros": "Pieni muutos",
+          "cons": "Kortit keskeyttävät yhä, ja löytöjä jää tekemättä",
+          "rejected_because": "Pelaajan pitää voida päättää itse, milloin hän valitsee"
+        },
+        {
+          "name": "Kaupunkikortti löytökortin päälle",
+          "pros": "Molemmat käytössä",
+          "cons": "Kaksi dialogia päällekkäin puhelimessa",
+          "rejected_because": "Yksi kortti kerrallaan pysyy selkeänä"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/main.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/hud.css",
+        "src/game/cities.ts (nextBuild pois)",
+        "tests/e2e/discovery.e2e.ts, city.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Löydöt jonoon ja pilleri",
+          "verify": "E2E: peli jatkuu, pilleri avaa, Myöhemmin säilyttää, valinta käyttää"
+        },
+        {
+          "step": 2,
+          "action": "Rakennusvalinta kaupunkikorttiin",
+          "verify": "E2E: valinnat, hinnat, tarkoitus, aika; puhelimella mahtuu"
+        },
+        {
+          "step": 3,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3497,6 +3570,48 @@
         "notes": "Turvallisuuteen vaikuttava muutos (tietoturvasääntö 4–5): ladattava data on syöte. Se tarkistetaan ennen käyttöä, ja peliin päätyy vain tarkistetuista kentistä rakennettu uusi olio."
       },
       "commit": "c3bfa9b",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-027",
+      "story": "STORY-037",
+      "plan": "PLAN-027",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/main.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/hud.css",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/discovery.e2e.ts"
+      ],
+      "change_summary": "Löydöt eivät enää pysäytä päiväkelloa eivätkä tason avautumista. Löytö näkyy löytäjän ilmoituksena ja pulssina, ja yksikköpaneelin yläpuolinen pilleri (Löytö odottaa / N löytöä odottaa) avaa vanhimman löydön kortin. Kortti pysäyttää pelin avattuna, ja siinä on uusi Myöhemmin-vaihtoehto. Kaupunkikortissa on rakennusten valinta (radiogroup Rakenna): Soturi (10 tuotantoa, puolustaa kaupunkia rosvoilta) ja Uudisasukas (40 tuotantoa ja 1 asukas, perustaa uuden kaupungin tai kehittää maata), kumpikin valmistumisaikoineen tai tiedolla, että se vaatii koon 2. Vaihda-nappi ja nextBuild poistuivat.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Play.findOpen; päiväsilmukka ja tasojen avautuminen eivät enää odota löytöjä",
+          "GameHudState.finds, GameHudHandlers.openFind",
+          "CityView.builds; createCityCard: setBuild",
+          "cities.ts: nextBuild ja BUILD_ORDER pois"
+        ],
+        "call_sites_found": [
+          "updatePlay",
+          "updateLevels",
+          "updateDiscovery",
+          "löytökortin valinta",
+          "noteDiscoveries",
+          "cityView"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Muuttaa STORY-027:n päätöstä: löytö pysäytti pelin heti. Testit päivitettiin uuteen käytökseen tarkoituksella."
+      },
+      "commit": "ecfe45f",
       "progress": 100
     }
   ],
@@ -6113,6 +6228,94 @@
           },
           {
             "item": "Tallennus tarkistetaan",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-027",
+      "story": "STORY-037",
+      "implementation_ticket": "TICKET-IMPL-027",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Samin pelitesti: löytökortti pysäytti pelin heti ja peitti kaupungin, ja monella tiedustelijalla kortteja tuli jatkuvasti. Kaupunkikortin Vaihda ei kertonut, mitä on tarjolla. Kuvista löytyi kaksi asiaa: pilleri oli läpikuultava ja erottui kartasta huonosti, joten se sai HUD-paneelien taustan. Lisäksi uudisasukkaan aika-arvio oli harhaanjohtava kokoa 1 olevassa kaupungissa (\"valmis 19 pv\", vaikka se vaatii koon 2), joten kortti kertoo nyt \"vaatii koon 2\".",
+        "files_changed": [
+          "src/globe/main.ts",
+          "src/ui/hud.css"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "E2E: löytö pelin aikana",
+            "expected": "Ei korttia, päivät kuluvat, pilleri Löytö odottaa näkyy",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: pilleri avaa kortin",
+            "expected": "Design 4a, kaksi löytöä ja Myöhemmin (vähintään 64 px), peli seis",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: Myöhemmin ja valinta",
+            "expected": "Myöhemmin sulkee ja löytö odottaa yhä; valinta käyttää löydön ja pilleri katoaa; peli jatkuu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kaupunkikortin rakennukset",
+            "expected": "Kaksi valintaa hintoineen, tarkoituksineen ja aikoineen, nykyinen valittuna; napautus vaihtaa ja takaisin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E puhelimella (390×844)",
+            "expected": "Löytökortti ja kaupunkikortti mahtuvat, valinnat vähintään 44 px, mikään ei leikkaudu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti",
+            "expected": "Vihreä",
+            "result": "E2E 48/48; discovery ja city CI-tilassa 4/4",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38246995059 (ecfe45f, 35 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Kaupunkia voi hoitaa monen tiedustelijan kanssa; rakennukset ovat selviä",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Löydöt eivät pysäytä peliä; pilleri avaa",
+            "checked": true
+          },
+          {
+            "item": "Myöhemmin säilyttää löydön",
+            "checked": true
+          },
+          {
+            "item": "Rakennukset näkyvät valintana",
             "checked": true
           }
         ],

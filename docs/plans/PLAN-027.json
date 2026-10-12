@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-027",
+  "story": "STORY-037",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Samin pelitesti: \"jos vain valitsee pelkkiä tutkijoita, niin aina on joku löydös kesken ja ei pääse esim. kaupunkia säätämään. Kaupungissa oli epäselvää mitä pystyn rakentamaan.\" Löydöt jonoutuvat kuten ennenkin, mutta eivät pysäytä peliä. Ne odottavat HUDissa, kunnes pelaaja avaa ne, ja kortti pysäyttää pelin vain avattuna (design 4a säilyy). Kaupunkiehdotukset ja rosvot pysäyttävät pelin edelleen, koska ne ovat harvinaisia ja kiireellisiä. Kaupunkikortin Vaihda-nappi korvataan valinnalla, joka näyttää molemmat rakennukset.",
+  "alternatives_considered": [
+    {
+      "name": "Löytöjen väli (esim. yksi kymmenessä päivässä)",
+      "pros": "Pieni muutos",
+      "cons": "Kortit keskeyttävät yhä, ja löytöjä jää tekemättä",
+      "rejected_because": "Pelaajan pitää voida päättää itse, milloin hän valitsee"
+    },
+    {
+      "name": "Kaupunkikortti löytökortin päälle",
+      "pros": "Molemmat käytössä",
+      "cons": "Kaksi dialogia päällekkäin puhelimessa",
+      "rejected_because": "Yksi kortti kerrallaan pysyy selkeänä"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css",
+    "src/game/cities.ts (nextBuild pois)",
+    "tests/e2e/discovery.e2e.ts, city.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Löydöt jonoon ja pilleri",
+      "verify": "E2E: peli jatkuu, pilleri avaa, Myöhemmin säilyttää, valinta käyttää"
+    },
+    {
+      "step": 2,
+      "action": "Rakennusvalinta kaupunkikorttiin",
+      "verify": "E2E: valinnat, hinnat, tarkoitus, aika; puhelimella mahtuu"
+    },
+    {
+      "step": 3,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

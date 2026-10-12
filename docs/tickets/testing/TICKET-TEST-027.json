@@ -1,0 +1,88 @@
+{
+  "id": "TICKET-TEST-027",
+  "story": "STORY-037",
+  "implementation_ticket": "TICKET-IMPL-027",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Samin pelitesti: löytökortti pysäytti pelin heti ja peitti kaupungin, ja monella tiedustelijalla kortteja tuli jatkuvasti. Kaupunkikortin Vaihda ei kertonut, mitä on tarjolla. Kuvista löytyi kaksi asiaa: pilleri oli läpikuultava ja erottui kartasta huonosti, joten se sai HUD-paneelien taustan. Lisäksi uudisasukkaan aika-arvio oli harhaanjohtava kokoa 1 olevassa kaupungissa (\"valmis 19 pv\", vaikka se vaatii koon 2), joten kortti kertoo nyt \"vaatii koon 2\".",
+    "files_changed": [
+      "src/globe/main.ts",
+      "src/ui/hud.css"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "E2E: löytö pelin aikana",
+        "expected": "Ei korttia, päivät kuluvat, pilleri Löytö odottaa näkyy",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: pilleri avaa kortin",
+        "expected": "Design 4a, kaksi löytöä ja Myöhemmin (vähintään 64 px), peli seis",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: Myöhemmin ja valinta",
+        "expected": "Myöhemmin sulkee ja löytö odottaa yhä; valinta käyttää löydön ja pilleri katoaa; peli jatkuu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kaupunkikortin rakennukset",
+        "expected": "Kaksi valintaa hintoineen, tarkoituksineen ja aikoineen, nykyinen valittuna; napautus vaihtaa ja takaisin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelimella (390×844)",
+        "expected": "Löytökortti ja kaupunkikortti mahtuvat, valinnat vähintään 44 px, mikään ei leikkaudu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti",
+        "expected": "Vihreä",
+        "result": "E2E 48/48; discovery ja city CI-tilassa 4/4",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38246995059 (ecfe45f, 35 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Kaupunkia voi hoitaa monen tiedustelijan kanssa; rakennukset ovat selviä",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Löydöt eivät pysäytä peliä; pilleri avaa",
+        "checked": true
+      },
+      {
+        "item": "Myöhemmin säilyttää löydön",
+        "checked": true
+      },
+      {
+        "item": "Rakennukset näkyvät valintana",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

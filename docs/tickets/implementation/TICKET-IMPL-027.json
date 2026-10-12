@@ -1,0 +1,42 @@
+{
+  "id": "TICKET-IMPL-027",
+  "story": "STORY-037",
+  "plan": "PLAN-027",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css",
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "tests/e2e/city.e2e.ts",
+    "tests/e2e/discovery.e2e.ts"
+  ],
+  "change_summary": "Löydöt eivät enää pysäytä päiväkelloa eivätkä tason avautumista. Löytö näkyy löytäjän ilmoituksena ja pulssina, ja yksikköpaneelin yläpuolinen pilleri (Löytö odottaa / N löytöä odottaa) avaa vanhimman löydön kortin. Kortti pysäyttää pelin avattuna, ja siinä on uusi Myöhemmin-vaihtoehto. Kaupunkikortissa on rakennusten valinta (radiogroup Rakenna): Soturi (10 tuotantoa, puolustaa kaupunkia rosvoilta) ja Uudisasukas (40 tuotantoa ja 1 asukas, perustaa uuden kaupungin tai kehittää maata), kumpikin valmistumisaikoineen tai tiedolla, että se vaatii koon 2. Vaihda-nappi ja nextBuild poistuivat.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Play.findOpen; päiväsilmukka ja tasojen avautuminen eivät enää odota löytöjä",
+      "GameHudState.finds, GameHudHandlers.openFind",
+      "CityView.builds; createCityCard: setBuild",
+      "cities.ts: nextBuild ja BUILD_ORDER pois"
+    ],
+    "call_sites_found": [
+      "updatePlay",
+      "updateLevels",
+      "updateDiscovery",
+      "löytökortin valinta",
+      "noteDiscoveries",
+      "cityView"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Muuttaa STORY-027:n päätöstä: löytö pysäytti pelin heti. Testit päivitettiin uuteen käytökseen tarkoituksella."
+  },
+  "commit": "ecfe45f",
+  "progress": 100
+}
