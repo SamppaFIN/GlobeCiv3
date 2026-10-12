@@ -68,6 +68,15 @@
 .hud-top { top: max(32px, calc(env(safe-area-inset-top) + 8px)); }
 .hud-bottom, .level-bottom { bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px)); padding: 8px; }
 .hud-row { display: flex; align-items: center; gap: 8px; }
+/* The current goal (STORY-041): a line under the meter; a tap tells how */
+.hud-goal {
+  display: flex; align-items: baseline; gap: 8px; min-height: 28px; padding: 0 2px; border: 0; background: none;
+  color: inherit; font: inherit; font-size: 12px; text-align: left; cursor: pointer;
+}
+.hud-goal[hidden] { display: none; }
+.hud-goal-label { color: var(--c-accent-text); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; }
+.hud-goal-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hud-goal-reward { color: var(--c-muted); white-space: nowrap; }
 /* Waiting discoveries (STORY-037) and science to choose (STORY-040): pills just above the unit panel */
 .hud-pills {
   position: absolute; bottom: calc(100% + 10px); left: 0; right: 0;
@@ -218,7 +227,7 @@
 #hud.discovering .hud-top, #hud.discovering .hud-bottom, #hud.discovering .level-bottom, #hud.discovering .chips { display: none; }
 .hud-notice {
   position: absolute; left: 8px; right: 8px; margin: 0 auto; max-width: 464px; width: fit-content;
-  top: calc(max(32px, calc(env(safe-area-inset-top) + 8px)) + 90px);
+  top: calc(max(32px, calc(env(safe-area-inset-top) + 8px)) + 124px);
   padding: 8px 12px; border-radius: var(--radius-md); background: var(--c-hud);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 13px;
   opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;

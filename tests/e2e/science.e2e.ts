@@ -22,7 +22,7 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   test.setTimeout(240_000);
   const errors = await startGame(page);
   // No city yet: nothing to research
-  await expect(page.getByRole('button', { name: 'Valitse tutkimus' })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Valitse tutkimus', exact: true })).toBeHidden();
   const name = page.locator('.hud-unit-name');
   for (let i = 0; i < 3 && (await name.textContent()) !== 'Uudisasukas'; i++) {
     const prev = (await name.textContent())!;
@@ -36,7 +36,7 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
 
   // The pill opens the science card: four advances to start, 10 bulbs each
-  await page.getByRole('button', { name: 'Valitse tutkimus' }).click();
+  await page.getByRole('button', { name: 'Valitse tutkimus', exact: true }).click();
   const card = page.getByRole('dialog', { name: 'Tutkimus' });
   await expect(card).toBeVisible();
   await expect(card.locator('.research-current')).toHaveText('Valitse, mitä tutkitaan. Tiede kertyy odottamaan.');
@@ -67,7 +67,7 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   await page.getByRole('button', { name: 'Tauko' }).click();
   const s = await state(page);
   expect([s.research.target, s.research.cost]).toEqual([null, 20]);
-  await expect(page.getByRole('button', { name: 'Valitse tutkimus' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Valitse tutkimus', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).click();
   const city = page.getByRole('dialog', { name: 'Aamuranta' });
   await expect(city.getByRole('radio', { name: /^Viljavarasto/ })).toBeEnabled();

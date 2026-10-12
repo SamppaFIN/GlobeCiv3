@@ -70,6 +70,8 @@ export interface SaveData {
   /** Advances, research and the tax rate (STORY-040); saves from before have none and half. */
   research: { known: Advance[]; target: Advance | null; bulbs: number };
   tax: number;
+  /** The current goal (STORY-041); saves from before start at the first and catch up. */
+  goal: number;
 }
 
 /** Ranges the save is checked against. */
@@ -224,6 +226,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         };
       })(),
       tax: s.tax === undefined ? 50 : oneOf(s.tax, TAX_RATES, 'tax'),
+      goal: s.goal === undefined ? 0 : int(s.goal, 'goal', 0, 1000),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;
