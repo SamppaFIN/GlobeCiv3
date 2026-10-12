@@ -76,7 +76,8 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   const soldiers = (await state(page)).units.filter((u: any) => u.kind === 'warrior').length;
   await card.getByRole('button', { name: /Rakenna soturi/ }).click();
   await expect(card).toBeHidden();
-  await expect(page.getByRole('status')).toHaveText('Aamuranta rakentaa soturin');
+  // A later notice (a fight) may replace it at once: look in all notices
+  await expect.poll(() => page.evaluate(() => (window as any).notices)).toContain('Aamuranta rakentaa soturin');
   const built = await state(page);
   expect(built.cities[0].build === 'warrior' || built.units.filter((u: any) => u.kind === 'warrior').length > soldiers).toBe(true);
 

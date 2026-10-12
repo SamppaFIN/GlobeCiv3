@@ -65,7 +65,7 @@ test('the game saves itself; after a reload Jatka goes on where it was', async (
   const after = await state(page);
   expect(kept(after)).toEqual(kept(before));
   await expect(page.locator('.hud-day-n')).toHaveText(`Päivä ${before.day}`);
-  await expect(page.getByRole('button', { name: 'Kaupunki: Aamuranta' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Kaupunki Aamuranta, koko/ })).toBeVisible();
   // And it goes on from there
   await page.getByRole('button', { name: 'Jatka' }).click();
   await page.waitForFunction(d => (window as any).globeGame.state.day > d, before.day, { timeout: 30_000 });

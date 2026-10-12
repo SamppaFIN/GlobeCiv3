@@ -25,6 +25,7 @@ import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
+import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
 import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
@@ -43,7 +44,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityMood, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -534,6 +535,9 @@ interface Play {
   researchOpen: boolean;
   /** The current goal (STORY-041). */
   goal: number;
+  /** The list of cities and units is open, and which tab (STORY-042). */
+  listOpen: boolean;
+  listTab: ListTab;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -600,13 +604,15 @@ function startPlay(startCity: number, saved?: SaveData) {
     openFind: () => { if (play && play.discoveries.length) play.findOpen = true; },
     openResearch: () => { if (play) play.researchOpen = true; },
     goalHint: () => { if (play && GOALS[play.goal]) discoveryCard.notice(GOALS[play.goal].hint); },
-    openCity: () => {
-      if (!play || !play.cities.length) return;
-      play.openCity = play.openCity === null ? 0 : (play.openCity + 1) % play.cities.length;
+    openList: () => {
+      if (!play) return;
+      play.listOpen = !play.listOpen;
+      play.openCity = null;
+      play.researchOpen = false;
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, goal: 0, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -656,9 +662,14 @@ function cityYields(): CityYield[] {
   return play.cities.map(c => {
     const y = cityYield(c, yieldOf, taken, supportOf(c));
     for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
-    return y;
+    return withMood(y, moodOf(c));
   });
 }
+
+/** A city's mood: its soldiers calm citizens under Despotism (STORY-044). */
+const moodOf = (c: City) => cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1);
+/** Cities in disorder on the last day, for the notices when it starts and ends. */
+const unrest = new Set<number>();
 
 /** Tiles each city works (or would, with `extra` citizens), in founding order; a tile is worked by the first city that takes it. */
 function workedByCity(extra = 0): number[][] {
@@ -698,6 +709,16 @@ function foundAt(tile: number) {
 function cityDays() {
   if (!play) return;
   let yields = cityYields();
+  // Disorder starts or ends
+  play.cities.forEach((c, i) => {
+    if (yields[i].disorder && !unrest.has(c.id)) {
+      unrest.add(c.id);
+      discoveryCard.notice(`Levottomuuksia: ${c.name} · tyytymättömät pysäyttivät kaupungin`);
+      moment('raid', c.tile);
+    } else if (!yields[i].disorder && unrest.delete(c.id)) {
+      discoveryCard.notice(`${c.name} rauhoittui`);
+    }
+  });
   play.cities.forEach((c, i) => {
     for (let short = shortfall(c, yields[i], supportOf(c)); short; short = shortfall(c, yields[i], supportOf(c))) {
       const own = play!.units.units.filter(u => u.home === c.id && (short === 'shield' || u.kind === 'settler'));
@@ -716,13 +737,13 @@ function cityDays() {
     }
     if (!done) return;
     if (isBuilding(done)) moment('city', c.tile);
-    else if (done === 'warrior' || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
+    else if (isSoldier(done) || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
   });
   // The cities' science; an advance learned opens what needs it (STORY-040)
   const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], play!.tax), 0));
   if (learned) {
-    const opens = (Object.keys(NEEDS) as (keyof typeof NEEDS)[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
+    const opens = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
     discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
   }
@@ -829,7 +850,8 @@ const cityCard = createCityCard(hud_root, {
   // Shields in store are kept: both builds are units, so Freeciv has no change penalty
   setFocus: (focus: Focus) => { if (play && play.openCity !== null) play.cities[play.openCity].focus = focus; },
   setBuild: (build: Build) => {
-    if (!play || play.openCity === null || (isBuilding(build) && !play.research.known.has(NEEDS[build]))) return;
+    const need = NEEDS[build];
+    if (!play || play.openCity === null || (need && !play.research.known.has(need))) return;
     play.cities[play.openCity].build = build;
   },
   openResearch: () => { if (play) play.researchOpen = true; },
@@ -847,7 +869,9 @@ const cityCard = createCityCard(hud_root, {
 const BUILD_PURPOSE: Record<Build, string> = {
   warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
   coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
+  phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
   library: 'Tieteeseen 50 % lisää',
+  temple: 'Rauhoittaa yhden tyytymättömän asukkaan',
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
 };
 
@@ -865,6 +889,15 @@ function cityView(c: City, y: CityYield): CityView {
     ...(settlers ? [`uudisasukkaat syövät ${settlers} ruokaa: lähetä ne perustamaan kaupunkeja`] : []),
   ];
   return {
+    ...(() => {
+      const m = moodOf(c);
+      return {
+        moodText: `Asukkaat: ${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}`,
+        disorder: m.disorder
+          ? 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Neljä asukasta on tyytyväisiä; jokainen kaupungissa oleva sotilas ja temppeli rauhoittavat yhden lisää.'
+          : null,
+      };
+    })(),
     foodText: `Ruokaa ${y.food} · asukkaat syövät ${2 * c.size}${settlers ? ` · uudisasukkaat ${settlers}` : ''} · varastossa ${c.food}/${granary(c.size)}`,
     focus: c.focus,
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
@@ -883,11 +916,12 @@ function cityView(c: City, y: CityYield): CityView {
     builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind))).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
-      const locked = isBuilding(kind) && !play!.research.known.has(NEEDS[kind]);
+      const need = NEEDS[kind];
+      const locked = need !== undefined && !play!.research.known.has(need);
       return {
         kind, name: b.name, selected: kind === c.build, locked,
         cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: locked && isBuilding(kind) ? `vaatii: ${ADVANCES[NEEDS[kind]].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        eta: locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -897,7 +931,7 @@ function cityView(c: City, y: CityYield): CityView {
 function updateCityCard() {
   if (!play) return;
   const id = play.openCity;
-  if (id === null || viewLevel !== 3 || discoveryCard.visible || researchCard.visible) {
+  if (id === null || viewLevel !== 3 || discoveryCard.visible || researchCard.visible || listCard.visible) {
     if (cityCard.visible) cityCard.hide();
     tileYields.update([]);
     return;
@@ -919,6 +953,56 @@ function updateCityCard() {
     const y = yieldOf(t, t === c.tile);
     return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
   }));
+}
+
+// ─── The list of cities and units (STORY-042) ─────
+const KIND_NAMES: Record<string, string> = { scout: 'tiedustelija', settler: 'uudisasukas', warrior: 'soturi', phalanx: 'falangi' };
+
+const listCard = createListCard(hud_root, {
+  close: () => { if (play) play.listOpen = false; },
+  tab: (tab: ListTab) => { if (play) play.listTab = tab; },
+  city: (id: number) => {
+    if (!play) return;
+    play.listOpen = false;
+    rig.flyTo(tileCenter(play.cities[id].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+    play.openCity = id;
+  },
+  unit: (index: number) => {
+    if (!play) return;
+    play.listOpen = false;
+    play.selected = index;
+    rig.flyTo(tileCenter(play.units.units[index].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+  },
+});
+
+function listView(): ListView {
+  const yields = cityYields();
+  return {
+    tab: play!.listTab,
+    cities: play!.cities.map((c, i) => {
+      const y = yields[i];
+      const ready = daysToBuild(c, y);
+      const when = c.build === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : ready === 0 ? 'valmis huomenna' : `${ready} pv`;
+      return {
+        id: c.id, name: c.name, size: `Koko ${c.size}`,
+        line: [...(y.disorder ? ['LEVOTTOMUUKSIA'] : []), `${BUILDS[c.build].name} · ${when}`, `ruokaa ${y.surplus < 0 ? '−' : '+'}${Math.abs(y.surplus)}`, ...(c.buildings.length ? [c.buildings.map(b => BUILDS[b].name).join(', ')] : [])].join(' · '),
+      };
+    }),
+    units: play!.units.units.map((u, index) => ({
+      index, name: u.name, kind: KIND_NAMES[u.kind],
+      line: unitStatus(play!.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name),
+    })),
+  };
+}
+
+function updateListCard() {
+  if (!play || !play.listOpen || viewLevel !== 3 || discoveryCard.visible) {
+    if (listCard.visible) listCard.hide();
+    return;
+  }
+  const view = listView();
+  if (listCard.visible) listCard.update(view);
+  else listCard.show(view);
 }
 
 // ─── Goals (STORY-041) ────────────────────────────
@@ -973,7 +1057,7 @@ function researchView(): ResearchView {
   const days = r.target && rates.science > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / rates.science)) : null;
   // What an advance opens: the buildings that need it, and the advances that need it
   const opens = (a: Advance) => [
-    ...(Object.keys(NEEDS) as (keyof typeof NEEDS)[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
+    ...(Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
     ...(Object.keys(ADVANCES) as Advance[]).filter(n => ADVANCES[n].needs.includes(a)).map(n => `tutkimuksen ${ADVANCES[n].name}`),
   ];
   return {
@@ -990,7 +1074,7 @@ function researchView(): ResearchView {
 }
 
 function updateResearchCard() {
-  if (!play || !play.researchOpen || viewLevel !== 3 || discoveryCard.visible) {
+  if (!play || !play.researchOpen || viewLevel !== 3 || discoveryCard.visible || listCard.visible) {
     if (researchCard.visible) researchCard.hide();
     return;
   }
@@ -1126,16 +1210,23 @@ function updateDiscovery() {
 // first sight stops the game; the soldiers in the city fight them one by one.
 
 /** Soldiers in the city on a tile. */
-const soldiersIn = (tile: number) => (play ? play.units.units.filter(u => u.kind === 'warrior' && u.tile === tile) : []);
+const soldiersIn = (tile: number) => (play ? play.units.units.filter(u => (u.kind === 'warrior' || u.kind === 'phalanx') && u.tile === tile) : []);
+/** A soldier's defense: Militia 1, Phalanx 2 (Freeciv civ1 units.ruleset). */
+const defenseOf = (kind: string) => (kind === 'phalanx' ? 2 : 1);
+/** The best soldier a city can build now (STORY-043). */
+const bestSoldier = (): 'warrior' | 'phalanx' => (play?.research.known.has('bronze') ? 'phalanx' : 'warrior');
 
 const raidWorld: RaidWorld = {
   cost: id => world.cost(id),
   terrainOf,
   walls: tile => play?.cities.find(c => c.tile === tile)?.buildings.includes('walls') ?? false,
   defenders: tile => soldiersIn(tile).length,
+  defense: tile => Math.max(1, ...soldiersIn(tile).map(u => defenseOf(u.kind))),
+  // The best defender fights, and falls
   loseDefender: tile => {
     const soldiers = soldiersIn(tile);
-    play!.units.disband(soldiers[soldiers.length - 1], world);
+    const best = soldiers.reduce((a, b) => (defenseOf(b.kind) > defenseOf(a.kind) ? b : a));
+    play!.units.disband(best, world);
   },
   plunder: tile => {
     const c = play!.cities.find(x => x.tile === tile)!;
@@ -1191,7 +1282,8 @@ function updateRaidAlert() {
     moment('raid', lead);
     const c = play.cities.find(x => x.tile === band.city)!;
     const soldiers = soldiersIn(c.tile).length;
-    const ready = daysToBuild({ ...c, build: 'warrior' }, cityYields()[play.cities.indexOf(c)]);
+    const soldier = bestSoldier();
+    const ready = daysToBuild({ ...c, build: soldier }, cityYields()[play.cities.indexOf(c)]);
     const n = band.bandits.length;
     discoveryCard.show({
       day: clock.day,
@@ -1200,7 +1292,7 @@ function updateRaidAlert() {
       body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
       options: [
         { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
-        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile), c.buildings.includes('walls'))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
+        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile), c.buildings.includes('walls'), raidWorld.defense(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
       ],
       note: 'Ryöstö vie kaupungin varastot ja asukkaan.',
     });
@@ -1220,8 +1312,8 @@ function chooseRaid(index: number) {
   const band = play.raids.band;
   const c = band && play.cities.find(x => x.tile === band.city);
   if (index !== 0 || !c) return;
-  c.build = 'warrior';
-  discoveryCard.notice(`${c.name} rakentaa soturin`);
+  c.build = bestSoldier();
+  discoveryCard.notice(`${c.name} rakentaa ${c.build === 'phalanx' ? 'falangin' : 'soturin'}`);
 }
 
 // ─── Province and state levels (STORY-026) ────────
@@ -1407,6 +1499,7 @@ function updatePlay(dt: number) {
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   updateDiscovery();
   updateCityLabels();
+  updateListCard();
   updateCityCard();
   updateResearchCard();
   checkGoals();
@@ -1613,6 +1706,8 @@ frameStartPlanet();
   /** Learn an advance, or add bulbs (STORY-040). */
   learn: (advance: Advance) => { play?.research.known.add(advance); },
   addBulbs: (n: number) => { if (play) play.research.bulbs += n; },
+  /** Set a city's size (STORY-044). */
+  setCitySize: (city: number, size: number) => { if (play) play.cities[city].size = size; },
   /** Set the treasury (STORY-038). */
   setGold: (gold: number) => { if (play) play.gold = gold; },
   /** Save now (STORY-036); resolves to whether the browser stored it. */

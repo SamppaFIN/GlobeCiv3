@@ -28,7 +28,7 @@ const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 25
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'city' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'city' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -108,6 +108,15 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     if (kind === 'scout') {
       g.beginPath(); g.moveTo(92, 26); g.lineTo(84, 116); g.stroke();
     }
+    if (kind === 'phalanx') {
+      // A long spear and a big round shield
+      g.beginPath(); g.moveTo(100, 2); g.lineTo(90, 116); g.stroke();
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.arc(44, 80, 24, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = INK_CSS;
+      g.lineWidth = 3;
+      g.beginPath(); g.arc(44, 80, 14, 0, Math.PI * 2); g.stroke();
+    }
     if (kind === 'warrior') {
       g.beginPath(); g.moveTo(96, 8); g.lineTo(88, 116); g.stroke();
       g.fillStyle = INK_DARK;
@@ -169,7 +178,7 @@ export class UnitLayer {
   constructor(radius: number) {
     this.radius = radius;
     this.textures = {
-      scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'),
+      scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
       city: figureTexture('city'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };

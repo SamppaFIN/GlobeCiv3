@@ -13,11 +13,11 @@ describe('science (STORY-040, Freeciv civ1)', () => {
 
   it('only what an advance needs opens it; a building needs its advance', () => {
     const r = new Research();
-    expect(r.available()).toEqual(['alphabet', 'bronze', 'pottery', 'masonry']);
+    expect(r.available()).toEqual(['alphabet', 'bronze', 'ceremonial', 'pottery', 'masonry']);
     r.known.add('bronze');
     expect(r.available()).toContain('currency');
     expect(r.available()).not.toContain('writing');
-    expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing' });
+    expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial' });
   });
 
   it('bulbs gather even without a target; the target is learned when they reach its cost, and the rest carries over', () => {

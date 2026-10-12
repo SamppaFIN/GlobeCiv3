@@ -72,9 +72,9 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market', 'library'] as const;
+export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple'] as const;
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1 };
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -82,14 +82,20 @@ export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly st
  * genus Convert, data/classic/buildings.ruleset commit 27a6a0c1; Civ I has none). After a
  * soldier or a building the city goes on to it (STORY-039).
  */
-export type Build = 'warrior' | 'settler' | Building | 'coinage';
+export type Build = 'warrior' | 'phalanx' | 'settler' | Building | 'coinage';
+/** Soldiers defend their city; a phalanx twice as well (STORY-043). */
+export const isSoldier = (b: Build): b is 'warrior' | 'phalanx' => b === 'warrior' || b === 'phalanx';
 export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> = {
   warrior: { name: 'Soturi', cost: 10, pop: 0 },
+  // Freeciv civ1 units.ruleset Phalanx: build_cost 20, attack 1, defense 2 (Bronze Working)
+  phalanx: { name: 'Falangi', cost: 20, pop: 0 },
   settler: { name: 'Uudisasukas', cost: 40, pop: 1 },
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
   market: { name: 'Tori', cost: 80, pop: 0 },
   library: { name: 'Kirjasto', cost: 80, pop: 0 },
+  // Freeciv civ1 buildings.ruleset Temple: build_cost 40, upkeep 1 (STORY-044)
+  temple: { name: 'Temppeli', cost: 40, pop: 0 },
   coinage: { name: 'Kultaa', cost: 0, pop: 0 },
 };
 
@@ -145,6 +151,48 @@ export function workedTiles(city: City, yieldOf: YieldOf, taken: ReadonlySet<num
 export interface CityYield extends Yield {
   /** Food left after the citizens and the settlers it supports have eaten. */
   surplus: number;
+  /** In civil disorder (STORY-044): no surplus food or shields, no gold or science. */
+  disorder?: boolean;
+}
+
+/**
+ * Citizens content under Despotism before anything calms them (Freeciv civ1
+ * effects.ruleset City_Unhappy_Size 4, Empire_Size_Base 10 and Empire_Size_Step 10;
+ * common/city.c player_base_citizen_happiness, commit fc8f694f): one fewer from the 11th
+ * city on, and one fewer again each 10 cities more.
+ */
+export function baseContent(cities: number): number {
+  const fewer = cities > 10 ? 1 + Math.floor((cities - 11) / 10) : 0;
+  return Math.max(0, 4 - fewer);
+}
+
+export interface Mood {
+  content: number;
+  unhappy: number;
+  /** Citizens a temple and the soldiers calmed. */
+  calmed: number;
+  disorder: boolean;
+}
+
+/**
+ * A city's mood: citizens over the content base are unhappy; a temple calms one
+ * (Make_Content 1) and each soldier in the city one (Despotism: Martial_Law_Each 1). With no
+ * luxury yet no citizen is happy, so any unhappy citizen left means civil disorder
+ * (common/city.c city_unhappy: happy < unhappy).
+ */
+export function cityMood(city: City, soldiers: number, cities: number): Mood {
+  const base = Math.min(city.size, baseContent(cities));
+  const unhappy = city.size - base;
+  const calmed = Math.min(unhappy, (city.buildings.includes('temple') ? 1 : 0) + soldiers);
+  return { content: base + calmed, unhappy: unhappy - calmed, calmed, disorder: unhappy - calmed > 0 };
+}
+
+/**
+ * A city's yield in disorder (common/city.c, output_types: food and shields lose their
+ * surplus, gold and science all of it; trade stays).
+ */
+export function withMood(y: CityYield, mood: Mood): CityYield {
+  return mood.disorder ? { ...y, surplus: Math.min(y.surplus, 0), shield: Math.min(y.shield, 0), disorder: true } : y;
 }
 
 /** Food, shields left after unit upkeep, trade, and the food surplus. */
@@ -202,7 +250,7 @@ export function cityDay(city: City, y: CityYield): Build | null {
   // settlers next (STORY-033) took a citizen at each growth and ate the city's food.
   // A building is there once, and the city goes on to gold after it too.
   if (isBuilding(done) && !city.buildings.includes(done)) city.buildings.push(done);
-  if (done === 'warrior' || isBuilding(done)) city.build = 'coinage';
+  if (isSoldier(done) || isBuilding(done)) city.build = 'coinage';
   return done;
 }
 
@@ -210,11 +258,11 @@ export function cityDay(city: City, y: CityYield): Build | null {
  * Gold a city brings a day: the tax rate's share of its trade, +50 % with a marketplace,
  * and its shields while it makes gold (Kultaa).
  */
-export const cityGold = (city: City, y: Yield, tax = 100) =>
+export const cityGold = (city: City, y: Yield & { disorder?: boolean }, tax = 100) => y.disorder ? 0 :
   Math.floor(splitTrade(y.trade, tax).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
 
 /** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040). */
-export const cityScience = (city: City, y: Yield, tax: number) =>
+export const cityScience = (city: City, y: Yield & { disorder?: boolean }, tax: number) => y.disorder ? 0 :
   Math.floor(splitTrade(y.trade, tax).science * (city.buildings.includes('library') ? 1.5 : 1));
 
 /**

@@ -85,8 +85,8 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   await expect(card.locator('.city-grow')).toHaveText(/^(kasvaa \d+ pv|ei kasva|nälkää)$/);
   // The builds to choose from; a Soturi first (a slow runner may have finished it before
   // the pause, and the city gone on to gold)
-  // Two units, four buildings (STORY-038, STORY-040) and Kultaa (STORY-039)
-  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(7);
+  // Three units (Falangi: STORY-043), five buildings (STORY-038, 040, 044) and Kultaa (STORY-039)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(9);
   await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');
   await expect(buildOption(card, 'settler')).toContainText('40 tuotantoa ja 1 asukas · Perustaa uuden kaupungin tai kehittää maata');
   await expect(buildOption(card, 'warrior')).toContainText(/(valmis \d+ pv|valmis huomenna|ei tuotantoa)/);
@@ -111,11 +111,16 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   const [cx, cy] = await onScreen(page, city.tile);
   await page.mouse.click(cx, cy - 10);
   await expect(card).toBeVisible();
-  // Without a pointer: the HUD's city button opens it from the keyboard
+  // Without a pointer: the list (STORY-042) opens it from the keyboard
   await card.getByRole('button', { name: 'Sulje' }).click();
   await expect(card).toBeHidden();
-  await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).focus();
+  await page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' }).focus();
   await page.keyboard.press('Enter');
+  const list = page.getByRole('dialog', { name: 'Luettelo' });
+  await expect(list).toBeVisible();
+  await list.getByRole('button', { name: /^Aamuranta/ }).focus();
+  await page.keyboard.press('Enter');
+  await expect(list).toBeHidden();
   await expect(card).toBeVisible();
 
   // Days go on (4× is still chosen): the city grows or its Soturi is ready
@@ -159,10 +164,10 @@ test.describe('on a phone', () => {
       expect(r.width).toBeGreaterThanOrEqual(43.5);
     }
     for (const b of await card.locator('.city-build').all()) expect(await b.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-    // The top panel still fits with the city button
+    // The top panel still fits with the list button
     const top = (await page.locator('.hud-top').boundingBox())!;
     expect(top.x + top.width).toBeLessThanOrEqual(390);
-    const cityButton = (await page.getByRole('button', { name: 'Kaupunki: Aamuranta' }).boundingBox())!;
+    const cityButton = (await page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' }).boundingBox())!;
     expect(cityButton.width).toBeGreaterThanOrEqual(43.5);
     expect(await page.locator('.hud-day').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('city-phone.png') });

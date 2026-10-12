@@ -29,6 +29,9 @@ export interface CityView {
   growText: string;
   /** Where the food goes: "Ruokaa 4 · asukkaat syövät 2 · varastossa 3/20" (STORY-039). */
   foodText: string;
+  /** "Asukkaat: 4 tyytyväistä · 1 tyytymätön", and what disorder means when the city is in it (STORY-044). */
+  moodText: string;
+  disorder: string | null;
   /** What the citizens work for, the city area ("Alue 1 rengas · laajenee koossa 2"), and how to grow faster when growth is slow. */
   focus: Focus;
   areaText: string;
@@ -74,6 +77,8 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
       <span class="city-grow"></span>
     </div>
     <span class="city-food"></span>
+    <span class="city-mood"></span>
+    <span class="city-disorder"></span>
     <div class="city-focus-row">
       <span id="city-focus-label" class="city-build-label">Kansalaiset työstävät</span>
       <div class="seg city-focus" role="radiogroup" aria-labelledby="city-focus-label">
@@ -112,6 +117,9 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     q('.city-bar').setAttribute('aria-valuenow', String(pct));
     q('.city-grow').textContent = v.growText;
     q('.city-food').textContent = v.foodText;
+    q('.city-mood').textContent = v.moodText;
+    q('.city-disorder').hidden = !v.disorder;
+    q('.city-disorder').textContent = v.disorder ?? '';
     q('.city-area').textContent = v.areaText;
     const hint = q('.city-hint');
     hint.hidden = !v.hint;
