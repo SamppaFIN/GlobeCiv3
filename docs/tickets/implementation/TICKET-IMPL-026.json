@@ -1,0 +1,46 @@
+{
+  "id": "TICKET-IMPL-026",
+  "story": "STORY-036",
+  "plan": "PLAN-026",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/save.ts",
+    "src/game/saveStore.ts",
+    "src/game/save.test.ts",
+    "src/game/units.ts",
+    "src/game/raids.ts",
+    "src/game/improvements.ts",
+    "src/globe/main.ts",
+    "src/ui/startScreen.ts",
+    "src/ui/hud.css",
+    "tests/e2e/save.e2e.ts",
+    "tests/e2e/start.e2e.ts"
+  ],
+  "change_summary": "Peli tallentuu IndexedDB:n yhteen paikkaan (globeciv3/saves/auto), kun päivä on vaihtunut ja edellisestä tallennuksesta on kulunut 10 s, sekä visibilitychange- ja pagehide-tapahtumissa. Aloitusnäyttö lukee tallennuksen, tarkistaa sen ja tarjoaa Jatka-napin (päivä, kaupungit, kartoitettu osuus), ja pallo kehystetään uudelleen napin mukaan. Uusi peli kysyy ensin. Jatka paljastaa kartoitetun, lentää pääkaupunkiin ja palauttaa pelin tilan. Units, Raids ja Improvements saivat tallennus- ja palautusmetodit.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Units(landing, world, saved?) ja save()",
+      "Raids(saved?) ja save()",
+      "Improvements.from",
+      "main.ts: startPlay(startCity, saved?), continueGame, flyIn (yhteinen uuden pelin kanssa), snapshot, autosave, savedGame/continuing; laskeutuminen avaa tallennetut tasot",
+      "StartScreen.offerContinue",
+      "globeDebug.saveNow"
+    ],
+    "call_sites_found": [
+      "newGame",
+      "updateGameFlow (laskeutuminen)",
+      "updatePlay",
+      "aloitusnäytön Uusi peli"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/ui/startScreen.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Turvallisuuteen vaikuttava muutos (tietoturvasääntö 4–5): ladattava data on syöte. Se tarkistetaan ennen käyttöä, ja peliin päätyy vain tarkistetuista kentistä rakennettu uusi olio."
+  },
+  "commit": "c3bfa9b",
+  "progress": 100
+}

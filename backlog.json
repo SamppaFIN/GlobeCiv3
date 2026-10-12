@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T07:48:49Z",
+    "generated_at": "2026-10-12T12:06:51Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "b8fbe4d",
+    "git_commit": "c3bfa9b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -137,9 +137,10 @@
         "STORY-032",
         "STORY-033",
         "STORY-034",
-        "STORY-035"
+        "STORY-035",
+        "STORY-036"
       ],
-      "progress": 93
+      "progress": 94
     }
   ],
   "stories": [
@@ -986,6 +987,31 @@
         "plan": "PLAN-025",
         "implementation": "TICKET-IMPL-025",
         "testing": "TICKET-TEST-025"
+      }
+    },
+    {
+      "id": "STORY-036",
+      "epic": "EPIC-006",
+      "title": "Peli tallentuu, ja sitä voi jatkaa",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että peli tallentuu itsestään ja jatkuu aloitusnäytöltä, jotta puhelimen sulkema välilehti tai uudelleenlataus ei vie peliä.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-021",
+        "STORY-034"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Peli tallentuu IndexedDB:hen itsestään, kun päivä on vaihtunut ja edellisestä tallennuksesta on kulunut 10 s, sekä aina, kun sivu menee taustalle tai suljetaan. Tallennus sisältää pelaajan muuttaman tilan; maasto, löydöt ja alueet palaavat siemenestä (sääntö 3).",
+        "Kun tallennus on, aloitusnäytössä on ensin Jatka, jossa näkyvät päivä, kaupungit ja kartoitusosuus. Uusi peli kysyy ennen kuin se korvaa tallennuksen.",
+        "Jatka lentää pääkaupunkiin (tai uudisasukkaan leiriin), ja peli jatkuu samasta tilasta: päivä, nopeus, tauko, kartoitus, yksiköt, kaupungit, parannukset, rosvot ja avatut tasot.",
+        "Tallennukseen ei luoteta (tietoturvasääntö 5): se tarkistetaan kenttä kentältä ja rakennetaan uudelleen vain tarkistetuista arvoista. Virheellistä tallennusta ei tarjota, eikä mitään sen osaa suoriteta."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-026",
+        "implementation": "TICKET-IMPL-026",
+        "testing": "TICKET-TEST-026"
       }
     }
   ],
@@ -2385,6 +2411,59 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-026",
+      "story": "STORY-036",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Puhelimen Chrome sulkee taustalle jääneitä välilehtiä, ja peli katosi uudelleenlatauksessa. Tallennus on ollut suunnitelmissa alusta asti (CLAUDE.md, storage: IndexedDB). Tallennus sisältää vain pelaajan muuttaman tilan (sääntö 3): kartoitetut ruudut nousevana listana, yksiköt, kaupungit, löydöt, bonukset, parannukset, rosvot, eteneminen sekä päivä, nopeus ja tauko. Units, Raids ja Improvements tallentavat ja palauttavat itsensä. validateSave (src/game/save.ts) tarkistaa jokaisen kentän: ruudut ja tunnisteet rajoissa, nimet listoista ja listojen pituudet rajoissa. Se rakentaa uuden olion vain tarkistetuista arvoista, joten ylimääräiset kentät ja prototyyppiavaimet eivät päädy peliin.",
+      "alternatives_considered": [
+        {
+          "name": "localStorage",
+          "pros": "Synkroninen ja yksinkertainen",
+          "cons": "5 Mt:n raja ja merkkijonot",
+          "rejected_because": "CLAUDE.md:n suunnitelma on IndexedDB, ja kartoitus kasvaa"
+        },
+        {
+          "name": "Koko kartoitus bittikarttana (136 kt)",
+          "pros": "Vakiokoko",
+          "cons": "Iso alkupelissä",
+          "rejected_because": "Nouseva ruutulista on pieni, kunnes kartoitusta on paljon"
+        },
+        {
+          "name": "Useita tallennuspaikkoja",
+          "pros": "Useita pelejä",
+          "cons": "Lisää käyttöliittymää",
+          "rejected_because": "Yksi paikka riittää nyt; Uusi peli kysyy ennen korvaamista"
+        }
+      ],
+      "files_to_change": [
+        "src/game/save.ts, saveStore.ts ja save.test.ts (uudet)",
+        "src/game/units.ts, raids.ts, improvements.ts",
+        "src/globe/main.ts",
+        "src/ui/startScreen.ts, hud.css",
+        "tests/e2e/save.e2e.ts (uusi), start.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Tallennuksen tyyppi ja tarkistus",
+          "verify": "Yksikkötestit: edestakaisin, jatkuu samoin, peukaloidut hylätään"
+        },
+        {
+          "step": 2,
+          "action": "IndexedDB, automaattinen tallennus ja Jatka",
+          "verify": "E2E: tallennus, uudelleenlataus ja jatkaminen; rikkinäinen tallennus"
+        },
+        {
+          "step": 3,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3372,6 +3451,52 @@
         "notes": "Kaivo pelissä vain avaruudesta, jottei hehku peitä vedettävää karttaa. Gallerian koodia ei käytetty."
       },
       "commit": "b8fbe4d",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-026",
+      "story": "STORY-036",
+      "plan": "PLAN-026",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/save.ts",
+        "src/game/saveStore.ts",
+        "src/game/save.test.ts",
+        "src/game/units.ts",
+        "src/game/raids.ts",
+        "src/game/improvements.ts",
+        "src/globe/main.ts",
+        "src/ui/startScreen.ts",
+        "src/ui/hud.css",
+        "tests/e2e/save.e2e.ts",
+        "tests/e2e/start.e2e.ts"
+      ],
+      "change_summary": "Peli tallentuu IndexedDB:n yhteen paikkaan (globeciv3/saves/auto), kun päivä on vaihtunut ja edellisestä tallennuksesta on kulunut 10 s, sekä visibilitychange- ja pagehide-tapahtumissa. Aloitusnäyttö lukee tallennuksen, tarkistaa sen ja tarjoaa Jatka-napin (päivä, kaupungit, kartoitettu osuus), ja pallo kehystetään uudelleen napin mukaan. Uusi peli kysyy ensin. Jatka paljastaa kartoitetun, lentää pääkaupunkiin ja palauttaa pelin tilan. Units, Raids ja Improvements saivat tallennus- ja palautusmetodit.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Units(landing, world, saved?) ja save()",
+          "Raids(saved?) ja save()",
+          "Improvements.from",
+          "main.ts: startPlay(startCity, saved?), continueGame, flyIn (yhteinen uuden pelin kanssa), snapshot, autosave, savedGame/continuing; laskeutuminen avaa tallennetut tasot",
+          "StartScreen.offerContinue",
+          "globeDebug.saveNow"
+        ],
+        "call_sites_found": [
+          "newGame",
+          "updateGameFlow (laskeutuminen)",
+          "updatePlay",
+          "aloitusnäytön Uusi peli"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/ui/startScreen.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Turvallisuuteen vaikuttava muutos (tietoturvasääntö 4–5): ladattava data on syöte. Se tarkistetaan ennen käyttöä, ja peliin päätyy vain tarkistetuista kentistä rakennettu uusi olio."
+      },
+      "commit": "c3bfa9b",
       "progress": 100
     }
   ],
@@ -5884,6 +6009,110 @@
           },
           {
             "item": "Ei mitattavaa suorituskykykustannusta",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-026",
+      "story": "STORY-036",
+      "implementation_ticket": "TICKET-IMPL-026",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvista löytyi, että Jatka-nappi peitti kompassirenkaan alareunan, koska pallo kehystettiin ennen napin ilmestymistä. Nyt pallo kehystetään uudelleen. start-testi latasi sivun kahdesti samassa selaimessa, ja ensimmäinen peli ehti tallentua sivulta poistuttaessa, jolloin Uusi peli kysyi vahvistusta. Testi hyväksyy nyt molemmat tilanteet, koska tallennus sivulta poistuttaessa ei ole taattu.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "tests/e2e/start.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: 12 päivää pelattu tallennus JSONin kautta",
+            "expected": "Tarkistus palauttaa saman",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: palautetut yksiköt, rosvot ja parannukset",
+            "expected": "Sama tila, ja 10 päivää lisää tuottaa saman kuin alkuperäinen",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: peukaloidut tallennukset",
+            "expected": "Väärä versio, ruutu rajojen ulkopuolella, tuntematon yksikkötyyppi, liian pitkä nimi, koko 0, merkkijono luvun paikalla, desimaalipäivä, nopeus 3, yksi löytö, tuntematon parannus, harva lista, puuttuva osa, null, merkkijono ja lista hylätään",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: ylimääräiset kentät ja __proto__",
+            "expected": "Eivät päädy tulokseen eivätkä saastuta prototyyppiä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: pelaa, tallenna, lataa uudelleen, Jatka",
+            "expected": "Jatka näyttää päivän ja kaupungin ja on kohdistettu; Uusi peli kysyy; jatkettu peli on sama (päivä, nopeus, tauko, kartoitus, kaupungit, yksiköt, paikka, parannukset, rosvot, löydöt) ja jatkuu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: rikkinäinen tallennus",
+            "expected": "Ei Jatka-nappia, varoitus konsolissa, uusi peli alkaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kuvakaappaukset: aloitusnäyttö ja jatkettu peli",
+            "expected": "Rengas sopii pallon ympärille napin yläpuolelle; jatkettu kaupunkialue näkyy heksoineen",
+            "result": "pass korjauksen jälkeen",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 23 tiedostoa (119 testiä); E2E 48/48; save ja start CI-tilassa 8/8",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38243049979 (c3bfa9b, 34 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Peli jatkuu, kun välilehti on suljettu ja avattu",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Automaattinen tallennus ja tallennus taustalle mentäessä",
+            "checked": true
+          },
+          {
+            "item": "Jatka aloitusnäytöllä; Uusi peli kysyy",
+            "checked": true
+          },
+          {
+            "item": "Jatkettu peli on sama",
+            "checked": true
+          },
+          {
+            "item": "Tallennus tarkistetaan",
             "checked": true
           }
         ],

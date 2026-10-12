@@ -1,0 +1,53 @@
+{
+  "id": "PLAN-026",
+  "story": "STORY-036",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Puhelimen Chrome sulkee taustalle jääneitä välilehtiä, ja peli katosi uudelleenlatauksessa. Tallennus on ollut suunnitelmissa alusta asti (CLAUDE.md, storage: IndexedDB). Tallennus sisältää vain pelaajan muuttaman tilan (sääntö 3): kartoitetut ruudut nousevana listana, yksiköt, kaupungit, löydöt, bonukset, parannukset, rosvot, eteneminen sekä päivä, nopeus ja tauko. Units, Raids ja Improvements tallentavat ja palauttavat itsensä. validateSave (src/game/save.ts) tarkistaa jokaisen kentän: ruudut ja tunnisteet rajoissa, nimet listoista ja listojen pituudet rajoissa. Se rakentaa uuden olion vain tarkistetuista arvoista, joten ylimääräiset kentät ja prototyyppiavaimet eivät päädy peliin.",
+  "alternatives_considered": [
+    {
+      "name": "localStorage",
+      "pros": "Synkroninen ja yksinkertainen",
+      "cons": "5 Mt:n raja ja merkkijonot",
+      "rejected_because": "CLAUDE.md:n suunnitelma on IndexedDB, ja kartoitus kasvaa"
+    },
+    {
+      "name": "Koko kartoitus bittikarttana (136 kt)",
+      "pros": "Vakiokoko",
+      "cons": "Iso alkupelissä",
+      "rejected_because": "Nouseva ruutulista on pieni, kunnes kartoitusta on paljon"
+    },
+    {
+      "name": "Useita tallennuspaikkoja",
+      "pros": "Useita pelejä",
+      "cons": "Lisää käyttöliittymää",
+      "rejected_because": "Yksi paikka riittää nyt; Uusi peli kysyy ennen korvaamista"
+    }
+  ],
+  "files_to_change": [
+    "src/game/save.ts, saveStore.ts ja save.test.ts (uudet)",
+    "src/game/units.ts, raids.ts, improvements.ts",
+    "src/globe/main.ts",
+    "src/ui/startScreen.ts, hud.css",
+    "tests/e2e/save.e2e.ts (uusi), start.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Tallennuksen tyyppi ja tarkistus",
+      "verify": "Yksikkötestit: edestakaisin, jatkuu samoin, peukaloidut hylätään"
+    },
+    {
+      "step": 2,
+      "action": "IndexedDB, automaattinen tallennus ja Jatka",
+      "verify": "E2E: tallennus, uudelleenlataus ja jatkaminen; rikkinäinen tallennus"
+    },
+    {
+      "step": 3,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

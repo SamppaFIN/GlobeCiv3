@@ -1,0 +1,104 @@
+{
+  "id": "TICKET-TEST-026",
+  "story": "STORY-036",
+  "implementation_ticket": "TICKET-IMPL-026",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvista löytyi, että Jatka-nappi peitti kompassirenkaan alareunan, koska pallo kehystettiin ennen napin ilmestymistä. Nyt pallo kehystetään uudelleen. start-testi latasi sivun kahdesti samassa selaimessa, ja ensimmäinen peli ehti tallentua sivulta poistuttaessa, jolloin Uusi peli kysyi vahvistusta. Testi hyväksyy nyt molemmat tilanteet, koska tallennus sivulta poistuttaessa ei ole taattu.",
+    "files_changed": [
+      "src/globe/main.ts",
+      "tests/e2e/start.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: 12 päivää pelattu tallennus JSONin kautta",
+        "expected": "Tarkistus palauttaa saman",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: palautetut yksiköt, rosvot ja parannukset",
+        "expected": "Sama tila, ja 10 päivää lisää tuottaa saman kuin alkuperäinen",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: peukaloidut tallennukset",
+        "expected": "Väärä versio, ruutu rajojen ulkopuolella, tuntematon yksikkötyyppi, liian pitkä nimi, koko 0, merkkijono luvun paikalla, desimaalipäivä, nopeus 3, yksi löytö, tuntematon parannus, harva lista, puuttuva osa, null, merkkijono ja lista hylätään",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: ylimääräiset kentät ja __proto__",
+        "expected": "Eivät päädy tulokseen eivätkä saastuta prototyyppiä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: pelaa, tallenna, lataa uudelleen, Jatka",
+        "expected": "Jatka näyttää päivän ja kaupungin ja on kohdistettu; Uusi peli kysyy; jatkettu peli on sama (päivä, nopeus, tauko, kartoitus, kaupungit, yksiköt, paikka, parannukset, rosvot, löydöt) ja jatkuu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rikkinäinen tallennus",
+        "expected": "Ei Jatka-nappia, varoitus konsolissa, uusi peli alkaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: aloitusnäyttö ja jatkettu peli",
+        "expected": "Rengas sopii pallon ympärille napin yläpuolelle; jatkettu kaupunkialue näkyy heksoineen",
+        "result": "pass korjauksen jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 23 tiedostoa (119 testiä); E2E 48/48; save ja start CI-tilassa 8/8",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38243049979 (c3bfa9b, 34 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Peli jatkuu, kun välilehti on suljettu ja avattu",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Automaattinen tallennus ja tallennus taustalle mentäessä",
+        "checked": true
+      },
+      {
+        "item": "Jatka aloitusnäytöllä; Uusi peli kysyy",
+        "checked": true
+      },
+      {
+        "item": "Jatkettu peli on sama",
+        "checked": true
+      },
+      {
+        "item": "Tallennus tarkistetaan",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}
