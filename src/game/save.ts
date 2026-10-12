@@ -77,14 +77,14 @@ export interface SaveData {
 /** Ranges the save is checked against. */
 export interface SaveLimits { tiles: number; cityAreas: number }
 
-const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'warrior'];
+const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'warrior', 'phalanx'];
 const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const FINDS: readonly FindKind[] = ['fish', 'ruins', 'ore', 'trail', 'lookout'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library'];
-const BUILDS: readonly Build[] = ['warrior', 'settler', ...BUILDINGS, 'coinage'];
+const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;

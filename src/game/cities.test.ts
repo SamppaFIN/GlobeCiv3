@@ -134,6 +134,11 @@ describe('cities', () => {
     c.shields = 59;
     expect(cityDay(c, { food: 0, shield: 1, trade: 0, surplus: 0 })).toBe('granary');
     expect([c.buildings, c.build, c.shields]).toEqual([['granary'], 'coinage', 0]);
+    // A phalanx (Freeciv civ1: 20 shields) is a soldier: then gold too
+    c.build = 'phalanx';
+    c.shields = 19;
+    expect(cityDay(c, { food: 0, shield: 1, trade: 0, surplus: 0 })).toBe('phalanx');
+    expect([c.build, BUILDS.phalanx.cost]).toEqual(['coinage', 20]);
     expect([BUILDS.granary.cost, BUILDS.walls.cost, BUILDS.market.cost]).toEqual([60, 120, 80]);
   });
 

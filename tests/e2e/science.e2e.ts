@@ -45,7 +45,7 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   const pottery = options.filter({ hasText: 'Keramiikka' });
   await expect(pottery).toContainText('10 tiedettä');
   await expect(pottery).toContainText('Avaa: Viljavarasto');
-  await expect(options.filter({ hasText: 'Pronssityö' })).toContainText('Avaa: tutkimuksen Rahatalous');
+  await expect(options.filter({ hasText: 'Pronssityö' })).toContainText('Avaa: Falangi, tutkimuksen Rahatalous');
   await expect(card.locator('.research-known')).toHaveText('Ei vielä keksintöjä');
   await page.screenshot({ path: testInfo.outputPath('science.png') });
 

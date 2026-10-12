@@ -11,7 +11,7 @@
  *  - every unit has 10 hit points and firepower 10, so one round decides a fight, and the
  *    attacker wins it with probability A / (A + D) (server/unittools.c unit_versus_unit).
  *    The defender gets its terrain's defense_bonus (terrain.ruleset) and +50 % fortified
- *    in a city (effects.ruleset); a soldier is Militia, defense 1 (units.ruleset). City
+ *    in a city (effects.ruleset); a soldier is Militia, defense 1, a phalanx 2 (units.ruleset). City
  *    walls give +200 % instead of the fortify bonus (effects.ruleset, STORY-038)
  * One day is one turn. Own simplifications: one band at a time, of one or two bandits
  * (Freeciv: two to four and a leader); bandits move a tile a day like the other units; only
@@ -43,11 +43,11 @@ export function uprising(seed: number, day: number, cities: number): boolean {
   return day >= RAID_ONSET && Math.floor(raidRoll(seed, day, 0) * 30) + 1 <= cities * (RATE - 1);
 }
 
-/** A soldier's defence in a city on this terrain: fortified, or behind walls. */
-export const defencePower = (terrain: Terrain, walls = false) => SOLDIER_DEFENSE * (1 + (DEFENSE_BONUS[terrain] ?? 0) / 100) * (walls ? WALLS : FORTIFIED);
+/** A soldier's defence in a city on this terrain: fortified, or behind walls; a phalanx has defense 2. */
+export const defencePower = (terrain: Terrain, walls = false, defense = SOLDIER_DEFENSE) => defense * (1 + (DEFENSE_BONUS[terrain] ?? 0) / 100) * (walls ? WALLS : FORTIFIED);
 
 /** The chance that a bandit beats a soldier defending a city on this terrain. */
-export const banditWins = (terrain: Terrain, walls = false) => BANDIT_ATTACK / (BANDIT_ATTACK + defencePower(terrain, walls));
+export const banditWins = (terrain: Terrain, walls = false, defense = SOLDIER_DEFENSE) => BANDIT_ATTACK / (BANDIT_ATTACK + defencePower(terrain, walls, defense));
 
 /** Where an uprising starts: a known land tile 5 to 8 tiles from the city, from a roll in [0, 1). */
 export function raidStart(city: number, roll: number, known: (id: number) => boolean, isLand: (id: number) => boolean): number | null {
@@ -64,9 +64,10 @@ export interface RaidWorld {
   terrainOf(id: number): Terrain;
   /** The city on this tile has walls. */
   walls(city: number): boolean;
-  /** Soldiers in the city on this tile. */
+  /** Soldiers in the city on this tile, and the best one's defense (STORY-043). */
   defenders(city: number): number;
-  /** One of them falls. */
+  defense(city: number): number;
+  /** The best of them falls. */
   loseDefender(city: number): void;
   /** The city loses its stores and a citizen. */
   plunder(city: number): void;
@@ -119,7 +120,7 @@ export class Raids {
         this.band = null;
         return [...events, 'plundered'];
       }
-      if (world.roll(events.length) < banditWins(world.terrainOf(band.city), world.walls(band.city))) {
+      if (world.roll(events.length) < banditWins(world.terrainOf(band.city), world.walls(band.city), world.defense(band.city))) {
         world.loseDefender(band.city);
         events.push('won');
       } else {
