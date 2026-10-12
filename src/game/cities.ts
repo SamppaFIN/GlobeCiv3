@@ -48,7 +48,6 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   warrior: { name: 'Soturi', cost: 10, pop: 0 },
   settler: { name: 'Uudisasukas', cost: 40, pop: 1 },
 };
-const BUILD_ORDER = Object.keys(BUILDS) as Build[];
 
 /** Own city names (rule 4), given in order. */
 export const CITY_NAMES = ['Aamuranta', 'Kivisalmi', 'Tuulikallio', 'Hopealahti', 'Karhuniemi', 'Sammalvuori', 'Kaislakorpi', 'Routajärvi'];
@@ -161,9 +160,4 @@ export function daysToBuild(city: City, y: CityYield): number | null {
   const left = BUILDS[city.build].cost - city.shields;
   if (left <= 0) return 0;
   return y.shield > 0 ? Math.ceil(left / y.shield) : null;
-}
-
-/** "Vaihda": the next build; shields in store are kept (both are units, so Freeciv has no change penalty). */
-export function nextBuild(city: City): void {
-  city.build = BUILD_ORDER[(BUILD_ORDER.indexOf(city.build) + 1) % BUILD_ORDER.length];
 }
