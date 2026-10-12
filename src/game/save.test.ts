@@ -41,7 +41,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
     discoveries: [{ tile: START_TILE, finder: 1, finds: ['fish', 'ruins'] }], bonuses: [[START_TILE, { food: 2, shield: 0, trade: 0 }]], found: 1,
     cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food' }],
     offers: [], offered: [START_TILE], lastOfferDay: 9, pendingSite: null,
-    improvements: imp.entries(), raids: raids.save(), raidAlert: true, gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4 }, tax: 30,
+    improvements: imp.entries(), raids: raids.save(), raidAlert: true, gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4 }, tax: 30, goal: 3,
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }

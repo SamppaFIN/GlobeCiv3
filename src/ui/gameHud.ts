@@ -40,6 +40,8 @@ export interface GameHudState {
   finds: number;
   /** No advance is being researched though one could be (STORY-040). */
   chooseResearch: boolean;
+  /** The current goal and its reward, or null when all are done (STORY-041). */
+  goal: { text: string; reward: number } | null;
 }
 
 export interface GameHudHandlers {
@@ -58,6 +60,8 @@ export interface GameHudHandlers {
   openFind(): void;
   /** Open the science card. */
   openResearch(): void;
+  /** Tell how to reach the current goal. */
+  goalHint(): void;
 }
 
 export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(state: GameHudState): void; element: HTMLElement } {
@@ -79,6 +83,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         <div class="hud-meter" role="meter" aria-label="Läänistä kartoitettu" aria-valuemin="0" aria-valuemax="100"><div class="hud-meter-fill"></div><div class="hud-meter-tick"></div></div>
         <span class="hud-meter-value"></span>
       </div>
+      <button class="hud-goal" type="button" hidden></button>
     </section>
     <section class="hud-panel hud-bottom" aria-label="Valittu yksikkö">
       <div class="hud-pills">
@@ -120,6 +125,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openCity);
   q<HTMLButtonElement>('.hud-finds').addEventListener('click', on.openFind);
   q<HTMLButtonElement>('.hud-research').addEventListener('click', on.openResearch);
+  q<HTMLButtonElement>('.hud-goal').addEventListener('click', on.goalHint);
 
   let last = '';
   return {
@@ -142,6 +148,10 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       q<HTMLElement>('.hud-meter-value').textContent = s.unlockAt === null ? `${pct} %` : `${pct} / ${Math.round(s.unlockAt * 100)} %`;
       q<HTMLElement>('.hud-meter').setAttribute('aria-label', `${{ Lääni: 'Läänistä', Valtio: 'Valtiosta' }[s.meterName] ?? s.meterName} kartoitettu`);
       q<HTMLElement>('.hud-meter-name').textContent = s.meterName;
+      const goal = q<HTMLButtonElement>('.hud-goal');
+      goal.hidden = !s.goal;
+      if (s.goal) goal.innerHTML = `<span class="hud-goal-label">Tavoite</span><span class="hud-goal-text"></span><span class="hud-goal-reward">+${s.goal.reward} kultaa</span>`;
+      if (s.goal) goal.querySelector('.hud-goal-text')!.textContent = s.goal.text;
       const city = q<HTMLElement>('.hud-city');
       city.hidden = !s.city;
       if (s.city) city.setAttribute('aria-label', `Kaupunki: ${s.city}`);

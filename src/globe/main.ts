@@ -26,6 +26,7 @@ import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
+import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
@@ -444,7 +445,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax,
+    research: play.research.save(), tax: play.tax, goal: play.goal,
   };
 }
 
@@ -531,6 +532,8 @@ interface Play {
   research: Research;
   tax: number;
   researchOpen: boolean;
+  /** The current goal (STORY-041). */
+  goal: number;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -596,13 +599,14 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
     openFind: () => { if (play && play.discoveries.length) play.findOpen = true; },
     openResearch: () => { if (play) play.researchOpen = true; },
+    goalHint: () => { if (play && GOALS[play.goal]) discoveryCard.notice(GOALS[play.goal].hint); },
     openCity: () => {
       if (!play || !play.cities.length) return;
       play.openCity = play.openCity === null ? 0 : (play.openCity + 1) % play.cities.length;
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, researchOpen: false, goal: 0, hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -610,7 +614,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     discoveries: saved.discoveries, bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
     improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
-    research: new Research(saved.research), tax: saved.tax,
+    research: new Research(saved.research), tax: saved.tax, goal: saved.goal,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -915,6 +919,27 @@ function updateCityCard() {
     const y = yieldOf(t, t === c.tile);
     return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
   }));
+}
+
+// ─── Goals (STORY-041) ────────────────────────────
+// One goal at a time leads through the game; a goal reached pays its gold.
+function checkGoals() {
+  if (!play) return;
+  const r = advanceGoals(play.goal, {
+    cities: play.cities.length,
+    biggest: Math.max(0, ...play.cities.map(c => c.size)),
+    researching: play.research.target !== null || play.research.known.size > 0,
+    advances: play.research.known.size,
+    improvements: play.improvements.entries().length,
+    buildings: play.cities.reduce((sum, c) => sum + c.buildings.length, 0),
+    openLevel: play.progress.openLevel,
+  });
+  if (!r.done.length) return;
+  play.goal = r.index;
+  const gold = r.done.reduce((sum, g) => sum + g.reward, 0);
+  play.gold += gold;
+  discoveryCard.notice(`Tavoite saavutettu: ${r.done.map(g => g.text).join(', ')} · +${gold} kultaa`);
+  if (play.cities[0]) moment('victory', play.cities[0].tile);
 }
 
 // ─── Science (STORY-040) ──────────────────────────
@@ -1384,6 +1409,7 @@ function updatePlay(dt: number) {
   updateCityLabels();
   updateCityCard();
   updateResearchCard();
+  checkGoals();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
     day: clock.day,
@@ -1397,6 +1423,7 @@ function updatePlay(dt: number) {
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
     finds: play.discoveries.length,
+    goal: GOALS[play.goal] ? { text: GOALS[play.goal].text, reward: GOALS[play.goal].reward } : null,
     chooseResearch: play.cities.length > 0 && play.research.target === null && play.research.available().length > 0 && !play.researchOpen,
   };
   play.hud.update(state);
@@ -1635,7 +1662,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, goal: play?.goal ?? null,
     };
   },
 };
