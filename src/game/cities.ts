@@ -40,8 +40,24 @@ const NO_SUPPORT: Support = { units: 0, settlers: 0 };
 
 /** Food a citizen eats each day. */
 export const FOOD_PER_CITIZEN = 2;
-/** Rings of tiles a city may work around its centre. */
+/** Rings a site is judged by, and mapped when a city is founded there. */
 export const CITY_RINGS = 2;
+
+/**
+ * Rings of tiles a city may work (STORY-039, own rule so that the area grows with the city):
+ * one at size 1, two at 2 to 4, three from size 5. Civ I has a fixed area of 21 tiles.
+ */
+export const cityRings = (size: number) => (size <= 1 ? 1 : size <= 4 ? 2 : 3);
+
+/** What a city's citizens work for: food, a balance, or production (STORY-039). */
+export type Focus = 'food' | 'balanced' | 'production';
+export const FOCUS_NAMES: Record<Focus, string> = { food: 'Ruoka', balanced: 'Tasapaino', production: 'Tuotanto' };
+/** How a tile is valued for each focus (own weights). */
+const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
+  food: y => 4 * y.food + y.shield + y.trade,
+  balanced: y => 2 * y.food + y.shield + y.trade,
+  production: y => y.food + 3 * y.shield + y.trade,
+};
 
 /**
  * Buildings (STORY-038), Freeciv civ1 buildings.ruleset (commit 27a6a0c1): build_cost and
@@ -55,13 +71,19 @@ export type Building = (typeof BUILDINGS)[number];
 export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
-export type Build = 'warrior' | 'settler' | Building;
+/**
+ * Kultaa: the shields become gold each day and nothing is built (Freeciv classic Coinage,
+ * genus Convert, data/classic/buildings.ruleset commit 27a6a0c1; Civ I has none). After a
+ * soldier or a building the city goes on to it (STORY-039).
+ */
+export type Build = 'warrior' | 'settler' | Building | 'coinage';
 export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> = {
   warrior: { name: 'Soturi', cost: 10, pop: 0 },
   settler: { name: 'Uudisasukas', cost: 40, pop: 1 },
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
   market: { name: 'Tori', cost: 80, pop: 0 },
+  coinage: { name: 'Kultaa', cost: 0, pop: 0 },
 };
 
 /** Own city names (rule 4), given in order. */
@@ -80,12 +102,14 @@ export interface City {
   build: Build;
   /** Buildings in the city (STORY-038). */
   buildings: Building[];
+  /** What the citizens work for (STORY-039). */
+  focus: Focus;
 }
 
 export function foundCity(cities: City[], tile: number): City {
   const city: City = {
     id: cities.length, name: CITY_NAMES[cities.length % CITY_NAMES.length], tile,
-    capital: cities.length === 0, size: 1, food: 0, shields: 0, build: 'warrior', buildings: [],
+    capital: cities.length === 0, size: 1, food: 0, shields: 0, build: 'warrior', buildings: [], focus: 'balanced',
   };
   cities.push(city);
   return city;
@@ -98,12 +122,12 @@ export type YieldOf = (id: number, centre: boolean) => Yield;
 export const granary = (size: number) => 20 + 10 * (size - 1);
 
 /**
- * The centre and the best `size` tiles around it that no other city works, by
- * 2 × food + shields + trade.
+ * The centre and the best `size` tiles in the city's area that no other city works, by
+ * the city's focus (balanced: 2 × food + shields + trade).
  */
 export function workedTiles(city: City, yieldOf: YieldOf, taken: ReadonlySet<number> = new Set()): number[] {
-  const score = (y: Yield) => 2 * y.food + y.shield + y.trade;
-  const around = tilesInRings(city.tile, CITY_RINGS)
+  const score = FOCUS_SCORE[city.focus ?? 'balanced'];
+  const around = tilesInRings(city.tile, cityRings(city.size))
     .filter(id => id !== city.tile && !taken.has(id))
     .map(id => [score(yieldOf(id, false)), id] as const)
     .sort((a, b) => b[0] - a[0] || a[1] - b[1])
@@ -158,6 +182,7 @@ export function cityDay(city: City, y: CityYield): Build | null {
     if (city.size > 1) city.size--;
     city.food = 0;
   }
+  if (city.build === 'coinage') return null;
   const build = BUILDS[city.build];
   city.shields += y.shield;
   // A build that costs a citizen waits until the city can spare one
@@ -165,20 +190,23 @@ export function cityDay(city: City, y: CityYield): Build | null {
   city.shields -= build.cost;
   city.size -= build.pop;
   const done = city.build;
-  // Own rule (STORY-033): after a soldier the city goes on to settlers. In Freeciv the build
-  // repeats, and a city left alone built soldiers until their upkeep took all its shields.
-  // A building is there once, and the city goes on to settlers after it too.
+  // Own rule: after a soldier the city goes on to gold (STORY-039). In Freeciv the build
+  // repeats, and a city left alone built soldiers until their upkeep took all its shields;
+  // settlers next (STORY-033) took a citizen at each growth and ate the city's food.
+  // A building is there once, and the city goes on to gold after it too.
   if (isBuilding(done) && !city.buildings.includes(done)) city.buildings.push(done);
-  if (done === 'warrior' || isBuilding(done)) city.build = 'settler';
+  if (done === 'warrior' || isBuilding(done)) city.build = 'coinage';
   return done;
 }
 
 /**
- * Gold a city brings a day: its trade, +50 % with a marketplace. Own simplification: all
+ * Gold a city brings a day: its trade, +50 % with a marketplace, and its shields while it
+ * makes gold (Kultaa). Own simplification: all
  * trade is gold while there is no science (Freeciv civ1 caps the tax rate at 60 % under
  * Despotism).
  */
-export const cityGold = (city: City, y: Yield) => Math.floor(y.trade * (city.buildings.includes('market') ? 1.5 : 1));
+export const cityGold = (city: City, y: Yield) =>
+  Math.floor(y.trade * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
 
 /**
  * Pay a city's building upkeep from the treasury. When it would fall below zero, buildings
@@ -203,6 +231,7 @@ export function payUpkeep(city: City, treasury: number): { treasury: number; sol
  * building, 2 a shield + missing² / 20 for a unit, twice that with nothing in store.
  */
 export function buyCost(city: City): number {
+  if (city.build === 'coinage') return 0;
   const missing = BUILDS[city.build].cost - city.shields;
   if (missing <= 0) return 0;
   const cost = 2 * missing + (isBuilding(city.build) ? 0 : Math.floor((missing * missing) / 20));
@@ -224,6 +253,7 @@ export function daysToGrow(city: City, y: CityYield): number | null {
 
 /** Days until the build is ready (0: ready, waiting for a citizen to spare), or null without shields. */
 export function daysToBuild(city: City, y: CityYield): number | null {
+  if (city.build === 'coinage') return null;
   const left = BUILDS[city.build].cost - city.shields;
   if (left <= 0) return 0;
   return y.shield > 0 ? Math.ceil(left / y.shield) : null;

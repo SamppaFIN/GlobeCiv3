@@ -9,7 +9,7 @@
  * else makes the whole save invalid. Nothing in it is ever run as code.
  */
 import { SPEEDS, type Speed } from './clock';
-import type { City, Build, Building } from './cities';
+import type { City, Build, Building, Focus } from './cities';
 import type { Discovery, FindKind, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
@@ -78,7 +78,8 @@ const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const FINDS: readonly FindKind[] = ['fish', 'ruins', 'ore', 'trail', 'lookout'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market'];
-const BUILDS: readonly Build[] = ['warrior', 'settler', ...BUILDINGS];
+const BUILDS: readonly Build[] = ['warrior', 'settler', ...BUILDINGS, 'coinage'];
+const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;
 const IMPROVEMENTS: readonly ImprovementKind[] = ['irrigation', 'mine', 'road'];
@@ -180,6 +181,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           build: oneOf(c.build, BUILDS, 'build'),
           // Saves from before STORY-038 have no buildings; each building is there once
           buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), 3))],
+          // Saves from before STORY-039 have no focus
+          focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
         };
       }, 10_000),
       offers: list(s.offers, 'offers', v => {

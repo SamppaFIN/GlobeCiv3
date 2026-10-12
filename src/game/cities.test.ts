@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
-import { BUILDS, buy, buyCost, cityDay, cityGold, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
+import { BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
@@ -33,7 +33,25 @@ describe('cities', () => {
     expect(workedTiles(city(1), yieldOf)).toEqual([START, OCEAN_FISH]);
     expect(workedTiles(city(2), yieldOf)).toEqual([START, OCEAN_FISH, FOREST]);
     expect(workedTiles(city(2), yieldOf, new Set([OCEAN_FISH]))).toEqual([START, FOREST, expect.any(Number)]);
-    expect(workedTiles(city(30), yieldOf)).toHaveLength(19);
+    // A city bigger than its area works all of its three rings (STORY-039): 37 tiles
+    expect(workedTiles(city(40), yieldOf)).toHaveLength(37);
+  });
+
+  it('the city area grows with the city: one ring at size 1, two at 2 to 4, three from 5 (own rule)', () => {
+    expect([1, 2, 4, 5, 12].map(cityRings)).toEqual([1, 2, 2, 3, 3]);
+    // Size 1 works a tile of the first ring only
+    const near = new Set(tilesInRings(START, 1));
+    expect(near.has(workedTiles(city(1), yieldOf)[1])).toBe(true);
+  });
+
+  it('the focus chooses the tiles: food 4 × food, balanced 2 × food, production 3 × shields', () => {
+    const c = city(1);
+    expect(workedTiles(c, yieldOf)).toEqual([START, OCEAN_FISH]);
+    c.focus = 'food';
+    expect(workedTiles(c, yieldOf)).toEqual([START, OCEAN_FISH]);
+    c.focus = 'production';
+    expect(workedTiles(c, yieldOf)).toEqual([START, FOREST]);
+    expect(cityYield(c, yieldOf)).toEqual({ food: 4, shield: 2, trade: 0, surplus: 2 });
   });
 
   it('yield the source table values of the worked tiles, less 2 food per citizen', () => {
@@ -75,14 +93,16 @@ describe('cities', () => {
     expect(shortfall(c, hungry, settlers)).toBeNull();
   });
 
-  it('build a 10-shield Soturi, then go on to an Uudisasukas for 40 shields and a citizen', () => {
+  it('build a 10-shield Soturi, then turn shields into gold; an Uudisasukas costs 40 shields and a citizen', () => {
     const c = city(2);
     const y = cityYield(c, yieldOf); // 2 shields a day
     expect(daysToBuild(c, y)).toBe(5);
     const done = Array.from({ length: 5 }, () => cityDay(c, { ...y, surplus: 0 }));
     expect(done).toEqual([null, null, null, null, 'warrior']);
-    // One soldier is enough: the city goes on to settlers by itself (own rule)
-    expect([c.shields, c.build]).toEqual([0, 'settler']);
+    // One soldier is enough: the city goes on to gold by itself (STORY-039; settlers next
+    // took a citizen at each growth and their upkeep stopped the city growing)
+    expect([c.shields, c.build]).toEqual([0, 'coinage']);
+    c.build = 'settler';
     expect(BUILDS.settler).toEqual({ name: 'Uudisasukas', cost: 40, pop: 1 });
     // A size-1 city waits with the shields until it can spare a citizen
     c.size = 1;
@@ -107,12 +127,12 @@ describe('cities', () => {
     expect([stored.size, stored.food]).toEqual([2, 17]);
   });
 
-  it('build a granary, walls or a marketplace once; then the city goes on to settlers', () => {
+  it('build a granary, walls or a marketplace once; then the city goes on to gold', () => {
     const c = city(2);
     c.build = 'granary';
     c.shields = 59;
     expect(cityDay(c, { food: 0, shield: 1, trade: 0, surplus: 0 })).toBe('granary');
-    expect([c.buildings, c.build, c.shields]).toEqual([['granary'], 'settler', 0]);
+    expect([c.buildings, c.build, c.shields]).toEqual([['granary'], 'coinage', 0]);
     expect([BUILDS.granary.cost, BUILDS.walls.cost, BUILDS.market.cost]).toEqual([60, 120, 80]);
   });
 
@@ -148,5 +168,16 @@ describe('cities', () => {
     c.build = 'walls';
     expect(buy(c, 10)).toBeNull();
     expect(c.shields).toBe(60);
+  });
+
+  it('Kultaa turns the shields into gold each day and builds nothing (Freeciv classic Coinage)', () => {
+    const c = city(2);
+    c.build = 'coinage';
+    c.shields = 5;
+    const y = { food: 4, shield: 3, trade: 1, surplus: 0 };
+    expect(cityDay(c, y)).toBeNull();
+    expect(c.shields).toBe(5);
+    expect(cityGold(c, y)).toBe(4);
+    expect([daysToBuild(c, y), buyCost(c)]).toEqual([null, 0]);
   });
 });
