@@ -17,6 +17,7 @@
 import { findPath, nearestTile, tilesInRings } from './pathfinding';
 import { compassIndex } from './names';
 import { IMPROVEMENT_NAMES, type ImprovementKind, type Job } from './improvements';
+import type { UnitsSave } from './save';
 import { tileCenter } from '../globe/hexTiles';
 
 export type UnitKind = 'scout' | 'settler' | 'warrior';
@@ -94,7 +95,21 @@ export class Units {
   homeProvince = -1;
   private nextId = 0;
 
-  constructor(landing: number, world: World) {
+  /** A new game's units at the landing tile, or a saved game's as they were (STORY-036). */
+  constructor(landing: number, world: World, saved?: UnitsSave) {
+    if (saved) {
+      this.units.push(...saved.units);
+      this.camp = saved.camp;
+      this.flag = saved.flag;
+      this.sites = saved.sites;
+      this.site = saved.site;
+      this.founding = saved.founding;
+      for (const [area, plan] of saved.areaPlans) this.areaPlans.set(area, plan);
+      this.stateLine = saved.stateLine;
+      this.homeProvince = saved.homeProvince;
+      this.nextId = saved.nextId;
+      return;
+    }
     this.camp = landing;
     this.homeProvince = Math.floor(world.cityOf(landing) / 7);
     const land = tilesInRings(landing, 1).filter(id => id !== landing && Number.isFinite(world.cost(id)));
@@ -103,6 +118,15 @@ export class Units {
     this.add('scout', 'Tiedustelija 2', land[Math.floor(land.length / 2)] ?? landing);
     this.findSites(world);
     for (const u of this.units) if (u.kind === 'scout') world.reveal(tilesInRings(u.tile, this.sight));
+  }
+
+  /** Everything the constructor restores, copied. */
+  save(): UnitsSave {
+    return {
+      units: this.units.map(u => ({ ...u, path: [...u.path], job: u.job && { ...u.job } })),
+      camp: this.camp, flag: this.flag, sites: [...this.sites], site: this.site, founding: this.founding,
+      areaPlans: [...this.areaPlans], stateLine: this.stateLine, homeProvince: this.homeProvince, nextId: this.nextId,
+    };
   }
 
   get sight(): number {

@@ -20,6 +20,7 @@
 import { hash } from '../globe/terrain';
 import { findPath, tilesInRings } from './pathfinding';
 import type { Terrain } from './terrainTypes';
+import type { RaidsSave } from './save';
 
 export const RAID_ONSET = 60;
 const UNREST_MIN = 5;
@@ -74,6 +75,17 @@ export type RaidEvent = 'repelled' | 'won' | 'plundered';
 export class Raids {
   band: Band | null = null;
   private nextId = 1;
+
+  /** No band, or a saved game's (STORY-036). */
+  constructor(saved?: RaidsSave) {
+    if (!saved) return;
+    this.band = saved.band;
+    this.nextId = saved.nextId;
+  }
+
+  save(): RaidsSave {
+    return { band: this.band && { city: this.band.city, bandits: this.band.bandits.map(b => ({ ...b, path: [...b.path] })) }, nextId: this.nextId };
+  }
 
   /** A band of `size` bandits sets off from a tile toward a city; false when no way leads there. */
   start(city: number, from: number, size: number, cost: (id: number) => number): boolean {

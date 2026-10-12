@@ -2,6 +2,8 @@
  * startScreen.ts — the start screen (Claude Design handoff, view 1a "Kartografi"):
  * title block, a compass ring around the real 3D planet, "Uusi peli" and the
  * mapped share. The planet itself is the game's globe (rule 1), framed by main.ts.
+ * With a saved game "Jatka" comes first, and "Uusi peli" asks before it replaces the
+ * save (STORY-036).
  */
 
 // Phosphor "arrow-right" (MIT)
@@ -41,6 +43,8 @@ export interface StartScreen {
   freeSpace(): { top: number; bottom: number };
   /** Put the compass ring around the planet: centre and radius in CSS pixels. */
   placeRing(cx: number, cy: number, r: number): void;
+  /** A saved game: "Jatka" with its day and cities, and the saved share mapped. */
+  offerContinue(detail: string, mappedPct: number, onContinue: () => void): void;
   /** Fade out (or hide at once) but keep blocking input until remove(). */
   hide(fade: boolean): void;
   remove(): void;
@@ -58,6 +62,7 @@ export function createStartScreen(root: HTMLElement, onNewGame: () => void): Sta
       <span class="start-subtitle">Kartta, joka piirtyy</span>
     </header>
     <div class="start-actions">
+      <button class="btn btn-primary btn-block start-continue" type="button" hidden>Jatka ${ARROW}</button>
       <button class="btn btn-primary btn-block start-new" type="button">Uusi peli ${ARROW}</button>
       <div class="start-progress"><div class="start-track"></div><span>Kartoitettu 0 %</span></div>
     </div>`;
@@ -65,7 +70,15 @@ export function createStartScreen(root: HTMLElement, onNewGame: () => void): Sta
   const ring = el.querySelector<SVGSVGElement>('.start-ring')!;
   const title = el.querySelector<HTMLElement>('.start-title')!;
   const actions = el.querySelector<HTMLElement>('.start-actions')!;
-  el.querySelector<HTMLButtonElement>('.start-new')!.addEventListener('click', onNewGame, { once: true });
+  const newGame = el.querySelector<HTMLButtonElement>('.start-new')!;
+  const continueButton = el.querySelector<HTMLButtonElement>('.start-continue')!;
+  /** A save exists: the first press on "Uusi peli" asks, the second starts anew. */
+  let asks = false;
+  newGame.addEventListener('click', () => {
+    if (!asks) return onNewGame();
+    asks = false;
+    newGame.innerHTML = `Aloita alusta, tallennus korvataan ${ARROW}`;
+  });
 
   return {
     element: el,
@@ -75,6 +88,17 @@ export function createStartScreen(root: HTMLElement, onNewGame: () => void): Sta
       ring.style.width = ring.style.height = `${size}px`;
       ring.style.left = `${cx - size / 2}px`;
       ring.style.top = `${cy - size / 2}px`;
+    },
+    offerContinue(detail, mappedPct, onContinue) {
+      continueButton.hidden = false;
+      continueButton.innerHTML = `<span class="start-continue-text"><span>Jatka</span><span class="start-continue-detail"></span></span>${ARROW}`;
+      continueButton.querySelector('.start-continue-detail')!.textContent = detail;
+      continueButton.addEventListener('click', onContinue, { once: true });
+      newGame.classList.replace('btn-primary', 'btn-secondary');
+      asks = true;
+      el.querySelector<HTMLElement>('.start-progress span')!.textContent = `Kartoitettu ${mappedPct} %`;
+      el.querySelector<HTMLElement>('.start-track')!.style.setProperty('--mapped', `${mappedPct}%`);
+      continueButton.focus();
     },
     hide(fade) {
       if (!fade) el.style.transition = 'none';

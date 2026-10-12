@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
-import { neighbors, pointToTile, tileCenter } from './hexTiles';
+import { neighbors, pointToTile, tileCenter, TILE_COUNT } from './hexTiles';
 import { Regions } from './regions';
 import { terrainHeight } from './terrain';
 import { TileManager } from './tiles';
@@ -30,6 +30,8 @@ import { banditWins, raidRoll, raidStart, Raids, uprising, type RaidEvent, type 
 import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
 import { PulseLayer, type PulseKind } from './pulses';
+import { SAVE_VERSION, validateSave, type SaveData } from '../game/save';
+import { loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, type RegionName } from '../game/names';
@@ -381,6 +383,86 @@ function newGame() {
   tiles.borderStrength.value = BORDER_STRENGTH;
   // Storyboard 2a: the landing tile and its 6 neighbours are mapped first
   reveal(withNeighbors(pointToTile(introTarget)));
+  flyIn(introTarget);
+}
+
+// ─── Saved game (STORY-036) ───────────────────────
+// The game saves itself to IndexedDB every SAVE_EVERY_MS of play when a day has passed,
+// and whenever the page goes to the background. A valid save offers "Jatka" on the
+// start screen; continuing flies to the capital (or the settler) and goes on.
+const SAVE_EVERY_MS = 10_000;
+/** The checked save the start screen offers, and the one being continued during the fly-in. */
+let savedGame: SaveData | null = null;
+let continuing: SaveData | null = null;
+
+if (startScreen) {
+  void loadSave().then(raw => {
+    const save = validateSave(raw, { tiles: TILE_COUNT, cityAreas: regions.centers[2].length });
+    if (raw !== null && !save) console.warn('[GlobeCiv3] The saved game is not valid; it is not offered.');
+    if (!save || screen !== 'start') return;
+    savedGame = save;
+    const [first, ...more] = save.cities;
+    const where = first ? (more.length ? `${first.name} ja ${more.length} muuta kaupunkia` : first.name) : 'ei kaupunkeja vielä';
+    // The meter's region: the home province, then the home state
+    const state = Math.floor(save.startCity / 49), province = Math.floor(save.startCity / 7);
+    const areas = save.progress.meter === 'province' ? [province * 7, 7] : [state * 49, 49];
+    const home = Array.from({ length: areas[1] }, (_, i) => cityTiles(regions, areas[0] + i)).flat();
+    const mapped = new Set(save.mapped);
+    const pct = Math.round((100 * home.filter(t => mapped.has(t)).length) / Math.max(1, home.length));
+    startScreen.offerContinue(`Päivä ${save.day} · ${where}`, pct, continueGame);
+    // The actions grew: the planet takes the space left
+    frameStartPlanet();
+  });
+}
+
+function continueGame() {
+  if (screen !== 'start' || !startScreen || !savedGame) return;
+  requestSurfacePatterns();
+  continuing = savedGame;
+  game = { seed: continuing.seed, startCity: continuing.startCity };
+  screen = 'intro';
+  // Back where the game was: the capital, else the settler's camp
+  introTarget = tileCenter(continuing.cities[0]?.tile ?? continuing.units.camp).clone();
+  tiles.borderStrength.value = BORDER_STRENGTH;
+  reveal(continuing.mapped);
+  flyIn(introTarget);
+}
+
+/** The game as it is now, for the save slot; null outside play. */
+function snapshot(): SaveData | null {
+  if (!play || !game || screen !== 'playing') return null;
+  const mapped: number[] = [];
+  mapState.mapped.forEach((m, id) => { if (m) mapped.push(id); });
+  return {
+    version: SAVE_VERSION, savedAt: Date.now(), seed: game.seed, startCity: game.startCity, day: clock.day, speed: clock.speed, paused: clock.paused, mapped,
+    units: play.units.save(), selected: play.selected, progress: { ...play.progress }, targetProvince: play.targetProvince,
+    discoveries: play.discoveries.map(d => ({ ...d, finds: [d.finds[0], d.finds[1]] })),
+    bonuses: [...play.bonuses].map(([t, y]) => [t, { ...y }] as [number, Yield]),
+    found: play.found, cities: play.cities.map(c => ({ ...c })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
+    lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
+    improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert,
+  };
+}
+
+let lastSaveAt = -Infinity;
+let lastSaveDay = -1;
+/** Save when a day has passed since the last save and SAVE_EVERY_MS has gone by, or now when forced. */
+function autosave(force = false): Promise<boolean> {
+  const now = performance.now();
+  if (!force && (clock.day === lastSaveDay || now - lastSaveAt < SAVE_EVERY_MS)) return Promise.resolve(false);
+  const data = snapshot();
+  if (!data) return Promise.resolve(false);
+  lastSaveAt = now;
+  lastSaveDay = clock.day;
+  return storeSave(data);
+}
+// A phone sends the page to the background before it may close it
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void autosave(true); });
+window.addEventListener('pagehide', () => { void autosave(true); });
+
+/** Hide the start screen and fly in to a city area: a straight cut with reduced motion. */
+function flyIn(target: THREE.Vector3) {
+  if (!startScreen) return;
   const reduce = reduceMotion();
   startScreen.hide(!reduce);
   if (reduce) {
@@ -389,11 +471,11 @@ function newGame() {
     cut.className = 'cut-fade';
     document.body.appendChild(cut);
     cut.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 }).finished.then(() => cut.remove());
-    legs.push({ to: { point: introTarget, dist: frames[3], level: 3 }, durationS: 0 });
+    legs.push({ to: { point: target, dist: frames[3], level: 3 }, durationS: 0 });
   } else {
     // Storyboard 2a: turn onto the target at planet distance (1 s), then descend (2 s)
-    legs.push({ to: { point: introTarget, dist: rig.dist, level: 0 }, durationS: 1 });
-    legs.push({ to: { point: introTarget, dist: frames[3], level: 3 }, durationS: 2 });
+    legs.push({ to: { point: target, dist: rig.dist, level: 0 }, durationS: 1 });
+    legs.push({ to: { point: target, dist: frames[3], level: 3 }, durationS: 2 });
   }
 }
 
@@ -478,8 +560,8 @@ const world: World = {
   },
 };
 
-function startPlay(startCity: number) {
-  const units = new Units(pointToTile(regions.centers[2][startCity]), world);
+function startPlay(startCity: number, saved?: SaveData) {
+  const units = new Units(pointToTile(regions.centers[2][startCity]), world, saved?.units);
   const province = Math.floor(startCity / 7);
   const provinceTiles: number[] = [];
   for (let c = province * 7; c < province * 7 + 7; c++) provinceTiles.push(...cityTiles(regions, c));
@@ -507,6 +589,18 @@ function startPlay(startCity: number) {
   });
   // The first scout is selected, as in the design
   play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, hud };
+  if (!saved) return;
+  // A saved game goes on where it was
+  Object.assign(play, {
+    selected: Math.min(saved.selected, units.units.length - 1), progress: saved.progress, targetProvince: saved.targetProvince,
+    discoveries: saved.discoveries, bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
+    offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
+    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert,
+  });
+  clock.day = saved.day;
+  clock.speed = saved.speed;
+  clock.paused = saved.paused;
+  lastSaveDay = saved.day;
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
@@ -1123,6 +1217,7 @@ function updatePlay(dt: number) {
     city: play.cities[0]?.name ?? null,
   };
   play.hud.update(state);
+  void autosave();
   unitLayer.update({
     units: play.units.units,
     cities: play.cities.map(c => c.tile),
@@ -1158,11 +1253,12 @@ function updateGameFlow(dt: number) {
   // Landed: the start city area is mapped, it is the game's view, and zooming out
   // waits for the unlock (STORY-026)
   if (game) reveal(cityTiles(regions, game.startCity));
-  if (game) startPlay(game.startCity);
+  if (game) startPlay(game.startCity, continuing ?? undefined);
   screen = 'playing';
   introTarget = null;
-  lockedLevel = 3;
-  rig.maxDist = lockDist();
+  lockedLevel = continuing?.progress.openLevel ?? 3;
+  rig.maxDist = lockDist(lockedLevel);
+  continuing = null;
   startScreen?.remove();
 }
 
@@ -1303,6 +1399,8 @@ frameStartPlanet();
     return sites.slice(0, count);
   },
   sendTo: (tile: number) => play?.units.sendTo(tile, world) ?? false,
+  /** Save now (STORY-036); resolves to whether the browser stored it. */
+  saveNow: () => autosave(true),
   /** A settler from a city, as if the city had built it (STORY-033). */
   spawnSettler: (city: number) => {
     if (!play) return null;
