@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-11T12:24:07Z",
+    "generated_at": "2026-10-12T05:18:19Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "343bf3d",
+    "git_commit": "b590ac5",
     "git_branch": "main",
     "language": "fi"
   },
@@ -135,9 +135,10 @@
         "STORY-030",
         "STORY-031",
         "STORY-032",
-        "STORY-033"
+        "STORY-033",
+        "STORY-034"
       ],
-      "progress": 92
+      "progress": 93
     }
   ],
   "stories": [
@@ -933,6 +934,31 @@
         "plan": "PLAN-023",
         "implementation": "TICKET-IMPL-023",
         "testing": "TICKET-TEST-023"
+      }
+    },
+    {
+      "id": "STORY-034",
+      "epic": "EPIC-006",
+      "title": "Rosvot hyökkäävät kaupunkeihin",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kaupunkejani uhkaa jokin, jotta sotureilla on tehtävä ja pelissä on panoksia.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-028",
+        "STORY-033"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Päivästä 60 alkaen rosvoja nousee 5–8 ruudun päässä kaupungista tunnetulla maalla, keskimäärin kerran 30 päivässä kaupunkia kohden (Freecivin barbaarisäännöt), ja ne marssivat kaupunkiin ruutu päivässä.",
+        "Ensimmäinen havainto pysäyttää pelin. Kortti kertoo rosvojen määrän, matkan päivinä, puolustajat ja soturin voittotodennäköisyyden, ja vaihtoehdot ovat Rakenna soturi ja Luota puolustukseen.",
+        "Taistelu civ1-luvuin: rosvo hyökkää voimalla 2, ja soturi puolustaa voimalla 1 × maasto × 1,5 (linnoittautuneena kaupungissa). Yksi kierros ratkaisee todennäköisyydellä A / (A + D). Ilman puolustajaa rosvot ryöstävät kaupungin (varastot ja asukas yli koon 1) ja lähtevät.",
+        "Rosvot ja niiden reitti näkyvät kartalla, ja HUD kertoo päivän taisteluista."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-024",
+        "implementation": "TICKET-IMPL-024",
+        "testing": "TICKET-TEST-024"
       }
     }
   ],
@@ -2212,6 +2238,64 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-024",
+      "story": "STORY-034",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-11",
+      "approach": "STORY-033:n jälkeen sotureilla ei ollut tehtävää, eikä pelissä ollut panoksia. Linssi ehdotti uhkaa, ja Sami sanoi \"jatka\". Säännöt ovat puhdasta logiikkaa (src/game/raids.ts), ja luvut tulevat Freecivistä: kapinat alkavat vuorolla 60 (common/game.h GAME_DEFAULT_ONSETBARBARIAN, commit 5068ce7b), alkavat 5–8 ruudun päässä kaupungista (server/barbarian.h) tunnetulla maalla, ja pieni sivilisaatio säästyy: kapina tulee vain, kun noppa 1–30 on enintään kaupungit × (taso − 1), normaalilla tasolla 2 (server/barbarian.c try_summon_barbarians, commit 3ac17fea). Maarosvot ovat civ1:n ratsuväkeä, hyökkäys 2 (units.ruleset, rooli Barbarian). Taistelussa on 10 osumapistettä ja tulivoima 10, joten yksi kierros ratkaisee, ja hyökkääjä voittaa todennäköisyydellä A / (A + D) (server/unittools.c). Puolustaja saa maaston defense_bonus-lisän (terrain.ruleset) ja +50 % linnoittautuneena kaupungissa (effects.ruleset). Ensimmäinen havainto pysäyttää pelin kortilla, joten pelaajalla on hetki reagoida.",
+      "alternatives_considered": [
+        {
+          "name": "Naapurisivilisaatiot",
+          "pros": "Diplomatia ja kauppa myöhemmin",
+          "cons": "Tekoäly, omat kaupungit ja rajat; iso työ",
+          "rejected_because": "Rosvot tuovat uhan murto-osalla työstä; naapurit voivat tulla myöhemmin"
+        },
+        {
+          "name": "Freecivin barbaarit sellaisenaan",
+          "pros": "Uskollinen alkuperäiselle",
+          "cons": "Kahdesta neljään yksikköä ja johtaja, ja ne valtaavat kaupungin",
+          "rejected_because": "Yhden soturin pääkaupunki menetettäisiin, ja se lopettaisi pelin"
+        },
+        {
+          "name": "Uhka ilman korttia",
+          "pros": "Ei keskeytyksiä",
+          "cons": "Pelaaja huomaa rosvot vasta ryöstöstä",
+          "rejected_because": "Sami toivoi vuorovaikutusta; kortti antaa valinnan"
+        }
+      ],
+      "files_to_change": [
+        "src/game/raids.ts ja raids.test.ts (uudet)",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/discoveryCard.ts",
+        "tests/e2e/raids.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Freecivin barbaari- ja taistelusäännöt lähteineen",
+          "verify": "Lähteet ja commitit kirjattu koodiin"
+        },
+        {
+          "step": 2,
+          "action": "Säännöt puhtaana logiikkana yksikkötesteineen",
+          "verify": "npm test vihreä"
+        },
+        {
+          "step": 3,
+          "action": "Päivätikki, kortti, taistelut ja rosvot kartalle",
+          "verify": "E2E, koeajo ja kuvakaappaukset"
+        },
+        {
+          "step": 4,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3125,6 +3209,46 @@
         "notes": "Kaupunkitestin rakennusjärjestys muuttui tarkoituksella: soturin jälkeen rakennus on uudisasukas, ja Vaihda vaihtaa takaisin soturiin."
       },
       "commit": "343bf3d",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-024",
+      "story": "STORY-034",
+      "plan": "PLAN-024",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/raids.ts",
+        "src/game/raids.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/discoveryCard.ts",
+        "src/globe/hexTiles.test.ts",
+        "tests/e2e/raids.e2e.ts"
+      ],
+      "change_summary": "Päivästä 60 alkaen kaupunkia vastaan voi nousta yhden tai kahden rosvon joukko 5–8 ruudun päässä tunnetulla maalla. Joukko marssii kaupunkiin ruutu päivässä maaston hinnoin. Ensimmäinen havainto pysäyttää pelin kortilla (Uhka · kaupunki, Rosvoja liikkeellä), joka kertoo matkan, puolustajat ja soturin voittotodennäköisyyden. Rakenna soturi vaihtaa kaupungin rakennuksen soturiin. Kaupungin vieressä rosvo hyökkää kerran päivässä: voitto kaataa soturin, häviö poistaa rosvon, ja ilman puolustajaa joukko ryöstää kaupungin ja lähtee. Rosvot piirretään ruosteenpunaisina ja niiden reitti ruosteenpunaisena katkoviivana. HUD kertoo päivän taistelut yhdellä ilmoituksella.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "main.ts: Play.raids ja raidAlert, raidsOn, raidDay, startRaid, updateRaidAlert, chooseRaid, raidNotice; päiväsilmukka pysähtyy myös rosvokortille; shownCard raid",
+          "globeDebug.setDiscoveries kytkee myös rosvot; uudet setRaids ja raidNow; globeGame.state.raid ja raidAlert",
+          "UnitView.bandits",
+          "discoveryCard: ChoiceKind defend"
+        ],
+        "call_sites_found": [
+          "updatePlay",
+          "updateDiscovery → updateSiteOffer → updateRaidAlert",
+          "löytökortin valinta",
+          "testit, jotka kytkevät löydöt pois"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/globe/unitLayer.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Testit, jotka kytkevät löydöt pois, kytkevät samalla rosvot pois. Rosvot tarvitsevat kaupungin, joten testit ilman kaupunkia eivät kohtaa niitä. hexTiles-naapuritestille annettiin muiden raskaiden testien 30 s:n aikaraja."
+      },
+      "commit": "b590ac5",
       "progress": 100
     }
   ],
@@ -5396,6 +5520,129 @@
           },
           {
             "item": "Kaupunki ei rakenna sotureita loputtomiin",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-11"
+      }
+    },
+    {
+      "id": "TICKET-TEST-024",
+      "story": "STORY-034",
+      "implementation_ticket": "TICKET-IMPL-024",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvakaappaukset ja koeajo löysivät kolme pientä vikaa: kortissa luki \"Kaupungissa on ei sotureita\", saman päivän taistelut toistuivat ilmoituksessa (\"Soturi torjui rosvon · Soturi torjui rosvon\"), ja samassa ruudussa olevat rosvot piirtyivät päällekkäin. Kaikki korjattiin. Lisäksi hexTiles-naapuritesti ylitti kuormassa 5 s:n oletusrajan (5,3–8,4 s). Testi on oikein, joten sille annettiin muiden raskaiden testien 30 s:n raja. Ensimmäinen CI-ajo (38160693458) oli punainen: sites-testi ei löytänyt kaupungin nimilappua \"koko 1\". Todennäköinen syy (ei todennettu, sillä annotaatio ei kerro kokoa ja testi meni paikallisesti läpi CI-tilassa): GPU:ttomalla ajokoneella kului useita päiviä perustamisesta taukoon, ja kaupunki ehti kasvaa. Paikallinen ajo CI-tilassa löysi kaksi samanlaista kilpailutilannetta: rosvotestin rakennustarkistus (soturi ehti valmistua) ja vanha kilpa testien alussa, jossa tiedustelija teki löydön ennen kuin testi kytki löydöt pois. Korjaukset: koko luetaan tilasta, rakennustarkistus hyväksyy myös valmistuneen soturin, ja debug-liput asetetaan ennen Uusi peli -nappia. Playwrightin portin voi vaihtaa E2E_PORT-muuttujalla, koska toinen projekti varasi portin 4175.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "src/globe/unitLayer.ts",
+          "src/globe/hexTiles.test.ts",
+          "playwright.config.ts",
+          "tests/e2e/raids.e2e.ts",
+          "tests/e2e/sites.e2e.ts",
+          "tests/e2e/city.e2e.ts",
+          "tests/e2e/improvements.e2e.ts",
+          "tests/e2e/play.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800). GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: puolustusvoima ja voittotodennäköisyys",
+            "expected": "Soturi kaupungissa: ruohomaa 1,5, metsä 2,25, kukkulat 3, vuoret 4,5; rosvo voittaa ruohomaalla 2/3,5 ja kukkuloilla 0,4",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: kapinoiden ajoitus ja tiheys",
+            "expected": "Ei ennen päivää 60; 3 000 päivässä yhdellä kaupungilla 70–130 ja kolmella 250–350 kapinaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: lähtöruutu",
+            "expected": "5–8 ruudun päässä, tunnettu maa, sama ruutu samalla nopalla, ei ruutua kun tunnettua maata ei ole",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: marssi ja taistelu",
+            "expected": "Ruutu päivässä, ei taistelua ennen kaupungin viereen pääsyä, torjunta poistaa rosvon, voitot kaatavat soturit, ilman puolustajaa ryöstö, ilman reittiä ei joukkoa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: rosvot kohti pääkaupunkia",
+            "expected": "Kortti (Uhka · Aamuranta, määrä, päivät, puolustajat, vaihtoehdot), peli seis, Rakenna soturi vaihtaa rakennuksen, rosvot ja reitti kartalla, taistelut ratkeavat",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Koeajo 150 päivää (siemen 42, 4×, Luota puolustukseen)",
+            "expected": "Kapinat tulevat itsestään, ja taistelut ja ryöstö toimivat",
+            "result": "Kapinat päivinä 71 (2 rosvoa, molemmat torjuttiin) ja 97 (rosvo kaatoi ainoan soturin ja ryösti kaupungin päivänä 108)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kuvakaappaukset: kortti, kaksi rosvoa ja reitti",
+            "expected": "Rosvot erottuvat ja näkyvät rinnakkain",
+            "result": "pass korjausten jälkeen",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit paikallisesti",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 21 tiedostoa (110 testiä). E2E 42/43 rinnakkain: unlock-testi ylitti sivun latauksen 20 s:n rajan kuormassa ja meni yksinään läpi 3/3. CI ajaa E2E:n yhdellä workerilla.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Ensimmäinen CI-ajo",
+            "expected": "Vihreä",
+            "result": "Ajo 38160693458 (18a979d) punainen: sites-testi ei löytänyt nimilappua \"Kaupunki Aamuranta, koko 1\" (todennäköisesti kaupunki ehti kasvaa); play-testin yksikkövalinta flaky (uusinta vihreä)",
+            "outcome": "fail"
+          },
+          {
+            "steps": "Koko E2E CI-tilassa paikallisesti korjausten jälkeen",
+            "expected": "Vihreä",
+            "result": "E2E 43/43 CI-tilassa (yksi worker, pikselisuhde 0,5, 27 min)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo korjausten jälkeen",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38165763101 (b590ac5, 32 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Uhka tuntuu ja kortti antaa mielekkään valinnan",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Rosvot nousevat päivästä 60 Freecivin säännöin",
+            "checked": true
+          },
+          {
+            "item": "Kortti pysäyttää pelin ja antaa valinnan",
+            "checked": true
+          },
+          {
+            "item": "Taistelu civ1-luvuin; ryöstö ilman puolustajaa",
+            "checked": true
+          },
+          {
+            "item": "Rosvot kartalla ja ilmoitukset HUDissa",
             "checked": true
           }
         ],

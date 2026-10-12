@@ -1,0 +1,40 @@
+{
+  "id": "TICKET-IMPL-024",
+  "story": "STORY-034",
+  "plan": "PLAN-024",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/raids.ts",
+    "src/game/raids.test.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/discoveryCard.ts",
+    "src/globe/hexTiles.test.ts",
+    "tests/e2e/raids.e2e.ts"
+  ],
+  "change_summary": "Päivästä 60 alkaen kaupunkia vastaan voi nousta yhden tai kahden rosvon joukko 5–8 ruudun päässä tunnetulla maalla. Joukko marssii kaupunkiin ruutu päivässä maaston hinnoin. Ensimmäinen havainto pysäyttää pelin kortilla (Uhka · kaupunki, Rosvoja liikkeellä), joka kertoo matkan, puolustajat ja soturin voittotodennäköisyyden. Rakenna soturi vaihtaa kaupungin rakennuksen soturiin. Kaupungin vieressä rosvo hyökkää kerran päivässä: voitto kaataa soturin, häviö poistaa rosvon, ja ilman puolustajaa joukko ryöstää kaupungin ja lähtee. Rosvot piirretään ruosteenpunaisina ja niiden reitti ruosteenpunaisena katkoviivana. HUD kertoo päivän taistelut yhdellä ilmoituksella.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: Play.raids ja raidAlert, raidsOn, raidDay, startRaid, updateRaidAlert, chooseRaid, raidNotice; päiväsilmukka pysähtyy myös rosvokortille; shownCard raid",
+      "globeDebug.setDiscoveries kytkee myös rosvot; uudet setRaids ja raidNow; globeGame.state.raid ja raidAlert",
+      "UnitView.bandits",
+      "discoveryCard: ChoiceKind defend"
+    ],
+    "call_sites_found": [
+      "updatePlay",
+      "updateDiscovery → updateSiteOffer → updateRaidAlert",
+      "löytökortin valinta",
+      "testit, jotka kytkevät löydöt pois"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/globe/unitLayer.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Testit, jotka kytkevät löydöt pois, kytkevät samalla rosvot pois. Rosvot tarvitsevat kaupungin, joten testit ilman kaupunkia eivät kohtaa niitä. hexTiles-naapuritestille annettiin muiden raskaiden testien 30 s:n aikaraja."
+  },
+  "commit": "b590ac5",
+  "progress": 100
+}

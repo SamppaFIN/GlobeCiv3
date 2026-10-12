@@ -1,0 +1,123 @@
+{
+  "id": "TICKET-TEST-024",
+  "story": "STORY-034",
+  "implementation_ticket": "TICKET-IMPL-024",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvakaappaukset ja koeajo löysivät kolme pientä vikaa: kortissa luki \"Kaupungissa on ei sotureita\", saman päivän taistelut toistuivat ilmoituksessa (\"Soturi torjui rosvon · Soturi torjui rosvon\"), ja samassa ruudussa olevat rosvot piirtyivät päällekkäin. Kaikki korjattiin. Lisäksi hexTiles-naapuritesti ylitti kuormassa 5 s:n oletusrajan (5,3–8,4 s). Testi on oikein, joten sille annettiin muiden raskaiden testien 30 s:n raja. Ensimmäinen CI-ajo (38160693458) oli punainen: sites-testi ei löytänyt kaupungin nimilappua \"koko 1\". Todennäköinen syy (ei todennettu, sillä annotaatio ei kerro kokoa ja testi meni paikallisesti läpi CI-tilassa): GPU:ttomalla ajokoneella kului useita päiviä perustamisesta taukoon, ja kaupunki ehti kasvaa. Paikallinen ajo CI-tilassa löysi kaksi samanlaista kilpailutilannetta: rosvotestin rakennustarkistus (soturi ehti valmistua) ja vanha kilpa testien alussa, jossa tiedustelija teki löydön ennen kuin testi kytki löydöt pois. Korjaukset: koko luetaan tilasta, rakennustarkistus hyväksyy myös valmistuneen soturin, ja debug-liput asetetaan ennen Uusi peli -nappia. Playwrightin portin voi vaihtaa E2E_PORT-muuttujalla, koska toinen projekti varasi portin 4175.",
+    "files_changed": [
+      "src/globe/main.ts",
+      "src/globe/unitLayer.ts",
+      "src/globe/hexTiles.test.ts",
+      "playwright.config.ts",
+      "tests/e2e/raids.e2e.ts",
+      "tests/e2e/sites.e2e.ts",
+      "tests/e2e/city.e2e.ts",
+      "tests/e2e/improvements.e2e.ts",
+      "tests/e2e/play.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800). GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: puolustusvoima ja voittotodennäköisyys",
+        "expected": "Soturi kaupungissa: ruohomaa 1,5, metsä 2,25, kukkulat 3, vuoret 4,5; rosvo voittaa ruohomaalla 2/3,5 ja kukkuloilla 0,4",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: kapinoiden ajoitus ja tiheys",
+        "expected": "Ei ennen päivää 60; 3 000 päivässä yhdellä kaupungilla 70–130 ja kolmella 250–350 kapinaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: lähtöruutu",
+        "expected": "5–8 ruudun päässä, tunnettu maa, sama ruutu samalla nopalla, ei ruutua kun tunnettua maata ei ole",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: marssi ja taistelu",
+        "expected": "Ruutu päivässä, ei taistelua ennen kaupungin viereen pääsyä, torjunta poistaa rosvon, voitot kaatavat soturit, ilman puolustajaa ryöstö, ilman reittiä ei joukkoa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rosvot kohti pääkaupunkia",
+        "expected": "Kortti (Uhka · Aamuranta, määrä, päivät, puolustajat, vaihtoehdot), peli seis, Rakenna soturi vaihtaa rakennuksen, rosvot ja reitti kartalla, taistelut ratkeavat",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koeajo 150 päivää (siemen 42, 4×, Luota puolustukseen)",
+        "expected": "Kapinat tulevat itsestään, ja taistelut ja ryöstö toimivat",
+        "result": "Kapinat päivinä 71 (2 rosvoa, molemmat torjuttiin) ja 97 (rosvo kaatoi ainoan soturin ja ryösti kaupungin päivänä 108)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: kortti, kaksi rosvoa ja reitti",
+        "expected": "Rosvot erottuvat ja näkyvät rinnakkain",
+        "result": "pass korjausten jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit paikallisesti",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 21 tiedostoa (110 testiä). E2E 42/43 rinnakkain: unlock-testi ylitti sivun latauksen 20 s:n rajan kuormassa ja meni yksinään läpi 3/3. CI ajaa E2E:n yhdellä workerilla.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ensimmäinen CI-ajo",
+        "expected": "Vihreä",
+        "result": "Ajo 38160693458 (18a979d) punainen: sites-testi ei löytänyt nimilappua \"Kaupunki Aamuranta, koko 1\" (todennäköisesti kaupunki ehti kasvaa); play-testin yksikkövalinta flaky (uusinta vihreä)",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Koko E2E CI-tilassa paikallisesti korjausten jälkeen",
+        "expected": "Vihreä",
+        "result": "E2E 43/43 CI-tilassa (yksi worker, pikselisuhde 0,5, 27 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo korjausten jälkeen",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38165763101 (b590ac5, 32 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Uhka tuntuu ja kortti antaa mielekkään valinnan",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Rosvot nousevat päivästä 60 Freecivin säännöin",
+        "checked": true
+      },
+      {
+        "item": "Kortti pysäyttää pelin ja antaa valinnan",
+        "checked": true
+      },
+      {
+        "item": "Taistelu civ1-luvuin; ryöstö ilman puolustajaa",
+        "checked": true
+      },
+      {
+        "item": "Rosvot kartalla ja ilmoitukset HUDissa",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-11"
+  }
+}

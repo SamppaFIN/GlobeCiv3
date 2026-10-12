@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-024",
+  "story": "STORY-034",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-11",
+  "approach": "STORY-033:n jälkeen sotureilla ei ollut tehtävää, eikä pelissä ollut panoksia. Linssi ehdotti uhkaa, ja Sami sanoi \"jatka\". Säännöt ovat puhdasta logiikkaa (src/game/raids.ts), ja luvut tulevat Freecivistä: kapinat alkavat vuorolla 60 (common/game.h GAME_DEFAULT_ONSETBARBARIAN, commit 5068ce7b), alkavat 5–8 ruudun päässä kaupungista (server/barbarian.h) tunnetulla maalla, ja pieni sivilisaatio säästyy: kapina tulee vain, kun noppa 1–30 on enintään kaupungit × (taso − 1), normaalilla tasolla 2 (server/barbarian.c try_summon_barbarians, commit 3ac17fea). Maarosvot ovat civ1:n ratsuväkeä, hyökkäys 2 (units.ruleset, rooli Barbarian). Taistelussa on 10 osumapistettä ja tulivoima 10, joten yksi kierros ratkaisee, ja hyökkääjä voittaa todennäköisyydellä A / (A + D) (server/unittools.c). Puolustaja saa maaston defense_bonus-lisän (terrain.ruleset) ja +50 % linnoittautuneena kaupungissa (effects.ruleset). Ensimmäinen havainto pysäyttää pelin kortilla, joten pelaajalla on hetki reagoida.",
+  "alternatives_considered": [
+    {
+      "name": "Naapurisivilisaatiot",
+      "pros": "Diplomatia ja kauppa myöhemmin",
+      "cons": "Tekoäly, omat kaupungit ja rajat; iso työ",
+      "rejected_because": "Rosvot tuovat uhan murto-osalla työstä; naapurit voivat tulla myöhemmin"
+    },
+    {
+      "name": "Freecivin barbaarit sellaisenaan",
+      "pros": "Uskollinen alkuperäiselle",
+      "cons": "Kahdesta neljään yksikköä ja johtaja, ja ne valtaavat kaupungin",
+      "rejected_because": "Yhden soturin pääkaupunki menetettäisiin, ja se lopettaisi pelin"
+    },
+    {
+      "name": "Uhka ilman korttia",
+      "pros": "Ei keskeytyksiä",
+      "cons": "Pelaaja huomaa rosvot vasta ryöstöstä",
+      "rejected_because": "Sami toivoi vuorovaikutusta; kortti antaa valinnan"
+    }
+  ],
+  "files_to_change": [
+    "src/game/raids.ts ja raids.test.ts (uudet)",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/discoveryCard.ts",
+    "tests/e2e/raids.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Freecivin barbaari- ja taistelusäännöt lähteineen",
+      "verify": "Lähteet ja commitit kirjattu koodiin"
+    },
+    {
+      "step": 2,
+      "action": "Säännöt puhtaana logiikkana yksikkötesteineen",
+      "verify": "npm test vihreä"
+    },
+    {
+      "step": 3,
+      "action": "Päivätikki, kortti, taistelut ja rosvot kartalle",
+      "verify": "E2E, koeajo ja kuvakaappaukset"
+    },
+    {
+      "step": 4,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}
