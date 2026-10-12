@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
-import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, shortfall, workedTiles, workedYield, type City } from './cities';
+import { BUILDS, buy, buyCost, cityDay, cityGold, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
@@ -92,5 +92,61 @@ describe('cities', () => {
     c.size = 2;
     expect(cityDay(c, { ...y, surplus: 0 })).toBe('settler');
     expect([c.size, c.shields]).toEqual([1, 3]);
+  });
+
+  it('carry the food over the box when growing, and with a granary half of the new box (Freeciv)', () => {
+    const plain = city(1);
+    plain.food = 18;
+    cityDay(plain, { food: 6, shield: 0, trade: 0, surplus: 4 });
+    expect([plain.size, plain.food]).toEqual([2, 2]);
+    const stored = city(1);
+    stored.buildings.push('granary');
+    stored.food = 18;
+    cityDay(stored, { food: 6, shield: 0, trade: 0, surplus: 4 });
+    // 2 over the box of 20, and half of the new box of 30
+    expect([stored.size, stored.food]).toEqual([2, 17]);
+  });
+
+  it('build a granary, walls or a marketplace once; then the city goes on to settlers', () => {
+    const c = city(2);
+    c.build = 'granary';
+    c.shields = 59;
+    expect(cityDay(c, { food: 0, shield: 1, trade: 0, surplus: 0 })).toBe('granary');
+    expect([c.buildings, c.build, c.shields]).toEqual([['granary'], 'settler', 0]);
+    expect([BUILDS.granary.cost, BUILDS.walls.cost, BUILDS.market.cost]).toEqual([60, 120, 80]);
+  });
+
+  it('trade is gold, half as much again with a marketplace; buildings cost their upkeep, and are sold when the gold runs out', () => {
+    const c = city(3);
+    expect(cityGold(c, { food: 0, shield: 0, trade: 5 })).toBe(5);
+    c.buildings.push('market');
+    expect(cityGold(c, { food: 0, shield: 0, trade: 5 })).toBe(7);
+    c.buildings.push('walls', 'granary');
+    // Upkeep 1 + 2 + 1 a day
+    expect(payUpkeep(c, 10)).toEqual({ treasury: 6, sold: [] });
+    // 3 gold cannot pay 4: the walls (the dearest upkeep) go for their cost, 120
+    expect(payUpkeep(c, 3)).toEqual({ treasury: 119, sold: ['walls'] });
+    expect(c.buildings).toEqual(['market', 'granary']);
+  });
+
+  it('buying costs 2 gold a missing shield, a unit more, and twice as much with nothing in store (Freeciv)', () => {
+    const c = city(2);
+    expect(buyCost(c)).toBe(50); // Soturi: (2 × 10 + 10² / 20) × 2
+    c.shields = 4;
+    expect(buyCost(c)).toBe(13); // 2 × 6 + 36 / 20
+    c.build = 'granary';
+    c.shields = 0;
+    expect(buyCost(c)).toBe(240);
+    c.shields = 30;
+    expect(buyCost(c)).toBe(60);
+    // Bought: the shields are in store, the build is done the next day
+    expect(buy(c, 100)).toBe(60);
+    expect(c.shields).toBe(60);
+    expect(buyCost(c)).toBe(0);
+    expect(buy(c, 100)).toBeNull();
+    // Not enough gold: nothing bought
+    c.build = 'walls';
+    expect(buy(c, 10)).toBeNull();
+    expect(c.shields).toBe(60);
   });
 });

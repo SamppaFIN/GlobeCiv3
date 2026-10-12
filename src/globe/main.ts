@@ -39,7 +39,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, shortfall, workedTiles, workedYield, CITY_RINGS, type Build, type City, type CityYield, type Support } from '../game/cities';
+import { BUILDS, buy, buyCost, cityDay, cityGold, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -438,9 +438,9 @@ function snapshot(): SaveData | null {
     units: play.units.save(), selected: play.selected, progress: { ...play.progress }, targetProvince: play.targetProvince,
     discoveries: play.discoveries.map(d => ({ ...d, finds: [d.finds[0], d.finds[1]] })),
     bonuses: [...play.bonuses].map(([t, y]) => [t, { ...y }] as [number, Yield]),
-    found: play.found, cities: play.cities.map(c => ({ ...c })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
+    found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
-    improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert,
+    improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
   };
 }
 
@@ -521,6 +521,8 @@ interface Play {
   /** Bandits on their way to a city, and whether their card waits to be answered (STORY-034). */
   raids: Raids;
   raidAlert: boolean;
+  /** The treasury: trade comes in as gold, and buildings and buying cost it (STORY-038). */
+  gold: number;
   hud: ReturnType<typeof createGameHud>;
 }
 let play: Play | null = null;
@@ -591,14 +593,14 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
     selected: Math.min(saved.selected, units.units.length - 1), progress: saved.progress, targetProvince: saved.targetProvince,
     discoveries: saved.discoveries, bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
-    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert,
+    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -611,6 +613,9 @@ function startPlay(startCity: number, saved?: SaveData) {
 // citizen, grows and builds; what it builds joins the units.
 
 const NO_YIELD: Yield = { food: 0, shield: 0, trade: 0 };
+
+/** Gold at the start: Freeciv GAME_DEFAULT_GOLD (common/game.h). */
+const START_GOLD = 50;
 
 /** A worked tile's food, shields and trade: terrain, resource, an irrigated centre and improvements (Freeciv civ1), plus finds. */
 function yieldOf(id: number, centre: boolean) {
@@ -685,9 +690,14 @@ function cityDays() {
     }
     const size = c.size;
     const done = cityDay(c, yields[i]);
+    // Trade comes in as gold, and the buildings' upkeep goes out (STORY-038)
+    const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i]));
+    play!.gold = paid.treasury;
+    if (paid.sold.length) discoveryCard.notice(`Kulta loppui: ${c.name} myi ${paid.sold.map(b => BUILDS[b].name.toLowerCase()).join(' ja ')}`);
     if (c.size > size) discoveryCard.notice(`${c.name} kasvoi kokoon ${c.size}`);
     if (!done) return;
-    play!.units.spawn(done, c.tile, world, c.id);
+    if (isBuilding(done)) moment('city', c.tile);
+    else play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
   });
   // A suggested site waiting for a settler gets the first free one
@@ -789,26 +799,42 @@ const cityCard = createCityCard(hud_root, {
   close: () => { if (play) play.openCity = null; },
   // Shields in store are kept: both builds are units, so Freeciv has no change penalty
   setBuild: (build: Build) => { if (play && play.openCity !== null) play.cities[play.openCity].build = build; },
+  buy: () => {
+    if (!play || play.openCity === null) return;
+    const c = play.cities[play.openCity];
+    const price = buy(c, play.gold);
+    if (price === null) return;
+    play.gold -= price;
+    discoveryCard.notice(`${c.name} osti: ${BUILDS[c.build].name} · ${price} kultaa`);
+  },
 });
 
-/** What each build costs and does, for the city card (STORY-037). */
-const BUILD_PURPOSE: Record<Build, string> = { warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata' };
+/** What each build does, for the city card (STORY-037, buildings STORY-038). */
+const BUILD_PURPOSE: Record<Build, string> = {
+  warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
+  granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
+};
 
 function cityView(c: City, y: CityYield): CityView {
   const grow = daysToGrow(c, y);
+  const price = buyCost(c);
   return {
+    gold: play?.gold ?? 0,
+    income: cityGold(c, y) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
+    buy: price ? { name: BUILDS[c.build].name, price, can: price <= (play?.gold ?? 0) } : null,
+    buildings: c.buildings.map(b => BUILDS[b].name),
     kicker: `${c.capital ? 'Pääkaupunki' : 'Kaupunki'} · ${nameOf(2, regions.tileTable()[c.tile]).name}`,
     name: c.name,
     size: c.size,
     growth: c.food / granary(c.size),
     growText: y.surplus < 0 ? 'nälkää' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
     yields: [y.surplus, y.shield, y.trade],
-    builds: (Object.keys(BUILDS) as Build[]).map(kind => {
+    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind))).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       return {
         kind, name: b.name, selected: kind === c.build,
-        cost: `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}`, purpose: BUILD_PURPOSE[kind],
+        cost: `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
         eta: ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
@@ -944,6 +970,7 @@ const soldiersIn = (tile: number) => (play ? play.units.units.filter(u => u.kind
 const raidWorld: RaidWorld = {
   cost: id => world.cost(id),
   terrainOf,
+  walls: tile => play?.cities.find(c => c.tile === tile)?.buildings.includes('walls') ?? false,
   defenders: tile => soldiersIn(tile).length,
   loseDefender: tile => {
     const soldiers = soldiersIn(tile);
@@ -1012,7 +1039,7 @@ function updateRaidAlert() {
       body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
       options: [
         { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
-        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
+        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile), c.buildings.includes('walls'))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
       ],
       note: 'Ryöstö vie kaupungin varastot ja asukkaan.',
     });
@@ -1417,6 +1444,8 @@ frameStartPlanet();
     return sites.slice(0, count);
   },
   sendTo: (tile: number) => play?.units.sendTo(tile, world) ?? false,
+  /** Set the treasury (STORY-038). */
+  setGold: (gold: number) => { if (play) play.gold = gold; },
   /** Save now (STORY-036); resolves to whether the browser stored it. */
   saveNow: () => autosave(true),
   /** A settler from a city, as if the city had built it (STORY-033). */
@@ -1463,6 +1492,7 @@ frameStartPlanet();
       improvements: play?.improvements.entries() ?? [],
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
+      gold: play?.gold ?? null,
     };
   },
 };

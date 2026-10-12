@@ -14,6 +14,7 @@ function makeWorld(soldiers: number, rolls: number[]): RaidWorld & { soldiers: n
     plundered: 0,
     cost: land,
     terrainOf: () => 'grassland',
+    walls: () => false,
     defenders() { return this.soldiers; },
     loseDefender() { this.soldiers--; },
     plunder() { this.plundered++; },
@@ -33,6 +34,9 @@ describe('raids (Freeciv civ1 barbarians)', () => {
     expect([defencePower('grassland'), defencePower('forest'), defencePower('hills'), defencePower('mountains')]).toEqual([1.5, 2.25, 3, 4.5]);
     expect(banditWins('grassland')).toBeCloseTo(2 / 3.5);
     expect(banditWins('hills')).toBeCloseTo(0.4);
+    // Walls: +200 % instead of the fortify bonus
+    expect([defencePower('grassland', true), defencePower('hills', true)]).toEqual([3, 6]);
+    expect(banditWins('grassland', true)).toBeCloseTo(0.4);
   });
 
   it('come from day 60 on, about one day in 30 per city', () => {

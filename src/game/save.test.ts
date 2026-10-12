@@ -39,9 +39,9 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
     mapped: [...map.mapped.keys()].filter(i => map.mapped[i]), units: units.save(), selected: 1,
     progress: { openLevel: 3, meter: 'province' }, targetProvince: -1,
     discoveries: [{ tile: START_TILE, finder: 1, finds: ['fish', 'ruins'] }], bonuses: [[START_TILE, { food: 2, shield: 0, trade: 0 }]], found: 1,
-    cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler' }],
+    cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'] }],
     offers: [], offered: [START_TILE], lastOfferDay: 9, pendingSite: null,
-    improvements: imp.entries(), raids: raids.save(), raidAlert: true,
+    improvements: imp.entries(), raids: raids.save(), raidAlert: true, gold: 73,
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }
@@ -89,6 +89,15 @@ describe('saved game (STORY-036)', () => {
     expect(validateSave(null, LIMITS)).toBeNull();
     expect(validateSave('{"version":1}', LIMITS)).toBeNull();
     expect(validateSave([], LIMITS)).toBeNull();
+  });
+
+  it('a save from before gold and buildings (STORY-038) gets the start gold and no buildings', () => {
+    const { data } = playedSave();
+    const old: any = JSON.parse(JSON.stringify(data));
+    delete old.gold;
+    delete old.cities[0].buildings;
+    const s = validateSave(old, LIMITS)!;
+    expect([s.gold, s.cities[0].buildings]).toEqual([50, []]);
   });
 
   it('keeps no property it did not check, and touches no prototype', () => {
