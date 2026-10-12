@@ -44,7 +44,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityMood, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -662,9 +662,14 @@ function cityYields(): CityYield[] {
   return play.cities.map(c => {
     const y = cityYield(c, yieldOf, taken, supportOf(c));
     for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
-    return y;
+    return withMood(y, moodOf(c));
   });
 }
+
+/** A city's mood: its soldiers calm citizens under Despotism (STORY-044). */
+const moodOf = (c: City) => cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1);
+/** Cities in disorder on the last day, for the notices when it starts and ends. */
+const unrest = new Set<number>();
 
 /** Tiles each city works (or would, with `extra` citizens), in founding order; a tile is worked by the first city that takes it. */
 function workedByCity(extra = 0): number[][] {
@@ -704,6 +709,16 @@ function foundAt(tile: number) {
 function cityDays() {
   if (!play) return;
   let yields = cityYields();
+  // Disorder starts or ends
+  play.cities.forEach((c, i) => {
+    if (yields[i].disorder && !unrest.has(c.id)) {
+      unrest.add(c.id);
+      discoveryCard.notice(`Levottomuuksia: ${c.name} · tyytymättömät pysäyttivät kaupungin`);
+      moment('raid', c.tile);
+    } else if (!yields[i].disorder && unrest.delete(c.id)) {
+      discoveryCard.notice(`${c.name} rauhoittui`);
+    }
+  });
   play.cities.forEach((c, i) => {
     for (let short = shortfall(c, yields[i], supportOf(c)); short; short = shortfall(c, yields[i], supportOf(c))) {
       const own = play!.units.units.filter(u => u.home === c.id && (short === 'shield' || u.kind === 'settler'));
@@ -856,6 +871,7 @@ const BUILD_PURPOSE: Record<Build, string> = {
   coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
   phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
   library: 'Tieteeseen 50 % lisää',
+  temple: 'Rauhoittaa yhden tyytymättömän asukkaan',
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
 };
 
@@ -873,6 +889,15 @@ function cityView(c: City, y: CityYield): CityView {
     ...(settlers ? [`uudisasukkaat syövät ${settlers} ruokaa: lähetä ne perustamaan kaupunkeja`] : []),
   ];
   return {
+    ...(() => {
+      const m = moodOf(c);
+      return {
+        moodText: `Asukkaat: ${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}`,
+        disorder: m.disorder
+          ? 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Neljä asukasta on tyytyväisiä; jokainen kaupungissa oleva sotilas ja temppeli rauhoittavat yhden lisää.'
+          : null,
+      };
+    })(),
     foodText: `Ruokaa ${y.food} · asukkaat syövät ${2 * c.size}${settlers ? ` · uudisasukkaat ${settlers}` : ''} · varastossa ${c.food}/${granary(c.size)}`,
     focus: c.focus,
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
@@ -960,7 +985,7 @@ function listView(): ListView {
       const when = c.build === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : ready === 0 ? 'valmis huomenna' : `${ready} pv`;
       return {
         id: c.id, name: c.name, size: `Koko ${c.size}`,
-        line: [`${BUILDS[c.build].name} · ${when}`, `ruokaa ${y.surplus < 0 ? '−' : '+'}${Math.abs(y.surplus)}`, ...(c.buildings.length ? [c.buildings.map(b => BUILDS[b].name).join(', ')] : [])].join(' · '),
+        line: [...(y.disorder ? ['LEVOTTOMUUKSIA'] : []), `${BUILDS[c.build].name} · ${when}`, `ruokaa ${y.surplus < 0 ? '−' : '+'}${Math.abs(y.surplus)}`, ...(c.buildings.length ? [c.buildings.map(b => BUILDS[b].name).join(', ')] : [])].join(' · '),
       };
     }),
     units: play!.units.units.map((u, index) => ({
@@ -1681,6 +1706,8 @@ frameStartPlanet();
   /** Learn an advance, or add bulbs (STORY-040). */
   learn: (advance: Advance) => { play?.research.known.add(advance); },
   addBulbs: (n: number) => { if (play) play.research.bulbs += n; },
+  /** Set a city's size (STORY-044). */
+  setCitySize: (city: number, size: number) => { if (play) play.cities[city].size = size; },
   /** Set the treasury (STORY-038). */
   setGold: (gold: number) => { if (play) play.gold = gold; },
   /** Save now (STORY-036); resolves to whether the browser stored it. */

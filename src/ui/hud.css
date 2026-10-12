@@ -196,6 +196,10 @@
 .city-food, .city-area { font-size: 12px; color: var(--c-muted); }
 .city-hint { font-size: 12px; color: var(--c-accent-text); }
 .city-hint[hidden] { display: none; }
+/* Citizens' mood and civil disorder (STORY-044) */
+.city-mood { font-size: 12px; color: var(--c-muted); }
+.city-disorder { font-size: 12px; color: oklch(0.78 0.14 35); }
+.city-disorder[hidden] { display: none; }
 .city-focus-row { display: flex; flex-direction: column; gap: 6px; }
 .city-focus { display: flex; }
 .city-focus .seg-opt { flex: 1; min-height: var(--touch-target); justify-content: center; padding: 0 6px; }

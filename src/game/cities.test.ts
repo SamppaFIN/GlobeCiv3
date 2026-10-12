@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
-import { BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
+import { baseContent, cityMood, withMood, BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
@@ -185,5 +185,19 @@ describe('cities', () => {
     expect(c.shields).toBe(5);
     expect(cityGold(c, y)).toBe(4);
     expect([daysToBuild(c, y), buyCost(c)]).toEqual([null, 0]);
+  });
+
+  it('four citizens are content under Despotism; a temple and each soldier calm one more, and unhappy ones left mean disorder (Freeciv civ1)', () => {
+    expect([1, 10, 11, 20, 21].map(baseContent)).toEqual([4, 4, 3, 3, 2]);
+    const c = city(6);
+    expect(cityMood(c, 0, 1)).toEqual({ content: 4, unhappy: 2, calmed: 0, disorder: true });
+    expect(cityMood(c, 1, 1)).toEqual({ content: 5, unhappy: 1, calmed: 1, disorder: true });
+    c.buildings.push('temple');
+    expect(cityMood(c, 1, 1)).toEqual({ content: 6, unhappy: 0, calmed: 2, disorder: false });
+    expect(cityMood(city(3), 0, 1).disorder).toBe(false);
+    // Disorder: no surplus food or shields, no gold or science; trade stays
+    const y = withMood({ food: 9, shield: 4, trade: 6, surplus: 3 }, cityMood(city(6), 0, 1));
+    expect(y).toEqual({ food: 9, shield: 0, trade: 6, surplus: 0, disorder: true });
+    expect([cityGold(c, y, 50), BUILDS.temple.cost]).toEqual([0, 40]);
   });
 });

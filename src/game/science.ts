@@ -14,11 +14,12 @@
  */
 import type { Build } from './cities';
 
-export type Advance = 'alphabet' | 'bronze' | 'pottery' | 'masonry' | 'currency' | 'writing';
+export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing';
 
 export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
   alphabet: { name: 'Aakkoset', needs: [] },
   bronze: { name: 'Pronssityö', needs: [] },
+  ceremonial: { name: 'Hautajaisriitit', needs: [] },
   pottery: { name: 'Keramiikka', needs: [] },
   masonry: { name: 'Muuraus', needs: [] },
   currency: { name: 'Rahatalous', needs: ['bronze'] },
@@ -27,7 +28,7 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 
 /** The advance each building and unit needs (buildings.ruleset and units.ruleset reqs). */
-export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze' };
+export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial' };
 
 /** Bulbs for the next advance when `known` advances are known. */
 export const advanceCost = (known: number) => 10 * (1 + known);
