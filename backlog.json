@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T12:43:27Z",
+    "generated_at": "2026-10-12T13:23:10Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "ecfe45f",
+    "git_commit": "4aedb59",
     "git_branch": "main",
     "language": "fi"
   },
@@ -139,7 +139,8 @@
         "STORY-034",
         "STORY-035",
         "STORY-036",
-        "STORY-037"
+        "STORY-037",
+        "STORY-038"
       ],
       "progress": 94
     }
@@ -1037,6 +1038,31 @@
         "plan": "PLAN-027",
         "implementation": "TICKET-IMPL-027",
         "testing": "TICKET-TEST-027"
+      }
+    },
+    {
+      "id": "STORY-038",
+      "epic": "EPIC-006",
+      "title": "Kauppa on kultaa, ja kaupungit rakentavat rakennuksia",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kaupungin kauppa tuottaa kultaa ja että voin rakentaa ja ostaa rakennuksia, jotta kaupungin kehittäminen on pelin ydintä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-028",
+        "STORY-037"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Kaupunkien kauppa tulee kassaan kultana (oma yksinkertaistus: kaikki kauppa on kultaa, kunnes tiede tulee peliin), ja kassassa on alussa Freecivin 50 kultaa.",
+        "Kaupunki voi rakentaa viljavaraston (60 tuotantoa, ylläpito 1, säilyttää kasvaessa puolet uudesta ruokalaatikosta), muurin (120, ylläpito 2, puolustus +200 % linnoittautumisen sijaan) ja torin (80, ylläpito 1, kultaa +50 %). Luvut ovat Freecivin civ1-säännöistä. Kukin rakennetaan kerran.",
+        "Ylläpito maksetaan päivittäin. Kun kulta loppuu, kallein rakennus myydään sen hinnalla (Freeciv, gold_upkeep_style City).",
+        "Kaupunkikortti näyttää kassan ja kaupungin päivittäisen kullan, valmiit rakennukset ja oston (Freecivin hinta: 2 kultaa puuttuvalta tuotannolta, yksiköille lisäksi puuttuva² / 20, kaksinkertaisena, jos varastossa ei ole mitään)."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-028",
+        "implementation": "TICKET-IMPL-028",
+        "testing": "TICKET-TEST-028"
       }
     }
   ],
@@ -2537,6 +2563,65 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-028",
+      "story": "STORY-038",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Samin aiempi palaute oli, että kaupungin rakentaminen jää taka-alalle, ja STORY-037:n jälkeen kaupungissa oli vain kaksi rakennettavaa. Kaupan tuotto ei tehnyt mitään. Kauppa tulee nyt kassaan kultana, ja kulta kuluu rakennusten ylläpitoon ja rakentamisen ostamiseen. Rakennuksiksi valittiin ne kolme Civ I:n alkupelin rakennusta, joilla on jo vaikutusta pelissä: viljavarasto (kasvu), muuri (rosvot) ja tori (kulta). Luvut ovat Freecivistä: data/civ1/buildings.ruleset (commit 27a6a0c1) ja effects.ruleset, aloituskulta common/game.h, ostohinnat common/improvement.c ja common/unittype.c (commit eecd32c8), kasvu server/cityturn.c (commit ed7a0f77) sekä ylläpito game.ruleset (gold_upkeep_style City).",
+      "alternatives_considered": [
+        {
+          "name": "Veroprosentti (despotismissa enintään 60 %) ja tiede",
+          "pros": "Uskollinen Civ I:lle",
+          "cons": "Tiede ja teknologiat ovat oma iso kokonaisuutensa",
+          "rejected_because": "Ensin kulta ja rakennukset; tiede tulee myöhemmin"
+        },
+        {
+          "name": "Kasarmi ja temppeli",
+          "pros": "Civ I:n halvimmat rakennukset",
+          "cons": "Pelissä ei ole kokemustasoja eikä tyytyväisyyttä",
+          "rejected_because": "Ne eivät vielä tekisi mitään"
+        },
+        {
+          "name": "Rakennuksen myynti satunnaisesti (Freeciv)",
+          "pros": "Uskollinen",
+          "cons": "Ei toistettavissa testissä",
+          "rejected_because": "Kallein ylläpito ensin on ennustettava ja säästää eniten"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts ja cities.test.ts",
+        "src/game/raids.ts ja raids.test.ts",
+        "src/game/save.ts ja save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/cityCard.ts, hud.css",
+        "tests/e2e/buildings.e2e.ts (uusi), city.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Freecivin luvut lähteineen",
+          "verify": "Lähteet koodissa"
+        },
+        {
+          "step": 2,
+          "action": "Säännöt ja yksikkötestit",
+          "verify": "npm test"
+        },
+        {
+          "step": 3,
+          "action": "Kassa, osto ja rakennukset kortissa; muuri rosvoihin; tallennus",
+          "verify": "E2E ja kuvat, myös puhelimella"
+        },
+        {
+          "step": 4,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3612,6 +3697,50 @@
         "notes": "Muuttaa STORY-027:n päätöstä: löytö pysäytti pelin heti. Testit päivitettiin uuteen käytökseen tarkoituksella."
       },
       "commit": "ecfe45f",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-028",
+      "story": "STORY-038",
+      "plan": "PLAN-028",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/raids.ts",
+        "src/game/raids.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/hud.css",
+        "tests/e2e/buildings.e2e.ts",
+        "tests/e2e/city.e2e.ts"
+      ],
+      "change_summary": "Build-tyyppi sai rakennukset viljavarasto, muuri ja tori, ja kaupungilla on rakennuslista. Valmis rakennus lisätään kaupunkiin, ja kaupunki jatkaa uudisasukkaisiin. cityGold, payUpkeep, buyCost ja buy ovat puhtaita funktioita. Kasvu siirtää ruokalaatikon ylijäämän ja viljavarastolla lisäksi puolet uudesta laatikosta, kuten Freecivissä. Muuri antaa rosvotaistelussa puolustukselle kertoimen 3 linnoittautumisen kertoimen 1,5 sijaan. Kassa ja rakennukset tallentuvat; vanhat tallennukset saavat aloituskullan ja tyhjän rakennuslistan.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "cities.ts: Build, BUILDS, BUILDINGS, UPKEEP, isBuilding, City.buildings, cityDay (kasvu ja rakennukset), cityGold, payUpkeep, buyCost, buy",
+          "raids.ts: defencePower ja banditWins (walls), RaidWorld.walls",
+          "save.ts: SaveData.gold, City.buildings",
+          "main.ts: Play.gold, cityDays, cityView, kaupunkikortin buy, raidWorld.walls, rosvokortin todennäköisyys, snapshot, globeDebug.setGold",
+          "CityView: gold, income, buy, buildings"
+        ],
+        "call_sites_found": [
+          "cityDays",
+          "cityView",
+          "raidDay ja updateRaidAlert",
+          "snapshot ja startPlay"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kasvun ruoka muuttui: ylijäämä säilyy (Freeciv). Aiempi kasvutesti pysyi ennallaan, koska siinä laatikko täyttyi tasan."
+      },
+      "commit": "4aedb59",
       "progress": 100
     }
   ],
@@ -6316,6 +6445,116 @@
           },
           {
             "item": "Rakennukset näkyvät valintana",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-028",
+      "story": "STORY-038",
+      "implementation_ticket": "TICKET-IMPL-028",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvasta löytyi taivutusvirhe \"2 kulta/pv\", joka korjattiin muotoon \"2 kultaa/pv\". Kaupunkitestin vaihtoehtojen määrä muuttui tarkoituksella kahdesta viiteen.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "tests/e2e/city.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: kasvu",
+            "expected": "Ylijäämä siirtyy (18 + 4 → koko 2, ruokaa 2); viljavarastolla 2 + 15 = 17",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: rakennus valmistuu kerran",
+            "expected": "Viljavarasto kaupunkiin, rakennus uudisasukkaaksi; hinnat 60, 120, 80",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: kulta, ylläpito ja myynti",
+            "expected": "Kauppa 5 → 5 kultaa, torilla 7; ylläpito 4 kymmenestä → 6; 3 kultaa ei riitä → muuri myydään 120:lla",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: ostohinta",
+            "expected": "Soturi tyhjästä 50, kun 4 varastossa 13; viljavarasto tyhjästä 240, kun 30 varastossa 60; osto täyttää varaston; kulta ei riitä → ei ostoa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: muuri rosvotaistelussa",
+            "expected": "Puolustus ruohomaalla 3 ja kukkuloilla 6; rosvo voittaa ruohomaalla 0,4",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: vanha tallennus",
+            "expected": "Ilman kultaa ja rakennuksia: 50 kultaa ja tyhjä lista",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kassa, viisi rakennusvaihtoehtoa, osto, valmis viljavarasto",
+            "expected": "Kassa vastaa tilaa; teksteissä hinnat ja ylläpito; osto ei onnistu 5 kullalla ja onnistuu 500:lla Freecivin hintaan; seuraavana päivänä rakennus listalla, poissa vaihtoehdoista, ja rakennus on uudisasukas",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E puhelimella",
+            "expected": "Kortti mahtuu 390×844:ään, valinnat ja osto vähintään 44 px, mikään ei leikkaudu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 23 tiedostoa (124 testiä); E2E 50/50; buildings, city, save ja raids CI-tilassa 7/7",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38250824781 (4aedb59, 39 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Kulta ja rakennukset tekevät kaupungista kiinnostavan",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kauppa on kultaa; aloituskulta 50",
+            "checked": true
+          },
+          {
+            "item": "Viljavarasto, muuri ja tori civ1-luvuin",
+            "checked": true
+          },
+          {
+            "item": "Ylläpito ja myynti",
+            "checked": true
+          },
+          {
+            "item": "Osto Freecivin hinnalla",
             "checked": true
           }
         ],

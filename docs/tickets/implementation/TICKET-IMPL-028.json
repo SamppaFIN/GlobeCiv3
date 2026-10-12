@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-028",
+  "story": "STORY-038",
+  "plan": "PLAN-028",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/raids.ts",
+    "src/game/raids.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/buildings.e2e.ts",
+    "tests/e2e/city.e2e.ts"
+  ],
+  "change_summary": "Build-tyyppi sai rakennukset viljavarasto, muuri ja tori, ja kaupungilla on rakennuslista. Valmis rakennus lisätään kaupunkiin, ja kaupunki jatkaa uudisasukkaisiin. cityGold, payUpkeep, buyCost ja buy ovat puhtaita funktioita. Kasvu siirtää ruokalaatikon ylijäämän ja viljavarastolla lisäksi puolet uudesta laatikosta, kuten Freecivissä. Muuri antaa rosvotaistelussa puolustukselle kertoimen 3 linnoittautumisen kertoimen 1,5 sijaan. Kassa ja rakennukset tallentuvat; vanhat tallennukset saavat aloituskullan ja tyhjän rakennuslistan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "cities.ts: Build, BUILDS, BUILDINGS, UPKEEP, isBuilding, City.buildings, cityDay (kasvu ja rakennukset), cityGold, payUpkeep, buyCost, buy",
+      "raids.ts: defencePower ja banditWins (walls), RaidWorld.walls",
+      "save.ts: SaveData.gold, City.buildings",
+      "main.ts: Play.gold, cityDays, cityView, kaupunkikortin buy, raidWorld.walls, rosvokortin todennäköisyys, snapshot, globeDebug.setGold",
+      "CityView: gold, income, buy, buildings"
+    ],
+    "call_sites_found": [
+      "cityDays",
+      "cityView",
+      "raidDay ja updateRaidAlert",
+      "snapshot ja startPlay"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kasvun ruoka muuttui: ylijäämä säilyy (Freeciv). Aiempi kasvutesti pysyi ennallaan, koska siinä laatikko täyttyi tasan."
+  },
+  "commit": "4aedb59",
+  "progress": 100
+}

@@ -1,0 +1,59 @@
+{
+  "id": "PLAN-028",
+  "story": "STORY-038",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Samin aiempi palaute oli, että kaupungin rakentaminen jää taka-alalle, ja STORY-037:n jälkeen kaupungissa oli vain kaksi rakennettavaa. Kaupan tuotto ei tehnyt mitään. Kauppa tulee nyt kassaan kultana, ja kulta kuluu rakennusten ylläpitoon ja rakentamisen ostamiseen. Rakennuksiksi valittiin ne kolme Civ I:n alkupelin rakennusta, joilla on jo vaikutusta pelissä: viljavarasto (kasvu), muuri (rosvot) ja tori (kulta). Luvut ovat Freecivistä: data/civ1/buildings.ruleset (commit 27a6a0c1) ja effects.ruleset, aloituskulta common/game.h, ostohinnat common/improvement.c ja common/unittype.c (commit eecd32c8), kasvu server/cityturn.c (commit ed7a0f77) sekä ylläpito game.ruleset (gold_upkeep_style City).",
+  "alternatives_considered": [
+    {
+      "name": "Veroprosentti (despotismissa enintään 60 %) ja tiede",
+      "pros": "Uskollinen Civ I:lle",
+      "cons": "Tiede ja teknologiat ovat oma iso kokonaisuutensa",
+      "rejected_because": "Ensin kulta ja rakennukset; tiede tulee myöhemmin"
+    },
+    {
+      "name": "Kasarmi ja temppeli",
+      "pros": "Civ I:n halvimmat rakennukset",
+      "cons": "Pelissä ei ole kokemustasoja eikä tyytyväisyyttä",
+      "rejected_because": "Ne eivät vielä tekisi mitään"
+    },
+    {
+      "name": "Rakennuksen myynti satunnaisesti (Freeciv)",
+      "pros": "Uskollinen",
+      "cons": "Ei toistettavissa testissä",
+      "rejected_because": "Kallein ylläpito ensin on ennustettava ja säästää eniten"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts ja cities.test.ts",
+    "src/game/raids.ts ja raids.test.ts",
+    "src/game/save.ts ja save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts, hud.css",
+    "tests/e2e/buildings.e2e.ts (uusi), city.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Freecivin luvut lähteineen",
+      "verify": "Lähteet koodissa"
+    },
+    {
+      "step": 2,
+      "action": "Säännöt ja yksikkötestit",
+      "verify": "npm test"
+    },
+    {
+      "step": 3,
+      "action": "Kassa, osto ja rakennukset kortissa; muuri rosvoihin; tallennus",
+      "verify": "E2E ja kuvat, myös puhelimella"
+    },
+    {
+      "step": 4,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

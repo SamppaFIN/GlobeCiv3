@@ -1,0 +1,110 @@
+{
+  "id": "TICKET-TEST-028",
+  "story": "STORY-038",
+  "implementation_ticket": "TICKET-IMPL-028",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvasta löytyi taivutusvirhe \"2 kulta/pv\", joka korjattiin muotoon \"2 kultaa/pv\". Kaupunkitestin vaihtoehtojen määrä muuttui tarkoituksella kahdesta viiteen.",
+    "files_changed": [
+      "src/globe/main.ts",
+      "tests/e2e/city.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD, 1280×800 ja 390×844) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: kasvu",
+        "expected": "Ylijäämä siirtyy (18 + 4 → koko 2, ruokaa 2); viljavarastolla 2 + 15 = 17",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: rakennus valmistuu kerran",
+        "expected": "Viljavarasto kaupunkiin, rakennus uudisasukkaaksi; hinnat 60, 120, 80",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: kulta, ylläpito ja myynti",
+        "expected": "Kauppa 5 → 5 kultaa, torilla 7; ylläpito 4 kymmenestä → 6; 3 kultaa ei riitä → muuri myydään 120:lla",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: ostohinta",
+        "expected": "Soturi tyhjästä 50, kun 4 varastossa 13; viljavarasto tyhjästä 240, kun 30 varastossa 60; osto täyttää varaston; kulta ei riitä → ei ostoa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: muuri rosvotaistelussa",
+        "expected": "Puolustus ruohomaalla 3 ja kukkuloilla 6; rosvo voittaa ruohomaalla 0,4",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: vanha tallennus",
+        "expected": "Ilman kultaa ja rakennuksia: 50 kultaa ja tyhjä lista",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kassa, viisi rakennusvaihtoehtoa, osto, valmis viljavarasto",
+        "expected": "Kassa vastaa tilaa; teksteissä hinnat ja ylläpito; osto ei onnistu 5 kullalla ja onnistuu 500:lla Freecivin hintaan; seuraavana päivänä rakennus listalla, poissa vaihtoehdoista, ja rakennus on uudisasukas",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E puhelimella",
+        "expected": "Kortti mahtuu 390×844:ään, valinnat ja osto vähintään 44 px, mikään ei leikkaudu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 23 tiedostoa (124 testiä); E2E 50/50; buildings, city, save ja raids CI-tilassa 7/7",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38250824781 (4aedb59, 39 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Kulta ja rakennukset tekevät kaupungista kiinnostavan",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kauppa on kultaa; aloituskulta 50",
+        "checked": true
+      },
+      {
+        "item": "Viljavarasto, muuri ja tori civ1-luvuin",
+        "checked": true
+      },
+      {
+        "item": "Ylläpito ja myynti",
+        "checked": true
+      },
+      {
+        "item": "Osto Freecivin hinnalla",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}
