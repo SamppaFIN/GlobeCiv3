@@ -1,0 +1,39 @@
+{
+  "id": "PLAN-035",
+  "story": "STORY-045",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Peruspeli: Civ I:n alkupelin ihmeet, joiden vaikutus on jo pelissä mallinnettu. Luvut: Freeciv civ1 buildings.ruleset (hinnat, vaatimukset, genus GreatWonder) ja effects.ruleset (Colossus Output_Inc_Tile, Hanging Gardens Make_Happy, Great Wall Defend_Bonus 200 jokaisessa kaupungissa); Output_Inc_Tile vain ruutuihin, joilla on tuotosta (doc/README.effects).",
+  "alternatives_considered": [
+    {
+      "name": "Pyramidit",
+      "pros": "Tunnettu",
+      "cons": "civ1-vaikutus koskee hallitusmuotoja, joita ei vielä ole",
+      "rejected_because": "Ei vaikutusta vielä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts, science.ts, save.ts ja testit",
+    "src/globe/main.ts",
+    "tests/e2e/wonders.e2e.ts (uusi) ja vaihtoehtomäärät"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Ihmeet säännöiksi ja testeiksi",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Peliin: kerran pelissä, vaikutukset, ilmoitus",
+      "verify": "E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

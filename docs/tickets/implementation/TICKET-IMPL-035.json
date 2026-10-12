@@ -1,0 +1,38 @@
+{
+  "id": "TICKET-IMPL-035",
+  "story": "STORY-045",
+  "plan": "PLAN-035",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "tests/e2e/wonders.e2e.ts",
+    "tests/e2e/science.e2e.ts",
+    "tests/e2e/city.e2e.ts",
+    "tests/e2e/buildings.e2e.ts"
+  ],
+  "change_summary": "BUILDINGS sai ihmeet (WONDERS, isWonder), ylläpito 0. cityYield lisää Kolossin kaupan, cityMood sai onnelliset (puutarhat) ja levottomuus vaatii tyytymättömiä enemmän kuin onnellisia. main.ts: hasWonder, hasWalls (Suuri muuri), ihmeen ilmoitus ja hetki, vaihtoehtojen suodatus ja tuottomerkkien Kolossi-kauppa.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Mood.happy, cityMood(gardens)",
+      "cityYield (Kolossi)",
+      "raidWorld.walls ja rosvokortti (hasWalls)"
+    ],
+    "call_sites_found": [
+      "cityMood, walls"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Rakennusvaihtoehtoja on nyt kaksitoista; testit päivitetty."
+  },
+  "commit": "90929a7",
+  "progress": 100
+}

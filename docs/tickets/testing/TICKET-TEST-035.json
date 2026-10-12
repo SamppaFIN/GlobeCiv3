@@ -1,0 +1,67 @@
+{
+  "id": "TICKET-TEST-035",
+  "story": "STORY-045",
+  "implementation_ticket": "TICKET-IMPL-035",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Koko sarjan ajossa aloituslennon kestotesti mittasi kuormassa 2,86 s (alaraja 2,9 s); yksinään se meni läpi. Testiä ei muutettu.",
+    "files_changed": []
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: puutarhat ja Kolossi",
+        "expected": "Onnellinen painaa tyytymättömän; Kolossi +1 kauppa keskustaan ja kalavesille; hinnat 200, 300, 300",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: ihmeet",
+        "expected": "Lukittu, avautuu, ostetaan, ilmoitus, poistuu vaihtoehdoista, onnellinen asukas; Kolossi rakennetaan",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 25 tiedostoa; E2E 57/58 rinnakkain ja aloituslento yksinään läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38309206983 (90929a7, 25 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Ihmeet ovat tavoittelemisen arvoisia",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kolme ihmettä civ1-luvuin",
+        "checked": true
+      },
+      {
+        "item": "Kerran pelissä",
+        "checked": true
+      },
+      {
+        "item": "Vaikutukset",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}
