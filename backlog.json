@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T19:06:55Z",
+    "generated_at": "2026-10-12T20:26:52Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "aff3983",
+    "git_commit": "2ef8633",
     "git_branch": "main",
     "language": "fi"
   },
@@ -142,7 +142,8 @@
         "STORY-037",
         "STORY-038",
         "STORY-039",
-        "STORY-040"
+        "STORY-040",
+        "STORY-041"
       ],
       "progress": 95
     }
@@ -1117,6 +1118,29 @@
         "plan": "PLAN-030",
         "implementation": "TICKET-IMPL-030",
         "testing": "TICKET-TEST-030"
+      }
+    },
+    {
+      "id": "STORY-041",
+      "epic": "EPIC-006",
+      "title": "Tavoitteet ohjaavat peliä",
+      "type": "story",
+      "narrative": "Pelaajana haluan tietää, mitä tehdä seuraavaksi, jotta peli ei ole pelkkää tutkimista.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-040"
+      ],
+      "acceptance_criteria": [
+        "Yläpaneelissa näkyy yksi tavoite kerrallaan palkkioineen; napautus kertoo, miten sen saavuttaa.",
+        "Saavutettu tavoite antaa kultaa, hehkuu ja ilmoittaa, ja seuraava tavoite tulee näkyviin. Ketjussa on kymmenen tavoitetta perustamisesta kolmeen kaupunkiin.",
+        "Tallennettu peli ennen tavoitteita saa saavutetut tavoitteet ja palkkiot heti."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-031",
+        "implementation": "TICKET-IMPL-031",
+        "testing": "TICKET-TEST-031"
       }
     }
   ],
@@ -2784,6 +2808,47 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-031",
+      "story": "STORY-041",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Samin varhainen palaute oli, että pelkkä tutkiminen on tylsää. Mekaniikkaa on nyt paljon, mutta suuntaa ei ole. Kymmenen tavoitteen ketju (goals.ts) on puhdas funktio pelin tiivistelmästä, ja palkkiot ovat omaa suunnittelua. Tavoite näkyy yläpaneelin kolmannella rivillä.",
+      "alternatives_considered": [
+        {
+          "name": "Tavoitelista kortissa",
+          "pros": "Kaikki näkyvissä",
+          "cons": "Yksi kerrallaan ohjaa selvemmin",
+          "rejected_because": "Yksi tavoite kerrallaan"
+        }
+      ],
+      "files_to_change": [
+        "src/game/goals.ts ja goals.test.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/ui/gameHud.ts, hud.css",
+        "tests/e2e/goals.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Tavoiteketju ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "HUD, palkkiot ja tallennus",
+          "verify": "E2E"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3991,6 +4056,43 @@
         "notes": "Kaupunkitestien kauppaluvut muuttuivat tarkoituksella keskusruudun tien myötä. Rakennustesti opettaa Keramiikan debugilla ennen viljavarastoa."
       },
       "commit": "aff3983",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-031",
+      "story": "STORY-041",
+      "plan": "PLAN-031",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/goals.ts",
+        "src/game/goals.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "tests/e2e/goals.e2e.ts",
+        "tests/e2e/science.e2e.ts"
+      ],
+      "change_summary": "goals.ts: GOALS ja advanceGoals. main.ts tarkistaa tavoitteet joka framessa, maksaa palkkiot ja ilmoittaa. HUDissa on tavoiterivi, jota napauttamalla saa vihjeen. Tallennus säilyttää tavoitteen. Ilmoitus siirtyi korkeamman yläpaneelin alle.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Play.goal",
+          "GameHudState.goal, goalHint",
+          "SaveData.goal"
+        ],
+        "call_sites_found": [
+          "updatePlay"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Pilleri ja tavoiterivi osuivat samaan nimihakuun (\"Valitse tutkimus\"), joten testit käyttävät tarkkaa nimeä."
+      },
+      "commit": "2ef8633",
       "progress": 100
     }
   ],
@@ -7010,6 +7112,75 @@
           },
           {
             "item": "Tutkimuskortti ja pilleri",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-031",
+      "story": "STORY-041",
+      "implementation_ticket": "TICKET-IMPL-031",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvasta löytyi, että ilmoitus meni korkeamman yläpaneelin päälle; se siirrettiin alemmas.",
+        "files_changed": [
+          "src/ui/hud.css"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti ja CI-tilassa; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: järjestys ja kiinniotto",
+            "expected": "Yksi kerrallaan; edellä oleva peli saa kaikki palkkiot",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tavoite, vihje, kaupunki, tutkimus",
+            "expected": "Ensimmäinen tavoite ja vihje; perustaminen antaa +20 ja seuraavan; tutkimuksen valinta +10",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 25 tiedostoa (133); E2E 54/54; goals, science ja buildings CI-tilassa 4/4",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38297125665 (2ef8633, 38 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Tavoitteet antavat suunnan",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Tavoite ja vihje yläpaneelissa",
+            "checked": true
+          },
+          {
+            "item": "Palkkiot ja seuraava tavoite",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
             "checked": true
           }
         ],

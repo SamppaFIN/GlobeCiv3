@@ -1,0 +1,69 @@
+{
+  "id": "TICKET-TEST-031",
+  "story": "STORY-041",
+  "implementation_ticket": "TICKET-IMPL-031",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvasta löytyi, että ilmoitus meni korkeamman yläpaneelin päälle; se siirrettiin alemmas.",
+    "files_changed": [
+      "src/ui/hud.css"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti ja CI-tilassa; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: järjestys ja kiinniotto",
+        "expected": "Yksi kerrallaan; edellä oleva peli saa kaikki palkkiot",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tavoite, vihje, kaupunki, tutkimus",
+        "expected": "Ensimmäinen tavoite ja vihje; perustaminen antaa +20 ja seuraavan; tutkimuksen valinta +10",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 25 tiedostoa (133); E2E 54/54; goals, science ja buildings CI-tilassa 4/4",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38297125665 (2ef8633, 38 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Tavoitteet antavat suunnan",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tavoite ja vihje yläpaneelissa",
+        "checked": true
+      },
+      {
+        "item": "Palkkiot ja seuraava tavoite",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

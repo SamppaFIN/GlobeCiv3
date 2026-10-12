@@ -1,0 +1,37 @@
+{
+  "id": "TICKET-IMPL-031",
+  "story": "STORY-041",
+  "plan": "PLAN-031",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/goals.ts",
+    "src/game/goals.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "tests/e2e/goals.e2e.ts",
+    "tests/e2e/science.e2e.ts"
+  ],
+  "change_summary": "goals.ts: GOALS ja advanceGoals. main.ts tarkistaa tavoitteet joka framessa, maksaa palkkiot ja ilmoittaa. HUDissa on tavoiterivi, jota napauttamalla saa vihjeen. Tallennus säilyttää tavoitteen. Ilmoitus siirtyi korkeamman yläpaneelin alle.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Play.goal",
+      "GameHudState.goal, goalHint",
+      "SaveData.goal"
+    ],
+    "call_sites_found": [
+      "updatePlay"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Pilleri ja tavoiterivi osuivat samaan nimihakuun (\"Valitse tutkimus\"), joten testit käyttävät tarkkaa nimeä."
+  },
+  "commit": "2ef8633",
+  "progress": 100
+}

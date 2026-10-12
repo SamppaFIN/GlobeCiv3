@@ -1,0 +1,41 @@
+{
+  "id": "PLAN-031",
+  "story": "STORY-041",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Samin varhainen palaute oli, että pelkkä tutkiminen on tylsää. Mekaniikkaa on nyt paljon, mutta suuntaa ei ole. Kymmenen tavoitteen ketju (goals.ts) on puhdas funktio pelin tiivistelmästä, ja palkkiot ovat omaa suunnittelua. Tavoite näkyy yläpaneelin kolmannella rivillä.",
+  "alternatives_considered": [
+    {
+      "name": "Tavoitelista kortissa",
+      "pros": "Kaikki näkyvissä",
+      "cons": "Yksi kerrallaan ohjaa selvemmin",
+      "rejected_because": "Yksi tavoite kerrallaan"
+    }
+  ],
+  "files_to_change": [
+    "src/game/goals.ts ja goals.test.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts, hud.css",
+    "tests/e2e/goals.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Tavoiteketju ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "HUD, palkkiot ja tallennus",
+      "verify": "E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}
