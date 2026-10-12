@@ -44,7 +44,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { cityMood, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityMood, isWonder, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -666,8 +666,12 @@ function cityYields(): CityYield[] {
   });
 }
 
-/** A city's mood: its soldiers calm citizens under Despotism (STORY-044). */
-const moodOf = (c: City) => cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1);
+/** A city's mood: its soldiers calm citizens under Despotism (STORY-044); the gardens make one happy (STORY-045). */
+const moodOf = (c: City) => cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, hasWonder('gardens'));
+/** A wonder is in one of the cities (STORY-045). */
+const hasWonder = (w: Build) => play?.cities.some(c => c.buildings.includes(w as never)) ?? false;
+/** A city's walls, or the Great Wall's in every city. */
+const hasWalls = (c: City) => c.buildings.includes('walls') || hasWonder('greatwall');
 /** Cities in disorder on the last day, for the notices when it starts and ends. */
 const unrest = new Set<number>();
 
@@ -736,9 +740,9 @@ function cityDays() {
       moment('city', c.tile);
     }
     if (!done) return;
-    if (isBuilding(done)) moment('city', c.tile);
+    if (isBuilding(done)) moment(isWonder(done) ? 'unlock' : 'city', c.tile);
     else if (isSoldier(done) || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
-    discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
+    discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
   });
   // The cities' science; an advance learned opens what needs it (STORY-040)
   const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], play!.tax), 0));
@@ -872,6 +876,9 @@ const BUILD_PURPOSE: Record<Build, string> = {
   phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
   library: 'Tieteeseen 50 % lisää',
   temple: 'Rauhoittaa yhden tyytymättömän asukkaan',
+  colossus: 'Ihme: +1 kauppa jokaiseen kaupungin ruutuun, jossa on kauppaa',
+  gardens: 'Ihme: yksi onnellinen asukas joka kaupunkiin',
+  greatwall: 'Ihme: muurin suoja kaikkiin kaupunkeihin',
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
 };
 
@@ -892,7 +899,7 @@ function cityView(c: City, y: CityYield): CityView {
     ...(() => {
       const m = moodOf(c);
       return {
-        moodText: `Asukkaat: ${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}`,
+        moodText: `Asukkaat: ${m.happy ? `${m.happy} onnellinen · ` : ''}${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}`,
         disorder: m.disorder
           ? 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Neljä asukasta on tyytyväisiä; jokainen kaupungissa oleva sotilas ja temppeli rauhoittavat yhden lisää.'
           : null,
@@ -913,14 +920,14 @@ function cityView(c: City, y: CityYield): CityView {
     growth: c.food / granary(c.size),
     growText: y.surplus < 0 ? 'nälkää' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
     yields: [y.surplus, y.shield, y.trade],
-    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind))).map(kind => {
+    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind))).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       const need = NEEDS[kind];
       const locked = need !== undefined && !play!.research.known.has(need);
       return {
         kind, name: b.name, selected: kind === c.build, locked,
-        cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
+        cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) && UPKEEP[kind] ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
         eta: locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
@@ -951,7 +958,9 @@ function updateCityCard() {
   tileYields.update(workedByCity()[id].map(t => {
     const at = toScreen(tileCenter(t));
     const y = yieldOf(t, t === c.tile);
-    return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
+    // Kolossi adds a trade where there is trade
+    const trade = y.trade + (c.buildings.includes('colossus') && y.trade > 0 ? 1 : 0);
+    return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade, centre: t === c.tile };
   }));
 }
 
@@ -1219,7 +1228,7 @@ const bestSoldier = (): 'warrior' | 'phalanx' => (play?.research.known.has('bron
 const raidWorld: RaidWorld = {
   cost: id => world.cost(id),
   terrainOf,
-  walls: tile => play?.cities.find(c => c.tile === tile)?.buildings.includes('walls') ?? false,
+  walls: tile => { const c = play?.cities.find(x => x.tile === tile); return c ? hasWalls(c) : false; },
   defenders: tile => soldiersIn(tile).length,
   defense: tile => Math.max(1, ...soldiersIn(tile).map(u => defenseOf(u.kind))),
   // The best defender fights, and falls
@@ -1292,7 +1301,7 @@ function updateRaidAlert() {
       body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
       options: [
         { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
-        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile), c.buildings.includes('walls'), raidWorld.defense(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
+        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile), hasWalls(c), raidWorld.defense(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
       ],
       note: 'Ryöstö vie kaupungin varastot ja asukkaan.',
     });

@@ -72,9 +72,18 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple'] as const;
+export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'colossus', 'gardens', 'greatwall'] as const;
+/**
+ * Wonders (STORY-045), Freeciv civ1 buildings.ruleset and effects.ruleset: once in the game,
+ * no upkeep. Kolossi (Colossus, 200, Bronze Working): +1 trade on each tile the city works
+ * that has trade (Output_Inc_Tile); Riippuvat puutarhat (Hanging Gardens, 300, Pottery): a
+ * happy citizen in every city (Make_Happy 1, player range); Suuri muuri (Great Wall, 300,
+ * Masonry): walls in every city (Defend_Bonus 200 at every city centre).
+ */
+export const WONDERS = ['colossus', 'gardens', 'greatwall'] as const;
+export const isWonder = (b: Build): boolean => (WONDERS as readonly string[]).includes(b);
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1 };
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, colossus: 0, gardens: 0, greatwall: 0 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -96,6 +105,9 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   library: { name: 'Kirjasto', cost: 80, pop: 0 },
   // Freeciv civ1 buildings.ruleset Temple: build_cost 40, upkeep 1 (STORY-044)
   temple: { name: 'Temppeli', cost: 40, pop: 0 },
+  colossus: { name: 'Kolossi', cost: 200, pop: 0 },
+  gardens: { name: 'Riippuvat puutarhat', cost: 300, pop: 0 },
+  greatwall: { name: 'Suuri muuri', cost: 300, pop: 0 },
   coinage: { name: 'Kultaa', cost: 0, pop: 0 },
 };
 
@@ -167,6 +179,8 @@ export function baseContent(cities: number): number {
 }
 
 export interface Mood {
+  /** Happy citizens (Riippuvat puutarhat, STORY-045). */
+  happy: number;
   content: number;
   unhappy: number;
   /** Citizens a temple and the soldiers calmed. */
@@ -180,11 +194,14 @@ export interface Mood {
  * luxury yet no citizen is happy, so any unhappy citizen left means civil disorder
  * (common/city.c city_unhappy: happy < unhappy).
  */
-export function cityMood(city: City, soldiers: number, cities: number): Mood {
+export function cityMood(city: City, soldiers: number, cities: number, gardens = false): Mood {
   const base = Math.min(city.size, baseContent(cities));
   const unhappy = city.size - base;
   const calmed = Math.min(unhappy, (city.buildings.includes('temple') ? 1 : 0) + soldiers);
-  return { content: base + calmed, unhappy: unhappy - calmed, calmed, disorder: unhappy - calmed > 0 };
+  // The gardens make a content citizen happy, and a happy one outweighs an unhappy one
+  const content = base + calmed;
+  const happy = gardens ? Math.min(1, content) : 0;
+  return { happy, content: content - happy, unhappy: unhappy - calmed, calmed, disorder: unhappy - calmed > happy };
 }
 
 /**
@@ -198,11 +215,12 @@ export function withMood(y: CityYield, mood: Mood): CityYield {
 /** Food, shields left after unit upkeep, trade, and the food surplus. */
 export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<number>, support: Support = NO_SUPPORT): CityYield {
   const y = { food: 0, shield: 0, trade: 0 };
+  const colossus = city.buildings.includes('colossus');
   for (const id of workedTiles(city, yieldOf, taken)) {
     const t = yieldOf(id, id === city.tile);
     y.food += t.food;
     y.shield += t.shield;
-    y.trade += t.trade;
+    y.trade += t.trade + (colossus && t.trade > 0 ? 1 : 0);
   }
   return {
     food: y.food,
