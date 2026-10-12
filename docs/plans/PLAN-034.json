@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-034",
+  "story": "STORY-044",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Peruspelin Civ I -mekaniikka: tyytyväisyys rajaa kasvua. Luvut ovat Freecivin civ1 effects.ruleset -tiedostosta (City_Unhappy_Size 4, Empire_Size_Base 10, Empire_Size_Step 10, temppelin Make_Content 1, despotismin Martial_Law_Each 1) ja common/city.c-tiedostosta (player_base_citizen_happiness, city_unhappy ja output_types-taulun levottomuusrangaistukset, commit fc8f694f). Ylellisyyttä ei vielä ole, joten onnellisia asukkaita ei ole.",
+  "alternatives_considered": [
+    {
+      "name": "Ylellisyysosuus kaupasta",
+      "pros": "Civ I:n keino",
+      "cons": "Kolmas liukusäädin",
+      "rejected_because": "Myöhemmin; nyt sotilaat ja temppeli"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts, science.ts, save.ts ja testit",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts, hud.css",
+    "tests/e2e/mood.e2e.ts (uusi) ja vaihtoehtomäärät"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Mieliala ja levottomuudet säännöiksi ja testeiksi",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Peliin, korttiin ja luetteloon",
+      "verify": "E2E ja kuva"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

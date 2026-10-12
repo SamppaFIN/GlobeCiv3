@@ -1,0 +1,34 @@
+{
+  "id": "PLAN-032",
+  "story": "STORY-042",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Samin palaute: \"Nyt on hankala hallinnoida rakennuksia ja ukkeleita, tarvitaan listanäkymä mistä pääsee selaamaan. Muutenkin pelaaminen vaatii isomman revampin, mut toteutetaan nyt itse peruspeli.\" Talo-nappi, joka kierrätti kaupunkikortteja, avaa nyt luettelon (listCard.ts, alapaneeli kuten kaupunkikortti). Isompi pelattavuuden uudistus kirjattiin avoimeksi kysymykseksi.",
+  "alternatives_considered": [
+    {
+      "name": "Erillinen luettelonappi talon viereen",
+      "pros": "Molemmat tavat",
+      "cons": "Puhelimen yläpaneeli on täynnä",
+      "rejected_because": "Luettelo korvaa kierrätyksen ja avaa myös kaupunkikortin"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/listCard.ts (uusi), gameHud.ts, hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/list.e2e.ts (uusi) ja testit, jotka käyttivät kaupunkinappia"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Luettelo ja HUD-nappi",
+      "verify": "E2E"
+    },
+    {
+      "step": 2,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

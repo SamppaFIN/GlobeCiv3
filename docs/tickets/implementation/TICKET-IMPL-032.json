@@ -1,0 +1,39 @@
+{
+  "id": "TICKET-IMPL-032",
+  "story": "STORY-042",
+  "plan": "PLAN-032",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/ui/listCard.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/list.e2e.ts",
+    "tests/e2e/city.e2e.ts",
+    "tests/e2e/save.e2e.ts",
+    "tests/e2e/science.e2e.ts",
+    "tests/e2e/raids.e2e.ts"
+  ],
+  "change_summary": "listCard näyttää kaupungit ja yksiköt välilehdillä. Rivit ovat nappeja: kaupunki avaa kortin ja lentää kaupunkiin, yksikkö valitaan ja tuodaan näkyviin. Luettelo sulkee kaupunki- ja tutkimuskortin, ja ne odottavat sen sulkeutumista.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "GameHudHandlers.openCity → openList; luettelonapin nimi \"Luettelo: kaupungit ja yksiköt\"",
+      "Play.listOpen ja listTab",
+      "updateCityCard ja updateResearchCard odottavat luettelon sulkeutumista"
+    ],
+    "call_sites_found": [
+      "kaupunkinapin testit"
+    ],
+    "call_sites_updated": [
+      "tests/e2e/city.e2e.ts",
+      "tests/e2e/save.e2e.ts",
+      "tests/e2e/science.e2e.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kaupunkinapin kierrätys poistui; kaupungin saa luettelosta tai nimilapusta."
+  },
+  "commit": "829caf4",
+  "progress": 100
+}

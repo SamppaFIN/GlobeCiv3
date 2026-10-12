@@ -1,0 +1,75 @@
+{
+  "id": "TICKET-TEST-033",
+  "story": "STORY-043",
+  "implementation_ticket": "TICKET-IMPL-033",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Tieteen testi odotti Pronssityön avaavan vain Rahatalouden; nyt se avaa myös Falangin, ja odotus päivitettiin.",
+    "files_changed": [
+      "tests/e2e/science.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti ja CI-tilassa; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: Falangin puolustus",
+        "expected": "Kukkuloilla 6; rosvo voittaa ruohomaalla 0,4",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: rakentaminen",
+        "expected": "20 tuotantoa; sen jälkeen Kultaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: Falangi",
+        "expected": "Lukittu ennen Pronssityötä, avautuu, ostetaan, seuraavana päivänä Falangi 1 puolustaa kaupunkia",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 25 tiedostoa; E2E 56/56; phalanx, list ja raids CI-tilassa 3/3",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38304286204 (829caf4, 44 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Falangi näkyy ja puolustaa",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Pronssityö avaa Falangin",
+        "checked": true
+      },
+      {
+        "item": "Paras puolustaja taistelee",
+        "checked": true
+      },
+      {
+        "item": "Kultaa Falangin jälkeen",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

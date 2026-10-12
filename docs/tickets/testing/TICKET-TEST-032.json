@@ -1,0 +1,69 @@
+{
+  "id": "TICKET-TEST-032",
+  "story": "STORY-042",
+  "implementation_ticket": "TICKET-IMPL-032",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Koko sarjan ajossa rosvotestin ilmoitus ehti vaihtua taisteluilmoitukseen ennen tarkistusta; testi katsoo nyt kaikki ilmoitukset.",
+    "files_changed": [
+      "tests/e2e/raids.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "E2E: luettelo",
+        "expected": "Ennen kaupunkia 0 kaupunkia ja 3 yksikköä; yksikkörivi valitsee; kaupunkirivi näyttää koon, rakennuksen ja ruoan ja avaa kortin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: näppäimistö",
+        "expected": "Luettelonappi ja kaupunkirivi Enterillä avaavat kortin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "E2E 55/55 (rosvotesti korjauksen jälkeen)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38304286204 (829caf4, 44 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Hallinta helpottuu",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Luettelo kaupungeista ja yksiköistä",
+        "checked": true
+      },
+      {
+        "item": "Rivit vievät kohteeseen",
+        "checked": true
+      },
+      {
+        "item": "Näppäimistö",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

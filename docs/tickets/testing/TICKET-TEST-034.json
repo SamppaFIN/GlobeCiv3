@@ -1,0 +1,70 @@
+{
+  "id": "TICKET-TEST-034",
+  "story": "STORY-044",
+  "implementation_ticket": "TICKET-IMPL-034",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen ajo löysi kaksi luokkavirhettä: mielialarivi käytti ruokarivin luokkaa (kasvutestin haku osui kahteen), ja kasvuvihjeen haku osui levottomuusriviin. Riveille annettiin omat luokat.",
+    "files_changed": [
+      "src/ui/cityCard.ts",
+      "src/ui/hud.css"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: tyytyväiset ja levottomuudet",
+        "expected": "Tyytyväisiä 4, 4, 3, 3, 2 (1, 10, 11, 20, 21 kaupunkia); koko 6 ilman: 2 tyytymätöntä ja levottomuus; soturi rauhoittaa yhden; temppeli ja soturi kaksi; levottomuudessa ylijäämät 0 ja kulta 0, kauppa säilyy",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: mieliala",
+        "expected": "Koko 1: 1 tyytyväinen; koko 5 + sotilaat: 1 tyytymätön ja levottomuudet; temppeli ostetaan ja rauhoittaa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 25 tiedostoa (134); E2E 57/57 korjausten jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38304286204 (829caf4, 44 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Mieliala on ymmärrettävä",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tyytyväiset ja tyytymättömät",
+        "checked": true
+      },
+      {
+        "item": "Temppeli ja sotilaat rauhoittavat",
+        "checked": true
+      },
+      {
+        "item": "Levottomuudet ja selitys",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "PLAN-033",
+  "story": "STORY-043",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "Sami: toteutetaan peruspeli. Pronssityö avasi vain Rahatalouden tutkimuksen; Freecivin civ1:ssä se avaa Phalanxin (units.ruleset: build_cost 20, attack 1, defense 2). Puolustajan vahvuus välitetään rosvotaisteluun (defencePower, banditWins), ja paras puolustaja taistelee kuten Freecivissä.",
+  "alternatives_considered": [
+    {
+      "name": "Ratsumies (Horseback Riding)",
+      "pros": "Nopea yksikkö",
+      "cons": "Pelaajan yksiköt eivät vielä hyökkää",
+      "rejected_because": "Puolustus on nyt tarpeellisempi"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts, science.ts, units.ts, raids.ts, save.ts ja testit",
+    "src/globe/main.ts, unitLayer.ts",
+    "tests/e2e/phalanx.e2e.ts (uusi) ja rakennusmäärät"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Falangi sääntöihin ja testeihin",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Peliin, kuvaan ja rosvotaisteluun",
+      "verify": "E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

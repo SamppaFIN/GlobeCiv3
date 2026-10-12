@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T20:26:52Z",
+    "generated_at": "2026-10-12T21:12:45Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "2ef8633",
+    "git_commit": "829caf4",
     "git_branch": "main",
     "language": "fi"
   },
@@ -143,9 +143,12 @@
         "STORY-038",
         "STORY-039",
         "STORY-040",
-        "STORY-041"
+        "STORY-041",
+        "STORY-042",
+        "STORY-043",
+        "STORY-044"
       ],
-      "progress": 95
+      "progress": 96
     }
   ],
   "stories": [
@@ -1141,6 +1144,78 @@
         "plan": "PLAN-031",
         "implementation": "TICKET-IMPL-031",
         "testing": "TICKET-TEST-031"
+      }
+    },
+    {
+      "id": "STORY-042",
+      "epic": "EPIC-006",
+      "title": "Kaupunkien ja yksiköiden luettelo",
+      "type": "story",
+      "narrative": "Pelaajana haluan selata kaupunkeja ja yksiköitä luettelona, jotta niiden hallinta on helppoa.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-039"
+      ],
+      "acceptance_criteria": [
+        "Yläpaneelin luettelonappi avaa luettelon kahdella välilehdellä: kaupungit (koko, rakennus ja aika, ruoka, rakennukset) ja yksiköt (tyyppi ja tila).",
+        "Kaupunkirivi avaa kaupunkikortin ja tuo kaupungin näkyviin; yksikkörivi valitsee yksikön ja tuo sen näkyviin.",
+        "Luettelo toimii näppäimistöllä."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-032",
+        "implementation": "TICKET-IMPL-032",
+        "testing": "TICKET-TEST-032"
+      }
+    },
+    {
+      "id": "STORY-043",
+      "epic": "EPIC-006",
+      "title": "Falangi",
+      "type": "story",
+      "narrative": "Pelaajana haluan paremman puolustajan rosvoja vastaan, kun keksin Pronssityön.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-034",
+        "STORY-040"
+      ],
+      "acceptance_criteria": [
+        "Pronssityö avaa Falangin (Freeciv civ1: 20 tuotantoa, puolustus 2). Se puolustaa kaupunkiaan kuten soturi.",
+        "Rosvoja vastaan paras puolustaja taistelee ja kaatuu ensin; rosvokortin Rakenna soturi rakentaa Falangin, kun Pronssityö tunnetaan.",
+        "Falangin jälkeen kaupunki tekee kultaa kuten soturin jälkeen."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-033",
+        "implementation": "TICKET-IMPL-033",
+        "testing": "TICKET-TEST-033"
+      }
+    },
+    {
+      "id": "STORY-044",
+      "epic": "EPIC-006",
+      "title": "Tyytyväisyys, temppeli ja levottomuudet",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että suuren kaupungin asukkaat vaativat huolenpitoa, jotta kasvu on valinta eikä vain odottamista.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-040",
+        "STORY-043"
+      ],
+      "acceptance_criteria": [
+        "Despotismissa neljä asukasta on tyytyväisiä (yksi vähemmän 11. kaupungista alkaen), loput tyytymättömiä (Freeciv civ1).",
+        "Temppeli ja jokainen kaupungissa oleva sotilas rauhoittavat yhden. Temppeli (40 tuotantoa, ylläpito 1) vaatii Hautajaisriitit.",
+        "Jos tyytymättömiä jää, kaupunki ajautuu levottomuuksiin: ei ruoan eikä tuotannon ylijäämää, ei kultaa eikä tiedettä. Ilmoitus kertoo alusta ja lopusta.",
+        "Kaupunkikortti näyttää mielialan ja selittää levottomuudet; luettelo merkitsee levottoman kaupungin."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-034",
+        "implementation": "TICKET-IMPL-034",
+        "testing": "TICKET-TEST-034"
       }
     }
   ],
@@ -2849,6 +2924,119 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-032",
+      "story": "STORY-042",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Samin palaute: \"Nyt on hankala hallinnoida rakennuksia ja ukkeleita, tarvitaan listanäkymä mistä pääsee selaamaan. Muutenkin pelaaminen vaatii isomman revampin, mut toteutetaan nyt itse peruspeli.\" Talo-nappi, joka kierrätti kaupunkikortteja, avaa nyt luettelon (listCard.ts, alapaneeli kuten kaupunkikortti). Isompi pelattavuuden uudistus kirjattiin avoimeksi kysymykseksi.",
+      "alternatives_considered": [
+        {
+          "name": "Erillinen luettelonappi talon viereen",
+          "pros": "Molemmat tavat",
+          "cons": "Puhelimen yläpaneeli on täynnä",
+          "rejected_because": "Luettelo korvaa kierrätyksen ja avaa myös kaupunkikortin"
+        }
+      ],
+      "files_to_change": [
+        "src/ui/listCard.ts (uusi), gameHud.ts, hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/list.e2e.ts (uusi) ja testit, jotka käyttivät kaupunkinappia"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Luettelo ja HUD-nappi",
+          "verify": "E2E"
+        },
+        {
+          "step": 2,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-033",
+      "story": "STORY-043",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Sami: toteutetaan peruspeli. Pronssityö avasi vain Rahatalouden tutkimuksen; Freecivin civ1:ssä se avaa Phalanxin (units.ruleset: build_cost 20, attack 1, defense 2). Puolustajan vahvuus välitetään rosvotaisteluun (defencePower, banditWins), ja paras puolustaja taistelee kuten Freecivissä.",
+      "alternatives_considered": [
+        {
+          "name": "Ratsumies (Horseback Riding)",
+          "pros": "Nopea yksikkö",
+          "cons": "Pelaajan yksiköt eivät vielä hyökkää",
+          "rejected_because": "Puolustus on nyt tarpeellisempi"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts, science.ts, units.ts, raids.ts, save.ts ja testit",
+        "src/globe/main.ts, unitLayer.ts",
+        "tests/e2e/phalanx.e2e.ts (uusi) ja rakennusmäärät"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Falangi sääntöihin ja testeihin",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Peliin, kuvaan ja rosvotaisteluun",
+          "verify": "E2E"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-034",
+      "story": "STORY-044",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "Peruspelin Civ I -mekaniikka: tyytyväisyys rajaa kasvua. Luvut ovat Freecivin civ1 effects.ruleset -tiedostosta (City_Unhappy_Size 4, Empire_Size_Base 10, Empire_Size_Step 10, temppelin Make_Content 1, despotismin Martial_Law_Each 1) ja common/city.c-tiedostosta (player_base_citizen_happiness, city_unhappy ja output_types-taulun levottomuusrangaistukset, commit fc8f694f). Ylellisyyttä ei vielä ole, joten onnellisia asukkaita ei ole.",
+      "alternatives_considered": [
+        {
+          "name": "Ylellisyysosuus kaupasta",
+          "pros": "Civ I:n keino",
+          "cons": "Kolmas liukusäädin",
+          "rejected_because": "Myöhemmin; nyt sotilaat ja temppeli"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts, science.ts, save.ts ja testit",
+        "src/globe/main.ts",
+        "src/ui/cityCard.ts, hud.css",
+        "tests/e2e/mood.e2e.ts (uusi) ja vaihtoehtomäärät"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Mieliala ja levottomuudet säännöiksi ja testeiksi",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Peliin, korttiin ja luetteloon",
+          "verify": "E2E ja kuva"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -4093,6 +4281,131 @@
         "notes": "Pilleri ja tavoiterivi osuivat samaan nimihakuun (\"Valitse tutkimus\"), joten testit käyttävät tarkkaa nimeä."
       },
       "commit": "2ef8633",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-032",
+      "story": "STORY-042",
+      "plan": "PLAN-032",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/ui/listCard.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/list.e2e.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/save.e2e.ts",
+        "tests/e2e/science.e2e.ts",
+        "tests/e2e/raids.e2e.ts"
+      ],
+      "change_summary": "listCard näyttää kaupungit ja yksiköt välilehdillä. Rivit ovat nappeja: kaupunki avaa kortin ja lentää kaupunkiin, yksikkö valitaan ja tuodaan näkyviin. Luettelo sulkee kaupunki- ja tutkimuskortin, ja ne odottavat sen sulkeutumista.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "GameHudHandlers.openCity → openList; luettelonapin nimi \"Luettelo: kaupungit ja yksiköt\"",
+          "Play.listOpen ja listTab",
+          "updateCityCard ja updateResearchCard odottavat luettelon sulkeutumista"
+        ],
+        "call_sites_found": [
+          "kaupunkinapin testit"
+        ],
+        "call_sites_updated": [
+          "tests/e2e/city.e2e.ts",
+          "tests/e2e/save.e2e.ts",
+          "tests/e2e/science.e2e.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kaupunkinapin kierrätys poistui; kaupungin saa luettelosta tai nimilapusta."
+      },
+      "commit": "829caf4",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-033",
+      "story": "STORY-043",
+      "plan": "PLAN-033",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/units.ts",
+        "src/game/raids.ts",
+        "src/game/raids.test.ts",
+        "src/game/save.ts",
+        "src/globe/unitLayer.ts",
+        "src/globe/main.ts",
+        "tests/e2e/phalanx.e2e.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/buildings.e2e.ts",
+        "tests/e2e/science.e2e.ts"
+      ],
+      "change_summary": "Build ja UnitKind saivat Falangin, NEEDS kattaa myös yksiköt (phalanx: Pronssityö), isSoldier yhdistää soturit. RaidWorld.defense kertoo parhaan puolustajan vahvuuden, ja loseDefender poistaa sen. Falangilla on oma hahmo (pitkä keihäs ja pyöreä kilpi).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Build phalanx, isSoldier",
+          "NEEDS: Partial<Record<Build, Advance>>",
+          "UnitKind phalanx",
+          "defencePower ja banditWins (defense)",
+          "RaidWorld.defense"
+        ],
+        "call_sites_found": [
+          "rakennusten lukitus ja keksintöjen avaukset main.ts:ssä"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Rakennusvaihtoehtoja on nyt kahdeksan; testit päivitetty."
+      },
+      "commit": "829caf4",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-034",
+      "story": "STORY-044",
+      "plan": "PLAN-034",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/hud.css",
+        "tests/e2e/mood.e2e.ts",
+        "tests/e2e/science.e2e.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/buildings.e2e.ts"
+      ],
+      "change_summary": "cities.ts: baseContent, cityMood, withMood; cityGold ja cityScience antavat levottomuudessa 0. Temppeli ja Hautajaisriitit lisättiin. main.ts laskee mielialan kaupungin sotilaista ja kaupunkien määrästä, soveltaa sen tuottoihin ja ilmoittaa levottomuuksien alusta ja lopusta hetken kera. Kaupunkikortti näyttää mielialan ja levottomuuden selityksen.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "CityYield.disorder",
+          "cityYields (withMood)",
+          "CityView.moodText ja disorder",
+          "BUILDINGS temple, Advance ceremonial",
+          "globeDebug.setCitySize"
+        ],
+        "call_sites_found": [
+          "cityYields: kaikki kaupunkien tuottojen käyttäjät"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Keksintöjä on alussa viisi ja rakennusvaihtoehtoja yhdeksän; testit päivitetty."
+      },
+      "commit": "829caf4",
       "progress": 100
     }
   ],
@@ -7181,6 +7494,220 @@
           },
           {
             "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-032",
+      "story": "STORY-042",
+      "implementation_ticket": "TICKET-IMPL-032",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Koko sarjan ajossa rosvotestin ilmoitus ehti vaihtua taisteluilmoitukseen ennen tarkistusta; testi katsoo nyt kaikki ilmoitukset.",
+        "files_changed": [
+          "tests/e2e/raids.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "E2E: luettelo",
+            "expected": "Ennen kaupunkia 0 kaupunkia ja 3 yksikköä; yksikkörivi valitsee; kaupunkirivi näyttää koon, rakennuksen ja ruoan ja avaa kortin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: näppäimistö",
+            "expected": "Luettelonappi ja kaupunkirivi Enterillä avaavat kortin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "E2E 55/55 (rosvotesti korjauksen jälkeen)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38304286204 (829caf4, 44 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Hallinta helpottuu",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Luettelo kaupungeista ja yksiköistä",
+            "checked": true
+          },
+          {
+            "item": "Rivit vievät kohteeseen",
+            "checked": true
+          },
+          {
+            "item": "Näppäimistö",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-033",
+      "story": "STORY-043",
+      "implementation_ticket": "TICKET-IMPL-033",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Tieteen testi odotti Pronssityön avaavan vain Rahatalouden; nyt se avaa myös Falangin, ja odotus päivitettiin.",
+        "files_changed": [
+          "tests/e2e/science.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti ja CI-tilassa; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: Falangin puolustus",
+            "expected": "Kukkuloilla 6; rosvo voittaa ruohomaalla 0,4",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: rakentaminen",
+            "expected": "20 tuotantoa; sen jälkeen Kultaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: Falangi",
+            "expected": "Lukittu ennen Pronssityötä, avautuu, ostetaan, seuraavana päivänä Falangi 1 puolustaa kaupunkia",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 25 tiedostoa; E2E 56/56; phalanx, list ja raids CI-tilassa 3/3",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38304286204 (829caf4, 44 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Falangi näkyy ja puolustaa",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Pronssityö avaa Falangin",
+            "checked": true
+          },
+          {
+            "item": "Paras puolustaja taistelee",
+            "checked": true
+          },
+          {
+            "item": "Kultaa Falangin jälkeen",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-034",
+      "story": "STORY-044",
+      "implementation_ticket": "TICKET-IMPL-034",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen ajo löysi kaksi luokkavirhettä: mielialarivi käytti ruokarivin luokkaa (kasvutestin haku osui kahteen), ja kasvuvihjeen haku osui levottomuusriviin. Riveille annettiin omat luokat.",
+        "files_changed": [
+          "src/ui/cityCard.ts",
+          "src/ui/hud.css"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: tyytyväiset ja levottomuudet",
+            "expected": "Tyytyväisiä 4, 4, 3, 3, 2 (1, 10, 11, 20, 21 kaupunkia); koko 6 ilman: 2 tyytymätöntä ja levottomuus; soturi rauhoittaa yhden; temppeli ja soturi kaksi; levottomuudessa ylijäämät 0 ja kulta 0, kauppa säilyy",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: mieliala",
+            "expected": "Koko 1: 1 tyytyväinen; koko 5 + sotilaat: 1 tyytymätön ja levottomuudet; temppeli ostetaan ja rauhoittaa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 25 tiedostoa (134); E2E 57/57 korjausten jälkeen",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38304286204 (829caf4, 44 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Mieliala on ymmärrettävä",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Tyytyväiset ja tyytymättömät",
+            "checked": true
+          },
+          {
+            "item": "Temppeli ja sotilaat rauhoittavat",
+            "checked": true
+          },
+          {
+            "item": "Levottomuudet ja selitys",
             "checked": true
           }
         ],
