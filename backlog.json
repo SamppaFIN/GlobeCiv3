@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T17:29:59Z",
+    "generated_at": "2026-10-12T19:06:55Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "dbcd21a",
+    "git_commit": "aff3983",
     "git_branch": "main",
     "language": "fi"
   },
@@ -141,7 +141,8 @@
         "STORY-036",
         "STORY-037",
         "STORY-038",
-        "STORY-039"
+        "STORY-039",
+        "STORY-040"
       ],
       "progress": 95
     }
@@ -1090,6 +1091,32 @@
         "plan": "PLAN-029",
         "implementation": "TICKET-IMPL-029",
         "testing": "TICKET-TEST-029"
+      }
+    },
+    {
+      "id": "STORY-040",
+      "epic": "EPIC-006",
+      "title": "Tiede ja keksinnöt",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kauppa tuottaa tiedettä ja tiede keksintöjä, jotka avaavat rakennuksia, jotta pelissä on pitkän aikavälin tavoitteita.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-038",
+        "STORY-039"
+      ],
+      "status": "done",
+      "acceptance_criteria": [
+        "Verokanta (30, 50 tai 70 %) jakaa kaupungin kaupan kullaksi ja tieteeksi. Kirjasto lisää tiedettä 50 %.",
+        "Keksinnöt ja niiden edellytykset ovat Freecivin civ1-sääntöjoukosta (Aakkoset, Pronssityö, Keramiikka, Muuraus, Rahatalous, Kirjoitus). Hinta on Freecivin Civ I -kaavan mukainen: 10 × (tunnetut + 1). Tiede kertyy myös ilman kohdetta, ja ylijäämä siirtyy.",
+        "Rakennukset vaativat keksintönsä: viljavarasto Keramiikan, muuri Muurauksen, tori Rahatalouden ja kirjasto Kirjoituksen. Lukittu rakennus näkyy kaupunkikortissa ja kertoo, mitä se vaatii.",
+        "Valitse tutkimus -pilleri ja kaupunkikortti avaavat tutkimuskortin: tutkimus ja sen valmistuminen, keksinnöt hintoineen ja avauksineen, verokanta ja tunnetut keksinnöt. Kun tiedettä ei tule, kortti kertoo mistä sitä saa.",
+        "Kaupungin keskusruudussa on tie kuten Freecivin civ1:ssä: +1 kauppa aavikolla, ruohomaalla ja tasangolla."
+      ],
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-030",
+        "implementation": "TICKET-IMPL-030",
+        "testing": "TICKET-TEST-030"
       }
     }
   ],
@@ -2703,6 +2730,60 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-030",
+      "story": "STORY-040",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-12",
+      "approach": "STORY-038:n jälkeen kaikki kauppa oli kultaa, eikä pelissä ollut pitkän aikavälin tavoitteita. Linssi ehdotti tiedettä seuraavaksi, ja Sami sanoi \"jatka\". Luvut ovat Freecivistä: civ1 game.ruleset (tech_cost_style Civ I|II, base_tech_cost 20, sciencebox 50) ja common/research.c (research_total_bulbs_required, recalculate_techs_researched, commit 3a9e586b), joista keksinnön hinnaksi tulee 10 × (tunnetut + 1). Keksinnöt ja niiden edellytykset ovat civ1 techs.ruleset -tiedostosta, kirjasto buildings.ruleset -tiedostosta (80 tuotantoa, ylläpito 1) ja effects.ruleset -tiedostosta (+50 % tiedettä). Keskusruudun tie tulee civ1 terrain.ruleset -tiedoston Road-lisäkkeen lipusta AlwaysOnCityCenter (commit 63c099a4). Mukana ovat vain ne keksinnöt, jotka avaavat pelissä jotain. Verokanta alkaa puolesta, kun Freecivin pelaajan oletus on kaikki tieteeseen.",
+      "alternatives_considered": [
+        {
+          "name": "Vapaa verokanta 0–100 % kymmenen prosentin askelin",
+          "pros": "Freeciv",
+          "cons": "Puhelimella kolme valintaa on selkeämpi",
+          "rejected_because": "Kolme kantaa riittää alkuun"
+        },
+        {
+          "name": "Koko civ1-teknologiapuu",
+          "pros": "Täydellinen",
+          "cons": "Useimmat keksinnöt eivät avaa vielä mitään",
+          "rejected_because": "Mukana vain ne, joilla on vaikutus"
+        },
+        {
+          "name": "Tutkimus pysäyttää pelin keksinnön valmistuessa",
+          "pros": "Huomio",
+          "cons": "Pelaajan palaute: keskeytykset estävät kaupungin hoidon",
+          "rejected_because": "Pilleri ja ilmoitus kuten löydöt (STORY-037)"
+        }
+      ],
+      "files_to_change": [
+        "src/game/science.ts ja science.test.ts (uudet)",
+        "src/game/cities.ts, cities.test.ts",
+        "src/game/save.ts, save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/researchCard.ts (uusi), cityCard.ts, gameHud.ts, hud.css",
+        "tests/e2e/science.e2e.ts (uusi), buildings.e2e.ts, city.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Freecivin luvut lähteineen; tieteen säännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Tutkimuskortti, pilleri, lukitut rakennukset, tallennus",
+          "verify": "E2E ja kuvat"
+        },
+        {
+          "step": 3,
+          "action": "Merge, CI ja hyväksyntä",
+          "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -3866,6 +3947,50 @@
         "notes": "Sääntömuutokset: alue kasvaa koon mukana, ja soturin tai rakennuksen jälkeen tulee Kultaa (ennen uudisasukas). Testit päivitettiin näihin tarkoituksella."
       },
       "commit": "dbcd21a",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-030",
+      "story": "STORY-040",
+      "plan": "PLAN-030",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/researchCard.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "tests/e2e/science.e2e.ts",
+        "tests/e2e/buildings.e2e.ts",
+        "tests/e2e/city.e2e.ts"
+      ],
+      "change_summary": "science.ts sisältää keksinnöt, NEEDS-taulun, advanceCost-, splitTrade- ja TAX_RATES-määrittelyt sekä Research-luokan (tunnetut, kohde, tiede ja tallennus). cities.ts sai kirjaston, cityGold(tax)- ja cityScience-funktiot sekä keskusruudun tien. main.ts kokoaa päivän tieteen, ilmoittaa keksinnöstä ja sen avaamista rakennuksista hetken kera, lukitsee rakennukset keksintöjen taakse ja näyttää tutkimuskortin. HUDin pillerit (löydöt ja tutkimus) ovat yhteisessä rivissä. Tallennus säilyttää tutkimuksen ja verokannan, ja vanhat tallennukset saavat oletukset.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "cities.ts: BUILDINGS (library), UPKEEP, BUILDS, cityGold(tax), cityScience, workedYield (keskusruudun tie)",
+          "save.ts: research, tax, library",
+          "main.ts: Play.research, tax, researchOpen; cityDays, cityView (locked, research), setBuild-vahti, tutkimuskortti, HUD chooseResearch, yieldOf (keskustan tie ei tuplaannu)",
+          "GameHudState.chooseResearch, openResearch; CityView.builds.locked ja research"
+        ],
+        "call_sites_found": [
+          "cityGold: cityDays, cityView, scienceRates",
+          "workedYield: yieldOf, testit"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kaupunkitestien kauppaluvut muuttuivat tarkoituksella keskusruudun tien myötä. Rakennustesti opettaa Keramiikan debugilla ennen viljavarastoa."
+      },
+      "commit": "aff3983",
       "progress": 100
     }
   ],
@@ -6780,6 +6905,111 @@
           },
           {
             "item": "Kasvuansa korjattu (Kultaa)",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-030",
+      "story": "STORY-040",
+      "implementation_ticket": "TICKET-IMPL-030",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvista löytyi, että esimerkkipelin kukkulapääkaupunki tuotti tiedettä 0/pv, jolloin tutkimus ei etenisi. Freecivin civ1:ssä jokaisen kaupungin keskusruudussa on tie, joten se lisättiin. Kukkuloilla tie ei tuo kauppaa Freecivissäkään, joten kortti neuvoo, mistä tiedettä saa. Lähteitä tarkistaessa löytyi STORY-038:n kommentti, jonka mukaan despotismi rajaa veron 60 %:iin. civ1-sääntöjoukossa rajaa ei ole (Max_Rates 100), joten kommentti korjattiin.",
+        "files_changed": [
+          "src/game/cities.ts",
+          "src/globe/main.ts",
+          "src/ui/researchCard.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa. GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: keksinnön hinta",
+            "expected": "10, 20, 30, 60 tunnetuilla 0, 1, 2, 5",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: edellytykset ja rakennusten vaatimukset",
+            "expected": "Alussa neljä; Pronssityö avaa Rahatalouden; NEEDS-taulu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: tiede kertyy, keksintö ja ylijäämä",
+            "expected": "6 + 3 + 4 → Keramiikka, jää 3; seuraava 20; tallennus edestakaisin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: verokanta, tori ja kirjasto",
+            "expected": "5 / 50 % → 3 + 2; 10 / 30 % → 3 + 7, torilla ja kirjastolla 4 + 10",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: keskusruudun tie",
+            "expected": "Ruohomaan keskusruutu +1 kauppa",
+            "result": "pass (kaupunkitestien luvut päivitetty)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tiede",
+            "expected": "Ei pilleriä ennen kaupunkia; pilleri avaa kortin; neljä keksintöä hintoineen ja avauksineen; valinta; verokanta 50 → 30 %; keksintö valmistuu, ilmoitus, kohde vapautuu, viljavarasto avautuu ja muuri on lukittu; kaupunkikortista tutkimukseen",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: rakennukset",
+            "expected": "Viljavarasto lukittu ennen Keramiikkaa ja vaatimus näkyy",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 24 tiedostoa (131 testiä); E2E 53/53; science, buildings ja growth CI-tilassa 5/5",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38284615497 (aff3983, 41 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Tiede ja keksinnöt ovat selviä ja antavat tavoitteita",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Verokanta jakaa kaupan",
+            "checked": true
+          },
+          {
+            "item": "Keksinnöt Freecivin civ1-säännöin",
+            "checked": true
+          },
+          {
+            "item": "Rakennukset keksintöjen takana",
+            "checked": true
+          },
+          {
+            "item": "Tutkimuskortti ja pilleri",
             "checked": true
           }
         ],

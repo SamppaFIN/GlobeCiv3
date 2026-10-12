@@ -1,0 +1,54 @@
+{
+  "id": "PLAN-030",
+  "story": "STORY-040",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-12",
+  "approach": "STORY-038:n jälkeen kaikki kauppa oli kultaa, eikä pelissä ollut pitkän aikavälin tavoitteita. Linssi ehdotti tiedettä seuraavaksi, ja Sami sanoi \"jatka\". Luvut ovat Freecivistä: civ1 game.ruleset (tech_cost_style Civ I|II, base_tech_cost 20, sciencebox 50) ja common/research.c (research_total_bulbs_required, recalculate_techs_researched, commit 3a9e586b), joista keksinnön hinnaksi tulee 10 × (tunnetut + 1). Keksinnöt ja niiden edellytykset ovat civ1 techs.ruleset -tiedostosta, kirjasto buildings.ruleset -tiedostosta (80 tuotantoa, ylläpito 1) ja effects.ruleset -tiedostosta (+50 % tiedettä). Keskusruudun tie tulee civ1 terrain.ruleset -tiedoston Road-lisäkkeen lipusta AlwaysOnCityCenter (commit 63c099a4). Mukana ovat vain ne keksinnöt, jotka avaavat pelissä jotain. Verokanta alkaa puolesta, kun Freecivin pelaajan oletus on kaikki tieteeseen.",
+  "alternatives_considered": [
+    {
+      "name": "Vapaa verokanta 0–100 % kymmenen prosentin askelin",
+      "pros": "Freeciv",
+      "cons": "Puhelimella kolme valintaa on selkeämpi",
+      "rejected_because": "Kolme kantaa riittää alkuun"
+    },
+    {
+      "name": "Koko civ1-teknologiapuu",
+      "pros": "Täydellinen",
+      "cons": "Useimmat keksinnöt eivät avaa vielä mitään",
+      "rejected_because": "Mukana vain ne, joilla on vaikutus"
+    },
+    {
+      "name": "Tutkimus pysäyttää pelin keksinnön valmistuessa",
+      "pros": "Huomio",
+      "cons": "Pelaajan palaute: keskeytykset estävät kaupungin hoidon",
+      "rejected_because": "Pilleri ja ilmoitus kuten löydöt (STORY-037)"
+    }
+  ],
+  "files_to_change": [
+    "src/game/science.ts ja science.test.ts (uudet)",
+    "src/game/cities.ts, cities.test.ts",
+    "src/game/save.ts, save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/researchCard.ts (uusi), cityCard.ts, gameHud.ts, hud.css",
+    "tests/e2e/science.e2e.ts (uusi), buildings.e2e.ts, city.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Freecivin luvut lähteineen; tieteen säännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Tutkimuskortti, pilleri, lukitut rakennukset, tallennus",
+      "verify": "E2E ja kuvat"
+    },
+    {
+      "step": 3,
+      "action": "Merge, CI ja hyväksyntä",
+      "verify": "Vihreä paikallisesti, CI-tilassa ja CI:ssä"
+    }
+  ],
+  "status": "approved"
+}

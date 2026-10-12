@@ -1,0 +1,105 @@
+{
+  "id": "TICKET-TEST-030",
+  "story": "STORY-040",
+  "implementation_ticket": "TICKET-IMPL-030",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvista löytyi, että esimerkkipelin kukkulapääkaupunki tuotti tiedettä 0/pv, jolloin tutkimus ei etenisi. Freecivin civ1:ssä jokaisen kaupungin keskusruudussa on tie, joten se lisättiin. Kukkuloilla tie ei tuo kauppaa Freecivissäkään, joten kortti neuvoo, mistä tiedettä saa. Lähteitä tarkistaessa löytyi STORY-038:n kommentti, jonka mukaan despotismi rajaa veron 60 %:iin. civ1-sääntöjoukossa rajaa ei ole (Max_Rates 100), joten kommentti korjattiin.",
+    "files_changed": [
+      "src/game/cities.ts",
+      "src/globe/main.ts",
+      "src/ui/researchCard.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest (Node). Playwright paikallisesti (Chrome ja Intel UHD) ja CI-tilassa. GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: keksinnön hinta",
+        "expected": "10, 20, 30, 60 tunnetuilla 0, 1, 2, 5",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: edellytykset ja rakennusten vaatimukset",
+        "expected": "Alussa neljä; Pronssityö avaa Rahatalouden; NEEDS-taulu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: tiede kertyy, keksintö ja ylijäämä",
+        "expected": "6 + 3 + 4 → Keramiikka, jää 3; seuraava 20; tallennus edestakaisin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: verokanta, tori ja kirjasto",
+        "expected": "5 / 50 % → 3 + 2; 10 / 30 % → 3 + 7, torilla ja kirjastolla 4 + 10",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: keskusruudun tie",
+        "expected": "Ruohomaan keskusruutu +1 kauppa",
+        "result": "pass (kaupunkitestien luvut päivitetty)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tiede",
+        "expected": "Ei pilleriä ennen kaupunkia; pilleri avaa kortin; neljä keksintöä hintoineen ja avauksineen; valinta; verokanta 50 → 30 %; keksintö valmistuu, ilmoitus, kohde vapautuu, viljavarasto avautuu ja muuri on lukittu; kaupunkikortista tutkimukseen",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rakennukset",
+        "expected": "Viljavarasto lukittu ennen Keramiikkaa ja vaatimus näkyy",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 24 tiedostoa (131 testiä); E2E 53/53; science, buildings ja growth CI-tilassa 5/5",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38284615497 (aff3983, 41 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Tiede ja keksinnöt ovat selviä ja antavat tavoitteita",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Verokanta jakaa kaupan",
+        "checked": true
+      },
+      {
+        "item": "Keksinnöt Freecivin civ1-säännöin",
+        "checked": true
+      },
+      {
+        "item": "Rakennukset keksintöjen takana",
+        "checked": true
+      },
+      {
+        "item": "Tutkimuskortti ja pilleri",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-12"
+  }
+}

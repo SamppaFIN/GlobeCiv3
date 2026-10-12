@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-030",
+  "story": "STORY-040",
+  "plan": "PLAN-030",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/researchCard.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "tests/e2e/science.e2e.ts",
+    "tests/e2e/buildings.e2e.ts",
+    "tests/e2e/city.e2e.ts"
+  ],
+  "change_summary": "science.ts sisältää keksinnöt, NEEDS-taulun, advanceCost-, splitTrade- ja TAX_RATES-määrittelyt sekä Research-luokan (tunnetut, kohde, tiede ja tallennus). cities.ts sai kirjaston, cityGold(tax)- ja cityScience-funktiot sekä keskusruudun tien. main.ts kokoaa päivän tieteen, ilmoittaa keksinnöstä ja sen avaamista rakennuksista hetken kera, lukitsee rakennukset keksintöjen taakse ja näyttää tutkimuskortin. HUDin pillerit (löydöt ja tutkimus) ovat yhteisessä rivissä. Tallennus säilyttää tutkimuksen ja verokannan, ja vanhat tallennukset saavat oletukset.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "cities.ts: BUILDINGS (library), UPKEEP, BUILDS, cityGold(tax), cityScience, workedYield (keskusruudun tie)",
+      "save.ts: research, tax, library",
+      "main.ts: Play.research, tax, researchOpen; cityDays, cityView (locked, research), setBuild-vahti, tutkimuskortti, HUD chooseResearch, yieldOf (keskustan tie ei tuplaannu)",
+      "GameHudState.chooseResearch, openResearch; CityView.builds.locked ja research"
+    ],
+    "call_sites_found": [
+      "cityGold: cityDays, cityView, scienceRates",
+      "workedYield: yieldOf, testit"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kaupunkitestien kauppaluvut muuttuivat tarkoituksella keskusruudun tien myötä. Rakennustesti opettaa Keramiikan debugilla ennen viljavarastoa."
+  },
+  "commit": "aff3983",
+  "progress": 100
+}
