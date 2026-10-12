@@ -63,6 +63,13 @@ export class Improvements {
     this.bits.set(tile, b | BIT[kind]);
   }
 
+  /** Improvements as entries() lists them (a saved game, STORY-036). */
+  static from(entries: readonly (readonly [number, readonly ImprovementKind[]])[]): Improvements {
+    const imp = new Improvements();
+    for (const [tile, kinds] of entries) for (const kind of kinds) imp.add(tile, kind);
+    return imp;
+  }
+
   /** Tiles with something built, and what. */
   entries(): [number, ImprovementKind[]][] {
     return [...this.bits].map(([tile, b]) => [tile, (Object.keys(BIT) as ImprovementKind[]).filter(k => b & BIT[k])]);

@@ -151,6 +151,11 @@ test('the same seed starts in the same city area', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openGame(page, '?seed=7');
     await page.getByRole('button', { name: 'Uusi peli' }).click();
+    // The first round's game may have saved itself as the page closed (STORY-036): then
+    // the button asks before it replaces the save
+    await page.waitForFunction(() => (window as any).globeGame.state.screen !== 'start' || document.querySelector('.start-new')!.textContent!.includes('Aloita alusta'));
+    const replace = page.getByRole('button', { name: 'Aloita alusta, tallennus korvataan' });
+    if (await replace.isVisible()) await replace.click();
     await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 30_000 });
     cities.push((await gameState(page)).startCity);
   }
