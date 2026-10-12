@@ -15,7 +15,7 @@ async function startGame(page: Page): Promise<string[]> {
 
 const state = (page: Page) => page.evaluate(() => (window as any).globeGame.state);
 
-/** Send the scouts toward the nearest discovery and run at 4× until a discovery card opens. */
+/** Send the scouts toward the nearest discovery and run at 4× until it waits in the HUD. */
 async function findDiscovery(page: Page) {
   await page.evaluate(() => {
     const w = window as any;
@@ -23,7 +23,7 @@ async function findDiscovery(page: Page) {
     w.globeDebug.sendTo(site.tile);
   });
   await page.locator('.hud-speed label', { hasText: '4×' }).click();
-  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByRole('button', { name: /^(Löytö odottaa|\d+ löytöä odottaa)$/ })).toBeVisible({ timeout: 90_000 });
 }
 
 /** Days that pass over at least `ms` of wall time and three frames, measured inside the page. */
@@ -39,51 +39,67 @@ const daysOver = (page: Page, ms: number) => page.evaluate(span => new Promise<n
   requestAnimationFrame(step);
 }), ms);
 
-test('a discovery stops the game until one of its two finds is chosen, and the choice changes the game', async ({ page }, testInfo) => {
+test('a discovery waits in the HUD while the game goes on; opened, it stops the game until a find is chosen', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   const errors = await startGame(page);
   await findDiscovery(page);
-  const s = await state(page);
-  expect(s.discovery).not.toBeNull();
+  // This test is about the first discovery: the next ones would add to the count
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
+  const found = await state(page);
+  expect(found.discovery).not.toBeNull();
+  const pill = page.getByRole('button', { name: 'Löytö odottaa' });
 
-  // Design 4a: the pause chip, the ring, the kicker, the area, the sentence, two finds and the note
+  // STORY-037: the game goes on with the find waiting, and no card opens by itself
+  await expect(page.getByRole('dialog')).toBeHidden();
+  expect(await daysOver(page, 2000)).toBeGreaterThan(0);
+  await page.screenshot({ path: testInfo.outputPath('waiting.png') });
+
+  // Opened from the HUD: design 4a with the pause chip, the ring, the kicker, the area, the
+  // sentence, two finds and Myöhemmin; the game stands still
+  await pill.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  const s = await state(page);
   await expect(page.locator('.discovery-day')).toHaveText(`Peli pysähtyi · Päivä ${s.day}`);
   await expect(page.locator('.discovery-kicker')).toHaveText(/^Löytö · Tiedustelija \d+$/);
   await expect(page.locator('.discovery-title')).not.toBeEmpty();
   await expect(page.locator('.discovery-body')).toHaveText(/^Tiedustelija löysi .+ ja .+\. Valitse niistä toinen\.$/);
   await expect(page.locator('.discovery-note')).toHaveText('Valitsematta jäänyt löytö katoaa.');
   const options = page.locator('.discovery-option');
-  await expect(options).toHaveCount(2);
+  await expect(options).toHaveCount(3);
+  await expect(options.last()).toContainText('Myöhemmin');
   for (const b of await options.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(63.5);
   await expect(page.locator('.discovery-ring')).toBeVisible();
   await expect(page.locator('.hud-top')).toBeHidden();
   await page.screenshot({ path: testInfo.outputPath('discovery.png') });
-
-  // The game stands still: no day passes over two seconds at 4× (over five days' worth)
   expect(await daysOver(page, 2000)).toBe(0);
 
-  // Keep the ruins if offered (a new scout), else the first find
+  // Myöhemmin: the card closes and the find still waits
+  await options.last().click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(pill).toBeVisible();
+  expect((await state(page)).found).toBe(0);
+
+  // Opened again: keep the ruins if offered (a new scout), else the first find
+  await pill.click();
   const finds: string[] = s.discovery.finds;
   const pick = finds.includes('ruins') ? finds.indexOf('ruins') : 0;
-  const before = { units: s.units.length, bonuses: s.bonuses.length, mapped: s.mapped };
-  // The next discovery (at 4× only seconds away) would stop the game again; this test is about the first
-  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
+  const before = await state(page);
   await options.nth(pick).click();
   await expect(page.getByRole('dialog')).toBeHidden();
   const after = await state(page);
   expect(after.found).toBe(1);
+  await expect(pill).toBeHidden();
   const notice = page.getByRole('status');
   if (finds[pick] === 'ruins') {
-    expect(after.units.length).toBe(before.units + 1);
+    expect(after.units.length).toBe(before.units.length + 1);
     await expect(notice).toHaveText(/^Vanhat rauniot: Tiedustelija \d+ liittyi joukkoon$/);
   } else if (finds[pick] === 'lookout') {
     expect(after.mapped).toBeGreaterThan(before.mapped);
     await expect(notice).toHaveText(/^Näköalapaikka: /);
   } else {
-    expect(after.bonuses.length).toBe(before.bonuses + 1);
+    expect(after.bonuses.length).toBe(before.bonuses.length + 1);
     await expect(notice).toHaveText(/löytöruudulle$/);
   }
-  await expect(notice).toBeVisible();
   await expect(page.locator('.hud-top')).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('after.png') });
 
@@ -99,6 +115,7 @@ test.describe('on a phone', () => {
     test.setTimeout(180_000);
     const errors = await startGame(page);
     await findDiscovery(page);
+    await page.getByRole('button', { name: /odottaa$/ }).click();
     const card = (await page.locator('.discovery-card').boundingBox())!;
     expect(card.x).toBeGreaterThanOrEqual(0);
     expect(card.x + card.width).toBeLessThanOrEqual(390);

@@ -14,6 +14,9 @@ const PLAY = '<svg width="18" height="18" viewBox="0 0 256 256" fill="currentCol
 export const PAUSE = '<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z"/></svg>';
 const FLAG = '<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M34.76,42A8,8,0,0,0,32,48V216a8,8,0,0,0,16,0V171.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V48A8,8,0,0,0,210.76,42c-28,24.22-51.72,12.48-79.21-1.13C103.07,26.76,70.78,10.79,34.76,42ZM208,164.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.38-52.35-25.92-83.55-5.34V51.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.38,52.35,25.91,83.55,5.35Z"/></svg>';
 
+// A four-pointed spark (own icon) for the waiting discoveries
+const SPARK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 C13 8 16 11 22 12 C16 13 13 16 12 22 C11 16 8 13 2 12 C8 11 11 8 12 2 Z"/></svg>';
+
 // A house (own icon) for the city button
 const CITY = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 L12 4 L21 11 M5 10 V20 H19 V10 M10 20 V14 H14 V20"/></svg>';
 
@@ -33,6 +36,8 @@ export interface GameHudState {
   flagTool: boolean;
   /** The first city's name: the city button opens the city cards (STORY-028). */
   city: string | null;
+  /** Discoveries waiting for the player (STORY-037). */
+  finds: number;
 }
 
 export interface GameHudHandlers {
@@ -47,6 +52,8 @@ export interface GameHudHandlers {
   nextUnit(): void;
   /** Open a city's card, the next one on each press. */
   openCity(): void;
+  /** Open the oldest waiting discovery. */
+  openFind(): void;
 }
 
 export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(state: GameHudState): void; element: HTMLElement } {
@@ -70,6 +77,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       </div>
     </section>
     <section class="hud-panel hud-bottom" aria-label="Valittu yksikkö">
+      <button class="btn btn-primary hud-finds" type="button" hidden></button>
       <button class="hud-unit" type="button" aria-label="Seuraava yksikkö"><span class="hud-unit-name"></span><span class="hud-unit-status"></span></button>
       <div class="hud-row hud-scout">
         <div class="seg hud-modes" role="radiogroup" aria-label="Moodi">
@@ -103,6 +111,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openCity);
+  q<HTMLButtonElement>('.hud-finds').addEventListener('click', on.openFind);
 
   let last = '';
   return {
@@ -128,6 +137,9 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       const city = q<HTMLElement>('.hud-city');
       city.hidden = !s.city;
       if (s.city) city.setAttribute('aria-label', `Kaupunki: ${s.city}`);
+      const finds = q<HTMLButtonElement>('.hud-finds');
+      finds.hidden = s.finds === 0;
+      finds.innerHTML = `${SPARK}<span>${s.finds === 1 ? 'Löytö odottaa' : `${s.finds} löytöä odottaa`}</span>`;
       const bottom = q<HTMLElement>('.hud-bottom');
       bottom.hidden = !s.unit || s.level !== 3;
       if (!s.unit) return;

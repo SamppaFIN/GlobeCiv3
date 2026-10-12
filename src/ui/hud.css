@@ -68,6 +68,14 @@
 .hud-top { top: max(32px, calc(env(safe-area-inset-top) + 8px)); }
 .hud-bottom, .level-bottom { bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px)); padding: 8px; }
 .hud-row { display: flex; align-items: center; gap: 8px; }
+/* Waiting discoveries (STORY-037): a pill just above the unit panel */
+.hud-finds {
+  position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  min-height: var(--touch-target); padding: 0 16px; gap: 8px; border-radius: 999px; white-space: nowrap;
+  color: var(--c-accent-text); background: var(--c-hud); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+.hud-finds[hidden] { display: none; }
 .hud-row[hidden] { display: none; }
 .hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
 .hud-city[hidden] { display: none; }
@@ -217,11 +225,17 @@
 .city-yield { display: flex; flex-direction: column; gap: 4px; padding: 10px; border-radius: var(--radius-md); background: var(--c-bg); }
 .city-yield-n { font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .city-yield-label { font-size: 12px; color: var(--c-muted); }
-.city-build-row { display: flex; align-items: center; gap: 8px; }
-.city-build { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.city-builds { display: flex; flex-direction: column; gap: 6px; }
 .city-build-label { font-size: 12px; color: var(--c-muted); }
-.city-build-name { font-size: 14px; }
-.city-change { min-height: var(--touch-target); flex: none; }
+.city-build {
+  display: flex; flex-direction: column; gap: 2px; min-height: 52px; padding: 8px 12px; text-align: left;
+  border: 1px solid #3f424d; border-radius: var(--radius-md); background: var(--c-bg); color: inherit; font: inherit; cursor: pointer;
+}
+.city-build[aria-checked="true"] { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 16%, var(--c-bg)); }
+.city-build-top { display: flex; justify-content: space-between; gap: 8px; }
+.city-build-name { font-size: 14px; font-weight: 500; }
+.city-build-eta { font-size: 12px; color: var(--c-muted); white-space: nowrap; }
+.city-build-info { font-size: 12px; color: var(--c-muted); }
 #hud.city-open .hud-bottom { display: none; }
 #hud.discovering .city-card { display: none; }
 

@@ -2,9 +2,11 @@
  * cityCard.ts — the city card (design 8a).
  *
  * Kicker (capital or city, and the area), the name and a close button; the size with
- * the food box as a bar and the days to grow; food, shields and trade a day; what the
- * city builds and when it is ready, with "Vaihda".
+ * the food box as a bar and the days to grow; food, shields and trade a day; and the
+ * builds to choose from, each with its cost, what it does and when it would be ready
+ * (STORY-037: "Vaihda" did not tell what the city can build).
  */
+import type { Build } from '../game/cities';
 
 // Icons from design 8a: close, food (grain), production (hammer), trade (coin)
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
@@ -26,8 +28,8 @@ export interface CityView {
   growText: string;
   /** Food left over (may be negative), shields and trade a day. */
   yields: [number, number, number];
-  /** "Soturi · valmis 5 pv" */
-  build: string;
+  /** Every build: "Soturi", "10 tuotantoa", what it does, "valmis 5 pv", and the one chosen. */
+  builds: { kind: Build; name: string; cost: string; purpose: string; eta: string; selected: boolean }[];
 }
 
 export interface CityCard {
@@ -37,7 +39,7 @@ export interface CityCard {
   readonly visible: boolean;
 }
 
-export function createCityCard(root: HTMLElement, on: { close(): void; changeBuild(): void }): CityCard {
+export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(build: Build): void }): CityCard {
   const el = document.createElement('section');
   el.className = 'city-card';
   el.setAttribute('role', 'dialog');
@@ -56,14 +58,13 @@ export function createCityCard(root: HTMLElement, on: { close(): void; changeBui
     <div class="city-yields">
       ${LABELS.map((label, i) => `<div class="city-yield">${ICONS[i]}<span class="city-yield-n"></span><span class="city-yield-label">${label}</span></div>`).join('')}
     </div>
-    <div class="city-build-row">
-      <div class="city-build"><span class="city-build-label">Rakentaa</span><span class="city-build-name"></span></div>
-      <button class="btn btn-primary city-change" type="button">Vaihda</button>
+    <div class="city-builds" role="radiogroup" aria-labelledby="city-builds-label">
+      <span id="city-builds-label" class="city-build-label">Rakenna</span>
     </div>`;
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
-  q('.city-change').addEventListener('click', on.changeBuild);
+  const builds = q('.city-builds');
   let last = '';
   const update = (v: CityView) => {
     const key = JSON.stringify(v);
@@ -80,7 +81,23 @@ export function createCityCard(root: HTMLElement, on: { close(): void; changeBui
       const y = v.yields[i];
       n.textContent = y < 0 ? `−${-y}` : `+${y}`;
     });
-    q('.city-build-name').textContent = v.build;
+    // One button per build, made once; a tap chooses it
+    v.builds.forEach((b, i) => {
+      let opt = builds.querySelectorAll<HTMLButtonElement>('.city-build')[i];
+      if (!opt) {
+        opt = document.createElement('button');
+        opt.type = 'button';
+        opt.className = 'city-build';
+        opt.setAttribute('role', 'radio');
+        opt.innerHTML = '<span class="city-build-top"><span class="city-build-name"></span><span class="city-build-eta"></span></span><span class="city-build-info"></span>';
+        opt.addEventListener('click', () => on.setBuild(b.kind));
+        builds.appendChild(opt);
+      }
+      opt.setAttribute('aria-checked', String(b.selected));
+      opt.querySelector('.city-build-name')!.textContent = b.name;
+      opt.querySelector('.city-build-eta')!.textContent = b.eta;
+      opt.querySelector('.city-build-info')!.textContent = `${b.cost} · ${b.purpose}`;
+    });
   };
   return {
     show(v) {

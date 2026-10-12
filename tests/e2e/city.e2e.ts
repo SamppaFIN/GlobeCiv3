@@ -61,11 +61,10 @@ async function foundCapital(page: Page): Promise<number> {
 
 const signed = (n: number) => (n < 0 ? `−${-n}` : `+${n}`);
 
-/** The city card's build line for each build. */
-const BUILD_TEXT = {
-  warrior: /^Soturi · (valmis \d+ pv|ei tuotantoa)$/,
-  settler: /^Uudisasukas · (valmis \d+ pv|odottaa kokoa 2|ei tuotantoa)$/,
-};
+/** The city card's builds (STORY-037): a choice of both, each with its cost, purpose and time. */
+const BUILD_NAMES = { warrior: 'Soturi', settler: 'Uudisasukas' };
+const buildOption = (card: ReturnType<Page['getByRole']>, build: 'warrior' | 'settler') =>
+  card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio', { name: new RegExp(`^${BUILD_NAMES[build]}`) });
 
 test('the settler founds the capital on the tapped tile; the city card shows its size, yields and build', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
@@ -84,18 +83,25 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   await expect(card.locator('.city-yield-n')).toHaveText([signed(city.yield.surplus), signed(city.yield.shield), signed(city.yield.trade)]);
   await expect(card.locator('.city-yield-label')).toHaveText(['Ruoka', 'Tuotanto', 'Kauppa']);
   await expect(card.locator('.city-grow')).toHaveText(/^(kasvaa \d+ pv|ei kasva|nälkää)$/);
-  // A Soturi first; a slow runner may have finished it before the pause, and the city gone on to settlers
-  await expect(card.locator('.city-build-name')).toHaveText(BUILD_TEXT[city.build as 'warrior' | 'settler']);
+  // Both builds to choose from; a Soturi first (a slow runner may have finished it before
+  // the pause, and the city gone on to settlers)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(2);
+  await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');
+  await expect(buildOption(card, 'settler')).toContainText('40 tuotantoa ja 1 asukas · Perustaa uuden kaupungin tai kehittää maata');
+  await expect(buildOption(card, 'warrior')).toContainText(/(valmis \d+ pv|valmis huomenna|ei tuotantoa)/);
+  await expect(buildOption(card, 'settler')).toContainText(city.size > 1 ? /(valmis \d+ pv|valmis huomenna|ei tuotantoa)/ : /(vaatii koon 2|ei tuotantoa)/);
+  await expect(buildOption(card, city.build)).toBeChecked();
   expect(city.yield.surplus > 0 || city.yield.shield > 0).toBe(true);
   await expect(page.locator('.hud-bottom')).toBeHidden();
   await page.screenshot({ path: testInfo.outputPath('city.png') });
 
-  // Vaihda switches the build, and back
+  // A tap chooses the other build, and back
   const other = city.build === 'warrior' ? 'settler' : 'warrior';
-  await card.getByRole('button', { name: 'Vaihda' }).click();
-  await expect(card.locator('.city-build-name')).toHaveText(BUILD_TEXT[other]);
+  await buildOption(card, other).click();
+  await expect(buildOption(card, other)).toBeChecked();
   expect((await state(page)).cities[0].build).toBe(other);
-  await card.getByRole('button', { name: 'Vaihda' }).click();
+  await buildOption(card, city.build).click();
+  await expect(buildOption(card, city.build)).toBeChecked();
   expect((await state(page)).cities[0].build).toBe(city.build);
 
   // Close the card; a tap on the city opens it again
@@ -145,12 +151,12 @@ test.describe('on a phone', () => {
     expect(box.x).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(390);
     expect(box.y + box.height).toBeLessThanOrEqual(844);
-    for (const b of await card.getByRole('button').all()) {
+    for (const b of [...await card.getByRole('button').all(), ...await card.getByRole('radio').all()]) {
       const r = (await b.boundingBox())!;
       expect(r.height).toBeGreaterThanOrEqual(43.5);
       expect(r.width).toBeGreaterThanOrEqual(43.5);
     }
-    expect(await card.locator('.city-build-name').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    for (const b of await card.locator('.city-build').all()) expect(await b.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     // The top panel still fits with the city button
     const top = (await page.locator('.hud-top').boundingBox())!;
     expect(top.x + top.width).toBeLessThanOrEqual(390);

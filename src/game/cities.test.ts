@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
-import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, nextBuild, shortfall, workedTiles, workedYield, type City } from './cities';
+import { BUILDS, cityDay, cityYield, daysToBuild, daysToGrow, foundCity, granary, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
@@ -81,11 +81,8 @@ describe('cities', () => {
     expect(daysToBuild(c, y)).toBe(5);
     const done = Array.from({ length: 5 }, () => cityDay(c, { ...y, surplus: 0 }));
     expect(done).toEqual([null, null, null, null, 'warrior']);
-    // One soldier is enough: the city goes on to settlers by itself (own rule); Vaihda switches
+    // One soldier is enough: the city goes on to settlers by itself (own rule)
     expect([c.shields, c.build]).toEqual([0, 'settler']);
-    nextBuild(c);
-    expect(c.build).toBe('warrior');
-    nextBuild(c);
     expect(BUILDS.settler).toEqual({ name: 'Uudisasukas', cost: 40, pop: 1 });
     // A size-1 city waits with the shields until it can spare a citizen
     c.size = 1;
