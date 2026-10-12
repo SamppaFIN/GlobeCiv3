@@ -28,7 +28,7 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 
 /** The advance each building and unit needs (buildings.ruleset and units.ruleset reqs). */
-export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial' };
+export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry' };
 
 /** Bulbs for the next advance when `known` advances are known. */
 export const advanceCost = (known: number) => 10 * (1 + known);

@@ -190,14 +190,25 @@ describe('cities', () => {
   it('four citizens are content under Despotism; a temple and each soldier calm one more, and unhappy ones left mean disorder (Freeciv civ1)', () => {
     expect([1, 10, 11, 20, 21].map(baseContent)).toEqual([4, 4, 3, 3, 2]);
     const c = city(6);
-    expect(cityMood(c, 0, 1)).toEqual({ content: 4, unhappy: 2, calmed: 0, disorder: true });
-    expect(cityMood(c, 1, 1)).toEqual({ content: 5, unhappy: 1, calmed: 1, disorder: true });
+    expect(cityMood(c, 0, 1)).toEqual({ happy: 0, content: 4, unhappy: 2, calmed: 0, disorder: true });
+    expect(cityMood(c, 1, 1)).toEqual({ happy: 0, content: 5, unhappy: 1, calmed: 1, disorder: true });
+    // Riippuvat puutarhat (STORY-045): a happy citizen outweighs the unhappy one
+    expect(cityMood(c, 1, 1, true)).toEqual({ happy: 1, content: 4, unhappy: 1, calmed: 1, disorder: false });
     c.buildings.push('temple');
-    expect(cityMood(c, 1, 1)).toEqual({ content: 6, unhappy: 0, calmed: 2, disorder: false });
+    expect(cityMood(c, 1, 1)).toEqual({ happy: 0, content: 6, unhappy: 0, calmed: 2, disorder: false });
     expect(cityMood(city(3), 0, 1).disorder).toBe(false);
     // Disorder: no surplus food or shields, no gold or science; trade stays
     const y = withMood({ food: 9, shield: 4, trade: 6, surplus: 3 }, cityMood(city(6), 0, 1));
     expect(y).toEqual({ food: 9, shield: 0, trade: 6, surplus: 0, disorder: true });
     expect([cityGold(c, y, 50), BUILDS.temple.cost]).toEqual([0, 40]);
+  });
+
+  it('Kolossi adds a trade on each worked tile with trade (Freeciv civ1 Output_Inc_Tile)', () => {
+    const c = city(1);
+    const before = cityYield(c, yieldOf);
+    c.buildings.push('colossus');
+    // The centre (road: 1 trade) and the fishing ocean (2 trade) each get one more
+    expect(cityYield(c, yieldOf).trade).toBe(before.trade + 2);
+    expect([BUILDS.colossus.cost, BUILDS.gardens.cost, BUILDS.greatwall.cost]).toEqual([200, 300, 300]);
   });
 });
