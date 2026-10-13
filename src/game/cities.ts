@@ -70,7 +70,7 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'colossus', 'gardens', 'greatwall'] as const;
+export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall'] as const;
 /**
  * Wonders (STORY-045), Freeciv civ1 buildings.ruleset and effects.ruleset: once in the game,
  * no upkeep. Kolossi (Colossus, 200, Bronze Working): +1 trade on each tile the city works
@@ -81,7 +81,7 @@ export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'co
 export const WONDERS = ['colossus', 'gardens', 'greatwall'] as const;
 export const isWonder = (b: Build): boolean => (WONDERS as readonly string[]).includes(b);
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, colossus: 0, gardens: 0, greatwall: 0 };
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -103,11 +103,22 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   library: { name: 'Kirjasto', cost: 80, pop: 0 },
   // Freeciv civ1 buildings.ruleset Temple: build_cost 40, upkeep 1 (STORY-044)
   temple: { name: 'Temppeli', cost: 40, pop: 0 },
+  // Freeciv civ1 buildings.ruleset (STORY-054): Aqueduct 120 and upkeep 2, Colosseum 100 and
+  // upkeep 4, both with Construction
+  aqueduct: { name: 'Vesijohto', cost: 120, pop: 0 },
+  colosseum: { name: 'Areena', cost: 100, pop: 0 },
   colossus: { name: 'Kolossi', cost: 200, pop: 0 },
   gardens: { name: 'Riippuvat puutarhat', cost: 300, pop: 0 },
   greatwall: { name: 'Suuri muuri', cost: 300, pop: 0 },
   coinage: { name: 'Kultaa', cost: 0, pop: 0 },
 };
+
+/**
+ * The size a city cannot grow past without an aqueduct (STORY-054; Freeciv civ1
+ * effects.ruleset Size_Adj 10, and Size_Unlimit with an Aqueduct).
+ */
+export const SIZE_LIMIT = 10;
+export const sizeLimit = (city: City) => (city.buildings.includes('aqueduct') ? Infinity : SIZE_LIMIT);
 
 /** Own city names (rule 4), given in order. */
 export const CITY_NAMES = ['Aamuranta', 'Kivisalmi', 'Tuulikallio', 'Hopealahti', 'Karhuniemi', 'Sammalvuori', 'Kaislakorpi', 'Routajärvi'];
@@ -205,7 +216,9 @@ export function cityMood(city: City, soldiers: number, cities: number, gardens =
   for (; lux >= 4 && unhappy > 0; lux -= 4) { unhappy--; happy++; }
   if (lux >= 2 && unhappy > 0) { unhappy--; content++; }
   // Then the temple and the soldiers, then the gardens make a content citizen happy
-  const calmed = Math.min(unhappy, (city.buildings.includes('temple') ? 1 : 0) + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
+  // An arena calms three (STORY-054, Freeciv civ1 effects.ruleset Colosseum Make_Content 3)
+  const buildings = (city.buildings.includes('temple') ? 1 : 0) + (city.buildings.includes('colosseum') ? 3 : 0);
+  const calmed = Math.min(unhappy, buildings + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
   unhappy -= calmed;
   content += calmed;
   if (gardens && content > 0) { content--; happy++; }
@@ -261,7 +274,10 @@ export function shortfall(city: City, y: CityYield, support: Support): 'shield' 
 /** One day: the city grows or starves and builds. Returns what was completed, if anything. */
 export function cityDay(city: City, y: CityYield): Build | null {
   city.food += y.surplus;
-  if (city.food >= granary(city.size)) {
+  if (city.food >= granary(city.size) && city.size >= sizeLimit(city)) {
+    // At the limit the box holds no more (server/cityturn.c city_increase_size, aqueductloss 0)
+    city.food = granary(city.size);
+  } else if (city.food >= granary(city.size)) {
     // Freeciv (server/cityturn.c city_increase_size, commit ed7a0f77): the food over the box
     // carries over, a granary keeps half of the new box, and the store never grows
     const stock = city.food;
@@ -340,7 +356,7 @@ export function buy(city: City, treasury: number): number | null {
 
 /** Days until the city grows, or null if it does not. */
 export function daysToGrow(city: City, y: CityYield): number | null {
-  return y.surplus > 0 ? Math.max(1, Math.ceil((granary(city.size) - city.food) / y.surplus)) : null;
+  return y.surplus > 0 && city.size < sizeLimit(city) ? Math.max(1, Math.ceil((granary(city.size) - city.food) / y.surplus)) : null;
 }
 
 /** Days until the build is ready (0: ready, waiting for a citizen to spare), or null without shields. */

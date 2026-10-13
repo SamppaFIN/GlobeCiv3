@@ -49,7 +49,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { cityLuxury, cityMood, isWonder, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -715,6 +715,8 @@ const rates = () => (!play ? { tax: 50, lux: 0 } : play.gov === 'anarchy' ? { ta
 const hasWonder = (w: Build) => play?.cities.some(c => c.buildings.includes(w as never)) ?? false;
 /** A city's walls, or the Great Wall's in every city. */
 const hasWalls = (c: City) => c.buildings.includes('walls') || hasWonder('greatwall');
+/** Cities told that they need an aqueduct to grow. */
+const atLimit = new Set<number>();
 /** Cities in disorder on the last day, for the notices when it starts and ends. */
 const unrest = new Set<number>();
 
@@ -781,6 +783,11 @@ function cityDays() {
     }
     const size = c.size;
     const done = cityDay(c, yields[i]);
+    // A full box at the size limit: said once (STORY-054)
+    if (c.size >= sizeLimit(c) && c.food >= granary(c.size) && !atLimit.has(c.id)) {
+      atLimit.add(c.id);
+      discoveryCard.notice(`${c.name} tarvitsee vesijohdon kasvaakseen yli koon ${SIZE_LIMIT}`);
+    }
     // Trade comes in as gold, and the buildings' upkeep goes out (STORY-038)
     const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i], rates().tax, rates().lux));
     play!.gold = paid.treasury;
@@ -926,6 +933,8 @@ const BUILD_PURPOSE: Record<Build, string> = {
   phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
   library: 'Tieteeseen 50 % lisää',
   temple: 'Rauhoittaa yhden tyytymättömän asukkaan',
+  aqueduct: 'Kaupunki voi kasvaa yli koon 10',
+  colosseum: 'Rauhoittaa kolme tyytymätöntä asukasta',
   colossus: 'Ihme: +1 kauppa jokaiseen kaupungin ruutuun, jossa on kauppaa',
   gardens: 'Ihme: yksi onnellinen asukas joka kaupunkiin',
   greatwall: 'Ihme: muurin suoja kaikkiin kaupunkeihin',
@@ -958,7 +967,8 @@ function cityView(c: City, y: CityYield): CityView {
     foodText: `Ruokaa ${y.food} · asukkaat syövät ${2 * c.size}${settlers ? ` · uudisasukkaat ${settlers}` : ''} · varastossa ${c.food}/${granary(c.size)}`,
     focus: c.focus,
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
-    hint: y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
+    hint: c.size >= sizeLimit(c) ? `Koko ${SIZE_LIMIT} on raja: kaupunki kasvaa vasta vesijohdon kanssa${play!.research.known.has('construction') ? '' : ' (Rakentaminen-tutkimus)'}.`
+      : y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
     advisor: play!.cityAdvisor === 'none' ? null : `Neuvonantaja ${CITY_ADVISORS[play!.cityAdvisor].name} hoitaa painotuksen ja rakentamisen.`,
     gold: play?.gold ?? 0,
     income: cityGold(c, y, rates().tax, rates().lux) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
@@ -969,7 +979,7 @@ function cityView(c: City, y: CityYield): CityView {
     name: c.name,
     size: c.size,
     growth: c.food / granary(c.size),
-    growText: y.surplus < 0 ? 'nälkää' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
+    growText: y.surplus < 0 ? 'nälkää' : c.size >= sizeLimit(c) ? 'vesijohto puuttuu' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
     yields: [y.surplus, y.shield, y.trade],
     builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind))).map(kind => {
       const b = BUILDS[kind];

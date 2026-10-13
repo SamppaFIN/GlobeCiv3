@@ -4,14 +4,15 @@
  * puolesta"). At the city area level one of three runs the cities and the units each day, and
  * with none (Oma ohjaus) the player does. Own design; it uses the game's own rules.
  *
- *   Kasvattaja   food focus; a temple before a citizen more would bring disorder, then a
- *                granary from size 2; settlers the cities built improve the land
+ *   Kasvattaja   food focus; a temple before a citizen more would bring disorder (then an
+ *                arena), an aqueduct a size before the limit, then a granary from size 2;
+ *                settlers the cities built improve the land
  *   Kartoittaja  balanced focus; the scouts explore, toward the home province's least mapped
  *                area when there is no flag
  *   Vartija      production focus; a soldier in every city, two and walls while bandits are
  *                on their way; it answers the bandit card by building the soldier
  */
-import type { Build, City, Focus } from './cities';
+import { SIZE_LIMIT, type Build, type City, type Focus } from './cities';
 import type { Advance } from './science';
 import type { StateLine } from './units';
 
@@ -20,7 +21,7 @@ export const CITY_ADVISOR_LIST: readonly CityAdvisor[] = ['none', 'growth', 'exp
 
 export const CITY_ADVISORS: Record<CityAdvisor, { name: string; does: string }> = {
   none: { name: 'Oma ohjaus', does: 'Hoidat kaupungit ja yksiköt itse.' },
-  growth: { name: 'Kasvattaja', does: 'Kaupungit painottavat ruokaa ja rakentavat temppelin ennen levottomuutta ja viljavaraston. Kaupunkien uudisasukkaat kehittävät maata.' },
+  growth: { name: 'Kasvattaja', does: 'Kaupungit painottavat ruokaa ja rakentavat temppelin tai areenan ennen levottomuutta, vesijohdon ennen kokorajaa ja viljavaraston. Kaupunkien uudisasukkaat kehittävät maata.' },
   explore: { name: 'Kartoittaja', does: 'Tiedustelijat tutkivat ja suuntaavat kotiläänin vähiten kartoitetulle alueelle. Kaupungit tasapainottavat.' },
   defend: { name: 'Vartija', does: 'Kaupungit painottavat tuotantoa, ja jokaisessa on sotilas. Rosvojen uhatessa kaupunki saa toisen sotilaan ja muurin.' },
 };
@@ -45,7 +46,11 @@ export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { fo
     case 'none':
       return null;
     case 'growth':
-      return { focus: 'food', build: n.unrestNear && can('temple') ? 'temple' : city.size >= 2 && can('granary') ? 'granary' : null };
+      return {
+        focus: 'food',
+        build: n.unrestNear && can('temple') ? 'temple' : n.unrestNear && can('colosseum') ? 'colosseum'
+          : city.size >= SIZE_LIMIT - 1 && can('aqueduct') ? 'aqueduct' : city.size >= 2 && can('granary') ? 'granary' : null,
+      };
     case 'explore':
       return { focus: 'balanced', build: null };
     case 'defend':
@@ -131,9 +136,9 @@ export const STATE_ADVISORS: Record<StateAdvisor, { name: string; does: string }
 
 /** Each advisor's state line, tax rate and order of advances. */
 export const STATE_PLANS: Record<Exclude<StateAdvisor, 'none'>, { line: StateLine; tax: number; order: Advance[] }> = {
-  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'monarchy', 'bronze', 'currency', 'masonry', 'writing'] },
-  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'monarchy', 'pottery', 'masonry'] },
-  war: { line: 'defend', tax: 70, order: ['bronze', 'masonry', 'ceremonial', 'alphabet', 'law', 'monarchy', 'pottery', 'currency', 'writing'] },
+  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'monarchy', 'bronze', 'currency', 'masonry', 'construction', 'writing'] },
+  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'monarchy', 'pottery', 'masonry', 'construction'] },
+  war: { line: 'defend', tax: 70, order: ['bronze', 'masonry', 'ceremonial', 'alphabet', 'law', 'monarchy', 'pottery', 'currency', 'construction', 'writing'] },
 };
 
 /** The next advance: the first of the order that can be researched, else any that can. */

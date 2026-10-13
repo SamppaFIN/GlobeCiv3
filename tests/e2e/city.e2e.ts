@@ -62,7 +62,7 @@ async function foundCapital(page: Page): Promise<number> {
 const signed = (n: number) => (n < 0 ? `−${-n}` : `+${n}`);
 
 /** The city card's builds (STORY-037): a choice of both, each with its cost, purpose and time. */
-const BUILD_NAMES = { warrior: 'Soturi', settler: 'Uudisasukas', coinage: 'Kultaa' };
+const BUILD_NAMES = { warrior: 'Soturi', settler: 'Uudisasukas', coinage: 'Kultaa', aqueduct: 'Vesijohto' };
 const buildOption = (card: ReturnType<Page['getByRole']>, build: keyof typeof BUILD_NAMES) =>
   card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio', { name: new RegExp(`^${BUILD_NAMES[build]}`) });
 
@@ -85,8 +85,9 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   await expect(card.locator('.city-grow')).toHaveText(/^(kasvaa \d+ pv|ei kasva|nälkää)$/);
   // The builds to choose from; a Soturi first (a slow runner may have finished it before
   // the pause, and the city gone on to gold)
-  // Three units (Falangi: STORY-043), five buildings (STORY-038, 040, 044), three wonders (STORY-045) and Kultaa (STORY-039)
-  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(12);
+  // Three units (Falangi: STORY-043), seven buildings (STORY-038, 040, 044, 054), three wonders (STORY-045) and Kultaa (STORY-039)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(14);
+  await expect(buildOption(card, 'aqueduct')).toContainText('vaatii: Rakentaminen');
   await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');
   await expect(buildOption(card, 'settler')).toContainText('40 tuotantoa ja 1 asukas · Perustaa uuden kaupungin tai kehittää maata');
   await expect(buildOption(card, 'warrior')).toContainText(/(valmis \d+ pv|valmis huomenna|ei tuotantoa)/);
@@ -141,6 +142,12 @@ test('the settler founds the capital on the tapped tile; the city card shows its
     await expect(card).toBeVisible();
   }
   await page.screenshot({ path: testInfo.outputPath('city-later.png') });
+  // At size 10 the card says the city waits for an aqueduct (STORY-054; the box at the limit is a unit test).
+  // Paused, so that it does not starve smaller
+  const pause = page.getByRole('button', { name: 'Tauko' });
+  if (await pause.isVisible()) await pause.click();
+  await page.evaluate(() => (window as any).globeDebug.setCitySize(0, 10));
+  await expect(card.locator('.city-hint')).toContainText('Koko 10 on raja');
   expect(errors).toEqual([]);
 });
 

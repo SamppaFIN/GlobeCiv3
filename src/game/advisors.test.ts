@@ -82,3 +82,11 @@ describe('state advisors', () => {
     expect(luxuryStep(0, false, 30, [0, 10, 20, 30])).toBe(0);
   });
 });
+
+describe('Kasvattaja and the size limit (STORY-054)', () => {
+  it('an arena once the temple is there, and an aqueduct a size before the limit', () => {
+    expect(cityAdvice('growth', city(6), needs({ available: ['colosseum'], unrestNear: true }))!.build).toBe('colosseum');
+    expect(cityAdvice('growth', city(9), needs({ available: ['aqueduct', 'granary'] }))!.build).toBe('aqueduct');
+    expect(cityAdvice('growth', city(8), needs({ available: ['aqueduct', 'granary'] }))!.build).toBe('granary');
+  });
+});
