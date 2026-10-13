@@ -51,16 +51,19 @@ describe('cities', () => {
     expect(workedTiles(c, yieldOf)).toEqual([START, OCEAN_FISH]);
     c.focus = 'production';
     expect(workedTiles(c, yieldOf)).toEqual([START, FOREST]);
-    expect(cityYield(c, yieldOf)).toEqual({ food: 4, shield: 2, trade: 1, surplus: 2 });
+    // Despotism (STORY-047): the irrigated centre's 3 food is 2
+    expect(cityYield(c, yieldOf)).toEqual({ food: 3, shield: 2, trade: 1, surplus: 1 });
   });
 
   it('yield the source table values of the worked tiles, less 2 food per citizen', () => {
     // The grassland centre is irrigated and has a road (STORY-040): 3 food and 1 trade; the
-    // ocean with fish 3 food and 2 trade
-    expect(cityYield(city(1), yieldOf)).toEqual({ food: 6, shield: 0, trade: 3, surplus: 4 });
-    expect(cityYield(city(2), yieldOf)).toEqual({ food: 7, shield: 2, trade: 3, surplus: 3 });
+    // ocean with fish 3 food and 2 trade, as they are under Monarchy (STORY-047)
+    expect(cityYield(city(1), yieldOf, undefined, undefined, 'monarchy')).toEqual({ food: 6, shield: 0, trade: 3, surplus: 4 });
+    expect(cityYield(city(2), yieldOf, undefined, undefined, 'monarchy')).toEqual({ food: 7, shield: 2, trade: 3, surplus: 3 });
     // Three desert tiles more: shields only, and the citizens go hungry
-    expect(cityYield(city(5), yieldOf)).toEqual({ food: 7, shield: 5, trade: 3, surplus: -3 });
+    expect(cityYield(city(5), yieldOf, undefined, undefined, 'monarchy')).toEqual({ food: 7, shield: 5, trade: 3, surplus: -3 });
+    // Under Despotism, the starting government, a tile's 3 food is 2 (Output_Penalty_Tile)
+    expect(cityYield(city(1), yieldOf)).toEqual({ food: 4, shield: 0, trade: 3, surplus: 2 });
     expect(workedYield({ terrain: 'hills', resource: null }, true).food).toBe(2);
     expect(workedYield({ terrain: 'forest', resource: null }, true).food).toBe(1);
   });
@@ -68,7 +71,7 @@ describe('cities', () => {
   it('grow when the food box of 20 + 10 per extra citizen is full, and shrink when starving', () => {
     expect([granary(1), granary(2), granary(5)]).toEqual([20, 30, 60]);
     const c = city(1);
-    const y = cityYield(c, yieldOf);
+    const y = cityYield(c, yieldOf, undefined, undefined, 'monarchy');
     expect(daysToGrow(c, y)).toBe(5);
     for (let d = 0; d < 4; d++) cityDay(c, y);
     expect([c.size, c.food]).toEqual([1, 16]);
@@ -80,15 +83,17 @@ describe('cities', () => {
   });
 
   it('pay upkeep under Despotism: three units free, a shield for each beyond, a food for each settler', () => {
-    const c = city(2); // 7 food, 2 shields, 3 trade, surplus 3
-    expect(cityYield(c, yieldOf, undefined, { units: 3, settlers: 0 })).toEqual({ food: 7, shield: 2, trade: 3, surplus: 3 });
-    expect(cityYield(c, yieldOf, undefined, { units: 5, settlers: 2 })).toEqual({ food: 7, shield: 0, trade: 3, surplus: 1 });
+    const c = city(2); // 5 food (3 on the centre and the fishing ocean is 2 each), 2 shields, 3 trade, surplus 1
+    expect(cityYield(c, yieldOf, undefined, { units: 3, settlers: 0 })).toEqual({ food: 5, shield: 2, trade: 3, surplus: 1 });
+    expect(cityYield(c, yieldOf, undefined, { units: 5, settlers: 2 })).toEqual({ food: 5, shield: 0, trade: 3, surplus: -1 });
+    // Monarchy has no free units (STORY-047)
+    expect(cityYield(c, yieldOf, undefined, { units: 3, settlers: 0 }, 'monarchy').shield).toBe(-1);
     const six = { units: 6, settlers: 0 };
     expect(shortfall(c, cityYield(c, yieldOf, undefined, six), six)).toBe('shield');
     // Out of food with settlers to feed: a settler leaves before the city starves
     const settlers = { units: 4, settlers: 4 };
     const hungry = cityYield(c, yieldOf, undefined, settlers);
-    expect(hungry.surplus).toBe(-1);
+    expect(hungry.surplus).toBe(-3);
     expect(shortfall(c, hungry, settlers)).toBe('food');
     c.food = 5;
     expect(shortfall(c, hungry, settlers)).toBeNull();
@@ -188,7 +193,7 @@ describe('cities', () => {
   });
 
   it('four citizens are content under Despotism; a temple and each soldier calm one more, and unhappy ones left mean disorder (Freeciv civ1)', () => {
-    expect([1, 10, 11, 20, 21].map(baseContent)).toEqual([4, 4, 3, 3, 2]);
+    expect([1, 10, 11, 20, 21].map(n => baseContent(n))).toEqual([4, 4, 3, 3, 2]);
     const c = city(6);
     expect(cityMood(c, 0, 1)).toEqual({ happy: 0, content: 4, unhappy: 2, calmed: 0, disorder: true });
     expect(cityMood(c, 1, 1)).toEqual({ happy: 0, content: 5, unhappy: 1, calmed: 1, disorder: true });
@@ -207,8 +212,10 @@ describe('cities', () => {
     const c = city(1);
     const before = cityYield(c, yieldOf);
     c.buildings.push('colossus');
-    // The centre (road: 1 trade) and the fishing ocean (2 trade) each get one more
-    expect(cityYield(c, yieldOf).trade).toBe(before.trade + 2);
+    // The centre (road: 1 trade) and the fishing ocean (2 trade) each get one more; under
+    // Despotism the ocean's 3 is then 2 (common/city.c city_tile_output)
+    expect(cityYield(c, yieldOf).trade).toBe(before.trade + 1);
+    expect(cityYield(c, yieldOf, undefined, undefined, 'monarchy').trade).toBe(before.trade + 2);
     expect([BUILDS.colossus.cost, BUILDS.gardens.cost, BUILDS.greatwall.cost]).toEqual([200, 300, 300]);
   });
 

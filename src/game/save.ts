@@ -16,6 +16,7 @@ import type { Bandit } from './raids';
 import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './units';
 import type { Progress } from './progress';
 import { ADVANCE_LIST, LUX_RATES, TAX_RATES, type Advance } from './science';
+import { GOVERNMENT_LIST, type Government } from './government';
 
 export const SAVE_VERSION = 1;
 
@@ -74,6 +75,9 @@ export interface SaveData {
   goal: number;
   /** The luxury rate (STORY-046); saves from before have none. */
   lux: number;
+  /** The government, and the day anarchy ends, or −1 (STORY-047); saves from before are under Despotism. */
+  gov: Government;
+  anarchyUntil: number;
 }
 
 /** Ranges the save is checked against. */
@@ -230,6 +234,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       tax: s.tax === undefined ? 50 : oneOf(s.tax, TAX_RATES, 'tax'),
       goal: s.goal === undefined ? 0 : int(s.goal, 'goal', 0, 1000),
       lux: s.lux === undefined ? 0 : oneOf(s.lux, LUX_RATES, 'lux'),
+      gov: s.gov === undefined ? 'despotism' : oneOf(s.gov, GOVERNMENT_LIST, 'gov'),
+      anarchyUntil: s.anarchyUntil === undefined ? -1 : int(s.anarchyUntil, 'anarchyUntil', -1),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;

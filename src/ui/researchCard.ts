@@ -19,6 +19,10 @@ export interface ResearchView {
   options: { advance: Advance; name: string; cost: string; opens: string; selected: boolean }[];
   tax: number;
   lux: number;
+  /** The government and its effect (STORY-047). */
+  government: string;
+  /** A revolution to Monarchy can start. */
+  revolution: boolean;
   known: string;
 }
 
@@ -29,7 +33,7 @@ export interface ResearchCard {
   readonly visible: boolean;
 }
 
-export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Advance): void; setTax(tax: number): void; setLux(lux: number): void }): ResearchCard {
+export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Advance): void; setTax(tax: number): void; setLux(lux: number): void; revolution(): void }): ResearchCard {
   const el = document.createElement('section');
   el.className = 'city-card research-card';
   el.setAttribute('role', 'dialog');
@@ -41,6 +45,10 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
       <button class="btn btn-secondary hud-icon city-close" type="button" aria-label="Sulje">${CLOSE}</button>
     </div>
     <span class="city-food research-rates"></span>
+    <div class="city-growth research-gov-row">
+      <span class="research-gov"></span>
+      <button class="btn btn-secondary research-revolution" type="button">Vallankumous: Monarkiaan</button>
+    </div>
     <div class="city-growth">
       <span class="research-current"></span>
     </div>
@@ -67,6 +75,7 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
   q('.city-close').addEventListener('click', on.close);
   el.querySelectorAll<HTMLInputElement>('input[name="research-tax"]').forEach(i => i.addEventListener('change', () => on.setTax(Number(i.value))));
   el.querySelectorAll<HTMLInputElement>('input[name="research-lux"]').forEach(i => i.addEventListener('change', () => on.setLux(Number(i.value))));
+  q('.research-revolution').addEventListener('click', on.revolution);
   const options = q('.city-builds');
   let last = '';
   const update = (v: ResearchView) => {
@@ -79,6 +88,8 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
     q('.research-fill').style.width = `${pct}%`;
     q('.city-bar').setAttribute('aria-valuenow', String(pct));
     q('.research-known').textContent = v.known;
+    q('.research-gov').textContent = v.government;
+    q<HTMLButtonElement>('.research-revolution').hidden = !v.revolution;
     q('.research-hint').hidden = !v.hint;
     q('.research-hint').textContent = v.hint ?? '';
     el.querySelectorAll<HTMLInputElement>('input[name="research-tax"]').forEach(i => { i.checked = Number(i.value) === v.tax; });

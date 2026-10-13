@@ -27,6 +27,7 @@ import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
+import { GOVERNMENTS, revolutionDays, type Government } from '../game/government';
 import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
@@ -44,7 +45,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { applyFind, discoveryAt, discoverySentence, FINDS, type Discovery, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { cityLuxury, cityMood, isWonder, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityLuxury, cityMood, isWonder, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -446,7 +447,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax, lux: play.lux, goal: play.goal,
+    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, goal: play.goal,
   };
 }
 
@@ -534,6 +535,9 @@ interface Play {
   tax: number;
   /** The share of trade that becomes luxury (STORY-046). */
   lux: number;
+  /** The government, and the day anarchy ends, or −1 (STORY-047). */
+  gov: Government;
+  anarchyUntil: number;
   researchOpen: boolean;
   /** The current goal (STORY-041). */
   goal: number;
@@ -614,7 +618,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -622,7 +626,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     discoveries: saved.discoveries, bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
     improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, goal: saved.goal,
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, goal: saved.goal,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -662,15 +666,17 @@ function cityYields(): CityYield[] {
   if (!play) return [];
   const taken = new Set<number>();
   return play.cities.map(c => {
-    const y = cityYield(c, yieldOf, taken, supportOf(c));
+    const y = cityYield(c, yieldOf, taken, supportOf(c), play!.gov);
     for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
     return withMood(y, moodOf(c, y));
   });
 }
 
-/** A city's mood: its soldiers calm citizens under Despotism (STORY-044); the gardens make one happy (STORY-045). */
+/** A city's mood: its soldiers calm citizens (STORY-044); the gardens make one happy (STORY-045). */
 const moodOf = (c: City, y: CityYield) =>
-  cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, hasWonder('gardens'), cityLuxury(c, y, play?.tax ?? 50, play?.lux ?? 0));
+  cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, hasWonder('gardens'), cityLuxury(c, y, rates().tax, rates().lux), play?.gov);
+/** The tax and luxury rates in force: in anarchy all trade is luxury (STORY-047). */
+const rates = () => (!play ? { tax: 50, lux: 0 } : play.gov === 'anarchy' ? { tax: 0, lux: 100 } : { tax: play.tax, lux: play.lux });
 /** A wonder is in one of the cities (STORY-045). */
 const hasWonder = (w: Build) => play?.cities.some(c => c.buildings.includes(w as never)) ?? false;
 /** A city's walls, or the Great Wall's in every city. */
@@ -715,6 +721,13 @@ function foundAt(tile: number) {
 /** A day of every city: units it cannot pay for leave first (newest first), then it grows and builds. */
 function cityDays() {
   if (!play) return;
+  // The day anarchy ends, Monarchy begins (STORY-047)
+  if (play.gov === 'anarchy' && clock.day >= play.anarchyUntil) {
+    play.gov = 'monarchy';
+    play.anarchyUntil = -1;
+    discoveryCard.notice('Anarkia päättyi: Monarkia on hallitusmuoto');
+    if (play.cities[0]) moment('unlock', play.cities[0].tile);
+  }
   let yields = cityYields();
   // Disorder starts or ends
   play.cities.forEach((c, i) => {
@@ -735,7 +748,7 @@ function cityDays() {
     const size = c.size;
     const done = cityDay(c, yields[i]);
     // Trade comes in as gold, and the buildings' upkeep goes out (STORY-038)
-    const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i], play!.tax, play!.lux));
+    const paid = payUpkeep(c, play!.gold + cityGold(c, yields[i], rates().tax, rates().lux));
     play!.gold = paid.treasury;
     if (paid.sold.length) discoveryCard.notice(`Kulta loppui: ${c.name} myi ${paid.sold.map(b => BUILDS[b].name.toLowerCase()).join(' ja ')}`);
     if (c.size > size) {
@@ -748,7 +761,7 @@ function cityDays() {
     discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
   });
   // The cities' science; an advance learned opens what needs it (STORY-040)
-  const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], play!.tax, play!.lux), 0));
+  const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
   if (learned) {
     const opens = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
     discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
@@ -913,7 +926,7 @@ function cityView(c: City, y: CityYield): CityView {
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
     hint: y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
     gold: play?.gold ?? 0,
-    income: cityGold(c, y, play?.tax ?? 100, play?.lux ?? 0) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
+    income: cityGold(c, y, rates().tax, rates().lux) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
     research: researchLine(),
     buy: price ? { name: BUILDS[c.build].name, price, can: price <= (play?.gold ?? 0) } : null,
     buildings: c.buildings.map(b => BUILDS[b].name),
@@ -960,10 +973,9 @@ function updateCityCard() {
   }
   tileYields.update(workedByCity()[id].map(t => {
     const at = toScreen(tileCenter(t));
-    const y = yieldOf(t, t === c.tile);
-    // Kolossi adds a trade where there is trade
-    const trade = y.trade + (c.buildings.includes('colossus') && y.trade > 0 ? 1 : 0);
-    return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade, centre: t === c.tile };
+    // Kolossi adds a trade where there is trade, and the government may take one (STORY-047)
+    const y = tileOutput(c, yieldOf(t, t === c.tile), play!.gov);
+    return { x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: t === c.tile };
   }));
 }
 
@@ -1047,9 +1059,9 @@ function scienceRates() {
   if (!play) return { science: 0, luxury: 0, gold: 0 };
   const yields = cityYields();
   return {
-    science: play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], play!.tax, play!.lux), 0),
-    luxury: play.cities.reduce((sum, c, i) => sum + cityLuxury(c, yields[i], play!.tax, play!.lux), 0),
-    gold: play.cities.reduce((sum, c, i) => sum + cityGold(c, yields[i], play!.tax, play!.lux) - c.buildings.reduce((u, b) => u + UPKEEP[b], 0), 0),
+    science: play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0),
+    luxury: play.cities.reduce((sum, c, i) => sum + cityLuxury(c, yields[i], rates().tax, rates().lux), 0),
+    gold: play.cities.reduce((sum, c, i) => sum + cityGold(c, yields[i], rates().tax, rates().lux) - c.buildings.reduce((u, b) => u + UPKEEP[b], 0), 0),
   };
 }
 
@@ -1063,7 +1075,21 @@ const researchCard = createResearchCard(hud_root, {
   choose: (advance: Advance) => { if (play && play.research.available().includes(advance)) play.research.target = advance; },
   setTax: (tax: number) => { if (play) play.tax = tax; },
   setLux: (lux: number) => { if (play) play.lux = lux; },
+  revolution: () => {
+    if (!play || !game || play.gov !== 'despotism' || !play.research.known.has('monarchy')) return;
+    play.gov = 'anarchy';
+    play.anarchyUntil = clock.day + revolutionDays(game.seed, clock.day);
+    discoveryCard.notice(`Vallankumous: anarkiaa ${play.anarchyUntil - clock.day} pv, sitten Monarkia`);
+  },
 });
+
+/** The government and what it means (STORY-047). */
+function governmentLine(): string {
+  const p = play!;
+  if (p.gov === 'anarchy') return `Hallitus: Anarkia vielä ${Math.max(1, p.anarchyUntil - clock.day)} pv · ei veroja eikä tiedettä, kaikki kauppa ylellisyyteen`;
+  if (p.gov === 'monarchy') return 'Hallitus: Monarkia · ruudut tuottavat täysin, ei ilmaisia yksiköitä, sotilaat rauhoittavat enintään kolme';
+  return `Hallitus: ${GOVERNMENTS.despotism.name} · ruudun yli kahden tuotosta menee yksi hukkaan${p.research.known.has('monarchy') ? '' : '. Monarkia-tutkimus avaa paremman.'}`;
+}
 
 function researchView(): ResearchView {
   const r = play!.research;
@@ -1073,6 +1099,7 @@ function researchView(): ResearchView {
   const opens = (a: Advance) => [
     ...(Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
     ...(Object.keys(ADVANCES) as Advance[]).filter(n => ADVANCES[n].needs.includes(a)).map(n => `tutkimuksen ${ADVANCES[n].name}`),
+    ...(a === 'monarchy' ? ['hallitusmuodon Monarkia'] : []),
   ];
   return {
     rates: `Tiedettä +${rates.science}/pv · kultaa ${rates.gold < 0 ? '−' : '+'}${Math.abs(rates.gold)}/pv${rates.luxury ? ` · ylellisyyttä +${rates.luxury}` : ''}`,
@@ -1084,6 +1111,8 @@ function researchView(): ResearchView {
     options: r.available().map(a => ({ advance: a, name: ADVANCES[a].name, cost: `${r.cost} tiedettä`, opens: `Avaa: ${opens(a).join(', ')}`, selected: a === r.target })),
     tax: play!.tax,
     lux: play!.lux,
+    government: governmentLine(),
+    revolution: play!.gov === 'despotism' && play!.research.known.has('monarchy'),
     known: r.known.size ? `Tunnetut: ${[...r.known].map(a => ADVANCES[a].name).join(', ')}` : 'Ei vielä keksintöjä',
   };
 }
@@ -1772,7 +1801,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, goal: play?.goal ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, goal: play?.goal ?? null,
     };
   },
 };

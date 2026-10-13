@@ -19,6 +19,7 @@
  * One turn is one game day. Own choices: citizens work the tiles with the most
  * 2 × food + shields + trade, and a starving city shrinks with an empty food box.
  */
+import { GOVERNMENTS, governed, type Government } from './government';
 import { improvementYield } from './improvements';
 import { splitTrade } from './science';
 import { tilesInRings } from './pathfinding';
@@ -36,9 +37,6 @@ export function workedYield(info: TileInfo, centre: boolean): Yield {
   const y = tileYield(info);
   return centre ? { ...y, food: y.food + (CENTRE_IRRIGATION[info.terrain] ?? 0), trade: y.trade + improvementYield('road', info.terrain).trade } : y;
 }
-
-/** Units a city supports free of shield upkeep. */
-export const FREE_UNITS = 3;
 
 /** Units a city built and still supports, and how many of them are settlers. */
 export interface Support { units: number; settlers: number }
@@ -173,8 +171,10 @@ export interface CityYield extends Yield {
  * common/city.c player_base_citizen_happiness, commit fc8f694f): one fewer from the 11th
  * city on, and one fewer again each 10 cities more.
  */
-export function baseContent(cities: number): number {
-  const fewer = cities > 10 ? 1 + Math.floor((cities - 11) / 10) : 0;
+export function baseContent(cities: number, gov: Government = 'despotism'): number {
+  // The base is per government (STORY-047): 9, 10 or 11 cities
+  const base = GOVERNMENTS[gov].empireBase;
+  const fewer = cities > base ? 1 + Math.floor((cities - base - 1) / 10) : 0;
   return Math.max(0, 4 - fewer);
 }
 
@@ -194,8 +194,8 @@ export interface Mood {
  * luxury yet no citizen is happy, so any unhappy citizen left means civil disorder
  * (common/city.c city_unhappy: happy < unhappy).
  */
-export function cityMood(city: City, soldiers: number, cities: number, gardens = false, luxury = 0): Mood {
-  let content = Math.min(city.size, baseContent(cities));
+export function cityMood(city: City, soldiers: number, cities: number, gardens = false, luxury = 0, gov: Government = 'despotism'): Mood {
+  let content = Math.min(city.size, baseContent(cities, gov));
   let unhappy = city.size - content;
   let happy = 0;
   // Luxury first (STORY-046, common/city.c citizen_luxury_happy, happy_cost 2): content to
@@ -205,7 +205,7 @@ export function cityMood(city: City, soldiers: number, cities: number, gardens =
   for (; lux >= 4 && unhappy > 0; lux -= 4) { unhappy--; happy++; }
   if (lux >= 2 && unhappy > 0) { unhappy--; content++; }
   // Then the temple and the soldiers, then the gardens make a content citizen happy
-  const calmed = Math.min(unhappy, (city.buildings.includes('temple') ? 1 : 0) + soldiers);
+  const calmed = Math.min(unhappy, (city.buildings.includes('temple') ? 1 : 0) + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
   unhappy -= calmed;
   content += calmed;
   if (gardens && content > 0) { content--; happy++; }
@@ -224,19 +224,24 @@ export function withMood(y: CityYield, mood: Mood): CityYield {
   return mood.disorder ? { ...y, surplus: Math.min(y.surplus, 0), shield: Math.min(y.shield, 0), disorder: true } : y;
 }
 
-/** Food, shields left after unit upkeep, trade, and the food surplus. */
-export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<number>, support: Support = NO_SUPPORT): CityYield {
-  const y = { food: 0, shield: 0, trade: 0 };
+/** What a worked tile gives the city: Kolossi adds a trade where there is trade, then the government's penalty. */
+export function tileOutput(city: City, t: Yield, gov: Government = 'despotism'): Yield {
   const colossus = city.buildings.includes('colossus');
+  return governed({ ...t, trade: t.trade + (colossus && t.trade > 0 ? 1 : 0) }, gov);
+}
+
+/** Food, shields left after unit upkeep, trade, and the food surplus. */
+export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<number>, support: Support = NO_SUPPORT, gov: Government = 'despotism'): CityYield {
+  const y = { food: 0, shield: 0, trade: 0 };
   for (const id of workedTiles(city, yieldOf, taken)) {
-    const t = yieldOf(id, id === city.tile);
+    const t = tileOutput(city, yieldOf(id, id === city.tile), gov);
     y.food += t.food;
     y.shield += t.shield;
-    y.trade += t.trade + (colossus && t.trade > 0 ? 1 : 0);
+    y.trade += t.trade;
   }
   return {
     food: y.food,
-    shield: y.shield - Math.max(0, support.units - FREE_UNITS),
+    shield: y.shield - Math.max(0, support.units - GOVERNMENTS[gov].freeUnits),
     trade: y.trade,
     surplus: y.food - FOOD_PER_CITIZEN * city.size - support.settlers,
   };
