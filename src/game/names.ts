@@ -76,6 +76,12 @@ export function provinceName(home: boolean, direction: number, landscape: keyof 
   return { name: `${first}lääni`, illative: `${first}lääniin` };
 }
 
+/** Name of a state at the planet level (STORY-016): "Kotivaltio", else by direction ("Itävaltio"). */
+export function stateName(home: boolean, direction: number): RegionName {
+  if (home) return { name: 'Kotivaltio', illative: 'Kotivaltioon' };
+  return { name: `${PREFIX[direction]}valtio`, illative: `${PREFIX[direction]}valtioon` };
+}
+
 /** Names for sibling regions: if two would be equal, the later ones take the direction instead. */
 export function distinctNames(names: RegionName[], directions: number[], kind: 'area' | 'province'): RegionName[] {
   const seen = new Set<string>();

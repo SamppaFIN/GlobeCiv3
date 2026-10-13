@@ -32,6 +32,8 @@ export interface GameHudState {
   mapped: number;
   meterName: string;
   unlockAt: number | null;
+  /** The meter's own value text and label, when it counts something other than mapping (STORY-016). */
+  meterText?: { value: string; label: string };
   /** View level: the unit panel shows at the city-area level (3) only. */
   level: number;
   /** 'waiting': a settler without the site actions (behind the one choosing a site, or improving land). */
@@ -150,8 +152,8 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       tick.hidden = s.unlockAt === null;
       if (s.unlockAt !== null) tick.style.left = `${s.unlockAt * 100}%`;
       q<HTMLElement>('.hud-meter').setAttribute('aria-valuenow', String(pct));
-      q<HTMLElement>('.hud-meter-value').textContent = s.unlockAt === null ? `${pct} %` : `${pct} / ${Math.round(s.unlockAt * 100)} %`;
-      q<HTMLElement>('.hud-meter').setAttribute('aria-label', `${{ Lääni: 'Läänistä', Valtio: 'Valtiosta' }[s.meterName] ?? s.meterName} kartoitettu`);
+      q<HTMLElement>('.hud-meter-value').textContent = s.meterText?.value ?? (s.unlockAt === null ? `${pct} %` : `${pct} / ${Math.round(s.unlockAt * 100)} %`);
+      q<HTMLElement>('.hud-meter').setAttribute('aria-label', s.meterText?.label ?? `${{ Lääni: 'Läänistä', Valtio: 'Valtiosta' }[s.meterName] ?? s.meterName} kartoitettu`);
       q<HTMLElement>('.hud-meter-name').textContent = s.meterName;
       const goal = q<HTMLButtonElement>('.hud-goal');
       goal.hidden = !s.goal;

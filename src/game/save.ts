@@ -101,7 +101,7 @@ const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;
 const IMPROVEMENTS: readonly ImprovementKind[] = ['irrigation', 'mine', 'road'];
-const METERS: readonly Progress['meter'][] = ['province', 'state', 'done'];
+const METERS: readonly Progress['meter'][] = ['province', 'state', 'conquest', 'done'];
 /** Bounds on list lengths and numbers, far above anything a game reaches. */
 const MAX_LIST = 100_000;
 const MAX_INT = 1e9;
@@ -178,7 +178,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       mapped: tiles(s.mapped, limits.tiles),
       units,
       selected: int(s.selected, 'selected', 0, 10_000),
-      progress: { openLevel: oneOf(p.openLevel, [1, 2, 3] as const, 'open level'), meter: oneOf(p.meter, METERS, 'meter') },
+      // Before STORY-016 the state level ended the meter: it goes on with the provinces held
+      progress: { openLevel: oneOf(p.openLevel, [0, 1, 2, 3] as const, 'open level'), meter: p.openLevel === 1 && p.meter === 'done' ? 'conquest' : oneOf(p.meter, METERS, 'meter') },
       targetProvince: int(s.targetProvince, 'target province', -1, limits.cityAreas),
       // Finds waiting in a save from before STORY-052 open as ruins on load; their old choices are not read
       discoveries: list(s.discoveries, 'discoveries', v => {

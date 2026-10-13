@@ -117,9 +117,9 @@ test('the state level opens next, with the state line and a target province', as
   await arrive(page, 1);
   await expect(page.locator('.chip:not([hidden])')).toHaveCount(7);
   await expect(page.locator('.chip-name', { hasText: 'Kotilääni' })).toBeVisible();
-  // Nothing more opens by mapping (the planet waits for a conquest): the meter shows the share only
-  await expect(page.locator('.hud-meter-value')).toHaveText(/^\d+ %$/);
-  await expect(page.locator('.hud-meter-tick')).toBeHidden();
+  // Nothing more opens by mapping: the meter counts the provinces held, and all seven open the planet (STORY-016)
+  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 7 hallussa');
+  await expect(page.locator('.hud-meter-tick')).toBeVisible();
   await page.locator('.state-panel label', { hasText: 'Puolustus' }).click();
   expect((await state(page)).stateLine).toBe('defend');
   const province = page.locator('.chip:not([hidden])').filter({ hasNotText: 'Kotilääni' }).first();
