@@ -31,6 +31,7 @@ import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
+import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { advanceGoals, GOALS } from '../game/goals';
@@ -466,7 +467,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, goal: play.goal,
+    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, goal: play.goal,
   };
 }
 
@@ -566,6 +567,10 @@ interface Play {
   stateAdvisor: StateAdvisor;
   stateLog: string[];
   calmDays: number;
+  /** The planet-level advisor, what it did lately, and the target state, or −1 (STORY-057). */
+  planetAdvisor: PlanetAdvisor;
+  planetLog: string[];
+  targetState: number;
   researchOpen: boolean;
   /** The current goal (STORY-041). */
   goal: number;
@@ -653,7 +658,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -661,7 +666,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
     improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, goal: saved.goal,
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, goal: saved.goal,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -1036,10 +1041,10 @@ function updateCityCard() {
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!)));
 
-type AdvisorLevel = 'city' | 'province' | 'state';
+type AdvisorLevel = 'city' | 'province' | 'state' | 'planet';
 
 function advise(text: string, level: AdvisorLevel = 'city') {
-  const log = level === 'city' ? 'advisorLog' : level === 'province' ? 'provinceLog' : 'stateLog';
+  const log = level === 'city' ? 'advisorLog' : level === 'province' ? 'provinceLog' : level === 'state' ? 'stateLog' : 'planetLog';
   play![log] = [`Päivä ${clock.day}: ${text}`, ...play![log]].slice(0, 4);
 }
 
@@ -1053,6 +1058,7 @@ function advisorDay() {
   const p = play;
   if (!p) return;
   p.units.keepHome = p.provinceAdvisor === 'defend';
+  if (p.planetAdvisor !== 'none') planetAdvisorDay();
   if (p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
@@ -1113,6 +1119,47 @@ function advisorDay() {
   }
 }
 
+/** Land tiles of each state, counted once (STORY-057). */
+const stateLand = new Map<number, number>();
+function landOf(state: number): number {
+  if (!stateLand.has(state)) {
+    const table = regions.tileTable();
+    let n = 0;
+    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state && Number.isFinite(world.cost(id))) n++;
+    stateLand.set(state, n);
+  }
+  return stateLand.get(state)!;
+}
+/** Tiles of each state, for its mapped share. */
+const stateTilesOf = new Map<number, number[]>();
+function stateShare(state: number): number {
+  if (!stateTilesOf.has(state)) {
+    const table = regions.tileTable();
+    const ids: number[] = [];
+    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state) ids.push(id);
+    stateTilesOf.set(state, ids);
+  }
+  return mapState.share(stateTilesOf.get(state)!);
+}
+
+/** Make a state the target: the expedition goes there (STORY-057). */
+function setTargetState(state: number, by: AdvisorLevel | null) {
+  const p = play!;
+  if (p.targetState === state) return;
+  p.targetState = state;
+  p.units.sendTo(pointToTile(regions.centers[0][state]), world);
+  if (by) advise(`kohdevaltio: ${stateNameOf(state).name}`, by);
+}
+
+/** The planet advisor's day: a new target once the old one is conquered or none is set. */
+function planetAdvisorDay() {
+  const p = play!;
+  const won = conquestNow();
+  if (p.targetState >= 0 && !won.conquered.has(p.targetState) && won.open.has(p.targetState)) return;
+  const target = planetTarget(p.planetAdvisor, [...won.open].map(state => ({ state, land: landOf(state), mapped: stateShare(state), conquered: won.conquered.has(state) })));
+  if (target !== null) setTargetState(target, 'planet');
+}
+
 /** The state advisor's day (STORY-051): the line, taxes, science, revolution, luxury, the target and buying. */
 function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) {
   const p = play!;
@@ -1141,7 +1188,8 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
     const current = p.targetProvince;
     const won = conquestNow();
     if (current < 0 || won.held.has(current)) {
-      const states = won.conquered.has(homeState()) ? [...won.open] : [homeState()];
+      const aim = p.targetState >= 0 && won.open.has(p.targetState) && !won.conquered.has(p.targetState) ? [p.targetState] : null;
+      const states = !won.conquered.has(homeState()) ? [homeState()] : aim ?? [...won.open];
       const from = tileCenter(p.units.camp);
       const provinces = states.flatMap(s => Array.from({ length: 7 }, (_, k) => s * 7 + k));
       const target = expeditionTarget(provinces.map(id => ({ area: id, share: won.held.has(id) ? 1 : 0, distance: from.angleTo(regions.centers[1][id]) })), 1);
@@ -1164,7 +1212,7 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
 }
 
 /** The level whose advisor the card and the button show: the city area, the province or the state, else none. */
-const advisorLevel = (): AdvisorLevel | null => (viewLevel === 3 ? 'city' : viewLevel === 2 ? 'province' : viewLevel === 1 ? 'state' : null);
+const advisorLevel = (): AdvisorLevel | null => (viewLevel === 3 ? 'city' : viewLevel === 2 ? 'province' : viewLevel === 1 ? 'state' : 'planet');
 
 const advisorCard = createAdvisorCard(hud_root, {
   close: () => { if (play) play.advisorOpen = false; },
@@ -1180,6 +1228,9 @@ const advisorCard = createAdvisorCard(hud_root, {
     } else if (level === 'state' && (STATE_ADVISOR_LIST as readonly string[]).includes(id)) {
       play.stateAdvisor = id as StateAdvisor;
       play.stateLog = [];
+    } else if (level === 'planet' && (PLANET_ADVISOR_LIST as readonly string[]).includes(id)) {
+      play.planetAdvisor = id as PlanetAdvisor;
+      play.planetLog = [];
     }
   },
 });
@@ -1198,10 +1249,14 @@ function updateAdvisorCard() {
     level: 'Lääni',
     options: PROVINCE_ADVISOR_LIST.map(id => ({ id, name: PROVINCE_ADVISORS[id].name, does: PROVINCE_ADVISORS[id].does, selected: id === play!.provinceAdvisor })),
     log: play.provinceLog,
-  } : {
+  } : level === 'state' ? {
     level: 'Valtio',
     options: STATE_ADVISOR_LIST.map(id => ({ id, name: STATE_ADVISORS[id].name, does: STATE_ADVISORS[id].does, selected: id === play!.stateAdvisor })),
     log: play.stateLog,
+  } : {
+    level: 'Planeetta',
+    options: PLANET_ADVISOR_LIST.map(id => ({ id, name: PLANET_ADVISORS[id].name, does: PLANET_ADVISORS[id].does, selected: id === play!.planetAdvisor })),
+    log: play.planetLog,
   };
   if (advisorCard.visible) advisorCard.update(view);
   else advisorCard.show(view);
@@ -1646,6 +1701,10 @@ const levelPanels = createLevelPanels(hud_root, {
   setPlan: (plan: AreaPlan) => { const a = selectedArea(); if (play && a !== null) play.units.setAreaPlan(a, plan, world); },
   expedition: () => { const a = selectedArea(); if (play && a !== null) play.units.sendTo(pointToTile(regions.centers[2][a]), world); },
   setLine: (line: StateLine) => { if (play) play.units.setStateLine(line, world); },
+  setTargetState: () => {
+    const s = selection?.level === 0 ? selection.id : null;
+    if (play && s !== null) setTargetState(s, null);
+  },
   setTarget: () => {
     const p = selectedProvince();
     if (!play || p === null) return;
@@ -1681,6 +1740,18 @@ const homeState = () => Math.floor((game?.startCity ?? 0) / 49);
 function conquestNow(): Conquest {
   const table = regions.tileTable();
   return conquest(play ? play.cities.map(c => table[c.tile]) : [], homeState(), regions.neighbors);
+}
+
+/** The planet panel (STORY-057): the selected state, else home, and whether it can be the target. */
+function planetPanel(won: Conquest) {
+  const id = selection?.level === 0 ? selection.id : homeState();
+  const held = won.conquered.has(id) ? 'vallattu' : `lääniä hallussa ${heldIn(won, id)}/7`;
+  return {
+    name: stateNameOf(id).name,
+    detail: won.open.has(id) ? `${held} · kartoitettu ${Math.round(stateShare(id) * 100)} %` : 'lukossa',
+    isTarget: id === play!.targetState,
+    canTarget: won.open.has(id) && !won.conquered.has(id),
+  };
 }
 
 /** A state's name at the planet level: home, else its direction from home. */
@@ -1748,7 +1819,7 @@ function updateLevels() {
     for (const id of won.open) {
       if (!room && id !== homeState()) continue;
       const at = toScreen(regions.centers[0][id]);
-      const sub = won.conquered.has(id) ? 'Vallattu' : `Lääniä hallussa ${heldIn(won, id)}/7`;
+      const sub = won.conquered.has(id) ? 'Vallattu' : id === play.targetState ? 'Tavoite' : `Lääniä hallussa ${heldIn(won, id)}/7`;
       const isSelected = selection?.level === 0 && selection.id === id;
       list.push({ id, name: stateNameOf(id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
     }
@@ -1769,6 +1840,7 @@ function updateLevels() {
       detail: `${won.held.has(province) ? 'Hallussa · ' : ''}Kartoitettu ${Math.round(provinceShare(province) * 100)} %`,
       isTarget: province === play.targetProvince,
     },
+    viewLevel === 0 ? planetPanel(won) : null,
   );
   // After the panels, so that a panel shown in this frame already bounds the chips
   const topPanel = hud_root.querySelector<HTMLElement>('.hud-top');
@@ -1907,7 +1979,8 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 
 function updatePlay(dt: number) {
   if (!play) return;
-  play.units.openStates = conquestNow().open;
+  const won = conquestNow();
+  play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
   const days = play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
@@ -1943,7 +2016,7 @@ function updatePlay(dt: number) {
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
     goal: GOALS[play.goal] ? { text: GOALS[play.goal].text, reward: GOALS[play.goal].reward } : null,
-    advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[play.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[play.stateAdvisor].name : null,
+    advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[play.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[play.stateAdvisor].name : PLANET_ADVISORS[play.planetAdvisor].name,
     research: !play.cities.length || play.researchOpen ? null
       : play.research.target ? { text: `Tiede · ${ADVANCES[play.research.target].name} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
       : play.research.available().length ? { text: 'Valitse tutkimus', choose: true } : null,
@@ -2197,7 +2270,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, targetProvince: play?.targetProvince ?? null, goal: play?.goal ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: play?.goal ?? null,
     };
   },
 };

@@ -88,6 +88,22 @@ async function conquer(page: Page, testInfo: TestInfo) {
   }
   expect(await sendNeighbour(page)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('planet.png') });
+
+  // The planet's panel and advisor (STORY-057): Valloittaja picks a target state
+  await expect(page.locator('.planet-panel')).toBeVisible();
+  await expect(page.locator('.planet-name')).toHaveText('Kotivaltio');
+  await page.getByRole('button', { name: 'Neuvonantaja: Oma ohjaus' }).click();
+  const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
+  await expect(card.locator('.advisor-level')).toHaveText('Planeetta');
+  await expect(card.getByRole('radio')).toHaveCount(4);
+  await card.getByRole('radio').filter({ hasText: 'Valloittaja' }).click();
+  await page.getByRole('button', { name: 'Jatka' }).click();
+  await expect(card.locator('.advisor-log')).toContainText('kohdevaltio:', { timeout: 30_000 });
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  const target = await page.evaluate(() => (window as any).globeGame.state.targetState);
+  expect(target).toBeGreaterThanOrEqual(0);
+  await card.getByRole('button', { name: 'Sulje' }).click();
+  await expect(page.locator('.chip:not([hidden])').filter({ hasText: 'Tavoite' })).toHaveCount(1);
   expect(errors).toEqual([]);
 }
 
