@@ -62,6 +62,24 @@ test('a tapped hex opens a card of what it holds; mapped land and the fog alike'
     await page.mouse.click(fx, fy);
     await expect(card.locator('.tile-title')).toHaveText('Kartoittamaton');
   }
+  // Coastal sea: Kartanteko opens it to the units (STORY-059); the nearest coast, mapped by the test hook
+  const coastRow = () => page.evaluate(() => {
+    const w = window as any;
+    const sea = (id: number) => w.globeTileTypes.tileInfo(id).terrain === 'ocean';
+    let ring = new Set<number>([w.globeGame.state.units[0].tile]);
+    for (let r = 0; r < 60; r++) {
+      ring = new Set([...ring].flatMap((id: number) => [id, ...w.globeHexTiles.neighbors(id)]));
+      const hit = [...ring].find(id => sea(id) && w.globeHexTiles.neighbors(id).some((n: number) => !sea(n)));
+      if (hit !== undefined) {
+        w.globeDebug.reveal([hit]);
+        return w.globeDebug.tileView(hit).rows.find((x: { label: string }) => x.label === 'Kulku').value as string;
+      }
+    }
+    return null;
+  });
+  expect(await coastRow()).toBe('rannikkovesi: Kartanteko avaa kulun');
+  await page.evaluate(() => (window as any).globeDebug.learn('mapmaking'));
+  expect(await coastRow()).toBe('rannikkovesi: 1 pv');
   // Another card closes it
   await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' }).click();
   await expect(card).toBeHidden();

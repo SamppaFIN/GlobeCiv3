@@ -14,7 +14,7 @@
  */
 import type { Build } from './cities';
 
-export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction';
+export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction' | 'mapmaking';
 
 export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
   alphabet: { name: 'Aakkoset', needs: [] },
@@ -29,6 +29,8 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
   monarchy: { name: 'Monarkia', needs: ['ceremonial', 'law'] },
   // Construction (STORY-054): the aqueduct and the arena
   construction: { name: 'Rakentaminen', needs: ['masonry', 'currency'] },
+  // Map Making (STORY-059, techs.ruleset: Alphabet): units go along the coast as by trireme
+  mapmaking: { name: 'Kartanteko', needs: ['alphabet'] },
 };
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 
