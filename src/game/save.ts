@@ -95,7 +95,7 @@ const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
-const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'colossus', 'gardens', 'greatwall'];
+const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall'];
 const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */

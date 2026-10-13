@@ -231,3 +231,28 @@ describe('cities', () => {
     expect(cityMood(city(5), 0, 1, false, 10)).toMatchObject({ happy: 4, content: 1, unhappy: 0 });
   });
 });
+
+describe('size limit and arena (STORY-054, Freeciv civ1)', () => {
+  it('a city stops at size 10 with a full box until it has an aqueduct', () => {
+    const c = city(10);
+    c.food = granary(10) - 1;
+    const y = { food: 30, shield: 0, trade: 0, surplus: 10 };
+    expect(daysToGrow(c, y)).toBeNull();
+    cityDay(c, y);
+    expect([c.size, c.food]).toEqual([10, granary(10)]);
+    c.buildings.push('aqueduct');
+    expect(daysToGrow(c, y)).toBe(1);
+    cityDay(c, y);
+    expect(c.size).toBe(11);
+    expect([BUILDS.aqueduct.cost, BUILDS.colosseum.cost]).toEqual([120, 100]);
+  });
+
+  it('an arena calms three citizens', () => {
+    const c = city(8);
+    expect(cityMood(c, 0, 1)).toMatchObject({ unhappy: 4, disorder: true });
+    c.buildings.push('colosseum');
+    expect(cityMood(c, 0, 1)).toMatchObject({ unhappy: 1, calmed: 3 });
+    c.buildings.push('temple');
+    expect(cityMood(c, 0, 1)).toMatchObject({ unhappy: 0, calmed: 4, disorder: false });
+  });
+});
