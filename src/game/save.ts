@@ -10,7 +10,7 @@
  */
 import { SPEEDS, type Speed } from './clock';
 import type { City, Build, Building, Focus } from './cities';
-import type { Discovery, FindKind, Yield } from './discoveries';
+import type { Discovery, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
 import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './units';
@@ -95,7 +95,6 @@ const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
-const FINDS: readonly FindKind[] = ['fish', 'ruins', 'ore', 'trail', 'lookout'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'colossus', 'gardens', 'greatwall'];
 const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
@@ -181,11 +180,10 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       selected: int(s.selected, 'selected', 0, 10_000),
       progress: { openLevel: oneOf(p.openLevel, [1, 2, 3] as const, 'open level'), meter: oneOf(p.meter, METERS, 'meter') },
       targetProvince: int(s.targetProvince, 'target province', -1, limits.cityAreas),
+      // Finds waiting in a save from before STORY-052 open as ruins on load; their old choices are not read
       discoveries: list(s.discoveries, 'discoveries', v => {
         const d = obj(v, 'discovery');
-        const finds = list(d.finds, 'finds', f => oneOf(f, FINDS, 'find'), 2);
-        if (finds.length !== 2) fail('finds');
-        return { tile: tile(d.tile), finder: int(d.finder, 'finder'), finds: [finds[0], finds[1]] as [FindKind, FindKind] };
+        return { tile: tile(d.tile), finder: int(d.finder, 'finder') };
       }, 1000),
       bonuses: list(s.bonuses, 'bonuses', v => {
         const b = list(v, 'bonus', x => x, 2);

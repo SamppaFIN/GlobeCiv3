@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function startGame(page: Page): Promise<string[]> {
+async function startGame(page: Page, ruins = true): Promise<string[]> {
   const errors: string[] = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(e.message));
@@ -8,23 +8,13 @@ async function startGame(page: Page): Promise<string[]> {
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
   await page.goto('./?seed=42');
   await ready;
+  if (!ruins) await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
   return errors;
 }
 
 const state = (page: Page) => page.evaluate(() => (window as any).globeGame.state);
-
-/** Send the scouts toward the nearest discovery and run at 4× until it waits in the HUD. */
-async function findDiscovery(page: Page) {
-  await page.evaluate(() => {
-    const w = window as any;
-    const [site] = w.globeDebug.discoverySites(1);
-    w.globeDebug.sendTo(site.tile);
-  });
-  await page.locator('.hud-speed label', { hasText: '4×' }).click();
-  await expect(page.getByRole('button', { name: /^(Löytö odottaa|\d+ löytöä odottaa)$/ })).toBeVisible({ timeout: 90_000 });
-}
 
 /** Days that pass over at least `ms` of wall time and three frames, measured inside the page. */
 const daysOver = (page: Page, ms: number) => page.evaluate(span => new Promise<number>(resolve => {
@@ -39,84 +29,60 @@ const daysOver = (page: Page, ms: number) => page.evaluate(span => new Promise<n
   requestAnimationFrame(step);
 }), ms);
 
-test('a discovery waits in the HUD while the game goes on; opened, it stops the game until a find is chosen', async ({ page }, testInfo) => {
+test('ruins open by themselves: no card and no choice, a notice tells what they held, and the game goes on', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   const errors = await startGame(page);
-  await findDiscovery(page);
-  // This test is about the first discovery: the next ones would add to the count
+  // Every notice, collected inside the page (a slow runner may replace one before a check)
+  await page.evaluate(() => {
+    const w = window as any;
+    w.notices = [];
+    const el = document.querySelector('[role="status"]')!;
+    new MutationObserver(() => w.notices.push(el.textContent)).observe(el, { childList: true, characterData: true, subtree: true });
+  });
+  // The scouts go toward the nearest ruins
+  const site = await page.evaluate(() => {
+    const w = window as any;
+    const [s] = w.globeDebug.discoverySites(1);
+    w.globeDebug.sendTo(s.tile);
+    return s as { tile: number; kind: string };
+  });
+  await page.locator('.hud-speed label', { hasText: '4×' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.found >= 1, null, { timeout: 90_000 });
   await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
-  const found = await state(page);
-  expect(found.discovery).not.toBeNull();
-  const pill = page.getByRole('button', { name: 'Löytö odottaa' });
-
-  // STORY-037: the game goes on with the find waiting, and no card opens by itself
+  const notice = (await page.evaluate(() => (window as any).notices as string[])).find(n => n.startsWith('Rauniot'));
+  testInfo.annotations.push({ type: 'ruins', description: `${site.kind}: ${notice}` });
+  // Without a city, a soldier is Freeciv's consolation of 25 gold
+  const held = [/: (25|50|100) kultaa$/, /: keksintö \S+$/, /: Tiedustelija \d+ liittyi joukkoon$/];
+  expect(notice).toMatch(/^Rauniot · Tiedustelija \d+: /);
+  expect(held.some(r => r.test(notice!))).toBe(true);
+  // No card, no waiting pill, and the game goes on
   await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(page.getByRole('button', { name: /odottaa$/ })).toHaveCount(0);
   expect(await daysOver(page, 2000)).toBeGreaterThan(0);
-  await page.screenshot({ path: testInfo.outputPath('waiting.png') });
-
-  // Opened from the HUD: design 4a with the pause chip, the ring, the kicker, the area, the
-  // sentence, two finds and Myöhemmin; the game stands still
-  await pill.click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  const s = await state(page);
-  await expect(page.locator('.discovery-day')).toHaveText(`Peli pysähtyi · Päivä ${s.day}`);
-  await expect(page.locator('.discovery-kicker')).toHaveText(/^Löytö · Tiedustelija \d+$/);
-  await expect(page.locator('.discovery-title')).not.toBeEmpty();
-  await expect(page.locator('.discovery-body')).toHaveText(/^Tiedustelija löysi .+ ja .+\. Valitse niistä toinen\.$/);
-  await expect(page.locator('.discovery-note')).toHaveText('Valitsematta jäänyt löytö katoaa.');
-  const options = page.locator('.discovery-option');
-  await expect(options).toHaveCount(3);
-  await expect(options.last()).toContainText('Myöhemmin');
-  for (const b of await options.all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(63.5);
-  await expect(page.locator('.discovery-ring')).toBeVisible();
-  await expect(page.locator('.hud-top')).toBeHidden();
-  await page.screenshot({ path: testInfo.outputPath('discovery.png') });
-  expect(await daysOver(page, 2000)).toBe(0);
-
-  // Myöhemmin: the card closes and the find still waits
-  await options.last().click();
-  await expect(page.getByRole('dialog')).toBeHidden();
-  await expect(pill).toBeVisible();
-  expect((await state(page)).found).toBe(0);
-
-  // Opened again: keep the ruins if offered (a new scout), else the first find
-  await pill.click();
-  const finds: string[] = s.discovery.finds;
-  const pick = finds.includes('ruins') ? finds.indexOf('ruins') : 0;
-  const before = await state(page);
-  await options.nth(pick).click();
-  await expect(page.getByRole('dialog')).toBeHidden();
-  const after = await state(page);
-  expect(after.found).toBe(1);
-  await expect(pill).toBeHidden();
-  const notice = page.getByRole('status');
-  if (finds[pick] === 'ruins') {
-    expect(after.units.length).toBe(before.units.length + 1);
-    await expect(notice).toHaveText(/^Vanhat rauniot: Tiedustelija \d+ liittyi joukkoon$/);
-  } else if (finds[pick] === 'lookout') {
-    expect(after.mapped).toBeGreaterThan(before.mapped);
-    await expect(notice).toHaveText(/^Näköalapaikka: /);
-  } else {
-    expect(after.bonuses.length).toBe(before.bonuses.length + 1);
-    await expect(notice).toHaveText(/löytöruudulle$/);
-  }
-  await expect(page.locator('.hud-top')).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('after.png') });
-
-  // The game goes on
-  expect(await daysOver(page, 2000)).toBeGreaterThan(0);
+  await page.screenshot({ path: testInfo.outputPath('ruins.png') });
   expect(errors).toEqual([]);
 });
 
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-  test('the discovery card fits the screen with 64 px choices', async ({ page }, testInfo) => {
+  test('the card that stops the game fits the screen with 64 px choices', async ({ page }, testInfo) => {
     test.setTimeout(180_000);
-    const errors = await startGame(page);
-    await findDiscovery(page);
-    await page.getByRole('button', { name: /odottaa$/ }).click();
-    // The card shows on the next frame, which on a slow runner comes later
+    const errors = await startGame(page, false);
+    await page.getByRole('button', { name: 'Tauko' }).click();
+    const name = page.locator('.hud-unit-name');
+    for (let i = 0; i < 3 && (await name.textContent()) !== 'Uudisasukas'; i++) {
+      const prev = (await name.textContent())!;
+      await page.locator('.hud-unit').click();
+      await expect(name).not.toHaveText(prev, { timeout: 15_000 });
+    }
+    await page.getByRole('button', { name: 'Perusta kaupunki tähän' }).click();
+    await page.locator('.hud-speed label', { hasText: '4×' }).click();
+    await page.waitForFunction(() => (window as any).globeGame.state.cities.length === 1, null, { timeout: 60_000 });
+    await page.getByRole('button', { name: 'Tauko' }).click();
+    await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
+    // Bandits: the card shows on the next frame, which on a slow runner comes later
+    await page.evaluate(() => (window as any).globeDebug.raidNow(0));
     await expect(page.locator('.discovery-card')).toBeVisible();
     const card = (await page.locator('.discovery-card').boundingBox())!;
     expect(card.x).toBeGreaterThanOrEqual(0);
@@ -129,7 +95,7 @@ test.describe('on a phone', () => {
     }
     // Nothing in the card is clipped
     expect(await page.locator('.discovery-body').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-    await page.screenshot({ path: testInfo.outputPath('discovery-phone.png') });
+    await page.screenshot({ path: testInfo.outputPath('card-phone.png') });
     expect(errors).toEqual([]);
   });
 });

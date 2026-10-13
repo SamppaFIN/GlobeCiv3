@@ -38,7 +38,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
     version: SAVE_VERSION, savedAt: 1_760_000_000_000, seed: 42, startCity: 1234, day: 12, speed: 4, paused: false,
     mapped: [...map.mapped.keys()].filter(i => map.mapped[i]), units: units.save(), selected: 1,
     progress: { openLevel: 3, meter: 'province' }, targetProvince: -1,
-    discoveries: [{ tile: START_TILE, finder: 1, finds: ['fish', 'ruins'] }], bonuses: [[START_TILE, { food: 2, shield: 0, trade: 0 }]], found: 1,
+    discoveries: [{ tile: START_TILE, finder: 1 }], bonuses: [[START_TILE, { food: 2, shield: 0, trade: 0 }]], found: 1,
     cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food' }],
     offers: [], offered: [START_TILE], lastOfferDay: 9, pendingSite: null,
     improvements: imp.entries(), raids: raids.save(), raidAlert: true, gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4 }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science',
@@ -50,6 +50,13 @@ describe('saved game (STORY-036)', () => {
   it('comes back as it was saved', () => {
     const { data } = playedSave();
     expect(validateSave(data, LIMITS)).toEqual(data);
+  });
+
+  it('a find waiting in a save from before STORY-052 loads without its old choices', () => {
+    const { data } = playedSave();
+    const old = JSON.parse(JSON.stringify(data));
+    old.discoveries[0].finds = ['fish', 'ruins'];
+    expect(validateSave(old, LIMITS)!.discoveries).toEqual([{ tile: START_TILE, finder: 1 }]);
   });
 
   it('restored units, raids and improvements go on exactly as the originals', () => {
@@ -82,7 +89,6 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.cities[0].food = '7'; })).toBeNull();
     expect(broken(s => { s.day = 1.5; })).toBeNull();
     expect(broken(s => { s.speed = 3; })).toBeNull();
-    expect(broken(s => { s.discoveries[0].finds = ['fish']; })).toBeNull();
     expect(broken(s => { s.improvements[0][1] = ['bridge']; })).toBeNull();
     expect(broken(s => { s.raids.band.bandits[0].path = [1, , 3]; })).toBeNull();
     expect(broken(s => { delete s.units; })).toBeNull();
