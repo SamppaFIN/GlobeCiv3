@@ -66,6 +66,12 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   await expect(card.locator('.research-rates')).toHaveText(/^Tiedettä \+\d+\/pv · kultaa [+−]\d+\/pv$/);
 
   // Learned: a notice, the target is free again and the granary opens in the city card
+  // The science pill stays: what is researched and how far, and it opens the card (STORY-052)
+  await page.getByRole('button', { name: 'Sulje' }).click();
+  const pill = page.getByRole('button', { name: /^Tiede · Keramiikka \d+ %$/ });
+  await expect(pill).toBeVisible();
+  await pill.click();
+  await expect(card).toBeVisible();
   await page.evaluate(() => (window as any).globeDebug.addBulbs(10));
   await page.getByRole('button', { name: 'Sulje' }).click();
   await page.getByRole('button', { name: 'Jatka' }).click();
