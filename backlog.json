@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-12T21:40:22Z",
+    "generated_at": "2026-10-13T03:42:06Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "90929a7",
+    "git_commit": "ba31d5c",
     "git_branch": "main",
     "language": "fi"
   },
@@ -147,7 +147,8 @@
         "STORY-042",
         "STORY-043",
         "STORY-044",
-        "STORY-045"
+        "STORY-045",
+        "STORY-046"
       ],
       "progress": 96
     }
@@ -1241,6 +1242,31 @@
         "plan": "PLAN-035",
         "implementation": "TICKET-IMPL-035",
         "testing": "TICKET-TEST-035"
+      }
+    },
+    {
+      "id": "STORY-046",
+      "epic": "EPIC-006",
+      "title": "Ylellisyys",
+      "type": "story",
+      "narrative": "Pelaajana haluan ohjata osan kaupasta ylellisyyteen, jotta isot kaupungit pysyvät tyytyväisinä ilman pelkkiä sotilaita ja temppeleitä.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-040",
+        "STORY-044",
+        "STORY-045"
+      ],
+      "acceptance_criteria": [
+        "Tutkimus-kortissa on ylellisyysosuus 0, 10, 20 tai 30 % kaupasta. Se otetaan ennen tiedettä, ja verotus pysyy ennallaan.",
+        "Ylellisyys tekee asukkaista onnellisia Freecivin civ1-sääntöjen mukaan (happy_cost 2): tyytyväinen onnelliseksi 2:lla, tyytymätön onnelliseksi 4:llä ja tyytymätön tyytyväiseksi 2:lla, ennen temppeliä ja sotilaita. Tori antaa +50 %.",
+        "Ylellisyys näkyy tuottorivillä ja kaupungin mielialassa, ja levottomuuden ohje mainitsee sen. Osuus tallentuu, ja vanhoissa tallennuksissa se on 0."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-036",
+        "implementation": "TICKET-IMPL-036",
+        "testing": "TICKET-TEST-036"
       }
     }
   ],
@@ -3101,6 +3127,46 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-036",
+      "story": "STORY-046",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Peruspeli: Civ I:n kolmas kauppaosuus. Luvut: Freeciv common/city.c citizen_luxury_happy ja RS_DEFAULT_HAPPY_COST 2 (järjestys: tyytyväinen, tyytymätön onnelliseksi, tyytymätön tyytyväiseksi) ja civ1 effects.ruleset (Marketplace Output_Bonus luxury 50). Ylellisyys lasketaan ennen rakennuksia ja sotilaita kuten Freecivin citizen_base_mood → citizen_luxury_happy → citizen_content_buildings.",
+      "alternatives_considered": [
+        {
+          "name": "Vapaa liukusäädin",
+          "pros": "Tarkka",
+          "cons": "Vaikea puhelimella",
+          "rejected_because": "Neljä valintaa riittää ja vastaa veron segmenttejä"
+        }
+      ],
+      "files_to_change": [
+        "src/game/science.ts, cities.ts, save.ts ja testit",
+        "src/globe/main.ts",
+        "src/ui/researchCard.ts",
+        "tests/e2e/science.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "splitTrade ja cityMood ylellisyydellä, testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Tutkimus-kortti, tuottorivi, tallennus",
+          "verify": "E2E"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -4508,6 +4574,45 @@
         "notes": "Rakennusvaihtoehtoja on nyt kaksitoista; testit päivitetty."
       },
       "commit": "90929a7",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-036",
+      "story": "STORY-046",
+      "plan": "PLAN-036",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/researchCard.ts",
+        "tests/e2e/science.e2e.ts"
+      ],
+      "change_summary": "LUX_RATES ja splitTrade(trade, tax, lux) palauttaa kullan, ylellisyyden ja tieteen. cityLuxury (tori ×1,5), cityMood(luxury) ennen temppeliä ja sotilaita. main.ts: Play.lux, mieliala ylellisyydellä, tuottorivi, tallennus ja palautus. Tutkimus-korttiin ylellisyysvalinta.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "splitTrade (luxury-kenttä)",
+          "cityMood(luxury)",
+          "cityGold/cityScience(lux)",
+          "SaveData.lux"
+        ],
+        "call_sites_found": [
+          "splitTrade, cityGold, cityScience, cityMood"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/cities.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Oletusparametrit pitävät vanhat kutsut ennallaan."
+      },
+      "commit": "ba31d5c",
       "progress": 100
     }
   ],
@@ -7883,6 +7988,82 @@
         "decision": "accepted",
         "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-12"
+      }
+    },
+    {
+      "id": "TICKET-TEST-036",
+      "story": "STORY-046",
+      "implementation_ticket": "TICKET-IMPL-036",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. E2E-tarkistus löysi kaksi testin omaa virhettä: \"0 %\" osui myös 10, 20 ja 30 %:iin (exact), ja debug-tila ei näyttänyt osuutta (lisätty). Löytökortin puhelintesti petti kerran koko sarjan kuormassa ja meni läpi yksinään ja seuraavassa koko ajossa.",
+        "files_changed": [
+          "tests/e2e/science.e2e.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: splitTrade ja cityMood ylellisyydellä",
+            "expected": "10 kauppaa, vero 50, ylellisyys 30 → 5/3/2; ylellisyys tekee onnellisia oikeassa järjestyksessä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: tallennus",
+            "expected": "lux tallentuu ja vanhassa tallennuksessa 0",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: Tutkimus-kortin ylellisyysvalinta",
+            "expected": "Aluksi 0 %, valinta 20 % näkyy tilassa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 136/136; E2E 58/58",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38339974340 (ba31d5c, 35 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Ylellisyys auttaa isoja kaupunkeja",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Ylellisyysosuus kaupasta",
+            "checked": true
+          },
+          {
+            "item": "Onnelliset civ1-järjestyksessä",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
       }
     }
   ]

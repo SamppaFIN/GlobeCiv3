@@ -1,0 +1,39 @@
+{
+  "id": "TICKET-IMPL-036",
+  "story": "STORY-046",
+  "plan": "PLAN-036",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/researchCard.ts",
+    "tests/e2e/science.e2e.ts"
+  ],
+  "change_summary": "LUX_RATES ja splitTrade(trade, tax, lux) palauttaa kullan, ylellisyyden ja tieteen. cityLuxury (tori ×1,5), cityMood(luxury) ennen temppeliä ja sotilaita. main.ts: Play.lux, mieliala ylellisyydellä, tuottorivi, tallennus ja palautus. Tutkimus-korttiin ylellisyysvalinta.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "splitTrade (luxury-kenttä)",
+      "cityMood(luxury)",
+      "cityGold/cityScience(lux)",
+      "SaveData.lux"
+    ],
+    "call_sites_found": [
+      "splitTrade, cityGold, cityScience, cityMood"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/game/cities.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Oletusparametrit pitävät vanhat kutsut ennallaan."
+  },
+  "commit": "ba31d5c",
+  "progress": 100
+}

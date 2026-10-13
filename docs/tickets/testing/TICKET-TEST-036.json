@@ -1,0 +1,76 @@
+{
+  "id": "TICKET-TEST-036",
+  "story": "STORY-046",
+  "implementation_ticket": "TICKET-IMPL-036",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. E2E-tarkistus löysi kaksi testin omaa virhettä: \"0 %\" osui myös 10, 20 ja 30 %:iin (exact), ja debug-tila ei näyttänyt osuutta (lisätty). Löytökortin puhelintesti petti kerran koko sarjan kuormassa ja meni läpi yksinään ja seuraavassa koko ajossa.",
+    "files_changed": [
+      "tests/e2e/science.e2e.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: splitTrade ja cityMood ylellisyydellä",
+        "expected": "10 kauppaa, vero 50, ylellisyys 30 → 5/3/2; ylellisyys tekee onnellisia oikeassa järjestyksessä",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: tallennus",
+        "expected": "lux tallentuu ja vanhassa tallennuksessa 0",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: Tutkimus-kortin ylellisyysvalinta",
+        "expected": "Aluksi 0 %, valinta 20 % näkyy tilassa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 136/136; E2E 58/58",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38339974340 (ba31d5c, 35 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Ylellisyys auttaa isoja kaupunkeja",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Ylellisyysosuus kaupasta",
+        "checked": true
+      },
+      {
+        "item": "Onnelliset civ1-järjestyksessä",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

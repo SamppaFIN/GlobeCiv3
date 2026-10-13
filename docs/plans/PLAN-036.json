@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-036",
+  "story": "STORY-046",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Peruspeli: Civ I:n kolmas kauppaosuus. Luvut: Freeciv common/city.c citizen_luxury_happy ja RS_DEFAULT_HAPPY_COST 2 (järjestys: tyytyväinen, tyytymätön onnelliseksi, tyytymätön tyytyväiseksi) ja civ1 effects.ruleset (Marketplace Output_Bonus luxury 50). Ylellisyys lasketaan ennen rakennuksia ja sotilaita kuten Freecivin citizen_base_mood → citizen_luxury_happy → citizen_content_buildings.",
+  "alternatives_considered": [
+    {
+      "name": "Vapaa liukusäädin",
+      "pros": "Tarkka",
+      "cons": "Vaikea puhelimella",
+      "rejected_because": "Neljä valintaa riittää ja vastaa veron segmenttejä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/science.ts, cities.ts, save.ts ja testit",
+    "src/globe/main.ts",
+    "src/ui/researchCard.ts",
+    "tests/e2e/science.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "splitTrade ja cityMood ylellisyydellä, testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Tutkimus-kortti, tuottorivi, tallennus",
+      "verify": "E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}
