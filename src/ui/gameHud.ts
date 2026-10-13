@@ -75,7 +75,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         <div class="seg hud-speed" role="radiogroup" aria-label="Nopeus">
           ${SPEEDS.map(s => `<label class="seg-opt"><input type="radio" name="hud-speed" value="${s}">${s}×</label>`).join('')}
         </div>
-        <button class="btn btn-secondary hud-icon hud-city" type="button" aria-label="Luettelo: kaupungit ja yksiköt">${LIST}</button>
+        <button class="btn btn-secondary hud-icon hud-city" type="button" aria-label="Luettelo: kaupungit, yksiköt ja talous">${LIST}</button>
         <div class="hud-spacer"></div>
         <div class="hud-day"><span class="hud-day-n"></span><span class="hud-day-label"></span></div>
       </div>

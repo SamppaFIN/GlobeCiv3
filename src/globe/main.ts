@@ -28,6 +28,7 @@ import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
 import { GOVERNMENTS, revolutionDays, type Government } from '../game/government';
+import { economy, type CityEconomy } from '../game/economy';
 import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
 import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
@@ -1016,7 +1017,42 @@ function listView(): ListView {
       index, name: u.name, kind: KIND_NAMES[u.kind],
       line: unitStatus(play!.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name),
     })),
+    economy: economyRows(yields),
   };
+}
+
+const signed = (n: number) => `${n < 0 ? '−' : '+'}${Math.abs(n)}`;
+
+/** The economy tab (STORY-048): the realm's day in total, then city by city. */
+function economyRows(yields: CityYield[]): ListView['economy'] {
+  const p = play!;
+  const worked = workedByCity();
+  const days: CityEconomy[] = p.cities.map((c, i) => {
+    const y = yields[i];
+    const unitUpkeep = y.disorder ? 0 : Math.max(0, supportOf(c).units - GOVERNMENTS[p.gov].freeUnits);
+    return {
+      food: y.food, surplus: y.surplus, shield: Math.max(0, y.shield) + unitUpkeep, unitUpkeep, trade: y.trade,
+      gold: cityGold(c, y, rates().tax, rates().lux), coinage: c.build === 'coinage' && !y.disorder ? Math.max(0, y.shield) : 0,
+      science: cityScience(c, y, rates().tax, rates().lux), luxury: cityLuxury(c, y, rates().tax, rates().lux),
+      buildingUpkeep: c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
+      resources: worked[i].filter(t => tileTypes.codes[t] & 16).map(t => RESOURCES[TERRAIN_RULES[terrainOf(t)].resource].name),
+    };
+  });
+  const e = economy(days);
+  const split = p.gov === 'anarchy' ? 'anarkia: kaikki ylellisyyteen' : `vero ${p.tax} %, ylellisyys ${p.lux} %`;
+  return [
+    { title: 'Kassa', right: `${p.gold} kultaa`, line: `tulot +${e.gold}/pv · rakennusten ylläpito −${e.buildingUpkeep}/pv · yhteensä ${signed(e.net)}/pv` },
+    ...(p.cities.length ? [
+      { title: 'Ruoka', right: `+${e.food}/pv`, line: `asukkaat ja uudisasukkaat syövät ${e.food - e.surplus} · ylijäämä ${signed(e.surplus)} kasvuun` },
+      { title: 'Tuotanto', right: `+${e.shield}/pv`, line: `yksiköiden ylläpito −${e.unitUpkeep}${e.coinage ? ` · Kultaa-tuotannosta kultaa +${e.coinage}` : ''}` },
+      { title: 'Kauppa', right: `+${e.trade}/pv`, line: `kultaa +${e.gold - e.coinage} · tiedettä +${e.science} · ylellisyyttä +${e.luxury} (${split})` },
+      { title: 'Erikoisresurssit', right: `${e.resources.reduce((n, r) => n + r[1], 0)} ruutua`, line: e.resources.length ? e.resources.map(([name, n]) => `${name} ${n}`).join(' · ') : 'Kaupungit eivät vielä työstä erikoisresursseja.' },
+      ...p.cities.map((c, i) => ({
+        title: c.name, right: `Koko ${c.size}`,
+        line: `ruokaa +${days[i].food} · tuotantoa +${days[i].shield} · kauppaa +${days[i].trade} · kultaa +${days[i].gold} · tiedettä +${days[i].science}`,
+      })),
+    ] : [{ title: 'Ei vielä kaupunkeja', right: '', line: 'Kaupungit tuovat ruokaa, tuotantoa ja kauppaa. Uudisasukas perustaa kaupungin.' }]),
+  ];
 }
 
 function updateListCard() {

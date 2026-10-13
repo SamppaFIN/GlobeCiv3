@@ -93,6 +93,7 @@
 .city-build:disabled { opacity: 0.55; cursor: default; }
 .city-research { min-height: var(--touch-target); }
 .list-rows { display: flex; flex-direction: column; gap: 6px; }
+.city-build.list-info { cursor: default; min-height: 0; border-color: transparent; background: color-mix(in srgb, var(--c-text) 5%, transparent); }
 .hud-row[hidden] { display: none; }
 .hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
 .hud-city[hidden] { display: none; }
@@ -252,6 +253,8 @@
   max-height: 55dvh; overflow-y: auto; overscroll-behavior: contain;
 }
 .city-card[hidden] { display: none; }
+/* The card scrolls; its parts keep their height rather than squeeze (STORY-048) */
+.city-card > * { flex-shrink: 0; }
 .city-head { display: flex; align-items: flex-start; gap: 10px; }
 .city-titles { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .city-kicker { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-accent-text); }

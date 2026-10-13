@@ -14,7 +14,7 @@ test('the list shows the cities and the units; a row opens the city or selects t
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
 
-  const open = page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' });
+  const open = page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' });
   const list = page.getByRole('dialog', { name: 'Luettelo' });
   // Before a city: no cities, three units
   await open.click();
@@ -50,5 +50,16 @@ test('the list shows the cities and the units; a row opens the city or selects t
   await rows.first().click();
   await expect(list).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Aamuranta' })).toBeVisible();
+
+  // Talous (STORY-048): the treasury, what comes in and goes, and the city by city; rows only tell
+  await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
+  await open.click();
+  await list.getByText('Talous', { exact: true }).click();
+  const gold = (await page.evaluate(() => (window as any).globeGame.state.gold)) as number;
+  await expect(rows.filter({ hasText: 'Kassa' })).toContainText(`${gold} kultaa`);
+  for (const title of ['Ruoka', 'Tuotanto', 'Kauppa', 'Erikoisresurssit', 'Aamuranta']) await expect(rows.filter({ hasText: title }).first()).toBeVisible();
+  await expect(rows.filter({ hasText: /^Kauppa/ })).toContainText(/kultaa \+\d+ · tiedettä \+\d+ · ylellisyyttä \+\d+ \(vero 50 %, ylellisyys 0 %\)/);
+  await expect(list.getByRole('button', { name: /^Kassa/ })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('economy.png') });
   expect(errors).toEqual([]);
 });

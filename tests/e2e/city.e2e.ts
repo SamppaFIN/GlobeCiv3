@@ -114,7 +114,7 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   // Without a pointer: the list (STORY-042) opens it from the keyboard
   await card.getByRole('button', { name: 'Sulje' }).click();
   await expect(card).toBeHidden();
-  await page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' }).focus();
+  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' }).focus();
   await page.keyboard.press('Enter');
   const list = page.getByRole('dialog', { name: 'Luettelo' });
   await expect(list).toBeVisible();
@@ -167,7 +167,7 @@ test.describe('on a phone', () => {
     // The top panel still fits with the list button
     const top = (await page.locator('.hud-top').boundingBox())!;
     expect(top.x + top.width).toBeLessThanOrEqual(390);
-    const cityButton = (await page.getByRole('button', { name: 'Luettelo: kaupungit ja yksiköt' }).boundingBox())!;
+    const cityButton = (await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' }).boundingBox())!;
     expect(cityButton.width).toBeGreaterThanOrEqual(43.5);
     expect(await page.locator('.hud-day').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('city-phone.png') });
