@@ -57,6 +57,12 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   await expect(tax.getByRole('radio', { name: '50 %' })).toBeChecked();
   await tax.getByText('30 %').click();
   expect((await state(page)).tax).toBe(30);
+  // Luxury (STORY-046): none at first, and a share can be chosen
+  const lux = card.getByRole('radiogroup', { name: /^Kaupasta ylellisyyteen/ });
+  await expect(lux.getByRole('radio', { name: '0 %', exact: true })).toBeChecked();
+  await lux.getByText('20 %').click();
+  expect((await state(page)).lux).toBe(20);
+  await lux.getByText('0 %', { exact: true }).click();
   await expect(card.locator('.research-rates')).toHaveText(/^Tiedettä \+\d+\/pv · kultaa [+−]\d+\/pv$/);
 
   // Learned: a notice, the target is free again and the granary opens in the city card

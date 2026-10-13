@@ -194,15 +194,27 @@ export interface Mood {
  * luxury yet no citizen is happy, so any unhappy citizen left means civil disorder
  * (common/city.c city_unhappy: happy < unhappy).
  */
-export function cityMood(city: City, soldiers: number, cities: number, gardens = false): Mood {
-  const base = Math.min(city.size, baseContent(cities));
-  const unhappy = city.size - base;
+export function cityMood(city: City, soldiers: number, cities: number, gardens = false, luxury = 0): Mood {
+  let content = Math.min(city.size, baseContent(cities));
+  let unhappy = city.size - content;
+  let happy = 0;
+  // Luxury first (STORY-046, common/city.c citizen_luxury_happy, happy_cost 2): content to
+  // happy for 2, unhappy to happy for 4, then unhappy to content for 2
+  let lux = luxury;
+  for (; lux >= 2 && content > 0; lux -= 2) { content--; happy++; }
+  for (; lux >= 4 && unhappy > 0; lux -= 4) { unhappy--; happy++; }
+  if (lux >= 2 && unhappy > 0) { unhappy--; content++; }
+  // Then the temple and the soldiers, then the gardens make a content citizen happy
   const calmed = Math.min(unhappy, (city.buildings.includes('temple') ? 1 : 0) + soldiers);
-  // The gardens make a content citizen happy, and a happy one outweighs an unhappy one
-  const content = base + calmed;
-  const happy = gardens ? Math.min(1, content) : 0;
-  return { happy, content: content - happy, unhappy: unhappy - calmed, calmed, disorder: unhappy - calmed > happy };
+  unhappy -= calmed;
+  content += calmed;
+  if (gardens && content > 0) { content--; happy++; }
+  return { happy, content, unhappy, calmed, disorder: unhappy > happy };
 }
+
+/** Luxury a city makes: its share of trade, +50 % with a marketplace (effects.ruleset). */
+export const cityLuxury = (city: City, y: Yield & { disorder?: boolean }, tax: number, lux: number) =>
+  Math.floor(splitTrade(y.trade, tax, lux).luxury * (city.buildings.includes('market') ? 1.5 : 1));
 
 /**
  * A city's yield in disorder (common/city.c, output_types: food and shields lose their
@@ -276,12 +288,12 @@ export function cityDay(city: City, y: CityYield): Build | null {
  * Gold a city brings a day: the tax rate's share of its trade, +50 % with a marketplace,
  * and its shields while it makes gold (Kultaa).
  */
-export const cityGold = (city: City, y: Yield & { disorder?: boolean }, tax = 100) => y.disorder ? 0 :
-  Math.floor(splitTrade(y.trade, tax).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
+export const cityGold = (city: City, y: Yield & { disorder?: boolean }, tax = 100, lux = 0) => y.disorder ? 0 :
+  Math.floor(splitTrade(y.trade, tax, lux).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
 
 /** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040). */
-export const cityScience = (city: City, y: Yield & { disorder?: boolean }, tax: number) => y.disorder ? 0 :
-  Math.floor(splitTrade(y.trade, tax).science * (city.buildings.includes('library') ? 1.5 : 1));
+export const cityScience = (city: City, y: Yield & { disorder?: boolean }, tax: number, lux = 0) => y.disorder ? 0 :
+  Math.floor(splitTrade(y.trade, tax, lux).science * (city.buildings.includes('library') ? 1.5 : 1));
 
 /**
  * Pay a city's building upkeep from the treasury. When it would fall below zero, buildings
