@@ -35,8 +35,11 @@ describe('science (STORY-040, Freeciv civ1)', () => {
   });
 
   it('the tax rate splits trade into gold and science; a marketplace and a library add half', () => {
-    expect(splitTrade(5, 50)).toEqual({ gold: 3, science: 2 });
-    expect(splitTrade(5, 30)).toEqual({ gold: 2, science: 3 });
+    expect(splitTrade(5, 50)).toEqual({ gold: 3, luxury: 0, science: 2 });
+    expect(splitTrade(5, 30)).toEqual({ gold: 2, luxury: 0, science: 3 });
+    // Luxury takes its share before science (STORY-046)
+    expect(splitTrade(10, 50, 30)).toEqual({ gold: 5, luxury: 3, science: 2 });
+    expect(splitTrade(10, 70, 30)).toEqual({ gold: 7, luxury: 3, science: 0 });
     const c = foundCity([], START);
     const y = { food: 0, shield: 0, trade: 10 };
     expect([cityGold(c, y, 30), cityScience(c, y, 30)]).toEqual([3, 7]);

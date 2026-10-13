@@ -211,4 +211,16 @@ describe('cities', () => {
     expect(cityYield(c, yieldOf).trade).toBe(before.trade + 2);
     expect([BUILDS.colossus.cost, BUILDS.gardens.cost, BUILDS.greatwall.cost]).toEqual([200, 300, 300]);
   });
+
+  it('luxury makes citizens happy: content to happy for 2, unhappy to happy for 4, unhappy to content for 2 (Freeciv)', () => {
+    const c = city(6);
+    // 4 content, 2 unhappy; 8 luxury: 4 content become happy
+    expect(cityMood(c, 0, 1, false, 8)).toEqual({ happy: 4, content: 0, unhappy: 2, calmed: 0, disorder: false });
+    // 2 luxury: one happy, and one happy is not enough for two unhappy
+    expect(cityMood(c, 0, 1, false, 2).disorder).toBe(true);
+    // A city of 5: 16 luxury make the 4 content happy (8) and the unhappy one happy too (4)
+    expect(cityMood(city(5), 0, 1, false, 16)).toMatchObject({ happy: 5, unhappy: 0, disorder: false });
+    // 10 luxury: 4 happy (8), and 2 left make the unhappy one content
+    expect(cityMood(city(5), 0, 1, false, 10)).toMatchObject({ happy: 4, content: 1, unhappy: 0 });
+  });
 });

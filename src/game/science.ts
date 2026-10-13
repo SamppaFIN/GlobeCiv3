@@ -36,11 +36,14 @@ export const advanceCost = (known: number) => 10 * (1 + known);
 /** Tax rates the player can choose: the share of trade that becomes gold. */
 export const TAX_RATES = [30, 50, 70] as const;
 export type TaxRate = (typeof TAX_RATES)[number];
+/** Luxury rates (STORY-046): the share of trade that makes citizens happy. */
+export const LUX_RATES = [0, 10, 20, 30] as const;
 
-/** A city's trade split into gold and science by the tax rate. */
-export function splitTrade(trade: number, tax: number): { gold: number; science: number } {
+/** A city's trade split into gold, luxury and science (the rest) by the rates. */
+export function splitTrade(trade: number, tax: number, lux = 0): { gold: number; luxury: number; science: number } {
   const gold = Math.round((trade * tax) / 100);
-  return { gold, science: trade - gold };
+  const luxury = Math.min(trade - gold, Math.round((trade * lux) / 100));
+  return { gold, luxury, science: trade - gold - luxury };
 }
 
 export class Research {

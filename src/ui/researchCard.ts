@@ -3,7 +3,7 @@
  * choose from with their cost and what they open, how trade is split between gold and
  * science, and the advances known. A bottom sheet like the city card; the game goes on.
  */
-import { TAX_RATES, type Advance } from '../game/science';
+import { LUX_RATES, TAX_RATES, type Advance } from '../game/science';
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
@@ -18,6 +18,7 @@ export interface ResearchView {
   hint: string | null;
   options: { advance: Advance; name: string; cost: string; opens: string; selected: boolean }[];
   tax: number;
+  lux: number;
   known: string;
 }
 
@@ -28,7 +29,7 @@ export interface ResearchCard {
   readonly visible: boolean;
 }
 
-export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Advance): void; setTax(tax: number): void }): ResearchCard {
+export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Advance): void; setTax(tax: number): void; setLux(lux: number): void }): ResearchCard {
   const el = document.createElement('section');
   el.className = 'city-card research-card';
   el.setAttribute('role', 'dialog');
@@ -54,11 +55,18 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
         ${TAX_RATES.map(t => `<label class="seg-opt"><input type="radio" name="research-tax" value="${t}">${t} %</label>`).join('')}
       </div>
     </div>
+    <div class="city-focus-row">
+      <span id="research-lux-label" class="city-build-label">Kaupasta ylellisyyteen: tekee asukkaista onnellisia</span>
+      <div class="seg city-focus" role="radiogroup" aria-labelledby="research-lux-label">
+        ${LUX_RATES.map(t => `<label class="seg-opt"><input type="radio" name="research-lux" value="${t}">${t} %</label>`).join('')}
+      </div>
+    </div>
     <span class="city-area research-known"></span>`;
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
   el.querySelectorAll<HTMLInputElement>('input[name="research-tax"]').forEach(i => i.addEventListener('change', () => on.setTax(Number(i.value))));
+  el.querySelectorAll<HTMLInputElement>('input[name="research-lux"]').forEach(i => i.addEventListener('change', () => on.setLux(Number(i.value))));
   const options = q('.city-builds');
   let last = '';
   const update = (v: ResearchView) => {
@@ -74,6 +82,7 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
     q('.research-hint').hidden = !v.hint;
     q('.research-hint').textContent = v.hint ?? '';
     el.querySelectorAll<HTMLInputElement>('input[name="research-tax"]').forEach(i => { i.checked = Number(i.value) === v.tax; });
+    el.querySelectorAll<HTMLInputElement>('input[name="research-lux"]').forEach(i => { i.checked = Number(i.value) === v.lux; });
     // One button per advance; the list shrinks as advances are learned
     options.querySelectorAll<HTMLButtonElement>('.city-build').forEach((opt, i) => { if (i >= v.options.length) opt.remove(); });
     v.options.forEach((o, i) => {

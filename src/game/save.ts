@@ -15,7 +15,7 @@ import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
 import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './units';
 import type { Progress } from './progress';
-import { ADVANCE_LIST, TAX_RATES, type Advance } from './science';
+import { ADVANCE_LIST, LUX_RATES, TAX_RATES, type Advance } from './science';
 
 export const SAVE_VERSION = 1;
 
@@ -72,6 +72,8 @@ export interface SaveData {
   tax: number;
   /** The current goal (STORY-041); saves from before start at the first and catch up. */
   goal: number;
+  /** The luxury rate (STORY-046); saves from before have none. */
+  lux: number;
 }
 
 /** Ranges the save is checked against. */
@@ -227,6 +229,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       })(),
       tax: s.tax === undefined ? 50 : oneOf(s.tax, TAX_RATES, 'tax'),
       goal: s.goal === undefined ? 0 : int(s.goal, 'goal', 0, 1000),
+      lux: s.lux === undefined ? 0 : oneOf(s.lux, LUX_RATES, 'lux'),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;
