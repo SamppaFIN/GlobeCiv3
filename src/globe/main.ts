@@ -1739,7 +1739,21 @@ const homeState = () => Math.floor((game?.startCity ?? 0) / 49);
 /** Provinces held, states conquered and states open, from the cities (conquest.ts). */
 function conquestNow(): Conquest {
   const table = regions.tileTable();
-  return conquest(play ? play.cities.map(c => table[c.tile]) : [], homeState(), regions.neighbors);
+  return conquest(play ? play.cities.map(c => table[c.tile]) : [], homeState(), regions.neighbors, provinceHasLand);
+}
+
+/** Whether a province has land, found once (STORY-058: a province without land counts as held). */
+const provinceLand = new Map<number, boolean>();
+function provinceHasLand(p: number): boolean {
+  if (!provinceLand.has(p)) {
+    let land = false;
+    for (let a = p * 7; a < p * 7 + 7 && !land; a++) {
+      if (!tilesOfArea.has(a)) tilesOfArea.set(a, cityTiles(regions, a));
+      land = tilesOfArea.get(a)!.some(t => Number.isFinite(world.cost(t)));
+    }
+    provinceLand.set(p, land);
+  }
+  return provinceLand.get(p)!;
 }
 
 /** The planet panel (STORY-057): the selected state, else home, and whether it can be the target. */
@@ -1808,7 +1822,7 @@ function updateLevels() {
       const share = level === 2 ? areaShare(id) : provinceShare(id);
       const sub = level === 2
         ? share === 0 ? 'Sumussa' : AREA_PLAN_NAMES[play.units.areaPlans.get(id) ?? 'explore']
-        : id === play.targetProvince ? 'Tavoite' : won.held.has(id) ? 'Hallussa' : `Kartoitettu ${Math.round(share * 100)} %`;
+        : id === play.targetProvince ? 'Tavoite' : !provinceHasLand(id) ? 'Ei maata' : won.held.has(id) ? 'Hallussa' : `Kartoitettu ${Math.round(share * 100)} %`;
       const isSelected = selection?.level === level && selection.id === id;
       list.push({ id, name: nameOf(level, id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
     }
