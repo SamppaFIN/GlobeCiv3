@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-050",
+  "story": "STORY-059",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "STORY-058:n avoin kysymys: saarellinen lääni ilman laivoja. World saa travel-hinnan, jota yksiköiden reitit käyttävät; cost pysyy maan hintana. Oma yksinkertaistus: laivaa ei rakenneta, koska yksiköt liikkuvat itse.",
+  "alternatives_considered": [
+    {
+      "name": "Rakennettava trireemi kuljetuksineen",
+      "pros": "Civ I:n tapa",
+      "cons": "Kuljetus ei sovi itsenäisesti liikkuviin yksiköihin, ja se on iso",
+      "rejected_because": "Yksinkertaisuus ensin"
+    }
+  ],
+  "files_to_change": [
+    "src/game/units.ts ja testi",
+    "src/game/science.ts, advisors.ts",
+    "src/globe/main.ts",
+    "tests/e2e/tile-card.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "travel ja testi",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Keksintö, kortti, neuvonantajat",
+      "verify": "E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

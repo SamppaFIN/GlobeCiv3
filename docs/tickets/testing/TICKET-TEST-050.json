@@ -1,0 +1,70 @@
+{
+  "id": "TICKET-TEST-050",
+  "story": "STORY-059",
+  "implementation_ticket": "TICKET-IMPL-050",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen E2E-tarkistus ei ajautunut, koska siemenen 42 aloituksen lähellä ei ollut kartoitettua rannikkoa (tarkistus olisi ollut tyhjä läpimeno); se tehtiin testikoukulla lähimpään rannikkoon.",
+    "files_changed": [
+      "tests/e2e/tile-card.e2e.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: saari meren takana",
+        "expected": "Ilman merikulkua ei perille, merikululla perille",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rannikkovesi kortissa",
+        "expected": "Ennen: \"Kartanteko avaa kulun\"; jälkeen: \"1 pv\"",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 158/158; E2E 66/66",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38452068943 (fb6941f, 49 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Saarille pääsee",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Rannikkovesikulku",
+        "checked": true
+      },
+      {
+        "item": "Maan tunnistus ennallaan",
+        "checked": true
+      },
+      {
+        "item": "Kortti ja keksintö",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

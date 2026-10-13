@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T19:06:15Z",
+    "generated_at": "2026-10-13T19:55:17Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "9c3c99a",
+    "git_commit": "fb6941f",
     "git_branch": "main",
     "language": "fi"
   },
@@ -160,7 +160,8 @@
         "STORY-055",
         "STORY-056",
         "STORY-057",
-        "STORY-058"
+        "STORY-058",
+        "STORY-059"
       ],
       "progress": 97
     }
@@ -1576,6 +1577,30 @@
         "plan": "PLAN-049",
         "implementation": "TICKET-IMPL-049",
         "testing": "TICKET-TEST-049"
+      }
+    },
+    {
+      "id": "STORY-059",
+      "epic": "EPIC-006",
+      "title": "Kartanteko: kulku rannikkovesillä",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että yksiköni pääsevät saarille ja veden takana olevaan maahan, jotta koko valtio on vallattavissa.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-016",
+        "STORY-058"
+      ],
+      "acceptance_criteria": [
+        "Kartanteko (Aakkoset) antaa yksiköiden kulkea rannikkovesillä (meriruutu maan vieressä) päivässä ruutu, kuten trireemi Freecivin civ1:ssä (Map Making, CoastStrict). Avomerelle ei mennä.",
+        "Kulku käyttää omaa hintaa, joten maan tunnistus (kaupunkipaikat, lääneissä maa, tiedustelijoiden kohteet) ei muutu.",
+        "Heksan kortti kertoo rannikkovedestä, ja keksintö mainitsee kulun. Valtion neuvonantajat tutkivat Kartanteon."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-050",
+        "implementation": "TICKET-IMPL-050",
+        "testing": "TICKET-TEST-050"
       }
     }
   ],
@@ -4028,6 +4053,46 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-050",
+      "story": "STORY-059",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "STORY-058:n avoin kysymys: saarellinen lääni ilman laivoja. World saa travel-hinnan, jota yksiköiden reitit käyttävät; cost pysyy maan hintana. Oma yksinkertaistus: laivaa ei rakenneta, koska yksiköt liikkuvat itse.",
+      "alternatives_considered": [
+        {
+          "name": "Rakennettava trireemi kuljetuksineen",
+          "pros": "Civ I:n tapa",
+          "cons": "Kuljetus ei sovi itsenäisesti liikkuviin yksiköihin, ja se on iso",
+          "rejected_because": "Yksinkertaisuus ensin"
+        }
+      ],
+      "files_to_change": [
+        "src/game/units.ts ja testi",
+        "src/game/science.ts, advisors.ts",
+        "src/globe/main.ts",
+        "tests/e2e/tile-card.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "travel ja testi",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Keksintö, kortti, neuvonantajat",
+          "verify": "E2E"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -5954,6 +6019,39 @@
         "notes": "Oletus hasLand = aina maata pitää aiemmat kutsut ennallaan."
       },
       "commit": "9c3c99a",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-050",
+      "story": "STORY-059",
+      "plan": "PLAN-050",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/units.ts",
+        "src/game/units.test.ts",
+        "src/game/science.ts",
+        "src/game/advisors.ts",
+        "src/globe/main.ts",
+        "tests/e2e/tile-card.e2e.ts"
+      ],
+      "change_summary": "World.travel ja travel() reiteille, askeleille ja päiville; kohteet pysyvät maalla. main.ts: coastal(), canSail() ja world.travel; kortin Kulku-rivi; ilmoitus keksinnöstä; testikoukku globeDebug.tileView.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "World.travel",
+          "Units: reitit ja askeleet"
+        ],
+        "call_sites_found": [
+          "findPath ja nearestTile units.ts:ssä"
+        ],
+        "call_sites_updated": [
+          "src/game/units.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Rosvot kulkevat yhä maitse."
+      },
+      "commit": "fb6941f",
       "progress": 100
     }
   ],
@@ -10376,6 +10474,76 @@
           },
           {
             "item": "Valtaus siemenellä 5",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-050",
+      "story": "STORY-059",
+      "implementation_ticket": "TICKET-IMPL-050",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Ensimmäinen E2E-tarkistus ei ajautunut, koska siemenen 42 aloituksen lähellä ei ollut kartoitettua rannikkoa (tarkistus olisi ollut tyhjä läpimeno); se tehtiin testikoukulla lähimpään rannikkoon.",
+        "files_changed": [
+          "tests/e2e/tile-card.e2e.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: saari meren takana",
+            "expected": "Ilman merikulkua ei perille, merikululla perille",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: rannikkovesi kortissa",
+            "expected": "Ennen: \"Kartanteko avaa kulun\"; jälkeen: \"1 pv\"",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 158/158; E2E 66/66",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38452068943 (fb6941f, 49 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Saarille pääsee",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Rannikkovesikulku",
+            "checked": true
+          },
+          {
+            "item": "Maan tunnistus ennallaan",
+            "checked": true
+          },
+          {
+            "item": "Kortti ja keksintö",
             "checked": true
           }
         ],
