@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-042",
+  "story": "STORY-052",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin pelitesti 2026-10-13: \"Raunioita tulee liikaa.. tee niin että sieltä saa joko insta resursseja, muitakin yksiköitä, teknologiaa, ja harvoin uusia tutkimusmatkoja. Älä anna käyttäjän valita. Ruudulle tulee liikaa hälinää.. tiede nappia en löytänyt.\" Hälinäksi Sami nimesi valintakortin. Palkinnot Freecivin oletusmajoista (data/default/default.lua _deflua_hut_enter_callback, commit b6156f2e2d) ilman barbaareja, kaupunkia ja karttaa; barbaarien paikalla uusi tiedustelija. Tiheys 1/180 on oma.",
+  "alternatives_considered": [
+    {
+      "name": "Tiede-nappi yläpaneeliin",
+      "pros": "Aina samassa paikassa",
+      "cons": "Puhelimella yläriville ei mahdu kuudetta nappia",
+      "rejected_because": "Pilleri alapaneelissa kertoo samalla edistymisen"
+    },
+    {
+      "name": "Sotilas raunion ruutuun (Freeciv)",
+      "pros": "Freecivin tapa",
+      "cons": "Sotilaat pysyvät kaupungeissa",
+      "rejected_because": "Sotilas liittyy pääkaupunkiin"
+    }
+  ],
+  "files_to_change": [
+    "src/game/discoveries.ts ja testi",
+    "src/game/save.ts ja testi",
+    "src/globe/main.ts",
+    "src/ui/discoveryCard.ts ja gameHud.ts",
+    "tests/e2e/discovery.e2e.ts ja science.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Rauniosäännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Rauniot peliin, kortti ja pilleri pois, tiede-pilleri",
+      "verify": "E2E ja kuvakaappaus"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

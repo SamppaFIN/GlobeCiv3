@@ -1,0 +1,39 @@
+{
+  "id": "TICKET-IMPL-042",
+  "story": "STORY-052",
+  "plan": "PLAN-042",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/discoveries.ts",
+    "src/game/discoveries.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/discoveryCard.ts",
+    "src/ui/gameHud.ts",
+    "tests/e2e/discovery.e2e.ts",
+    "tests/e2e/science.e2e.ts"
+  ],
+  "change_summary": "discoveries.ts: isRuin() ja ruinAt() (palkinto ja keksinnön valinta siemenestä). main.ts: openRuin() antaa palkinnon, ilmoittaa ja hehkuttaa ruudun; löytökortin valinta, Play.discoveries ja findOpen poistettiin. Kortti on nyt vain kaupunkipaikoille ja rosvoille. HUDin löytöpilleri pois, tiede-pilleri aina näkyvissä. Tallennus lukee vanhat löydöt ilman valintoja ja avaa ne raunioina.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "discoveryAt, applyFind, FINDS (poistettu)",
+      "ChoiceKind",
+      "GameHudState.finds ja chooseResearch → research",
+      "SaveData.discoveries (vain vanhat)",
+      "globeDebug.discoverySites (kind)"
+    ],
+    "call_sites_found": [
+      "main.ts, save.ts, discoveryCard.ts, gameHud.ts, E2E"
+    ],
+    "call_sites_updated": [
+      "kaikki"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Vanhojen löytöjen ruutubonukset säilyvät tallennuksissa ja tuotoissa."
+  },
+  "commit": "f71454f",
+  "progress": 100
+}

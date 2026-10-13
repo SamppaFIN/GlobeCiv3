@@ -1,0 +1,93 @@
+{
+  "id": "TICKET-TEST-042",
+  "story": "STORY-052",
+  "implementation_ticket": "TICKET-IMPL-042",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Säännön muutos. Vanhat löytötestit ja tallennustesti, joka vaati löydön valinnat, kuvasivat poistettua sääntöä, ja ne korvattiin tarkoituksella. Puhelintesti mittaa nyt saman kortin rosvokortilla. Aloituslennon kestotesti petti koko sarjan kuormassa (2,72 s, alaraja 2,9 s) ja meni läpi yksinään, kuten aiemminkin.",
+    "files_changed": [
+      "src/game/discoveries.test.ts",
+      "src/game/save.test.ts",
+      "tests/e2e/discovery.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: raunioiden tiheys ja palkintojen osuudet",
+        "expected": "Noin 1/180; kulta 5/11, keksintö 3/11, sotilas 2/11, tiedustelija 1/11",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: vanha tallennus",
+        "expected": "Löytö valintoineen latautuu ilman valintoja",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: rauniot",
+        "expected": "Ilmoitus \"Rauniot · Tiedustelija N: …\", ei korttia eikä pilleriä, peli jatkuu",
+        "result": "pass (ruins.png: 25 kultaa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tiede-pilleri",
+        "expected": "\"Tiede · Keramiikka N %\" näkyy ja avaa kortin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kortti puhelimella",
+        "expected": "Rosvokortti mahtuu 390 × 844:ään, valinnat 64 px",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 148/148; E2E 61/62 rinnakkain, aloituslento yksinään läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38412629287 (f71454f, 45 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Raunioita sopivasti, ei hälinää, tiede löytyy",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Rauniot harvemmin",
+        "checked": true
+      },
+      {
+        "item": "Palkinto heti ilman valintaa",
+        "checked": true
+      },
+      {
+        "item": "Kortti ja pilleri pois",
+        "checked": true
+      },
+      {
+        "item": "Tiede-pilleri",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}
