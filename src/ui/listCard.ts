@@ -2,16 +2,19 @@
  * listCard.ts — the cities and the units as lists (STORY-042, Sami: "hankala hallinnoida
  * rakennuksia ja ukkeleita, tarvitaan listanäkymä"). Two tabs; a city row opens its card and
  * a unit row selects the unit, both bringing it into view. A bottom sheet like the city card.
+ * The third tab, Talous, tells what the realm gets a day (STORY-048).
  */
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
-export type ListTab = 'cities' | 'units';
+export type ListTab = 'cities' | 'units' | 'economy';
 
 export interface ListView {
   tab: ListTab;
   cities: { id: number; name: string; size: string; line: string }[];
   units: { index: number; name: string; kind: string; line: string }[];
+  /** Rows of the economy tab: what comes in and where it goes. */
+  economy: { title: string; right: string; line: string }[];
 }
 
 export interface ListCard {
@@ -35,6 +38,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
     <div class="seg city-focus" role="radiogroup" aria-label="Näytä">
       <label class="seg-opt"><input type="radio" name="list-tab" value="cities"><span class="list-tab-cities"></span></label>
       <label class="seg-opt"><input type="radio" name="list-tab" value="units"><span class="list-tab-units"></span></label>
+      <label class="seg-opt"><input type="radio" name="list-tab" value="economy">Talous</label>
     </div>
     <div class="list-rows"></div>`;
   root.appendChild(el);
@@ -50,18 +54,20 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
     q('.list-tab-cities').textContent = `Kaupungit (${v.cities.length})`;
     q('.list-tab-units').textContent = `Yksiköt (${v.units.length})`;
     el.querySelectorAll<HTMLInputElement>('input[name="list-tab"]').forEach(i => { i.checked = i.value === v.tab; });
-    const items = v.tab === 'cities'
+    const items: { title: string; right: string; line: string; go?: () => void }[] = v.tab === 'cities'
       ? v.cities.map(c => ({ title: c.name, right: c.size, line: c.line, go: () => on.city(c.id) }))
-      : v.units.map(u => ({ title: u.name, right: u.kind, line: u.line, go: () => on.unit(u.index) }));
+      : v.tab === 'units' ? v.units.map(u => ({ title: u.name, right: u.kind, line: u.line, go: () => on.unit(u.index) }))
+      : v.economy;
     rows.replaceChildren(...items.map(it => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'city-build list-row';
+      // Economy rows only tell; the others are buttons
+      const b = document.createElement(it.go ? 'button' : 'div');
+      if (b instanceof HTMLButtonElement) b.type = 'button';
+      b.className = it.go ? 'city-build list-row' : 'city-build list-row list-info';
       b.innerHTML = '<span class="city-build-top"><span class="city-build-name"></span><span class="city-build-eta"></span></span><span class="city-build-info"></span>';
       b.querySelector('.city-build-name')!.textContent = it.title;
       b.querySelector('.city-build-eta')!.textContent = it.right;
       b.querySelector('.city-build-info')!.textContent = it.line;
-      b.addEventListener('click', it.go);
+      if (it.go) b.addEventListener('click', it.go);
       return b;
     }));
     if (!items.length) {
