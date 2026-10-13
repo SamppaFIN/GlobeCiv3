@@ -27,7 +27,8 @@ import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, LUX_RATES, NEEDS, Research, type Advance } from '../game/science';
-import { GOVERNMENTS, revolutionDays, type Government } from '../game/government';
+import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
+import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
@@ -552,6 +553,8 @@ interface Play {
   /** The government, and the day anarchy ends, or −1 (STORY-047). */
   gov: Government;
   anarchyUntil: number;
+  /** The tapped hex whose card is open (STORY-055). */
+  tileOpen: number | null;
   /** The city-level advisor, its card, and what it did lately (STORY-049). */
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
@@ -650,7 +653,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -1805,11 +1808,78 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
   }
   if (city) {
     play.openCity = city.id;
+    play.tileOpen = null;
     return true;
   }
-  const selected = play.units.units[play.selected];
-  if (hit && selected === play.units.settler) return play.units.setSite(pointToTile(hit), world);
-  return false;
+  if (!hit) return false;
+  const tile = pointToTile(hit);
+  // With the settler selected a tap picks its site, and its actions stay in view
+  if (play.units.units[play.selected] === play.units.settler) return play.units.setSite(tile, world);
+  // What the hex holds (STORY-055)
+  play.tileOpen = tile;
+  play.openCity = null;
+  play.listOpen = play.researchOpen = play.advisorOpen = false;
+  return true;
+}
+
+const tileCard = createTileCard(hud_root, { close: () => { if (play) play.tileOpen = null; } });
+
+const plus = (y: { food: number; shield: number; trade: number }) =>
+  [y.food ? `+${y.food} ruokaa` : '', y.shield ? `+${y.shield} tuotantoa` : '', y.trade ? `+${y.trade} kauppaa` : ''].filter(Boolean).join(', ');
+
+/** What a hex gives: to the city working it or whose area it is in (the Kolossi and the government count), else under the government alone. */
+function tileYieldNow(id: number) {
+  const p = play!;
+  const city = p.cities.find(c => c.tile === id);
+  const worked = workedByCity();
+  const by = p.cities.findIndex((_, i) => worked[i].includes(id));
+  const owner = by >= 0 ? p.cities[by] : p.cities.find(c => tilesInRings(c.tile, cityRings(c.size)).includes(id));
+  const raw = yieldOf(id, !!city);
+  return { city, owner, worked: by >= 0, y: owner ? tileOutput(owner, raw, p.gov) : governed(raw, p.gov) };
+}
+
+/** The tapped hex's card: terrain, resource, yield, improvements, city, units, crossing. */
+function tileView(id: number): TileView {
+  const p = play!;
+  const kicker = nameOf(2, regions.tileTable()[id]).name;
+  if (!mapState.isMapped(id)) return { kicker, title: 'Kartoittamaton', rows: [{ label: 'Tiedossa', value: 'Ei vielä mitään: tiedustelija kartoittaa ruudun.' }] };
+  const terrain = terrainOf(id);
+  const kind = tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null;
+  const { city, owner, worked, y } = tileYieldNow(id);
+  const done = (['irrigation', 'mine', 'road'] as const).filter(k => p.improvements.has(id, k)).map(k => IMPROVEMENT_NAMES[k]);
+  const units = p.units.units.filter(u => u.tile === id).map(u => u.name);
+  const bonus = p.bonuses.get(id);
+  const cost = world.cost(id);
+  const rows: TileView['rows'] = [
+    { label: 'Tuottaa', value: `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade} päivässä` },
+    ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }] : []),
+    { label: 'Parannukset', value: city ? 'kaupungin keskus: kastelu ja tie' : done.length ? done.join(', ') : 'ei' },
+    ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
+    { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
+    ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
+    ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
+    { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : 'vettä: maayksiköt eivät kulje' },
+    ...(p.units.isOpen(id, world) ? [] : [{ label: 'Valtio', value: 'lukossa, kunnes kotivaltio on vallattu' }]),
+  ];
+  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : TERRAIN_RULES[terrain].name, rows };
+}
+
+function updateTileCard() {
+  if (!play) return;
+  // Another card closes this one
+  if (play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible) play.tileOpen = null;
+  const id = play.tileOpen;
+  if (id === null || viewLevel !== 3) {
+    if (tileCard.visible) tileCard.hide();
+    return;
+  }
+  const view = tileView(id);
+  if (tileCard.visible) tileCard.update(view);
+  else tileCard.show(view);
+  // The hex's yield on the map marks it
+  const at = toScreen(tileCenter(id));
+  const y = mapState.isMapped(id) ? tileYieldNow(id).y : null;
+  tileYields.update(y ? [{ x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: false }] : []);
 }
 
 /** The top panel's meter: the mapping of the home province or state, then the provinces held (STORY-016). */
@@ -1857,6 +1927,7 @@ function updatePlay(dt: number) {
   updateCityCard();
   updateResearchCard();
   updateAdvisorCard();
+  updateTileCard();
   checkGoals();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
@@ -2123,7 +2194,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, stateAdvisor: play?.stateAdvisor ?? null, targetProvince: play?.targetProvince ?? null, goal: play?.goal ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, targetProvince: play?.targetProvince ?? null, goal: play?.goal ?? null,
     };
   },
 };
