@@ -116,6 +116,8 @@ test.describe('on a phone', () => {
     const errors = await startGame(page);
     await findDiscovery(page);
     await page.getByRole('button', { name: /odottaa$/ }).click();
+    // The card shows on the next frame, which on a slow runner comes later
+    await expect(page.locator('.discovery-card')).toBeVisible();
     const card = (await page.locator('.discovery-card').boundingBox())!;
     expect(card.x).toBeGreaterThanOrEqual(0);
     expect(card.x + card.width).toBeLessThanOrEqual(390);
