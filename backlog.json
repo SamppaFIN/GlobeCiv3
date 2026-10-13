@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T03:42:06Z",
+    "generated_at": "2026-10-13T10:22:07Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "ba31d5c",
+    "git_commit": "d3da866",
     "git_branch": "main",
     "language": "fi"
   },
@@ -148,9 +148,14 @@
         "STORY-043",
         "STORY-044",
         "STORY-045",
-        "STORY-046"
+        "STORY-046",
+        "STORY-047",
+        "STORY-048",
+        "STORY-049",
+        "STORY-050",
+        "STORY-051"
       ],
-      "progress": 96
+      "progress": 97
     }
   ],
   "stories": [
@@ -1267,6 +1272,131 @@
         "plan": "PLAN-036",
         "implementation": "TICKET-IMPL-036",
         "testing": "TICKET-TEST-036"
+      }
+    },
+    {
+      "id": "STORY-047",
+      "epic": "EPIC-006",
+      "title": "Hallitusmuodot",
+      "type": "story",
+      "narrative": "Pelaajana haluan vaihtaa itsevaltiuden monarkiaan, jotta kaupungit tuottavat paremmin ja tutkimuksella on pitkän aikavälin tavoite.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-040",
+        "STORY-044",
+        "STORY-046"
+      ],
+      "acceptance_criteria": [
+        "Peli alkaa itsevaltiudessa: ruudun ruoasta, tuotannosta tai kaupasta, joka on yli 2, menee yksi hukkaan (Freeciv civ1 Output_Penalty_Tile 2, Kolossin jälkeen).",
+        "Uudet tutkimukset Lakikokoelma (Aakkoset) ja Monarkia (Hautajaisriitit ja Lakikokoelma). Monarkian tunteva pelaaja aloittaa Tutkimus-kortista vallankumouksen: 1–5 päivää anarkiaa (revolen 5, satunnainen), jolloin kaikki kauppa on ylellisyyttä, sitten Monarkia.",
+        "Monarkia: ei ruuturangaistusta, ei ilmaisia yksiköitä, sotilaat rauhoittavat enintään kolme, tyytyväisiä 11 kaupunkiin asti (anarkia 9, itsevaltius 10). Hallitus tallentuu, ja vanhat tallennukset ovat itsevaltiudessa."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-037",
+        "implementation": "TICKET-IMPL-037",
+        "testing": "TICKET-TEST-037"
+      }
+    },
+    {
+      "id": "STORY-048",
+      "epic": "EPIC-006",
+      "title": "Talous-tilasto",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä, mitä resursseja valtio saa ja mihin ne menevät, jotta ymmärrän talouden yhdellä silmäyksellä.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-042",
+        "STORY-046",
+        "STORY-047"
+      ],
+      "acceptance_criteria": [
+        "Luettelossa on kaupunkien ja yksiköiden lisäksi kolmas välilehti Talous.",
+        "Talous kertoo kassan, tulot, rakennusten ylläpidon ja nettotuloksen; ruoan ja ylijäämän; tuotannon ja yksiköiden ylläpidon; kaupan jaon kullaksi, tieteeksi ja ylellisyydeksi verokantoineen; työstetyt erikoisresurssit; sekä jokaisen kaupungin päivän.",
+        "Talouden rivit vain kertovat (eivät ole nappeja), ja kortti näyttää välilehdet ehjinä, vaikka rivejä on paljon."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-038",
+        "implementation": "TICKET-IMPL-038",
+        "testing": "TICKET-TEST-038"
+      }
+    },
+    {
+      "id": "STORY-049",
+      "epic": "EPIC-006",
+      "title": "Kaupunkialueen neuvonantajat",
+      "type": "story",
+      "narrative": "Pelaajana haluan valita kaupunkialuetasolle neuvonantajan, joka hoitaa kaupungit ja yksiköt puolestani, jotta minun ei tarvitse mikromanageroida.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-039",
+        "STORY-043",
+        "STORY-047"
+      ],
+      "acceptance_criteria": [
+        "Yläpaneelin neuvonantajanappi avaa kortin, jossa on Oma ohjaus ja kolme neuvonantajaa: Kasvattaja, Kartoittaja ja Vartija, kukin kuvauksineen.",
+        "Valittu neuvonantaja toimii joka päivä. Kasvattaja: ruoka-painotus, temppeli ennen levottomuutta, viljavarasto koosta 2, kaupunkien uudisasukkaat kehittävät maata. Kartoittaja: tiedustelijat tutkivat ja suuntaavat kotiläänin vähiten kartoitetulle alueelle. Vartija: tuotanto-painotus, sotilas joka kaupunkiin, uhatessa toinen ja muuri, ja se vastaa rosvokorttiin itse.",
+        "Kortti kertoo, mitä neuvonantaja teki viimeksi, ja kaupunkikortti kertoo, kuka kaupunkia hoitaa. Valinta tallentuu."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-039",
+        "implementation": "TICKET-IMPL-039",
+        "testing": "TICKET-TEST-039"
+      }
+    },
+    {
+      "id": "STORY-050",
+      "epic": "EPIC-006",
+      "title": "Läänin neuvonantajat",
+      "type": "story",
+      "narrative": "Pelaajana haluan läänitasolle oman neuvonantajan, joka hoitaa läänin asutuksen, retkikunnat tai puolustuksen puolestani.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-026",
+        "STORY-049"
+      ],
+      "acceptance_criteria": [
+        "Läänitasolla neuvonantajanappi avaa läänin oman kortin: Oma ohjaus, Asuttaja, Tutkimusmatkailija ja Vartija.",
+        "Asuttaja merkitsee läänin kaksi parasta kartoitettua aluetta ilman kaupunkia asutettaviksi ja hyväksyy kaupunkipaikat itse. Tutkimusmatkailija poistaa Ohita-merkinnät ja lähettää retkikunnan lähimmälle alle 60 % kartoitetulle alueelle, ensin läänissä ja sitten valtiossa. Vartija pitää tiedustelijat läänissä, antaa kaupungille ilman sotilasta sotilaan ja rajakaupungille muurin.",
+        "Läänin neuvonantajan rakennukset ja retkikunnat menevät kaupunkitason edelle, eikä odottavan paikan uudisasukasta vaihdeta. Valinta tallentuu."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-040",
+        "implementation": "TICKET-IMPL-040",
+        "testing": "TICKET-TEST-040"
+      }
+    },
+    {
+      "id": "STORY-051",
+      "epic": "EPIC-006",
+      "title": "Valtion neuvonantajat",
+      "type": "story",
+      "narrative": "Pelaajana haluan valtiotasolle oman neuvonantajan, joka hoitaa tieteen, verot, valtion linjan ja tavoitteen puolestani.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-040",
+        "STORY-046",
+        "STORY-047",
+        "STORY-050"
+      ],
+      "acceptance_criteria": [
+        "Valtiotasolla neuvonantajanappi avaa valtion oman kortin: Oma ohjaus, Laajentaja, Oppinut ja Kenraali.",
+        "Laajentaja: linja Laajentuminen, vero 50 %, kasvun keksinnöt ensin, tavoitteeksi lähin valtion lääni alle 60 % kartoitettu. Oppinut: linja Tutkimus, vero 30 %, kirjoitus ja kauppa ensin. Kenraali: linja Puolustus, vero 70 %, pronssi ja muuraus ensin, ja se ostaa uhatun kaupungin sotilaan tai muurin.",
+        "Jokainen aloittaa vallankumouksen Monarkiaan, kun se tunnetaan, nostaa ylellisyyttä levottomuudessa askeleen kerrallaan ja laskee sitä kymmenen rauhallisen päivän jälkeen. Valinta tallentuu."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-041",
+        "implementation": "TICKET-IMPL-041",
+        "testing": "TICKET-TEST-041"
       }
     }
   ],
@@ -3167,6 +3297,227 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-037",
+      "story": "STORY-047",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Peruspeli: Civ I:n ensimmäinen hallitusmuodon vaihto. Luvut Freecivin civ1-sääntösarjasta (commit b6156f2e2d): effects.ruleset Output_Penalty_Tile, Unit_Upkeep_Free_Per_City, Empire_Size_Base ja Martial_Law_Max; techs.ruleset Code of Laws ja Monarchy; common/city.c city_tile_output (rangaistus Kolossin jälkeen); server/plrhand.c revolentype_length ja common/game.h (RANDOM, revolen 5); governments.ruleset (anarkiassa ei veroja eikä tutkimusta). Korruptiota ei mallinneta vielä.",
+      "alternatives_considered": [
+        {
+          "name": "Hallitus vaihtuu heti",
+          "pros": "Yksinkertainen",
+          "cons": "Vallankumouksella ei ole hintaa",
+          "rejected_because": "Anarkia on Civ I:n peruskustannus"
+        },
+        {
+          "name": "Ruuturangaistus vain uusille peleille",
+          "pros": "Vanhat pelit eivät hidastu",
+          "cons": "Kaksi sääntöä",
+          "rejected_because": "Tallennus on kehitysvaiheessa, ja itsevaltius on aloitushallinto"
+        }
+      ],
+      "files_to_change": [
+        "src/game/government.ts (uusi) ja testit",
+        "src/game/cities.ts, science.ts, save.ts ja testit",
+        "src/globe/main.ts",
+        "src/ui/researchCard.ts ja hud.css",
+        "tests/e2e/government.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Hallitussäännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Peliin: vallankumous, anarkia, Monarkia, tallennus",
+          "verify": "E2E ja kuvakaappaukset"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-038",
+      "story": "STORY-048",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin pyyntö 2026-10-13: \"ekonomia tilasto, mikä kertoo mitä resursseja valtio saa\". Kaupunki- ja yksikkölista olivat jo luettelossa (STORY-042), joten talous tulee sen kolmanneksi välilehdeksi. Summat lasketaan puhtaassa funktiossa economy() samoista kaupunkien päivistä kuin pelin kulku.",
+      "alternatives_considered": [
+        {
+          "name": "Oma talouskortti",
+          "pros": "Enemmän tilaa",
+          "cons": "Neljäs nappi yläpaneeliin",
+          "rejected_because": "Luettelo on jo valtakunnan yleiskuva"
+        }
+      ],
+      "files_to_change": [
+        "src/game/economy.ts (uusi) ja testi",
+        "src/ui/listCard.ts, gameHud.ts ja hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/list.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "economy() ja testi",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Talous-välilehti",
+          "verify": "E2E ja kuvakaappaus"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-039",
+      "story": "STORY-049",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin pyyntö 2026-10-13: jokaisella karttatasolla oma neuvonantaja, joka mikromanageroi alueen, kolmesta valittavissa. Sami valitsi, että kaupunkitason \"tutkiminen\" on kartoitusta (tiede kuuluu valtion neuvonantajalle). Tämä story tekee kaupunkialuetason; lääni (STORY-050) ja valtio (STORY-051) seuraavat. Säännöt ovat puhtaassa moduulissa advisors.ts (oma suunnittelu).",
+      "alternatives_considered": [
+        {
+          "name": "Neuvonantaja kaupunkikohtaisesti",
+          "pros": "Joustavampi",
+          "cons": "Enemmän valintoja",
+          "rejected_because": "Sami: jokaiselle tasolle oma neuvonantaja"
+        },
+        {
+          "name": "Neuvonantaja vain ehdottaa",
+          "pros": "Pelaaja päättää",
+          "cons": "Ei vähennä mikromanagerointia",
+          "rejected_because": "Sami: mikromanageroi puolestasi"
+        }
+      ],
+      "files_to_change": [
+        "src/game/advisors.ts (uusi) ja testi",
+        "src/ui/advisorCard.ts (uusi), gameHud.ts, cityCard.ts ja hud.css",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "tests/e2e/advisors.e2e.ts (uusi)"
+      ],
+      "open_questions": [
+        "Läänin ja valtion neuvonantajat (STORY-050 ja STORY-051)"
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Säännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Kortti, nappi, päivän toimet, tallennus",
+          "verify": "E2E ja kuvakaappaukset, myös puhelinleveys"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-040",
+      "story": "STORY-050",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin valinta 2026-10-13: läänin neuvonantajat Asuttaja, Tutkimusmatkailija ja Vartija (samat teemat kuin kaupunkitasolla, taso ylempänä). Säännöt advisors.ts:ssä (oma suunnittelu), päivän toimet main.ts:n advisorDay():ssa, ja sama kortti näyttää tason mukaisen neuvonantajan.",
+      "alternatives_considered": [
+        {
+          "name": "Rakentaja puolustuksen tilalle",
+          "pros": "Maanparannus läänin tasolla",
+          "cons": "Puolustus jäisi vain kaupunkitasolle",
+          "rejected_because": "Samin valinta"
+        }
+      ],
+      "files_to_change": [
+        "src/game/advisors.ts ja testi",
+        "src/game/units.ts (keepHome)",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/ui/hud.css",
+        "tests/e2e/province-advisors.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Säännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Läänin kortti, päivän toimet, kaupunkipaikan hyväksyntä, tallennus",
+          "verify": "E2E ja kuvakaappaus"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-041",
+      "story": "STORY-051",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin valinta 2026-10-13: kaupunkitason tutkiminen on kartoitusta, ja tiede kuuluu valtion neuvonantajalle. Valtion neuvonantaja menee ensimmäisenä (tavoite ja retkikunta), sitten lääni ja kaupunki. Nimet ja säännöt ovat omia; keksintöjen järjestykset ovat Linssin ehdotus.",
+      "alternatives_considered": [
+        {
+          "name": "Tiede kaupunkitasolle",
+          "pros": "Lähempänä kaupunkeja",
+          "cons": "Verot ja tutkimus ovat koko valtion asioita",
+          "rejected_because": "Samin valinta: kaupunkitasolla kartoitus"
+        }
+      ],
+      "files_to_change": [
+        "src/game/advisors.ts ja testi",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/ui/hud.css",
+        "tests/e2e/state-advisors.e2e.ts (uusi)"
+      ],
+      "open_questions": [
+        "Planeettatasolla ei vielä ole toimintoja eikä neuvonantajaa (valloitus puuttuu)"
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Säännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Valtion kortti ja päivän toimet",
+          "verify": "E2E ja kuvakaappaus"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -4613,6 +4964,203 @@
         "notes": "Oletusparametrit pitävät vanhat kutsut ennallaan."
       },
       "commit": "ba31d5c",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-037",
+      "story": "STORY-047",
+      "plan": "PLAN-037",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/government.ts",
+        "src/game/government.test.ts",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/science.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/researchCard.ts",
+        "src/ui/hud.css",
+        "tests/e2e/government.e2e.ts"
+      ],
+      "change_summary": "government.ts: GOVERNMENTS (rangaistus, ilmaiset yksiköt, valtakunnan koko, sotatila), governed ja revolutionDays. cities.ts: tileOutput (Kolossi ja rangaistus), cityYield, baseContent ja cityMood hallituksen mukaan; FREE_UNITS korvautui. main.ts: Play.gov ja anarchyUntil, rates() (anarkiassa kaikki ylellisyyteen), Monarkia alkaa päivän vaihteessa, tuottomerkit hallituksen mukaan. Tutkimus-korttiin hallitusrivi ja vallankumousnappi.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "cityYield(gov)",
+          "cityMood(gov)",
+          "baseContent(gov)",
+          "FREE_UNITS (poistettu)",
+          "Advance (law, monarchy)",
+          "SaveData.gov ja anarchyUntil"
+        ],
+        "call_sites_found": [
+          "cityYield, cityMood, baseContent, FREE_UNITS"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/cities.test.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Itsevaltius hidastaa alkukasvua: kasteltu ruohokeskusta ja kalavesi antavat 2 ruokaa 3:n sijaan."
+      },
+      "commit": "0a618f4",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-038",
+      "story": "STORY-048",
+      "plan": "PLAN-038",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/economy.ts",
+        "src/game/economy.test.ts",
+        "src/ui/listCard.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/list.e2e.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/science.e2e.ts"
+      ],
+      "change_summary": "economy() summaa kaupunkien päivät ja laskee erikoisresurssit. Luettelon kolmas välilehti Talous; rivit ovat tietorivejä. Luettelonapin nimi on nyt \"Luettelo: kaupungit, yksiköt ja talous\". Kortin osat eivät enää litisty, kun kortti vierii (koskee kaikkia kortteja).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "ListTab (economy)",
+          "ListView.economy",
+          "luettelonapin aria-label",
+          ".city-card > * flex-shrink"
+        ],
+        "call_sites_found": [
+          "luettelonappi kolmessa E2E-testissä"
+        ],
+        "call_sites_updated": [
+          "tests/e2e/list.e2e.ts",
+          "tests/e2e/city.e2e.ts",
+          "tests/e2e/science.e2e.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Ensimmäisessä kuvakaappauksessa välilehdet litistyivät, kun rivit täyttivät kortin; korjattu flex-shrinkillä."
+      },
+      "commit": "9895444",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-039",
+      "story": "STORY-049",
+      "plan": "PLAN-039",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/ui/advisorCard.ts",
+        "src/ui/gameHud.ts",
+        "src/ui/cityCard.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/advisors.e2e.ts"
+      ],
+      "change_summary": "cityAdvice() antaa painotuksen ja rakennuksen, exploreTarget() kartoituskohteen. main.ts: advisorDay() päivän lopussa, Vartija vastaa rosvokorttiin updateRaidAlertissa, neuvonantajakortti ja loki. Yläpaneeliin oma ikoni (rintakuva), kaupunkikorttiin neuvonantajarivi. Päivän numero ei enää rivity puhelimella.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "GameHudState.advisor",
+          "GameHudHandlers.openAdvisor",
+          "CityView.advisor",
+          "SaveData.cityAdvisor",
+          "updateRaidAlert"
+        ],
+        "call_sites_found": [
+          "createGameHud, createCityCard"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Neuvonantaja ohittaa pelaajan painotuksen ja rakennusvalinnan joka päivä; Oma ohjaus palauttaa ne pelaajalle."
+      },
+      "commit": "13d5793",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-040",
+      "story": "STORY-050",
+      "plan": "PLAN-040",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/game/units.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/hud.css",
+        "tests/e2e/province-advisors.e2e.ts"
+      ],
+      "change_summary": "settleAreas(), expeditionTarget() ja provinceBuild(). Units.keepHome rajaa tiedustelijat kotilääniin. advisorDay() hoitaa molemmat tasot, Asuttaja vastaa kaupunkipaikkakorttiin updateSiteOfferissa, ja kortti ja nappi näyttävät läänin neuvonantajan läänitasolla. Tason paneeli piiloutuu kortin alle.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Units.keepHome ja tiedustelijoiden aluerajaus",
+          "advisorDay",
+          "updateSiteOffer",
+          "SaveData.provinceAdvisor"
+        ],
+        "call_sites_found": [
+          "Units.plan"
+        ],
+        "call_sites_updated": [
+          "src/game/units.ts",
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Asuttaja omistaa kotiläänin painotukset: muut kuin valitut alueet palaavat Tutki-tilaan."
+      },
+      "commit": "ad70f78",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-041",
+      "story": "STORY-051",
+      "plan": "PLAN-041",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/ui/hud.css",
+        "tests/e2e/state-advisors.e2e.ts"
+      ],
+      "change_summary": "STATE_PLANS (linja, vero, keksintöjen järjestys), nextAdvance() ja luxuryStep(). main.ts: stateAdvisorDay(), startRevolution() yhteinen Tutkimus-kortin kanssa, kortti ja nappi valtiotasolla. Alueiden nimilaput piiloutuvat kortin ajaksi (ne nousivat yläpaneelin päälle).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "startRevolution (Tutkimus-kortin handlerista)",
+          "advisorDay",
+          "SaveData.stateAdvisor",
+          "#hud.research-open .chips"
+        ],
+        "call_sites_found": [
+          "researchCard revolution"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Anarkiassa veroa ei aseteta; Kenraalin 70 % ja ylellisyyden 30 % mahtuvat yhteen."
+      },
+      "commit": "f6bd402",
       "progress": 100
     }
   ],
@@ -8054,6 +8602,394 @@
           },
           {
             "item": "Onnelliset civ1-järjestyksessä",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-037",
+      "story": "STORY-047",
+      "implementation_ticket": "TICKET-IMPL-037",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Viisi kaupunkitestiä oletti tuotot ilman itsevaltiuden rangaistusta, joka on nyt sääntö. Taulukko- ja kasvutestit nimeävät nyt Monarkian, ja itsevaltiuden testit (ylläpito, Kolossi, painotus) saivat rangaistut arvot. Oma testivirhe: odotin Monarkian toista tyytyväisyyden pudotusta 23. kaupungin kohdalla, mutta Freecivin kaava antaa 22.",
+        "files_changed": [
+          "src/game/cities.test.ts",
+          "src/game/government.test.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: rangaistus, vallankumouksen kesto, tyytyväiset ja sotatila hallituksittain",
+            "expected": "3 → 2 itsevaltiudessa ja anarkiassa; 1–5 päivää; 9/10/11 kaupunkia; Monarkiassa enintään 3",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: kaupungin tuotot, ylläpito ja Kolossi hallituksen mukaan; tallennus",
+            "expected": "Lähdetaulukon arvot Monarkiassa, rangaistut itsevaltiudessa; gov tallentuu",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: hallitus",
+            "expected": "Itsevaltius, ei nappia; Monarkia tunnettu → vallankumous → anarkia, tiede 0 → Monarkia",
+            "result": "pass (kuvakaappaukset revolution.png ja monarchy.png)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 140/140; E2E 59/59",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38345953433 (0a618f4, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu. Ensimmäinen ajo 38344474619 (13d5793) oli punainen: löytökortin puhelintesti luki kortin paikan ennen kuin kortti näkyi; testi korjattiin odottamaan korttia (d3da866, ajo 38347966977 vihreä)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Monarkia tuntuu tavoittelemisen arvoiselta, eikä itsevaltiuden hitaampi alkukasvu haittaa",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Itsevaltiuden ruuturangaistus",
+            "checked": true
+          },
+          {
+            "item": "Vallankumous ja anarkia",
+            "checked": true
+          },
+          {
+            "item": "Monarkian vaikutukset",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-038",
+      "story": "STORY-048",
+      "implementation_ticket": "TICKET-IMPL-038",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvakaappaus näytti välilehtien litistyvän (flex-sarakkeen lapset kutistuivat ennen vieritystä); korjattu ja tarkistettu uudesta kuvasta.",
+        "files_changed": [
+          "src/ui/hud.css"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: economy()",
+            "expected": "Summat, nettotulos ja resurssien määrät; tyhjänä nollat",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: luettelon Talous-välilehti",
+            "expected": "Kassa vastaa tilaa, rivit Ruoka, Tuotanto, Kauppa, Erikoisresurssit ja kaupunki; kaupan jako verokantoineen; ei nappeja",
+            "result": "pass (economy.png)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 146/146; E2E 60/60 (STORY-049:n haarassa, joka sisältää tämän)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38345953433 (9895444, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu. Ensimmäinen ajo 38344474619 (13d5793) oli punainen: löytökortin puhelintesti luki kortin paikan ennen kuin kortti näkyi; testi korjattiin odottamaan korttia (d3da866, ajo 38347966977 vihreä)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Talous kertoo, mitä valtio saa",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Talous-välilehti",
+            "checked": true
+          },
+          {
+            "item": "Tulot ja menot",
+            "checked": true
+          },
+          {
+            "item": "Erikoisresurssit",
+            "checked": true
+          },
+          {
+            "item": "Kaupungit",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-039",
+      "story": "STORY-049",
+      "implementation_ticket": "TICKET-IMPL-039",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Koko sarja löysi oman virheen: neuvonantajarivi käytti luokkaa city-hint, jolloin kasvutestin haku osui kahteen elementtiin. Rivi sai oman luokan. Vartijan vastaus siirrettiin rosvokortin näyttökohtaan, koska päivän ulkopuolella alkanut ryöstö ehti muuten näyttää kortin.",
+        "files_changed": [
+          "src/ui/cityCard.ts",
+          "src/ui/hud.css",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: neuvonantajien säännöt ja kartoituskohde",
+            "expected": "Oma ohjaus ei tee mitään; Kasvattaja, Vartija ja Kartoittaja kuten kriteereissä",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: neuvonantajat",
+            "expected": "Kortissa neljä vaihtoehtoa; Kartoittaja ohjaa tiedustelijat; Vartija tuotanto-painotus, vastaa rosvoihin ilman korttia; kaupunkikortin rivi",
+            "result": "pass (advisors.png, city-advisor.png)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Puhelinleveys 390 px",
+            "expected": "Yläpaneeli mahtuu, kortti luettava",
+            "result": "pass (kuvakaappaus; päivän numero korjattu yhdelle riville)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 146/146; E2E 60/60",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38345953433 (13d5793, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu. Ensimmäinen ajo 38344474619 (13d5793) oli punainen: löytökortin puhelintesti luki kortin paikan ennen kuin kortti näkyi; testi korjattiin odottamaan korttia (d3da866, ajo 38347966977 vihreä)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Neuvonantaja vähentää mikromanagerointia",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Neljä vaihtoehtoa",
+            "checked": true
+          },
+          {
+            "item": "Päivittäiset toimet",
+            "checked": true
+          },
+          {
+            "item": "Rosvokortin vastaus",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-040",
+      "story": "STORY-050",
+      "implementation_ticket": "TICKET-IMPL-040",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Kuvakaappauksessa alueiden nimilaput nousivat yläpaneelin päälle, kun kortti peitti näkymän; STORY-051 piilottaa ne kortin ajaksi.",
+        "files_changed": []
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: asutettavat alueet, retkikunnan kohde ja Vartijan rakennus",
+            "expected": "Kaksi parasta ilman kaupunkia; lähin alle 60 %; sotilas ensin, sitten muuri rajalla",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: läänin neuvonantajat",
+            "expected": "Kortti Lääni ja neljä vaihtoehtoa; Asuttaja merkitsee kaksi aluetta; Tutkimusmatkailija poistaa Ohitan ja lähettää retkikunnan; Vartija tallentuu",
+            "result": "pass (province-advisors.png)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 151/151; E2E 62/62 (STORY-051:n haarassa, joka sisältää tämän)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38345953433 (ad70f78, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Läänin neuvonantaja vähentää mikromanagerointia",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Läänin kortti",
+            "checked": true
+          },
+          {
+            "item": "Asuttaja",
+            "checked": true
+          },
+          {
+            "item": "Tutkimusmatkailija",
+            "checked": true
+          },
+          {
+            "item": "Vartija",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-041",
+      "story": "STORY-051",
+      "implementation_ticket": "TICKET-IMPL-041",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus.",
+        "files_changed": []
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: keksintöjärjestys ja ylellisyyden askel",
+            "expected": "Ensimmäinen saatavilla oleva; ylös levottomuudessa, alas kymmenen päivän jälkeen",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valtion neuvonantajat",
+            "expected": "Kortti Valtio; Oppinut: Tutkimus, 30 %, Aakkoset, vallankumous → Monarkia; Laajentaja: Laajentuminen, 50 %, tavoitelääni; Kenraali: Puolustus, 70 %",
+            "result": "pass (state-advisors.png)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 151/151; E2E 62/62",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38345953433 (f6bd402, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Valtion neuvonantaja hoitaa tieteen ja verot järkevästi",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Valtion kortti",
+            "checked": true
+          },
+          {
+            "item": "Laajentaja",
+            "checked": true
+          },
+          {
+            "item": "Oppinut",
+            "checked": true
+          },
+          {
+            "item": "Kenraali",
+            "checked": true
+          },
+          {
+            "item": "Vallankumous ja ylellisyys",
             "checked": true
           },
           {

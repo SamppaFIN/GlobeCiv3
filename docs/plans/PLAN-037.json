@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-037",
+  "story": "STORY-047",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Peruspeli: Civ I:n ensimmäinen hallitusmuodon vaihto. Luvut Freecivin civ1-sääntösarjasta (commit b6156f2e2d): effects.ruleset Output_Penalty_Tile, Unit_Upkeep_Free_Per_City, Empire_Size_Base ja Martial_Law_Max; techs.ruleset Code of Laws ja Monarchy; common/city.c city_tile_output (rangaistus Kolossin jälkeen); server/plrhand.c revolentype_length ja common/game.h (RANDOM, revolen 5); governments.ruleset (anarkiassa ei veroja eikä tutkimusta). Korruptiota ei mallinneta vielä.",
+  "alternatives_considered": [
+    {
+      "name": "Hallitus vaihtuu heti",
+      "pros": "Yksinkertainen",
+      "cons": "Vallankumouksella ei ole hintaa",
+      "rejected_because": "Anarkia on Civ I:n peruskustannus"
+    },
+    {
+      "name": "Ruuturangaistus vain uusille peleille",
+      "pros": "Vanhat pelit eivät hidastu",
+      "cons": "Kaksi sääntöä",
+      "rejected_because": "Tallennus on kehitysvaiheessa, ja itsevaltius on aloitushallinto"
+    }
+  ],
+  "files_to_change": [
+    "src/game/government.ts (uusi) ja testit",
+    "src/game/cities.ts, science.ts, save.ts ja testit",
+    "src/globe/main.ts",
+    "src/ui/researchCard.ts ja hud.css",
+    "tests/e2e/government.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Hallitussäännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Peliin: vallankumous, anarkia, Monarkia, tallennus",
+      "verify": "E2E ja kuvakaappaukset"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,0 +1,79 @@
+{
+  "id": "TICKET-TEST-041",
+  "story": "STORY-051",
+  "implementation_ticket": "TICKET-IMPL-041",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus.",
+    "files_changed": []
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: keksintöjärjestys ja ylellisyyden askel",
+        "expected": "Ensimmäinen saatavilla oleva; ylös levottomuudessa, alas kymmenen päivän jälkeen",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valtion neuvonantajat",
+        "expected": "Kortti Valtio; Oppinut: Tutkimus, 30 %, Aakkoset, vallankumous → Monarkia; Laajentaja: Laajentuminen, 50 %, tavoitelääni; Kenraali: Puolustus, 70 %",
+        "result": "pass (state-advisors.png)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 151/151; E2E 62/62",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38345953433 (f6bd402, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Valtion neuvonantaja hoitaa tieteen ja verot järkevästi",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Valtion kortti",
+        "checked": true
+      },
+      {
+        "item": "Laajentaja",
+        "checked": true
+      },
+      {
+        "item": "Oppinut",
+        "checked": true
+      },
+      {
+        "item": "Kenraali",
+        "checked": true
+      },
+      {
+        "item": "Vallankumous ja ylellisyys",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

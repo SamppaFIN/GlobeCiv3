@@ -1,0 +1,40 @@
+{
+  "id": "TICKET-IMPL-039",
+  "story": "STORY-049",
+  "plan": "PLAN-039",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/advisors.e2e.ts"
+  ],
+  "change_summary": "cityAdvice() antaa painotuksen ja rakennuksen, exploreTarget() kartoituskohteen. main.ts: advisorDay() päivän lopussa, Vartija vastaa rosvokorttiin updateRaidAlertissa, neuvonantajakortti ja loki. Yläpaneeliin oma ikoni (rintakuva), kaupunkikorttiin neuvonantajarivi. Päivän numero ei enää rivity puhelimella.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "GameHudState.advisor",
+      "GameHudHandlers.openAdvisor",
+      "CityView.advisor",
+      "SaveData.cityAdvisor",
+      "updateRaidAlert"
+    ],
+    "call_sites_found": [
+      "createGameHud, createCityCard"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Neuvonantaja ohittaa pelaajan painotuksen ja rakennusvalinnan joka päivä; Oma ohjaus palauttaa ne pelaajalle."
+  },
+  "commit": "13d5793",
+  "progress": 100
+}

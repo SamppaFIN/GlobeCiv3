@@ -1,0 +1,80 @@
+{
+  "id": "TICKET-TEST-037",
+  "story": "STORY-047",
+  "implementation_ticket": "TICKET-IMPL-037",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Viisi kaupunkitestiä oletti tuotot ilman itsevaltiuden rangaistusta, joka on nyt sääntö. Taulukko- ja kasvutestit nimeävät nyt Monarkian, ja itsevaltiuden testit (ylläpito, Kolossi, painotus) saivat rangaistut arvot. Oma testivirhe: odotin Monarkian toista tyytyväisyyden pudotusta 23. kaupungin kohdalla, mutta Freecivin kaava antaa 22.",
+    "files_changed": [
+      "src/game/cities.test.ts",
+      "src/game/government.test.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: rangaistus, vallankumouksen kesto, tyytyväiset ja sotatila hallituksittain",
+        "expected": "3 → 2 itsevaltiudessa ja anarkiassa; 1–5 päivää; 9/10/11 kaupunkia; Monarkiassa enintään 3",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: kaupungin tuotot, ylläpito ja Kolossi hallituksen mukaan; tallennus",
+        "expected": "Lähdetaulukon arvot Monarkiassa, rangaistut itsevaltiudessa; gov tallentuu",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: hallitus",
+        "expected": "Itsevaltius, ei nappia; Monarkia tunnettu → vallankumous → anarkia, tiede 0 → Monarkia",
+        "result": "pass (kuvakaappaukset revolution.png ja monarchy.png)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 140/140; E2E 59/59",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38345953433 (0a618f4, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu. Ensimmäinen ajo 38344474619 (13d5793) oli punainen: löytökortin puhelintesti luki kortin paikan ennen kuin kortti näkyi; testi korjattiin odottamaan korttia (d3da866, ajo 38347966977 vihreä)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Monarkia tuntuu tavoittelemisen arvoiselta, eikä itsevaltiuden hitaampi alkukasvu haittaa",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Itsevaltiuden ruuturangaistus",
+        "checked": true
+      },
+      {
+        "item": "Vallankumous ja anarkia",
+        "checked": true
+      },
+      {
+        "item": "Monarkian vaikutukset",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

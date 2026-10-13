@@ -1,0 +1,42 @@
+{
+  "id": "PLAN-040",
+  "story": "STORY-050",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin valinta 2026-10-13: läänin neuvonantajat Asuttaja, Tutkimusmatkailija ja Vartija (samat teemat kuin kaupunkitasolla, taso ylempänä). Säännöt advisors.ts:ssä (oma suunnittelu), päivän toimet main.ts:n advisorDay():ssa, ja sama kortti näyttää tason mukaisen neuvonantajan.",
+  "alternatives_considered": [
+    {
+      "name": "Rakentaja puolustuksen tilalle",
+      "pros": "Maanparannus läänin tasolla",
+      "cons": "Puolustus jäisi vain kaupunkitasolle",
+      "rejected_because": "Samin valinta"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts ja testi",
+    "src/game/units.ts (keepHome)",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/province-advisors.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Säännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Läänin kortti, päivän toimet, kaupunkipaikan hyväksyntä, tallennus",
+      "verify": "E2E ja kuvakaappaus"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

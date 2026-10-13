@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-038",
+  "story": "STORY-048",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin pyyntö 2026-10-13: \"ekonomia tilasto, mikä kertoo mitä resursseja valtio saa\". Kaupunki- ja yksikkölista olivat jo luettelossa (STORY-042), joten talous tulee sen kolmanneksi välilehdeksi. Summat lasketaan puhtaassa funktiossa economy() samoista kaupunkien päivistä kuin pelin kulku.",
+  "alternatives_considered": [
+    {
+      "name": "Oma talouskortti",
+      "pros": "Enemmän tilaa",
+      "cons": "Neljäs nappi yläpaneeliin",
+      "rejected_because": "Luettelo on jo valtakunnan yleiskuva"
+    }
+  ],
+  "files_to_change": [
+    "src/game/economy.ts (uusi) ja testi",
+    "src/ui/listCard.ts, gameHud.ts ja hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/list.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "economy() ja testi",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Talous-välilehti",
+      "verify": "E2E ja kuvakaappaus"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

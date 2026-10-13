@@ -1,0 +1,73 @@
+{
+  "id": "TICKET-TEST-038",
+  "story": "STORY-048",
+  "implementation_ticket": "TICKET-IMPL-038",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvakaappaus näytti välilehtien litistyvän (flex-sarakkeen lapset kutistuivat ennen vieritystä); korjattu ja tarkistettu uudesta kuvasta.",
+    "files_changed": [
+      "src/ui/hud.css"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: economy()",
+        "expected": "Summat, nettotulos ja resurssien määrät; tyhjänä nollat",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: luettelon Talous-välilehti",
+        "expected": "Kassa vastaa tilaa, rivit Ruoka, Tuotanto, Kauppa, Erikoisresurssit ja kaupunki; kaupan jako verokantoineen; ei nappeja",
+        "result": "pass (economy.png)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 146/146; E2E 60/60 (STORY-049:n haarassa, joka sisältää tämän)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38345953433 (9895444, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu. Ensimmäinen ajo 38344474619 (13d5793) oli punainen: löytökortin puhelintesti luki kortin paikan ennen kuin kortti näkyi; testi korjattiin odottamaan korttia (d3da866, ajo 38347966977 vihreä)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Talous kertoo, mitä valtio saa",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Talous-välilehti",
+        "checked": true
+      },
+      {
+        "item": "Tulot ja menot",
+        "checked": true
+      },
+      {
+        "item": "Erikoisresurssit",
+        "checked": true
+      },
+      {
+        "item": "Kaupungit",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

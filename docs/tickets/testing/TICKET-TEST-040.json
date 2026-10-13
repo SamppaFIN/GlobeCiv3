@@ -1,0 +1,75 @@
+{
+  "id": "TICKET-TEST-040",
+  "story": "STORY-050",
+  "implementation_ticket": "TICKET-IMPL-040",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Kuvakaappauksessa alueiden nimilaput nousivat yläpaneelin päälle, kun kortti peitti näkymän; STORY-051 piilottaa ne kortin ajaksi.",
+    "files_changed": []
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: asutettavat alueet, retkikunnan kohde ja Vartijan rakennus",
+        "expected": "Kaksi parasta ilman kaupunkia; lähin alle 60 %; sotilas ensin, sitten muuri rajalla",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: läänin neuvonantajat",
+        "expected": "Kortti Lääni ja neljä vaihtoehtoa; Asuttaja merkitsee kaksi aluetta; Tutkimusmatkailija poistaa Ohitan ja lähettää retkikunnan; Vartija tallentuu",
+        "result": "pass (province-advisors.png)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 151/151; E2E 62/62 (STORY-051:n haarassa, joka sisältää tämän)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38345953433 (ad70f78, 27 min; sama ajo kattaa STORY-047–051:n) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Läänin neuvonantaja vähentää mikromanagerointia",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Läänin kortti",
+        "checked": true
+      },
+      {
+        "item": "Asuttaja",
+        "checked": true
+      },
+      {
+        "item": "Tutkimusmatkailija",
+        "checked": true
+      },
+      {
+        "item": "Vartija",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

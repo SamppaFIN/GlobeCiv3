@@ -1,0 +1,43 @@
+{
+  "id": "TICKET-IMPL-037",
+  "story": "STORY-047",
+  "plan": "PLAN-037",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/government.ts",
+    "src/game/government.test.ts",
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/science.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/researchCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/government.e2e.ts"
+  ],
+  "change_summary": "government.ts: GOVERNMENTS (rangaistus, ilmaiset yksiköt, valtakunnan koko, sotatila), governed ja revolutionDays. cities.ts: tileOutput (Kolossi ja rangaistus), cityYield, baseContent ja cityMood hallituksen mukaan; FREE_UNITS korvautui. main.ts: Play.gov ja anarchyUntil, rates() (anarkiassa kaikki ylellisyyteen), Monarkia alkaa päivän vaihteessa, tuottomerkit hallituksen mukaan. Tutkimus-korttiin hallitusrivi ja vallankumousnappi.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "cityYield(gov)",
+      "cityMood(gov)",
+      "baseContent(gov)",
+      "FREE_UNITS (poistettu)",
+      "Advance (law, monarchy)",
+      "SaveData.gov ja anarchyUntil"
+    ],
+    "call_sites_found": [
+      "cityYield, cityMood, baseContent, FREE_UNITS"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/game/cities.test.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Itsevaltius hidastaa alkukasvua: kasteltu ruohokeskusta ja kalavesi antavat 2 ruokaa 3:n sijaan."
+  },
+  "commit": "0a618f4",
+  "progress": 100
+}

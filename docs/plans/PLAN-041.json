@@ -1,0 +1,43 @@
+{
+  "id": "PLAN-041",
+  "story": "STORY-051",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin valinta 2026-10-13: kaupunkitason tutkiminen on kartoitusta, ja tiede kuuluu valtion neuvonantajalle. Valtion neuvonantaja menee ensimmäisenä (tavoite ja retkikunta), sitten lääni ja kaupunki. Nimet ja säännöt ovat omia; keksintöjen järjestykset ovat Linssin ehdotus.",
+  "alternatives_considered": [
+    {
+      "name": "Tiede kaupunkitasolle",
+      "pros": "Lähempänä kaupunkeja",
+      "cons": "Verot ja tutkimus ovat koko valtion asioita",
+      "rejected_because": "Samin valinta: kaupunkitasolla kartoitus"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts ja testi",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/state-advisors.e2e.ts (uusi)"
+  ],
+  "open_questions": [
+    "Planeettatasolla ei vielä ole toimintoja eikä neuvonantajaa (valloitus puuttuu)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Säännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Valtion kortti ja päivän toimet",
+      "verify": "E2E ja kuvakaappaus"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

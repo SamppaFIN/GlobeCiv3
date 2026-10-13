@@ -1,0 +1,49 @@
+{
+  "id": "PLAN-039",
+  "story": "STORY-049",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin pyyntö 2026-10-13: jokaisella karttatasolla oma neuvonantaja, joka mikromanageroi alueen, kolmesta valittavissa. Sami valitsi, että kaupunkitason \"tutkiminen\" on kartoitusta (tiede kuuluu valtion neuvonantajalle). Tämä story tekee kaupunkialuetason; lääni (STORY-050) ja valtio (STORY-051) seuraavat. Säännöt ovat puhtaassa moduulissa advisors.ts (oma suunnittelu).",
+  "alternatives_considered": [
+    {
+      "name": "Neuvonantaja kaupunkikohtaisesti",
+      "pros": "Joustavampi",
+      "cons": "Enemmän valintoja",
+      "rejected_because": "Sami: jokaiselle tasolle oma neuvonantaja"
+    },
+    {
+      "name": "Neuvonantaja vain ehdottaa",
+      "pros": "Pelaaja päättää",
+      "cons": "Ei vähennä mikromanagerointia",
+      "rejected_because": "Sami: mikromanageroi puolestasi"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts (uusi) ja testi",
+    "src/ui/advisorCard.ts (uusi), gameHud.ts, cityCard.ts ja hud.css",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "tests/e2e/advisors.e2e.ts (uusi)"
+  ],
+  "open_questions": [
+    "Läänin ja valtion neuvonantajat (STORY-050 ja STORY-051)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Säännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Kortti, nappi, päivän toimet, tallennus",
+      "verify": "E2E ja kuvakaappaukset, myös puhelinleveys"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

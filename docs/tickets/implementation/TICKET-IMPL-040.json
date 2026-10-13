@@ -1,0 +1,38 @@
+{
+  "id": "TICKET-IMPL-040",
+  "story": "STORY-050",
+  "plan": "PLAN-040",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/game/units.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/province-advisors.e2e.ts"
+  ],
+  "change_summary": "settleAreas(), expeditionTarget() ja provinceBuild(). Units.keepHome rajaa tiedustelijat kotilääniin. advisorDay() hoitaa molemmat tasot, Asuttaja vastaa kaupunkipaikkakorttiin updateSiteOfferissa, ja kortti ja nappi näyttävät läänin neuvonantajan läänitasolla. Tason paneeli piiloutuu kortin alle.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Units.keepHome ja tiedustelijoiden aluerajaus",
+      "advisorDay",
+      "updateSiteOffer",
+      "SaveData.provinceAdvisor"
+    ],
+    "call_sites_found": [
+      "Units.plan"
+    ],
+    "call_sites_updated": [
+      "src/game/units.ts",
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Asuttaja omistaa kotiläänin painotukset: muut kuin valitut alueet palaavat Tutki-tilaan."
+  },
+  "commit": "ad70f78",
+  "progress": 100
+}
