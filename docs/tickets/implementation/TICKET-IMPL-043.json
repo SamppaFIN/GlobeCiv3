@@ -1,0 +1,43 @@
+{
+  "id": "TICKET-IMPL-043",
+  "story": "STORY-016",
+  "plan": "PLAN-043",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/conquest.ts",
+    "src/game/conquest.test.ts",
+    "src/game/progress.ts",
+    "src/game/levelActions.test.ts",
+    "src/game/save.ts",
+    "src/game/names.ts",
+    "src/game/units.ts",
+    "src/game/advisors.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "tests/e2e/conquest.e2e.ts",
+    "tests/e2e/unlock.e2e.ts"
+  ],
+  "change_summary": "conquest() ja heldIn(). Units.openStates ja isOpen rajaavat tiedustelijat, lipun, retkikunnat ja paikat. advance() avaa tason 0, kun kotivaltio on vallattu, ja kamera päästää koko planeetan näkyviin. Mittari näyttää \"n / 7 hallussa\" ja vallattujen valtioiden määrän. stateName() nimeää valtiot ilmansuunnasta. Laajentajan tavoite on lähin lääni ilman kaupunkia. Testikoukku globeDebug.foundIn.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Progress.meter (conquest), openLevel 0",
+      "advance(homeConquered)",
+      "Units.openStates, isOpen",
+      "GameHudState.meterText",
+      "Laajentajan tavoite"
+    ],
+    "call_sites_found": [
+      "advance, sendTo, setSite, findSites, plan, lippu, kaupunkipaikat"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/game/units.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Vanha tallennus tasolla 1 ja mittarilla done jatkaa conquest-mittarilla."
+  },
+  "commit": "ceba488",
+  "progress": 100
+}

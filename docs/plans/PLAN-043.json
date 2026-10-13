@@ -1,0 +1,50 @@
+{
+  "id": "PLAN-043",
+  "story": "STORY-016",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin valinta: kaupunki läänissä. conquest.ts laskee hallussa olevat läänit, vallatut valtiot ja avoimet valtiot kaupungeista ja valtioiden naapuruudesta (regions.neighbors). Progress saa tason 0 ja mittarin conquest. Alkuperäisen kriteerin \"planeettatason värit\" tilalla on teksti (saavutettavuus: tieto ei pelkkänä värinä).",
+  "alternatives_considered": [
+    {
+      "name": "Kaupunki ja sotilas",
+      "pros": "Puolustus merkitsee",
+      "cons": "Ryöstö veisi läänin",
+      "rejected_because": "Samin valinta"
+    },
+    {
+      "name": "Alkuasukaskylät",
+      "pros": "Valtaus yksiköillä",
+      "cons": "Vaatii hyökkäyssäännöt ja uusia yksiköitä",
+      "rejected_because": "Samin valinta; myöhemmin vastustajien kanssa"
+    }
+  ],
+  "files_to_change": [
+    "src/game/conquest.ts (uusi) ja testi",
+    "src/game/progress.ts ja levelActions.test.ts",
+    "src/game/units.ts, names.ts, save.ts, advisors.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "tests/e2e/conquest.e2e.ts (uusi) ja unlock.e2e.ts"
+  ],
+  "open_questions": [
+    "Planeettatason sirut menevät päällekkäin, kun koko planeetta on kuvassa"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Valloitussäännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Rajaus avoimiin valtioihin, mittari, sirut, planeetan avautuminen",
+      "verify": "E2E ja kuvakaappaukset"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T15:09:35Z",
+    "generated_at": "2026-10-13T15:40:21Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "f71454f",
+    "git_commit": "ceba488",
     "git_branch": "main",
     "language": "fi"
   },
@@ -101,7 +101,7 @@
         "STORY-015",
         "STORY-016"
       ],
-      "progress": 0
+      "progress": 25
     },
     {
       "id": "EPIC-005",
@@ -524,24 +524,25 @@
       "epic": "EPIC-004",
       "title": "Valtion valloitus avaa naapurivaltiot",
       "type": "story",
-      "narrative": "Pelaajana haluan tutkia ja vallata valtion lääni kerrallaan, ja kun koko valtio on hallussani, haluan sen naapurivaltioiden avautuvan, jotta imperiumi kasvaa planeetan yli.",
+      "narrative": "Pelaajana haluan vallata valtion lääni kerrallaan, ja kun koko valtio on hallussani, haluan sen naapurivaltioiden avautuvan, jotta imperiumi kasvaa planeetan yli.",
       "effort": "M",
       "depends_on": [
-        "STORY-014",
-        "STORY-019"
+        "STORY-026",
+        "STORY-028",
+        "STORY-051"
       ],
-      "status": "todo",
       "acceptance_criteria": [
-        "Peli alkaa yhdestä valtiosta, ja muut valtiot ovat lukittuja",
-        "Lääni vallataan Civilization I:n tapaan yksiköillä tai kaupungin perustamisella (lähde kirjattu)",
-        "Valtio on vallattu, kun kaikki sen läänit ovat pelaajan hallussa, ja silloin sen naapurivaltiot avautuvat",
-        "Avautuminen näkyy planeettatason väreissä seuraavan makrotikin jälkeen"
+        "Peli alkaa yhdestä valtiosta, ja muut valtiot ovat lukittuja: tiedustelijat, lippu, retkikunnat ja kaupunkipaikat pysyvät avoimissa valtioissa.",
+        "Lääni on hallussa, kun siinä on pelaajan kaupunki (Samin valinta 2026-10-13; yksiköillä valtaaminen tulee, kun pelissä on vastustajia).",
+        "Valtio on vallattu, kun kaikki sen seitsemän lääniä ovat hallussa. Kotivaltion valtaus avaa planeettatason ja naapurivaltiot.",
+        "Avautuminen näkyy tekstinä eikä pelkkänä värinä: valtiotason sirut kertovat hallussa olevat läänit, mittari laskee 0–7, ja planeettatasolla avoimilla valtioilla on nimetyt sirut (vallattu tai lääniä hallussa n/7)."
       ],
-      "progress": 0,
+      "status": "done",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-043",
+        "implementation": "TICKET-IMPL-043",
+        "testing": "TICKET-TEST-043"
       }
     },
     {
@@ -3591,6 +3592,56 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-043",
+      "story": "STORY-016",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin valinta: kaupunki läänissä. conquest.ts laskee hallussa olevat läänit, vallatut valtiot ja avoimet valtiot kaupungeista ja valtioiden naapuruudesta (regions.neighbors). Progress saa tason 0 ja mittarin conquest. Alkuperäisen kriteerin \"planeettatason värit\" tilalla on teksti (saavutettavuus: tieto ei pelkkänä värinä).",
+      "alternatives_considered": [
+        {
+          "name": "Kaupunki ja sotilas",
+          "pros": "Puolustus merkitsee",
+          "cons": "Ryöstö veisi läänin",
+          "rejected_because": "Samin valinta"
+        },
+        {
+          "name": "Alkuasukaskylät",
+          "pros": "Valtaus yksiköillä",
+          "cons": "Vaatii hyökkäyssäännöt ja uusia yksiköitä",
+          "rejected_because": "Samin valinta; myöhemmin vastustajien kanssa"
+        }
+      ],
+      "files_to_change": [
+        "src/game/conquest.ts (uusi) ja testi",
+        "src/game/progress.ts ja levelActions.test.ts",
+        "src/game/units.ts, names.ts, save.ts, advisors.ts",
+        "src/globe/main.ts",
+        "src/ui/gameHud.ts",
+        "tests/e2e/conquest.e2e.ts (uusi) ja unlock.e2e.ts"
+      ],
+      "open_questions": [
+        "Planeettatason sirut menevät päällekkäin, kun koko planeetta on kuvassa"
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Valloitussäännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Rajaus avoimiin valtioihin, mittari, sirut, planeetan avautuminen",
+          "verify": "E2E ja kuvakaappaukset"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -5273,6 +5324,49 @@
         "notes": "Vanhojen löytöjen ruutubonukset säilyvät tallennuksissa ja tuotoissa."
       },
       "commit": "f71454f",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-043",
+      "story": "STORY-016",
+      "plan": "PLAN-043",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/conquest.ts",
+        "src/game/conquest.test.ts",
+        "src/game/progress.ts",
+        "src/game/levelActions.test.ts",
+        "src/game/save.ts",
+        "src/game/names.ts",
+        "src/game/units.ts",
+        "src/game/advisors.ts",
+        "src/globe/main.ts",
+        "src/ui/gameHud.ts",
+        "tests/e2e/conquest.e2e.ts",
+        "tests/e2e/unlock.e2e.ts"
+      ],
+      "change_summary": "conquest() ja heldIn(). Units.openStates ja isOpen rajaavat tiedustelijat, lipun, retkikunnat ja paikat. advance() avaa tason 0, kun kotivaltio on vallattu, ja kamera päästää koko planeetan näkyviin. Mittari näyttää \"n / 7 hallussa\" ja vallattujen valtioiden määrän. stateName() nimeää valtiot ilmansuunnasta. Laajentajan tavoite on lähin lääni ilman kaupunkia. Testikoukku globeDebug.foundIn.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Progress.meter (conquest), openLevel 0",
+          "advance(homeConquered)",
+          "Units.openStates, isOpen",
+          "GameHudState.meterText",
+          "Laajentajan tavoite"
+        ],
+        "call_sites_found": [
+          "advance, sendTo, setSite, findSites, plan, lippu, kaupunkipaikat"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/units.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Vanha tallennus tasolla 1 ja mittarilla done jatkaa conquest-mittarilla."
+      },
+      "commit": "ceba488",
       "progress": 100
     }
   ],
@@ -9199,6 +9293,86 @@
           },
           {
             "item": "Tiede-pilleri",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-043",
+      "story": "STORY-016",
+      "implementation_ticket": "TICKET-IMPL-043",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Unlock-testi odotti, että valtiotason jälkeen mittari näyttää vain kartoitusprosentin ilman merkkiä; sääntö muuttui tarkoituksella (läänit 0–7, merkki seitsemässä), ja testi päivitettiin. Oma virhe: build kaatui tyyppivirheeseen, ja ensimmäinen E2E-ajo käytti vanhaa buildia.",
+        "files_changed": [
+          "tests/e2e/unlock.e2e.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: valloitus",
+            "expected": "Kaupunki pitää läänin; seitsemän valtaa valtion; naapurit avautuvat; vallatun naapurin naapurit myös",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: eteneminen",
+            "expected": "Taso 1 → mittari conquest; vallattu kotivaltio → taso 0",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valloitus",
+            "expected": "Naapuriin ei voi lähettää ennen valtausta; 6/7 hallussa ja sirut Hallussa; seitsemäs avaa planeetan, sirut Kotivaltio Vallattu ja naapurit 0/7; naapuriin voi lähettää",
+            "result": "pass (held.png, planet.png)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 150/150; E2E 62/63 koko sarjassa, ja päivitetty unlock-testi (3/3) erikseen",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38414471761 (ceba488, 30 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Valloitus tuntuu tavoitteelta",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Lukitut valtiot",
+            "checked": true
+          },
+          {
+            "item": "Kaupunki pitää läänin",
+            "checked": true
+          },
+          {
+            "item": "Valtaus avaa planeetan ja naapurit",
+            "checked": true
+          },
+          {
+            "item": "Tieto tekstinä",
             "checked": true
           }
         ],

@@ -1,0 +1,80 @@
+{
+  "id": "TICKET-TEST-043",
+  "story": "STORY-016",
+  "implementation_ticket": "TICKET-IMPL-043",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Unlock-testi odotti, että valtiotason jälkeen mittari näyttää vain kartoitusprosentin ilman merkkiä; sääntö muuttui tarkoituksella (läänit 0–7, merkki seitsemässä), ja testi päivitettiin. Oma virhe: build kaatui tyyppivirheeseen, ja ensimmäinen E2E-ajo käytti vanhaa buildia.",
+    "files_changed": [
+      "tests/e2e/unlock.e2e.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: valloitus",
+        "expected": "Kaupunki pitää läänin; seitsemän valtaa valtion; naapurit avautuvat; vallatun naapurin naapurit myös",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: eteneminen",
+        "expected": "Taso 1 → mittari conquest; vallattu kotivaltio → taso 0",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valloitus",
+        "expected": "Naapuriin ei voi lähettää ennen valtausta; 6/7 hallussa ja sirut Hallussa; seitsemäs avaa planeetan, sirut Kotivaltio Vallattu ja naapurit 0/7; naapuriin voi lähettää",
+        "result": "pass (held.png, planet.png)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 150/150; E2E 62/63 koko sarjassa, ja päivitetty unlock-testi (3/3) erikseen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38414471761 (ceba488, 30 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Valloitus tuntuu tavoitteelta",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Lukitut valtiot",
+        "checked": true
+      },
+      {
+        "item": "Kaupunki pitää läänin",
+        "checked": true
+      },
+      {
+        "item": "Valtaus avaa planeetan ja naapurit",
+        "checked": true
+      },
+      {
+        "item": "Tieto tekstinä",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}
