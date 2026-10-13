@@ -60,8 +60,10 @@ export interface Unit {
 
 /** What units need to know about the world. */
 export interface World {
-  /** Days to enter a tile; Infinity where a land unit cannot go. */
+  /** Days to enter a tile; Infinity where a land unit cannot go. Finite means land. */
   cost(id: number): number;
+  /** Days for a unit to enter a tile, sea included once it can sail (STORY-059); else cost. */
+  travel?(id: number): number;
   isMapped(id: number): boolean;
   hasResource(id: number): boolean;
   /** Map tiles (the fog lifts). */
@@ -268,12 +270,12 @@ export class Units {
     settler.task = 'found';
     settler.job = null;
     this.founding = true;
-    settler.path = findPath(settler.tile, site, id => world.cost(id)) ?? [];
+    settler.path = findPath(settler.tile, site, id => travel(world, id)) ?? [];
   }
 
   /** Days of walking along a path. */
   static days(path: number[], world: World): number {
-    return path.reduce((sum, id) => sum + world.cost(id), 0);
+    return path.reduce((sum, id) => sum + travel(world, id), 0);
   }
 
   /** One day: every unit acts. Returns the tiles where cities were founded. */
@@ -284,10 +286,10 @@ export class Units {
       if (u.kind === 'settler' && u.task === 'improve' && this.work(u, world)) continue;
       if (!u.path.length && u.kind === 'scout') u.path = this.plan(u, world);
       const next = u.path[0];
-      if (next === undefined || !Number.isFinite(world.cost(next))) { u.path = []; continue; }
+      if (next === undefined || !Number.isFinite(travel(world, next))) { u.path = []; continue; }
       u.path.shift();
       u.tile = next;
-      u.wait = world.cost(next) - 1;
+      u.wait = travel(world, next) - 1;
       if (u.kind === 'scout') {
         world.reveal(tilesInRings(u.tile, this.sight));
         if (u.tile === this.flag) this.flag = null;
@@ -314,7 +316,7 @@ export class Units {
     if (!u.job) {
       const job = world.nextJob?.(u) ?? null;
       if (!job) return true;
-      u.path = u.tile === job.tile ? [] : findPath(u.tile, job.tile, id => world.cost(id)) ?? [];
+      u.path = u.tile === job.tile ? [] : findPath(u.tile, job.tile, id => travel(world, id)) ?? [];
       if (u.tile !== job.tile && !u.path.length) return true;
       u.job = { ...job, left: job.days };
     }
@@ -335,12 +337,14 @@ export class Units {
 
   /** A scout's next path for its mode. */
   private plan(u: Unit, world: World): number[] {
-    const cost = (id: number) => world.cost(id);
+    // Paths may cross the sea; their ends are on land
+    const cost = (id: number) => travel(world, id);
+    const land = (id: number) => Number.isFinite(world.cost(id));
     const to = (target: number | null) => (target === null || target === u.tile ? [] : findPath(u.tile, target, cost) ?? []);
     if (u.mode === 'defend') return to(this.camp);
     if (u.mode === 'gather') {
       if (u.carrying) return to(this.camp);
-      return to(nearestTile(u.tile, cost, id => world.isMapped(id) && world.hasResource(id) && id !== this.camp && Number.isFinite(cost(id))));
+      return to(nearestTile(u.tile, cost, id => world.isMapped(id) && world.hasResource(id) && id !== this.camp && land(id)));
     }
     if (this.flag !== null) {
       const path = to(this.flag);
@@ -352,9 +356,12 @@ export class Units {
       const city = world.cityOf(id);
       return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince) && this.isOpen(id, world);
     };
-    return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && Number.isFinite(cost(id)) && allowed(id)));
+    return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && land(id) && allowed(id)));
   }
 }
+
+/** Days for a unit to enter a tile: by sea too once it can sail (STORY-059). */
+const travel = (world: World, id: number) => (world.travel ? world.travel(id) : world.cost(id));
 
 const COMPASS = ['pohjoista', 'koillista', 'itää', 'kaakkoa', 'etelää', 'lounasta', 'länttä', 'luodetta'];
 
@@ -376,7 +383,7 @@ export function unitStatus(units: Units, u: Unit, world: World, terrainName: (id
     const site = units.currentSite();
     if (site === null) return 'Ei maata lähellä';
     if (units.founding && !u.path.length && u.tile === site) return 'Perillä · kaupunki perustetaan';
-    const path = u.tile === site ? [] : findPath(u.tile, site, id => world.cost(id)) ?? [];
+    const path = u.tile === site ? [] : findPath(u.tile, site, id => travel(world, id)) ?? [];
     return `Kaupungin paikka: ${terrainName(site).toLowerCase()}, ${Units.days(path, world)} pv`;
   }
   const goal = u.path.at(-1);

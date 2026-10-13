@@ -214,3 +214,26 @@ describe('improving settlers (STORY-033)', () => {
     expect(units.sites.length).toBeGreaterThan(0);
   });
 });
+
+describe('sea travel (STORY-059)', () => {
+  it('a scout sent to an island reaches it only when units can go by sea', () => {
+    const base = makeWorld();
+    // An island deep in the test sea
+    const island = pointToTile(new THREE.Vector3(0.5, 0.3, 0.81).normalize());
+    expect(Number.isFinite(base.cost(island))).toBe(false);
+    const cost = (id: number) => (id === island ? 1 : base.cost(id));
+    const ashore: World = { ...base, cost };
+    const sailing: World = { ...ashore, travel: id => (Number.isFinite(cost(id)) ? cost(id) : 1) };
+    const reaches = (world: World) => {
+      const units = new Units(START_TILE, world);
+      expect(units.sendTo(island, world)).toBe(true);
+      for (let d = 0; d < 300; d++) {
+        units.day(world);
+        if (units.units.some(u => u.tile === island)) return true;
+      }
+      return false;
+    };
+    expect(reaches(ashore)).toBe(false);
+    expect(reaches(sailing)).toBe(true);
+  });
+});

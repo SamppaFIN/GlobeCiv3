@@ -593,8 +593,17 @@ let discoveriesOn = true;
 let siteOffersOn = true;
 /** Raids as well (STORY-034). */
 let raidsOn = true;
+/**
+ * Coastal sea: ocean next to land. With Kartanteko units go there at a day a tile (STORY-059;
+ * Freeciv civ1 units.ruleset Trireme: Map Making, move_rate 3, flag CoastStrict). Own
+ * simplification: no ship is built, as the units move by themselves.
+ */
+const coastal = (id: number) => terrainOf(id) === 'ocean' && neighbors(id).some(n => terrainOf(n) !== 'ocean');
+const canSail = () => play?.research.known.has('mapmaking') ?? false;
+
 const world: World = {
   cost: id => (terrainOf(id) === 'ocean' ? Infinity : TERRAIN_RULES[terrainOf(id)].move),
+  travel: id => (terrainOf(id) !== 'ocean' ? TERRAIN_RULES[terrainOf(id)].move : canSail() && coastal(id) ? 1 : Infinity),
   isMapped: id => mapState.isMapped(id),
   hasResource: id => (tileTypes.codes[id] & 16) !== 0,
   reveal: ids => {
@@ -813,7 +822,7 @@ function cityDays() {
   const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
   if (learned) {
     const opens = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
-    discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
+    discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${learned === 'mapmaking' ? ' · yksiköt kulkevat rannikkovesillä' : ''}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
   }
   // A suggested site waiting for a settler gets the first free one
@@ -1425,6 +1434,7 @@ function researchView(): ResearchView {
     ...(Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
     ...(Object.keys(ADVANCES) as Advance[]).filter(n => ADVANCES[n].needs.includes(a)).map(n => `tutkimuksen ${ADVANCES[n].name}`),
     ...(a === 'monarchy' ? ['hallitusmuodon Monarkia'] : []),
+    ...(a === 'mapmaking' ? ['kulun rannikkovesillä'] : []),
   ];
   return {
     rates: `Tiedettä +${rates.science}/pv · kultaa ${rates.gold < 0 ? '−' : '+'}${Math.abs(rates.gold)}/pv${rates.luxury ? ` · ylellisyyttä +${rates.luxury}` : ''}`,
@@ -1947,7 +1957,7 @@ function tileView(id: number): TileView {
     { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
     ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
-    { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : 'vettä: maayksiköt eivät kulje' },
+    { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : coastal(id) ? (canSail() ? 'rannikkovesi: 1 pv' : 'rannikkovesi: Kartanteko avaa kulun') : 'avomeri: ei kulkua' },
     ...(p.units.isOpen(id, world) ? [] : [{ label: 'Valtio', value: 'lukossa, kunnes kotivaltio on vallattu' }]),
   ];
   return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : TERRAIN_RULES[terrain].name, rows };
@@ -2239,6 +2249,8 @@ frameStartPlanet();
   /** Discoveries, site offers and raids all stop the game: off together, site offers or raids back on alone. */
   setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; raidsOn = on; },
   setRaids: (on: boolean) => { raidsOn = on; },
+  /** The card a tapped hex would show (STORY-055). */
+  tileView: (id: number) => (play ? tileView(id) : null),
   /** Found a city on the first land tile of a province that has none (STORY-016). */
   foundIn: (province: number) => {
     if (!play) return null;
