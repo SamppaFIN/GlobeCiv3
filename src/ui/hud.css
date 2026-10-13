@@ -89,7 +89,7 @@
   box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
 }
 .hud-pill[hidden] { display: none; }
-#hud.research-open .hud-bottom, #hud.research-open .level-bottom { display: none; }
+#hud.research-open .hud-bottom, #hud.research-open .level-bottom, #hud.research-open .chips { display: none; }
 .city-build:disabled { opacity: 0.55; cursor: default; }
 .city-research { min-height: var(--touch-target); }
 .list-rows { display: flex; flex-direction: column; gap: 6px; }

@@ -12,6 +12,8 @@
  *                on their way; it answers the bandit card by building the soldier
  */
 import type { Build, City, Focus } from './cities';
+import type { Advance } from './science';
+import type { StateLine } from './units';
 
 export type CityAdvisor = 'none' | 'growth' | 'explore' | 'defend';
 export const CITY_ADVISOR_LIST: readonly CityAdvisor[] = ['none', 'growth', 'explore', 'defend'];
@@ -103,4 +105,48 @@ export function provinceBuild(advisor: ProvinceAdvisor, n: { soldiers: number; b
   if (advisor !== 'defend') return null;
   if (n.soldiers < 1) return n.soldier;
   return n.border && !n.walls && n.available.includes('walls') ? 'walls' : null;
+}
+
+/*
+ * The state level (STORY-051): one of three runs the realm's science, taxes and line, the
+ * revolution to Monarchy, and the state's target province. Sami chose that science belongs here.
+ *
+ *   Laajentaja  the state line Laajentuminen, tax 50 %, advances for growth first, and the
+ *               nearest province of the home state under 60 % mapped as the target
+ *   Oppinut     the state line Tutkimus, tax 30 %, writing and trade first
+ *   Kenraali    the state line Puolustus, tax 70 %, bronze and masonry first; it buys the
+ *               soldier or walls a city under threat is building when the treasury allows
+ * Each one starts the revolution to Monarchy once it is known, and puts trade into luxury a
+ * step at a time while a city is in disorder, and back a step after ten calm days.
+ */
+export type StateAdvisor = 'none' | 'expand' | 'science' | 'war';
+export const STATE_ADVISOR_LIST: readonly StateAdvisor[] = ['none', 'expand', 'science', 'war'];
+
+export const STATE_ADVISORS: Record<StateAdvisor, { name: string; does: string }> = {
+  none: { name: 'Oma ohjaus', does: 'Hoidat tutkimuksen, verot, valtion linjan ja tavoitteen itse.' },
+  expand: { name: 'Laajentaja', does: 'Valtion linja Laajentuminen, vero 50 %, kasvun keksinnöt ensin. Tavoitteeksi lähin valtion lääni, joka on alle 60 % kartoitettu.' },
+  science: { name: 'Oppinut', does: 'Valtion linja Tutkimus, vero 30 %, kirjoitus ja kauppa ensin.' },
+  war: { name: 'Kenraali', does: 'Valtion linja Puolustus, vero 70 %, pronssi ja muuraus ensin. Ostaa uhatun kaupungin sotilaan tai muurin, kun kassa riittää.' },
+};
+
+/** Each advisor's state line, tax rate and order of advances. */
+export const STATE_PLANS: Record<Exclude<StateAdvisor, 'none'>, { line: StateLine; tax: number; order: Advance[] }> = {
+  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'monarchy', 'bronze', 'currency', 'masonry', 'writing'] },
+  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'monarchy', 'pottery', 'masonry'] },
+  war: { line: 'defend', tax: 70, order: ['bronze', 'masonry', 'ceremonial', 'alphabet', 'law', 'monarchy', 'pottery', 'currency', 'writing'] },
+};
+
+/** The next advance: the first of the order that can be researched, else any that can. */
+export function nextAdvance(order: readonly Advance[], available: readonly Advance[]): Advance | null {
+  return order.find(a => available.includes(a)) ?? available[0] ?? null;
+}
+
+/** Days without disorder before the luxury rate goes back a step. */
+export const CALM_DAYS = 10;
+
+/** The luxury rate for tomorrow: a step up in disorder, a step down after CALM_DAYS calm days. */
+export function luxuryStep(lux: number, disorder: boolean, calmDays: number, rates: readonly number[]): number {
+  const i = rates.indexOf(lux);
+  if (disorder) return rates[Math.min(rates.length - 1, i + 1)];
+  return calmDays >= CALM_DAYS ? rates[Math.max(0, i - 1)] : lux;
 }
