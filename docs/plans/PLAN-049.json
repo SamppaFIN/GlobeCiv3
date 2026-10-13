@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-049",
+  "story": "STORY-058",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Mittaus 12 siemenellä (1, 2, 3, 5, 8, 13, 21, 34, 42, 55, 89, 144): kotivaltion lääneissä maata ja maata, johon pääsee alusta maitse kotivaltion ja naapurien alueella. Siemenillä 5 ja 13 kotivaltiossa on lääni ilman maata (0 ruutua), jolloin STORY-016:n sääntö teki valtauksesta mahdottoman. Saavutettavuus oli muuten hyvä (enintään kaksi maaruutua läänissä erillään). conquest() saa hasLand-ehdon, ja maa tarkistetaan kerran läänissä.",
+  "alternatives_considered": [
+    {
+      "name": "Laivat (Kartanteko ja trireemi)",
+      "pros": "Saaret ja meri pelin osaksi",
+      "cons": "Iso ominaisuus",
+      "rejected_because": "Merilääniin ei voi perustaa kaupunkia laivallakaan"
+    },
+    {
+      "name": "Vain maitse saavutettavat läänit",
+      "pros": "Kattaa myös saaret",
+      "cons": "Raskas laskea",
+      "rejected_because": "Mittauksessa ei ollut saarilääniä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/conquest.ts ja testi",
+    "src/globe/main.ts",
+    "tests/e2e/conquest.e2e.ts"
+  ],
+  "open_questions": [
+    "Lääni, jonka kaikki maa on saarella, jää valtaamatta ilman laivoja (ei havaittu mitatuilla siemenillä)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Mittaus",
+      "verify": "12 siementä"
+    },
+    {
+      "step": 2,
+      "action": "Sääntö ja testit",
+      "verify": "npm test ja E2E siemenellä 5"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

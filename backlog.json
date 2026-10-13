@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T18:25:18Z",
+    "generated_at": "2026-10-13T19:06:15Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "b865b3a",
+    "git_commit": "9c3c99a",
     "git_branch": "main",
     "language": "fi"
   },
@@ -159,7 +159,8 @@
         "STORY-054",
         "STORY-055",
         "STORY-056",
-        "STORY-057"
+        "STORY-057",
+        "STORY-058"
       ],
       "progress": 97
     }
@@ -1553,6 +1554,28 @@
         "plan": "PLAN-048",
         "implementation": "TICKET-IMPL-048",
         "testing": "TICKET-TEST-048"
+      }
+    },
+    {
+      "id": "STORY-058",
+      "epic": "EPIC-006",
+      "title": "Merilääni lasketaan hallituksi",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kotivaltion voi aina vallata, vaikka jokin sen lääneistä olisi pelkkää merta.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-016"
+      ],
+      "acceptance_criteria": [
+        "Lääni, jossa ei ole maata, lasketaan hallussa olevaksi, joten valtion voi vallata kaupungeilla maata sisältäviin lääneihin.",
+        "Merilääni näkyy valtiotason sirussa tekstillä \"Ei maata\", ja mittari laskee sen hallussa olevaksi."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-049",
+        "implementation": "TICKET-IMPL-049",
+        "testing": "TICKET-TEST-049"
       }
     }
   ],
@@ -3958,6 +3981,53 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-049",
+      "story": "STORY-058",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Mittaus 12 siemenellä (1, 2, 3, 5, 8, 13, 21, 34, 42, 55, 89, 144): kotivaltion lääneissä maata ja maata, johon pääsee alusta maitse kotivaltion ja naapurien alueella. Siemenillä 5 ja 13 kotivaltiossa on lääni ilman maata (0 ruutua), jolloin STORY-016:n sääntö teki valtauksesta mahdottoman. Saavutettavuus oli muuten hyvä (enintään kaksi maaruutua läänissä erillään). conquest() saa hasLand-ehdon, ja maa tarkistetaan kerran läänissä.",
+      "alternatives_considered": [
+        {
+          "name": "Laivat (Kartanteko ja trireemi)",
+          "pros": "Saaret ja meri pelin osaksi",
+          "cons": "Iso ominaisuus",
+          "rejected_because": "Merilääniin ei voi perustaa kaupunkia laivallakaan"
+        },
+        {
+          "name": "Vain maitse saavutettavat läänit",
+          "pros": "Kattaa myös saaret",
+          "cons": "Raskas laskea",
+          "rejected_because": "Mittauksessa ei ollut saarilääniä"
+        }
+      ],
+      "files_to_change": [
+        "src/game/conquest.ts ja testi",
+        "src/globe/main.ts",
+        "tests/e2e/conquest.e2e.ts"
+      ],
+      "open_questions": [
+        "Lääni, jonka kaikki maa on saarella, jää valtaamatta ilman laivoja (ei havaittu mitatuilla siemenillä)"
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Mittaus",
+          "verify": "12 siementä"
+        },
+        {
+          "step": 2,
+          "action": "Sääntö ja testit",
+          "verify": "npm test ja E2E siemenellä 5"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -5854,6 +5924,36 @@
         "notes": "Neuvonantajanappi näkyy nyt kaikilla tasoilla."
       },
       "commit": "b865b3a",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-049",
+      "story": "STORY-058",
+      "plan": "PLAN-049",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/conquest.ts",
+        "src/game/conquest.test.ts",
+        "src/globe/main.ts",
+        "tests/e2e/conquest.e2e.ts"
+      ],
+      "change_summary": "conquest(hasLand): kotivaltion ja kaupunkien valtioiden maattomat läänit lisätään hallussa oleviin. provinceHasLand() välimuistilla. Valtiotason siru \"Ei maata\".",
+      "impact_analysis": {
+        "changed_symbols": [
+          "conquest(hasLand)"
+        ],
+        "call_sites_found": [
+          "conquestNow"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Oletus hasLand = aina maata pitää aiemmat kutsut ennallaan."
+      },
+      "commit": "9c3c99a",
       "progress": 100
     }
   ],
@@ -10200,6 +10300,82 @@
           },
           {
             "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-049",
+      "story": "STORY-058",
+      "implementation_ticket": "TICKET-IMPL-049",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Pelin pysäyttävä vika STORY-016:ssa: merilääniä ei voinut pitää. Löytyi mittauksella, ei pelaajalta.",
+        "files_changed": [
+          "src/game/conquest.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Mittaus 12 siemenellä",
+            "expected": "Merilääneillä 0 maaruutua",
+            "result": "Siemenellä 5 kaksi ja siemenellä 13 yksi lääni ilman maata",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: merilääni",
+            "expected": "Maattomat lasketaan, valtio vallattu viidellä kaupungilla",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E siemenellä 5",
+            "expected": "Mittari 2 / 7, kaksi \"Ei maata\" -sirua, viisi kaupunkia valtaa valtion",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 157/157; E2E 66/66",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38448286094 (9c3c99a, 27 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Kotivaltion voi vallata",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Merilääni hallussa",
+            "checked": true
+          },
+          {
+            "item": "Ei maata -siru",
+            "checked": true
+          },
+          {
+            "item": "Valtaus siemenellä 5",
             "checked": true
           }
         ],

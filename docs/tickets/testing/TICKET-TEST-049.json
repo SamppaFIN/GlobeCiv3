@@ -1,0 +1,76 @@
+{
+  "id": "TICKET-TEST-049",
+  "story": "STORY-058",
+  "implementation_ticket": "TICKET-IMPL-049",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Pelin pysäyttävä vika STORY-016:ssa: merilääniä ei voinut pitää. Löytyi mittauksella, ei pelaajalta.",
+    "files_changed": [
+      "src/game/conquest.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Mittaus 12 siemenellä",
+        "expected": "Merilääneillä 0 maaruutua",
+        "result": "Siemenellä 5 kaksi ja siemenellä 13 yksi lääni ilman maata",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: merilääni",
+        "expected": "Maattomat lasketaan, valtio vallattu viidellä kaupungilla",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E siemenellä 5",
+        "expected": "Mittari 2 / 7, kaksi \"Ei maata\" -sirua, viisi kaupunkia valtaa valtion",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 157/157; E2E 66/66",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38448286094 (9c3c99a, 27 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Kotivaltion voi vallata",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Merilääni hallussa",
+        "checked": true
+      },
+      {
+        "item": "Ei maata -siru",
+        "checked": true
+      },
+      {
+        "item": "Valtaus siemenellä 5",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}
