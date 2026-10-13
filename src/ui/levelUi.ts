@@ -161,8 +161,17 @@ export interface StatePanelState {
   isTarget: boolean;
 }
 
+/** The planet level's panel (STORY-057): the selected state and making it the target. */
+export interface PlanetPanelState {
+  name: string;
+  detail: string;
+  isTarget: boolean;
+  /** An open state not yet conquered can be the target. */
+  canTarget: boolean;
+}
+
 export interface LevelPanels {
-  update(level: number, area: AreaPanelState | null, state: StatePanelState | null): void;
+  update(level: number, area: AreaPanelState | null, state: StatePanelState | null, planet?: PlanetPanelState | null): void;
 }
 
 /** Bottom panels of the province level (design 6a) and the state level (7a). */
@@ -171,6 +180,7 @@ export function createLevelPanels(root: HTMLElement, on: {
   expedition(): void;
   setLine(line: StateLine): void;
   setTarget(): void;
+  setTargetState(): void;
 }): LevelPanels {
   const el = document.createElement('div');
   el.innerHTML = `
@@ -190,6 +200,13 @@ export function createLevelPanels(root: HTMLElement, on: {
         <div class="panel-title state-target"><span class="panel-name province-name"></span><span class="panel-detail province-detail"></span></div>
         <button class="btn btn-secondary state-set-target" type="button">Tavoitteeksi</button>
       </div>
+    </section>
+    <section class="hud-panel level-bottom level-panel planet-panel" aria-label="Planeetta" hidden>
+      <span class="level-kicker">Kohdevaltio</span>
+      <div class="hud-row">
+        <div class="panel-title"><span class="panel-name planet-name"></span><span class="panel-detail planet-detail"></span></div>
+        <button class="btn btn-secondary planet-set-target" type="button">Tavoitteeksi</button>
+      </div>
     </section>`;
   root.appendChild(el);
   const q = <T extends Element>(s: string) => el.querySelector<T>(s)!;
@@ -197,14 +214,24 @@ export function createLevelPanels(root: HTMLElement, on: {
   el.querySelectorAll<HTMLInputElement>('input[name="state-line"]').forEach(i => i.addEventListener('change', () => on.setLine(i.value as StateLine)));
   q('.area-expedition').addEventListener('click', on.expedition);
   q('.state-set-target').addEventListener('click', on.setTarget);
+  q('.planet-set-target').addEventListener('click', on.setTargetState);
   let last = '';
   return {
-    update(level, area, state) {
-      const key = JSON.stringify([level, area, state]);
+    update(level, area, state, planet = null) {
+      const key = JSON.stringify([level, area, state, planet]);
       if (key === last) return;
       last = key;
       q<HTMLElement>('.area-panel').hidden = level !== 2 || !area;
       q<HTMLElement>('.state-panel').hidden = level !== 1 || !state;
+      q<HTMLElement>('.planet-panel').hidden = level !== 0 || !planet;
+      if (planet) {
+        q('.planet-name').textContent = planet.name;
+        q('.planet-detail').textContent = planet.detail;
+        const t = q<HTMLButtonElement>('.planet-set-target');
+        t.hidden = !planet.canTarget && !planet.isTarget;
+        t.disabled = planet.isTarget;
+        t.textContent = planet.isTarget ? 'Tavoite' : 'Tavoitteeksi';
+      }
       if (area) {
         q('.area-name').textContent = area.name;
         q('.area-detail').textContent = area.detail;

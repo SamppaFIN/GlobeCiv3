@@ -155,3 +155,31 @@ export function luxuryStep(lux: number, disorder: boolean, calmDays: number, rat
   if (disorder) return rates[Math.min(rates.length - 1, i + 1)];
   return calmDays >= CALM_DAYS ? rates[Math.max(0, i - 1)] : lux;
 }
+
+/*
+ * The planet level (STORY-057): one of three picks the target state among the open ones.
+ *
+ *   Valloittaja      the open state not yet conquered with the most land
+ *   Löytöretkeilijä  the open state not yet conquered that is least mapped
+ *   Linnoittaja      no new state: the scouts and city sites keep to the states held
+ * The state advisor's Laajentaja aims at the target state's provinces first.
+ */
+export type PlanetAdvisor = 'none' | 'conquer' | 'explore' | 'fortify';
+export const PLANET_ADVISOR_LIST: readonly PlanetAdvisor[] = ['none', 'conquer', 'explore', 'fortify'];
+
+export const PLANET_ADVISORS: Record<PlanetAdvisor, { name: string; does: string }> = {
+  none: { name: 'Oma ohjaus', does: 'Valitset itse kohdevaltion.' },
+  conquer: { name: 'Valloittaja', does: 'Kohteeksi avoin valtio, jossa on eniten maata. Laajentaja asuttaa sen läänit ensin.' },
+  explore: { name: 'Löytöretkeilijä', does: 'Kohteeksi avoin valtio, joka on vähiten kartoitettu, ja retkikunta sinne.' },
+  fortify: { name: 'Linnoittaja', does: 'Ei uusia valtioita: tiedustelijat ja kaupunkipaikat pysyvät vallatuissa valtioissa.' },
+};
+
+/** The planet advisor's target state, or null (Linnoittaja, or none to take). */
+export function planetTarget(advisor: PlanetAdvisor, states: readonly { state: number; land: number; mapped: number; conquered: boolean }[]): number | null {
+  const open = states.filter(s => !s.conquered);
+  if (!open.length || advisor === 'none' || advisor === 'fortify') return null;
+  const best = advisor === 'conquer'
+    ? open.reduce((a, b) => (b.land > a.land || (b.land === a.land && b.state < a.state) ? b : a))
+    : open.reduce((a, b) => (b.mapped < a.mapped || (b.mapped === a.mapped && b.state < a.state) ? b : a));
+  return best.state;
+}

@@ -17,7 +17,7 @@ import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './u
 import type { Progress } from './progress';
 import { ADVANCE_LIST, LUX_RATES, TAX_RATES, type Advance } from './science';
 import { GOVERNMENT_LIST, type Government } from './government';
-import { CITY_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
+import { CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
 
 export const SAVE_VERSION = 1;
 
@@ -85,6 +85,9 @@ export interface SaveData {
   provinceAdvisor: ProvinceAdvisor;
   /** The state-level advisor (STORY-051); saves from before have none. */
   stateAdvisor: StateAdvisor;
+  /** The planet-level advisor and the target state, or −1 (STORY-057); saves from before have none. */
+  planetAdvisor: PlanetAdvisor;
+  targetState: number;
 }
 
 /** Ranges the save is checked against. */
@@ -245,6 +248,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       cityAdvisor: s.cityAdvisor === undefined ? 'none' : oneOf(s.cityAdvisor, CITY_ADVISOR_LIST, 'cityAdvisor'),
       provinceAdvisor: s.provinceAdvisor === undefined ? 'none' : oneOf(s.provinceAdvisor, PROVINCE_ADVISOR_LIST, 'provinceAdvisor'),
       stateAdvisor: s.stateAdvisor === undefined ? 'none' : oneOf(s.stateAdvisor, STATE_ADVISOR_LIST, 'stateAdvisor'),
+      planetAdvisor: s.planetAdvisor === undefined ? 'none' : oneOf(s.planetAdvisor, PLANET_ADVISOR_LIST, 'planetAdvisor'),
+      targetState: s.targetState === undefined ? -1 : int(s.targetState, 'target state', -1, Math.ceil(limits.cityAreas / 49)),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;

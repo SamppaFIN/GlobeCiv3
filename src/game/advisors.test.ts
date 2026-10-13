@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
+import { planetTarget, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
 
@@ -88,5 +88,20 @@ describe('Kasvattaja and the size limit (STORY-054)', () => {
     expect(cityAdvice('growth', city(6), needs({ available: ['colosseum'], unrestNear: true }))!.build).toBe('colosseum');
     expect(cityAdvice('growth', city(9), needs({ available: ['aqueduct', 'granary'] }))!.build).toBe('aqueduct');
     expect(cityAdvice('growth', city(8), needs({ available: ['aqueduct', 'granary'] }))!.build).toBe('granary');
+  });
+});
+
+describe('planet advisors (STORY-057)', () => {
+  const states = [
+    { state: 4, land: 900, mapped: 0.1, conquered: true },
+    { state: 7, land: 1200, mapped: 0.3, conquered: false },
+    { state: 9, land: 600, mapped: 0.05, conquered: false },
+  ];
+  it('Valloittaja the open state with the most land, Löytöretkeilijä the least mapped, Linnoittaja none', () => {
+    expect(planetTarget('conquer', states)).toBe(7);
+    expect(planetTarget('explore', states)).toBe(9);
+    expect(planetTarget('fortify', states)).toBeNull();
+    expect(planetTarget('none', states)).toBeNull();
+    expect(planetTarget('conquer', [states[0]])).toBeNull();
   });
 });
