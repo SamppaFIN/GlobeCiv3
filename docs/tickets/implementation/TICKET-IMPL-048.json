@@ -1,0 +1,36 @@
+{
+  "id": "TICKET-IMPL-048",
+  "story": "STORY-057",
+  "plan": "PLAN-048",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/ui/levelUi.ts",
+    "src/globe/main.ts",
+    "tests/e2e/conquest.e2e.ts"
+  ],
+  "change_summary": "PlanetAdvisor ja planetTarget(). main.ts: Play.planetAdvisor, planetLog ja targetState, setTargetState(), planetAdvisorDay() ensimmäisenä, landOf() ja stateShare() välimuisteineen, planetPanel(), Linnoittajan rajaus avoimiin valtioihin ja Laajentajan kohde. levelUi: planeetan paneeli.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "advisorLevel (planeetta)",
+      "LevelPanels.update(planet)",
+      "SaveData.planetAdvisor, targetState",
+      "Laajentajan lääniehdokkaat"
+    ],
+    "call_sites_found": [
+      "levelPanels.update, advisorDay, updatePlay"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Neuvonantajanappi näkyy nyt kaikilla tasoilla."
+  },
+  "commit": "b865b3a",
+  "progress": 100
+}

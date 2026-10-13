@@ -1,0 +1,31 @@
+{
+  "id": "TICKET-IMPL-046",
+  "story": "STORY-055",
+  "plan": "PLAN-046",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/ui/tileCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/tile-card.e2e.ts"
+  ],
+  "change_summary": "tapPlay avaa heksan kortin (Play.tileOpen), tileYieldNow() laskee heksan tuoton omistavalle kaupungille tai hallitusmuodon mukaan, tileView() kokoaa rivit ja updateTileCard() näyttää kortin ja tuottomerkin. Kortti piilottaa yksikköpaneelin eikä poista luokkaa, jos toinen kortti avautui samalla.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "tapPlay",
+      "Play.tileOpen"
+    ],
+    "call_sites_found": [
+      "tapPlay (onTap)"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Napautus ei enää valitse kaupunkialuetta kaupunkialuetasolla, kun se avaa kortin."
+  },
+  "commit": "5fab141",
+  "progress": 100
+}

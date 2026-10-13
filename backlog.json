@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T16:16:15Z",
+    "generated_at": "2026-10-13T18:25:18Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "3eee7e7",
+    "git_commit": "b865b3a",
     "git_branch": "main",
     "language": "fi"
   },
@@ -156,7 +156,10 @@
         "STORY-051",
         "STORY-052",
         "STORY-053",
-        "STORY-054"
+        "STORY-054",
+        "STORY-055",
+        "STORY-056",
+        "STORY-057"
       ],
       "progress": 97
     }
@@ -1474,6 +1477,82 @@
         "plan": "PLAN-045",
         "implementation": "TICKET-IMPL-045",
         "testing": "TICKET-TEST-045"
+      }
+    },
+    {
+      "id": "STORY-055",
+      "epic": "EPIC-006",
+      "title": "Heksan tiedot",
+      "type": "story",
+      "narrative": "Pelaajana haluan napauttaa heksaa ja nähdä, mitä se sisältää, jotta ymmärrän kartan ilman arvailua.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-023",
+        "STORY-033",
+        "STORY-039"
+      ],
+      "acceptance_criteria": [
+        "Kaupunkialuetasolla napautus heksaan, jossa ei ole yksikköä eikä kaupunkia, avaa kortin: maasto ja erikoisresurssi, päivän tuotto, parannukset, vanhan löydön bonus, kaupunki ja työstetäänkö ruutua, yksiköt ja rosvot, kulun kesto ja lukittu valtio.",
+        "Sumussa oleva heksa kertoo, ettei siitä tiedetä vielä mitään.",
+        "Kortti siirtää yksikköpaneelin syrjään, heksan tuotto näkyy kartalla, ja toinen kortti sulkee sen. Valittu uudisasukas valitsee yhä paikkansa napautuksella."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-046",
+        "implementation": "TICKET-IMPL-046",
+        "testing": "TICKET-TEST-046"
+      }
+    },
+    {
+      "id": "STORY-056",
+      "epic": "EPIC-006",
+      "title": "Tavoitteet valloitukseen",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että tavoitteet jatkuvat kolmen kaupungin jälkeen ja vievät kohti kotivaltion valtausta, jotta pelissä on suunta loppuun asti.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-041",
+        "STORY-016",
+        "STORY-047",
+        "STORY-049",
+        "STORY-054"
+      ],
+      "acceptance_criteria": [
+        "Kolmen kaupungin jälkeen tulevat tavoitteet: valitse neuvonantaja (30), kartoita valtiosi (60), siirry monarkiaan (60), kaupunki neljään lääniin (80), kasvata kaupunki yli koon 10 (100) ja valtaa kotivaltio (150), vihjeineen.",
+        "Vanha peli, joka on suorittanut entisen ketjun, jatkaa ensimmäisestä uudesta tavoitteesta."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-047",
+        "implementation": "TICKET-IMPL-047",
+        "testing": "TICKET-TEST-047"
+      }
+    },
+    {
+      "id": "STORY-057",
+      "epic": "EPIC-006",
+      "title": "Planeettatason kohdevaltio ja neuvonantajat",
+      "type": "story",
+      "narrative": "Pelaajana haluan planeettatasolle oman toiminnon ja neuvonantajan, jotta jokaisella karttatasolla on oma neuvonantaja.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-016",
+        "STORY-051",
+        "STORY-053"
+      ],
+      "acceptance_criteria": [
+        "Planeettatason paneeli näyttää valitun valtion ja tekee avoimesta, valtaamattomasta valtiosta kohdevaltion: retkikunta lähtee sinne, ja Laajentaja asuttaa sen läänit ensin.",
+        "Planeetan neuvonantajat: Valloittaja (avoin valtio, jossa eniten maata), Löytöretkeilijä (vähiten kartoitettu) ja Linnoittaja (tiedustelijat ja kaupunkipaikat pysyvät vallatuissa valtioissa).",
+        "Kohdevaltio näkyy sirussa (Tavoite), ja valinta ja kohde tallentuvat."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-048",
+        "implementation": "TICKET-IMPL-048",
+        "testing": "TICKET-TEST-048"
       }
     }
   ],
@@ -3771,6 +3850,114 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-046",
+      "story": "STORY-055",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin pyyntö 2026-10-13: \"jos käyttäjä klikkaa heksaa, niin siitä tulee details ruutu mitä heksa sisältää\". Uusi tileCard.ts (alapaneeli kuten muut kortit), tieto main.ts:n tileView():ssa samoista funktioista kuin kaupungin tuotot.",
+      "alternatives_considered": [
+        {
+          "name": "Kortti myös uudisasukkaan paikkanapautukseen",
+          "pros": "Näkee paikan tiedot",
+          "cons": "Peittää Perusta kaupunki -napin",
+          "rejected_because": "Paikan valinta on silloin pelaajan aikomus"
+        }
+      ],
+      "files_to_change": [
+        "src/ui/tileCard.ts (uusi) ja hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/tile-card.e2e.ts (uusi)"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Kortti ja tiedot",
+          "verify": "E2E ja kuvakaappaus"
+        },
+        {
+          "step": 2,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-047",
+      "story": "STORY-056",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Oma suunnittelu (kuten STORY-041). GoalState saa neuvonantajan, monarkian ja hallussa olevat läänit; uudet tavoitteet ovat ketjun jatkona, joten tallennettu indeksi pätee.",
+      "alternatives_considered": [
+        {
+          "name": "Tavoitteet erilliseksi listaksi",
+          "pros": "Näkee kaikki",
+          "cons": "Lisää hälinää",
+          "rejected_because": "Yksi tavoite kerrallaan on ollut selkein (Samin palaute hälinästä)"
+        }
+      ],
+      "files_to_change": [
+        "src/game/goals.ts ja testi",
+        "src/globe/main.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Tavoitteet ja testi",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-048",
+      "story": "STORY-057",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Samin pyyntö (STORY-049): jokaiselle karttatasolle oma neuvonantaja. Planeettataso avautui STORY-016:ssa ilman toimintoja. Säännöt advisors.ts:n planetTarget():ssa (oma suunnittelu).",
+      "alternatives_considered": [
+        {
+          "name": "Planeetan neuvonantaja vasta vastustajien kanssa",
+          "pros": "Diplomatia ja sota",
+          "cons": "Taso jäisi tyhjäksi",
+          "rejected_because": "Kohdevaltio riittää nyt tason toiminnoksi"
+        }
+      ],
+      "files_to_change": [
+        "src/game/advisors.ts ja testi",
+        "src/game/save.ts ja testi",
+        "src/ui/levelUi.ts",
+        "src/globe/main.ts",
+        "tests/e2e/conquest.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Säännöt ja testi",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Paneeli, neuvonantaja, kohde",
+          "verify": "E2E työpöydällä ja puhelimella"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -5570,6 +5757,103 @@
         "notes": "Rakennusvaihtoehtoja on nyt neljätoista."
       },
       "commit": "3eee7e7",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-046",
+      "story": "STORY-055",
+      "plan": "PLAN-046",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/ui/tileCard.ts",
+        "src/ui/hud.css",
+        "src/globe/main.ts",
+        "tests/e2e/tile-card.e2e.ts"
+      ],
+      "change_summary": "tapPlay avaa heksan kortin (Play.tileOpen), tileYieldNow() laskee heksan tuoton omistavalle kaupungille tai hallitusmuodon mukaan, tileView() kokoaa rivit ja updateTileCard() näyttää kortin ja tuottomerkin. Kortti piilottaa yksikköpaneelin eikä poista luokkaa, jos toinen kortti avautui samalla.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "tapPlay",
+          "Play.tileOpen"
+        ],
+        "call_sites_found": [
+          "tapPlay (onTap)"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Napautus ei enää valitse kaupunkialuetta kaupunkialuetasolla, kun se avaa kortin."
+      },
+      "commit": "5fab141",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-047",
+      "story": "STORY-056",
+      "plan": "PLAN-047",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/goals.ts",
+        "src/game/goals.test.ts",
+        "src/globe/main.ts"
+      ],
+      "change_summary": "Kuusi uutta tavoitetta ja GoalStaten kentät advisor, monarchy ja provinces; main.ts laskee ne.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "GoalState",
+          "GOALS"
+        ],
+        "call_sites_found": [
+          "checkGoals"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kiinnike-testin \"edellä oleva peli\" sai uudet kentät, jotta se kattaa koko ketjun; tarkistus ei muuttunut."
+      },
+      "commit": "1e63f07",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-048",
+      "story": "STORY-057",
+      "plan": "PLAN-048",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/ui/levelUi.ts",
+        "src/globe/main.ts",
+        "tests/e2e/conquest.e2e.ts"
+      ],
+      "change_summary": "PlanetAdvisor ja planetTarget(). main.ts: Play.planetAdvisor, planetLog ja targetState, setTargetState(), planetAdvisorDay() ensimmäisenä, landOf() ja stateShare() välimuisteineen, planetPanel(), Linnoittajan rajaus avoimiin valtioihin ja Laajentajan kohde. levelUi: planeetan paneeli.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "advisorLevel (planeetta)",
+          "LevelPanels.update(planet)",
+          "SaveData.planetAdvisor, targetState",
+          "Laajentajan lääniehdokkaat"
+        ],
+        "call_sites_found": [
+          "levelPanels.update, advisorDay, updatePlay"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Neuvonantajanappi näkyy nyt kaikilla tasoilla."
+      },
+      "commit": "b865b3a",
       "progress": 100
     }
   ],
@@ -9727,6 +10011,195 @@
           },
           {
             "item": "Neuvonantajat",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-046",
+      "story": "STORY-055",
+      "implementation_ticket": "TICKET-IMPL-046",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Suunnitteluvaiheessa löytyi kaksi omaa virhettä ennen testejä: kortin sulkeminen olisi poistanut toisen kortin piilotusluokan, ja uudisasukkaan paikkanapautuksen kortti olisi peittänyt perustamisnapin.",
+        "files_changed": []
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "E2E: heksan kortti",
+            "expected": "Kartoitettu maaheksa: otsikko, tuotto, kulku, kaupunki; paneeli syrjään; tuottomerkki; sumuheksa Kartoittamaton; luettelo sulkee kortin",
+            "result": "pass (tile.png: Kukkulat · Hiili)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 154/154; E2E 65/65",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38427739379 (40 min) vihreä ja julkaistu: STORY-057:n ajo, joka sisältää tämän; oma ajo (5fab141) peruttiin uudemman tieltä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Heksan tiedot löytyvät napautuksella",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kortti napautuksella",
+            "checked": true
+          },
+          {
+            "item": "Sumuheksa",
+            "checked": true
+          },
+          {
+            "item": "Paneeli ja merkki",
+            "checked": true
+          },
+          {
+            "item": "Uudisasukkaan paikka",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-047",
+      "story": "STORY-056",
+      "implementation_ticket": "TICKET-IMPL-047",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus.",
+        "files_changed": []
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: ketju kolmen kaupungin jälkeen",
+            "expected": "Kuusi tavoitetta järjestyksessä, kukin yksi kerrallaan; edellä oleva peli saa kaikki",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tavoitteet, valloitus ja neuvonantajat",
+            "expected": "Vihreä",
+            "result": "6/6",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38427739379 (40 min) vihreä ja julkaistu: STORY-057:n ajo, joka sisältää tämän; oma ajo (1e63f07) peruttiin uudemman tieltä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Pelissä on suunta kolmen kaupungin jälkeen",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kuusi uutta tavoitetta",
+            "checked": true
+          },
+          {
+            "item": "Vanha peli jatkaa",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-048",
+      "story": "STORY-057",
+      "implementation_ticket": "TICKET-IMPL-048",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus.",
+        "files_changed": []
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: planeetan neuvonantajat",
+            "expected": "Eniten maata, vähiten kartoitettu, ei kohdetta",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valloitus ja planeetta työpöydällä ja puhelimella",
+            "expected": "Paneeli Kotivaltio; kortti Planeetta, neljä vaihtoehtoa; Valloittaja asettaa kohteen, siru Tavoite",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 156/156; E2E 65/65",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38427739379 (b865b3a, 40 min; kattaa myös STORY-055:n ja STORY-056:n) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Planeettataso on mielekäs valtauksen jälkeen",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kohdevaltio",
+            "checked": true
+          },
+          {
+            "item": "Planeetan neuvonantajat",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
             "checked": true
           }
         ],

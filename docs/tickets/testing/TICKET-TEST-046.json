@@ -1,0 +1,65 @@
+{
+  "id": "TICKET-TEST-046",
+  "story": "STORY-055",
+  "implementation_ticket": "TICKET-IMPL-046",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Suunnitteluvaiheessa löytyi kaksi omaa virhettä ennen testejä: kortin sulkeminen olisi poistanut toisen kortin piilotusluokan, ja uudisasukkaan paikkanapautuksen kortti olisi peittänyt perustamisnapin.",
+    "files_changed": []
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "E2E: heksan kortti",
+        "expected": "Kartoitettu maaheksa: otsikko, tuotto, kulku, kaupunki; paneeli syrjään; tuottomerkki; sumuheksa Kartoittamaton; luettelo sulkee kortin",
+        "result": "pass (tile.png: Kukkulat · Hiili)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 154/154; E2E 65/65",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38427739379 (40 min) vihreä ja julkaistu: STORY-057:n ajo, joka sisältää tämän; oma ajo (5fab141) peruttiin uudemman tieltä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Heksan tiedot löytyvät napautuksella",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kortti napautuksella",
+        "checked": true
+      },
+      {
+        "item": "Sumuheksa",
+        "checked": true
+      },
+      {
+        "item": "Paneeli ja merkki",
+        "checked": true
+      },
+      {
+        "item": "Uudisasukkaan paikka",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

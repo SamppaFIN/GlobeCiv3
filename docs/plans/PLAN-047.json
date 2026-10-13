@@ -1,0 +1,33 @@
+{
+  "id": "PLAN-047",
+  "story": "STORY-056",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Oma suunnittelu (kuten STORY-041). GoalState saa neuvonantajan, monarkian ja hallussa olevat läänit; uudet tavoitteet ovat ketjun jatkona, joten tallennettu indeksi pätee.",
+  "alternatives_considered": [
+    {
+      "name": "Tavoitteet erilliseksi listaksi",
+      "pros": "Näkee kaikki",
+      "cons": "Lisää hälinää",
+      "rejected_because": "Yksi tavoite kerrallaan on ollut selkein (Samin palaute hälinästä)"
+    }
+  ],
+  "files_to_change": [
+    "src/game/goals.ts ja testi",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Tavoitteet ja testi",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

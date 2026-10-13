@@ -1,0 +1,41 @@
+{
+  "id": "PLAN-048",
+  "story": "STORY-057",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Samin pyyntö (STORY-049): jokaiselle karttatasolle oma neuvonantaja. Planeettataso avautui STORY-016:ssa ilman toimintoja. Säännöt advisors.ts:n planetTarget():ssa (oma suunnittelu).",
+  "alternatives_considered": [
+    {
+      "name": "Planeetan neuvonantaja vasta vastustajien kanssa",
+      "pros": "Diplomatia ja sota",
+      "cons": "Taso jäisi tyhjäksi",
+      "rejected_because": "Kohdevaltio riittää nyt tason toiminnoksi"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts ja testi",
+    "src/game/save.ts ja testi",
+    "src/ui/levelUi.ts",
+    "src/globe/main.ts",
+    "tests/e2e/conquest.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Säännöt ja testi",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Paneeli, neuvonantaja, kohde",
+      "verify": "E2E työpöydällä ja puhelimella"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

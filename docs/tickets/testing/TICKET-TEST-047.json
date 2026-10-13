@@ -1,0 +1,57 @@
+{
+  "id": "TICKET-TEST-047",
+  "story": "STORY-056",
+  "implementation_ticket": "TICKET-IMPL-047",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus.",
+    "files_changed": []
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: ketju kolmen kaupungin jälkeen",
+        "expected": "Kuusi tavoitetta järjestyksessä, kukin yksi kerrallaan; edellä oleva peli saa kaikki",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tavoitteet, valloitus ja neuvonantajat",
+        "expected": "Vihreä",
+        "result": "6/6",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38427739379 (40 min) vihreä ja julkaistu: STORY-057:n ajo, joka sisältää tämän; oma ajo (1e63f07) peruttiin uudemman tieltä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Pelissä on suunta kolmen kaupungin jälkeen",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kuusi uutta tavoitetta",
+        "checked": true
+      },
+      {
+        "item": "Vanha peli jatkaa",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

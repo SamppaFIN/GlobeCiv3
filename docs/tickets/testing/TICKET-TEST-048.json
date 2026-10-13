@@ -1,0 +1,67 @@
+{
+  "id": "TICKET-TEST-048",
+  "story": "STORY-057",
+  "implementation_ticket": "TICKET-IMPL-048",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus.",
+    "files_changed": []
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: planeetan neuvonantajat",
+        "expected": "Eniten maata, vähiten kartoitettu, ei kohdetta",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valloitus ja planeetta työpöydällä ja puhelimella",
+        "expected": "Paneeli Kotivaltio; kortti Planeetta, neljä vaihtoehtoa; Valloittaja asettaa kohteen, siru Tavoite",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 156/156; E2E 65/65",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38427739379 (b865b3a, 40 min; kattaa myös STORY-055:n ja STORY-056:n) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Planeettataso on mielekäs valtauksen jälkeen",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kohdevaltio",
+        "checked": true
+      },
+      {
+        "item": "Planeetan neuvonantajat",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}
