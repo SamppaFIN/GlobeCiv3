@@ -237,3 +237,22 @@ describe('sea travel (STORY-059)', () => {
     expect(reaches(sailing)).toBe(true);
   });
 });
+
+describe('scouts map the focus first (STORY-060)', () => {
+  it('a scout heads for unmapped land in the focus though other land is nearer, and anywhere once the focus is mapped', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    const scout = units.units.find(u => u.kind === 'scout')!;
+    // The focus: a band of latitude well north of the start
+    const north = (id: number) => tileCenter(id).y > tileCenter(START_TILE).y + 0.02;
+    units.focus = north;
+    units.day(world);
+    expect(north(scout.path.at(-1) ?? scout.tile)).toBe(true);
+    // Nothing left in the focus: the nearest unmapped land again
+    units.focus = () => false;
+    scout.path = [];
+    scout.wait = 0;
+    units.day(world);
+    expect(north(scout.path.at(-1) ?? scout.tile)).toBe(false);
+  });
+});

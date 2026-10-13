@@ -21,7 +21,7 @@ import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
 import { GameClock, type Speed } from '../game/clock';
 import { findPath, tilesInRings } from '../game/pathfinding';
-import { goodSite, OFFER_EVERY_DAYS } from '../game/sites';
+import { FAIR_SITE, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
@@ -831,7 +831,13 @@ function cityDays() {
     sendSettler(free, play.pendingSite);
     play.pendingSite = null;
     discoveryCard.notice(`${free.name} lähti kaupunkipaikalle`);
+  } else if (play.pendingSite !== null && !free && play.cities[0] && !play.cities.some(c => c.build === 'settler')) {
+    // The waiting site keeps a settler coming (STORY-060): a soldier against bandits, an
+    // advisor or the player may have changed the build, and the site would wait for ever
+    play.cities[0].build = 'settler';
   }
+  // The best known sites come daily too, not only with freshly mapped land
+  noteSiteOffer([]);
 }
 
 // ─── City sites and labels (STORY-032) ────────────
@@ -871,11 +877,58 @@ function noteSiteOffer(fresh: number[]) {
   const site = play.units.settler ? play.units.currentSite() : null;
   const taken = [...play.cities.map(c => c.tile), ...play.offered, ...(site !== null ? [site] : []), ...(play.pendingSite !== null ? [play.pendingSite] : [])];
   const isLand = (id: number) => Number.isFinite(world.cost(id));
-  const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken));
+  // Good sites come from freshly mapped land; after a quiet while, or in the conquest, the best known one
+  const quiet = play.cities.length > 0 && clock.day - play.lastOfferDay >= QUIET_DAYS;
+  const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken))
+    ?? (play.progress.meter === 'conquest' ? provinceSite(taken) : quiet ? nearbySite(taken) : undefined);
   if (tile === undefined) return;
   play.offers.push({ tile, finder: finderOf(tile) });
   play.offered.push(tile);
   play.lastOfferDay = clock.day;
+}
+
+/**
+ * During the conquest: the best mapped site of the nearest home-state province without a city
+ * (STORY-060). Good sites come from freshly mapped land only, and a province mapped before, or
+ * one without land in the top quarter, would otherwise never get a city.
+ */
+function provinceSite(taken: readonly number[]): number | undefined {
+  const p = play!;
+  const won = conquestNow();
+  const from = tileCenter(p.cities[0]?.tile ?? p.units.camp);
+  const provinces = Array.from({ length: 7 }, (_, k) => homeState() * 7 + k)
+    .filter(pr => !won.held.has(pr))
+    .sort((a, b) => from.angleTo(regions.centers[1][a]) - from.angleTo(regions.centers[1][b]));
+  const near = new Set(taken.flatMap(t => tilesInRings(t, SITE_SPACING - 1)));
+  for (const pr of provinces) {
+    let best: number | undefined, top = -Infinity;
+    for (let a = pr * 7; a < pr * 7 + 7; a++) {
+      if (!tilesOfArea.has(a)) tilesOfArea.set(a, cityTiles(regions, a));
+      for (const t of tilesOfArea.get(a)!) {
+        if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t)) continue;
+        const s = world.siteScore(t);
+        if (s > top) { top = s; best = t; }
+      }
+    }
+    if (best !== undefined) return best;
+  }
+  return undefined;
+}
+
+/**
+ * The best mapped site within twelve rings of the capital, of the median score at least
+ * (STORY-060: the scouts may map far and poor land for a long while, and the cities stopped).
+ */
+function nearbySite(taken: readonly number[]): number | undefined {
+  const p = play!;
+  const near = new Set(taken.flatMap(t => tilesInRings(t, SITE_SPACING - 1)));
+  let best: number | undefined, top = FAIR_SITE - 1;
+  for (const t of tilesInRings(p.cities[0].tile, 12)) {
+    if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || !p.units.isOpen(t, world)) continue;
+    const s = world.siteScore(t);
+    if (s > top) { top = s; best = t; }
+  }
+  return best;
 }
 
 /** Food, shields and trade within a city's two rings of a site. */
@@ -1079,17 +1132,26 @@ function advisorDay() {
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
     const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, hasWonder('gardens'), luxury, p.gov);
     const advice = cityAdvice(p.cityAdvisor, c, {
-      available, soldiers, unrestNear: !!yields[i].disorder || bigger.disorder,
-      threat: p.raids.band?.city === c.tile, soldier: bestSoldier(),
+      available, soldiers, unrestNear: !!yields[i].disorder || bigger.disorder, disorder: !!yields[i].disorder,
+      threat: p.raids.band?.city === c.tile, soldier: bestSoldier(), settlers: supportOf(c).settlers,
     });
     if (advice && c.focus !== advice.focus) c.focus = advice.focus;
     const border = tilesInRings(c.tile, 3).some(t => Math.floor(world.cityOf(t) / 7) !== home);
     const ordered = provinceBuild(p.provinceAdvisor, { soldiers, border, available, soldier: bestSoldier(), walls: hasWalls(c) });
     const build = ordered ?? advice?.build ?? null;
     // A settler for a waiting city site is not changed
-    if (!build || build === c.build || (c.build === 'settler' && p.pendingSite !== null)) return;
-    c.build = build;
-    advise(`${c.name} rakentaa: ${BUILDS[build].name}`, ordered ? 'province' : 'city');
+    if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null)) {
+      c.build = build;
+      advise(`${c.name} rakentaa: ${BUILDS[build].name}`, ordered ? 'province' : 'city');
+    }
+    // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
+    if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
+      const price = buyCost(c);
+      if (price > 0 && price * 2 <= p.gold && buy(c, p.gold)) {
+        p.gold -= price;
+        advise(`${c.name} osti: ${BUILDS[c.build].name} (${price} kultaa)`);
+      }
+    }
   });
   if (p.provinceAdvisor === 'settle') {
     const withCity = new Set(p.cities.map(c => world.cityOf(c.tile)));
@@ -2004,6 +2066,13 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 function updatePlay(dt: number) {
   if (!play) return;
   const won = conquestNow();
+  // Scouts map first what opens the next level (STORY-060)
+  const meter = play.progress.meter;
+  // ... and then the provinces of the home state not yet held, where the next cities go
+  const held = meter === 'conquest' ? conquestNow().held : null;
+  play.units.focus = meter === 'province' ? id => Math.floor(world.cityOf(id) / 7) === play!.units.homeProvince
+    : meter === 'state' ? id => Math.floor(world.cityOf(id) / 49) === homeState()
+    : held ? id => Math.floor(world.cityOf(id) / 49) === homeState() && !held.has(Math.floor(world.cityOf(id) / 7)) : null;
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
   const days = play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
@@ -2249,6 +2318,15 @@ frameStartPlanet();
   /** Discoveries, site offers and raids all stop the game: off together, site offers or raids back on alone. */
   setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; raidsOn = on; },
   setRaids: (on: boolean) => { raidsOn = on; },
+  /** Long test games: a faster clock and the advisors of every level (STORY-060). */
+  fastForward: (speed: number) => { clock.speed = speed as Speed; clock.paused = false; },
+  setAdvisors: (a: { city?: CityAdvisor; province?: ProvinceAdvisor; state?: StateAdvisor; planet?: PlanetAdvisor }) => {
+    if (!play) return;
+    if (a.city) play.cityAdvisor = a.city;
+    if (a.province) play.provinceAdvisor = a.province;
+    if (a.state) play.stateAdvisor = a.state;
+    if (a.planet) play.planetAdvisor = a.planet;
+  },
   /** The card a tapped hex would show (STORY-055). */
   tileView: (id: number) => (play ? tileView(id) : null),
   /** Found a city on the first land tile of a province that has none (STORY-016). */

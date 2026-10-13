@@ -97,6 +97,11 @@ export class Units {
   keepHome = false;
   /** States open to scouts, flags and city sites (STORY-016), or null for all; set by the game, not saved. */
   openStates: Set<number> | null = null;
+  /**
+   * Land the scouts map first while the next level waits for it (STORY-060): the home province,
+   * then the home state. Set by the game, not saved; null for anywhere.
+   */
+  focus: ((id: number) => boolean) | null = null;
   /** The home province: Puolustus keeps exploring scouts inside it. */
   homeProvince = -1;
   private nextId = 0;
@@ -356,7 +361,9 @@ export class Units {
       const city = world.cityOf(id);
       return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince) && this.isOpen(id, world);
     };
-    return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && land(id) && allowed(id)));
+    // The focus first, then anywhere (the nearest land could lie outside the home province for ever)
+    const unmapped = (also: (id: number) => boolean) => nearestTile(u.tile, cost, id => !world.isMapped(id) && land(id) && allowed(id) && also(id));
+    return to((this.focus && unmapped(this.focus)) ?? unmapped(() => true));
   }
 }
 

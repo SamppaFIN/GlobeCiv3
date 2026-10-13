@@ -121,7 +121,12 @@ export const SIZE_LIMIT = 10;
 export const sizeLimit = (city: City) => (city.buildings.includes('aqueduct') ? Infinity : SIZE_LIMIT);
 
 /** Own city names (rule 4), given in order. */
-export const CITY_NAMES = ['Aamuranta', 'Kivisalmi', 'Tuulikallio', 'Hopealahti', 'Karhuniemi', 'Sammalvuori', 'Kaislakorpi', 'Routajärvi'];
+export const CITY_NAMES = [
+  'Aamuranta', 'Kivisalmi', 'Tuulikallio', 'Hopealahti', 'Karhuniemi', 'Sammalvuori', 'Kaislakorpi', 'Routajärvi',
+  // More own names (STORY-060: a long game ran out of the eight and repeated them)
+  'Koivuranta', 'Lumivaara', 'Peltoniemi', 'Kuusisalo', 'Hiekkalahti', 'Tähtiniemi', 'Ruskovaara', 'Myllysalmi',
+  'Kalliokoski', 'Suvantola', 'Pajulahti', 'Vuorenrinne', 'Lehtokorpi', 'Kanervala', 'Jäkälänummi', 'Ahvenlampi',
+];
 
 export interface City {
   id: number;
@@ -142,7 +147,8 @@ export interface City {
 
 export function foundCity(cities: City[], tile: number): City {
   const city: City = {
-    id: cities.length, name: CITY_NAMES[cities.length % CITY_NAMES.length], tile,
+    // After the list, the names come round again with a number: "Aamuranta 2"
+    id: cities.length, name: CITY_NAMES[cities.length % CITY_NAMES.length] + (cities.length >= CITY_NAMES.length ? ` ${Math.floor(cities.length / CITY_NAMES.length) + 1}` : ''), tile,
     capital: cities.length === 0, size: 1, food: 0, shields: 0, build: 'warrior', buildings: [], focus: 'balanced',
   };
   cities.push(city);
