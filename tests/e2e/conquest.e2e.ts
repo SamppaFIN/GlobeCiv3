@@ -120,3 +120,36 @@ test.describe('on a phone', () => {
     await conquer(page, testInfo);
   });
 });
+
+test('a province without land counts as held, so a home state with sea provinces can be conquered (STORY-058)', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  // Seed 5: two of the home state's seven provinces are all sea
+  await page.goto('./?seed=5');
+  await ready;
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
+  await page.getByRole('button', { name: 'Uusi peli' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  await mapShare(page, 'province', 0.61);
+  await page.getByRole('button', { name: 'Myöhemmin' }).click();
+  await page.keyboard.press('-');
+  await arrive(page, 2);
+  await mapShare(page, 'state', 0.61);
+  await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
+  await arrive(page, 1);
+  await expect(page.locator('.hud-meter-value')).toHaveText('2 / 7 hallussa');
+  await expect(page.locator('.chip-sub', { hasText: 'Ei maata' })).toHaveCount(2);
+  // A city in each province with land conquers the state
+  const founded = await page.evaluate(() => {
+    const w = window as any;
+    const home = Math.floor(w.globeGame.state.startCity / 49);
+    return Array.from({ length: 7 }, (_, k) => w.globeDebug.foundIn(home * 7 + k)).filter((t: number | null) => t !== null).length;
+  });
+  expect(founded).toBe(5);
+  await expect(page.getByRole('heading', { name: 'Valtio vallattu, zoomaa ulos' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
