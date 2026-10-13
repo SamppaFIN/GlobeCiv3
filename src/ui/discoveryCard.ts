@@ -1,27 +1,21 @@
 /**
- * discoveryCard.ts — a scout's discovery (design 4a).
+ * discoveryCard.ts — the card that stops the game (design 4a): it suggests a good city site
+ * (STORY-032) and warns of bandits (STORY-034). Scouts' finds no longer use it (STORY-052).
  *
  * While the card is open the game stands still: a chip says "Peli pysähtyi · Päivä N",
- * an accent ring marks the tile, and the bottom sheet offers two finds. After the choice
- * a notice (role=status) tells what changed. The same card suggests a good city site
- * (STORY-032) and warns of bandits (STORY-034).
+ * an accent ring marks the tile, and the bottom sheet offers the choices. After a choice
+ * a notice (role=status) tells what changed; the game's other notices use it too.
  */
-import type { FindKind } from '../game/discoveries';
 import { PAUSE } from './gameHud';
 
-/** What a choice on the card is: a find, building a city at a suggested site, a soldier against bandits, or later. */
-export type ChoiceKind = FindKind | 'site' | 'defend' | 'later';
+/** What a choice on the card is: building a city at a suggested site, a soldier against bandits, or later. */
+export type ChoiceKind = 'site' | 'defend' | 'later';
 
-// Icons on a 24 px grid in ink (fish and ruins as in design 4a; the others are own)
+// Icons on a 24 px grid in ink (own)
 const ICONS: Record<ChoiceKind, string> = {
   site: '<path d="M3 20 H21 M5 20 V12 L9 9 L13 12 V20 M13 20 V8 L17 5 L21 8 V20 M8 15 H10 M16 12 H18" stroke-linejoin="round" stroke-linecap="round"/>',
   defend: '<path d="M12 3 L19 6 V11 C19 16 16 19 12 21 C8 19 5 16 5 11 V6 Z" stroke-linejoin="round"/>',
   later: '<circle cx="12" cy="12" r="8"/><path d="M12 7 V12 L15.5 14" stroke-linecap="round"/>',
-  fish: '<path d="M3 12 Q11 5 17 12 Q11 19 3 12 Z M17 12 L21 8 V16 Z" stroke-linejoin="round"/>',
-  ruins: '<path d="M4 20 H20 M6 20 V9 M10 20 V12 M14 20 V7 M18 20 V11 M5 9 H8 M13 7 H16" stroke-linecap="round"/>',
-  ore: '<path d="M4 19 L8 9 L13 5 L19 9 L20 19 Z M8 15 L12 12 L16 14" stroke-linejoin="round" stroke-linecap="round"/>',
-  trail: '<path d="M4 20 C8 15 10 17 12 12 C14 7 17 8 20 4" stroke-linecap="round" stroke-dasharray="2.5 2.5"/>',
-  lookout: '<path d="M2 12 Q12 4 22 12 Q12 20 2 12 Z" stroke-linejoin="round"/><circle cx="12" cy="12" r="3"/>',
 };
 
 export interface DiscoveryView {

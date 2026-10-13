@@ -40,10 +40,9 @@ export interface GameHudState {
   flagTool: boolean;
   /** The first city's name: the city button opens the city cards (STORY-028). */
   city: string | null;
-  /** Discoveries waiting for the player (STORY-037). */
-  finds: number;
   /** No advance is being researched though one could be (STORY-040). */
-  chooseResearch: boolean;
+  /** The science pill (STORY-052): what is researched and how far, or "Valitse tutkimus"; null without a city. */
+  research: { text: string; choose: boolean } | null;
   /** The current goal and its reward, or null when all are done (STORY-041). */
   goal: { text: string; reward: number } | null;
   /** The advisor of the level in view, or null where the level has none (STORY-049). */
@@ -64,8 +63,6 @@ export interface GameHudHandlers {
   openList(): void;
   /** Open the advisor of the level in view (STORY-049). */
   openAdvisor(): void;
-  /** Open the oldest waiting discovery. */
-  openFind(): void;
   /** Open the science card. */
   openResearch(): void;
   /** Tell how to reach the current goal. */
@@ -96,8 +93,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
     </section>
     <section class="hud-panel hud-bottom" aria-label="Valittu yksikkö">
       <div class="hud-pills">
-        <button class="btn btn-primary hud-pill hud-finds" type="button" hidden></button>
-        <button class="btn btn-primary hud-pill hud-research" type="button" hidden>${SPARK}<span>Valitse tutkimus</span></button>
+        <button class="btn btn-primary hud-pill hud-research" type="button" hidden>${SPARK}<span class="hud-research-text">Valitse tutkimus</span></button>
       </div>
       <button class="hud-unit" type="button" aria-label="Seuraava yksikkö"><span class="hud-unit-name"></span><span class="hud-unit-status"></span></button>
       <div class="hud-row hud-scout">
@@ -133,7 +129,6 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openList);
   q<HTMLButtonElement>('.hud-advisor').addEventListener('click', on.openAdvisor);
-  q<HTMLButtonElement>('.hud-finds').addEventListener('click', on.openFind);
   q<HTMLButtonElement>('.hud-research').addEventListener('click', on.openResearch);
   q<HTMLButtonElement>('.hud-goal').addEventListener('click', on.goalHint);
 
@@ -162,10 +157,14 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       goal.hidden = !s.goal;
       if (s.goal) goal.innerHTML = `<span class="hud-goal-label">Tavoite</span><span class="hud-goal-text"></span><span class="hud-goal-reward">+${s.goal.reward} kultaa</span>`;
       if (s.goal) goal.querySelector('.hud-goal-text')!.textContent = s.goal.text;
-      const finds = q<HTMLButtonElement>('.hud-finds');
-      finds.hidden = s.finds === 0;
-      finds.innerHTML = `${SPARK}<span>${s.finds === 1 ? 'Löytö odottaa' : `${s.finds} löytöä odottaa`}</span>`;
-      q<HTMLElement>('.hud-research').hidden = !s.chooseResearch;
+      const research = q<HTMLButtonElement>('.hud-research');
+      research.hidden = !s.research;
+      if (s.research) {
+        q<HTMLElement>('.hud-research-text').textContent = s.research.text;
+        // Choosing calls for the accent; research under way is quieter
+        research.classList.toggle('btn-primary', s.research.choose);
+        research.classList.toggle('btn-secondary', !s.research.choose);
+      }
       const advisor = q<HTMLButtonElement>('.hud-advisor');
       advisor.hidden = s.advisor === null;
       advisor.setAttribute('aria-label', `Neuvonantaja: ${s.advisor ?? ''}`);
