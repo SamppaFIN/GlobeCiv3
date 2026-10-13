@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 /** Map a share of the home province or state through the test hook. */
 const mapShare = (page: Page, region: 'province' | 'state', share: number) => page.evaluate(([r, s]) => {
@@ -30,8 +30,7 @@ const sendNeighbour = (page: Page) => page.evaluate(() => {
   return false;
 });
 
-test('a city holds its province; all seven conquer the home state, which opens the planet and the neighbouring states', async ({ page }, testInfo) => {
-  test.setTimeout(180_000);
+async function conquer(page: Page, testInfo: TestInfo) {
   const errors: string[] = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(e.message));
@@ -81,7 +80,27 @@ test('a city holds its province; all seven conquer the home state, which opens t
   await expect(page.locator('.chip:not([hidden])').filter({ hasText: 'Lääniä hallussa 0/7' }).first()).toBeAttached();
   expect(await page.locator('.chip').count()).toBeGreaterThanOrEqual(1 + neighbours);
   await expect(page.locator('.hud-meter-value')).toHaveText('1 vallattu');
+  // The planet level stops near enough that the states' chips do not overlap (STORY-053)
+  const boxes = await page.locator('.chip:not([hidden])').evaluateAll(els => els.map(e => e.getBoundingClientRect().toJSON()));
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], b = boxes[j];
+    expect(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top).toBe(true);
+  }
   expect(await sendNeighbour(page)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('planet.png') });
   expect(errors).toEqual([]);
+}
+
+test('a city holds its province; all seven conquer the home state, which opens the planet and the neighbouring states', async ({ page }, testInfo) => {
+  test.setTimeout(180_000);
+  await conquer(page, testInfo);
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+
+  test('the unlock card takes the tap over the chips, and the chips of the planet spread out (STORY-053)', async ({ page }, testInfo) => {
+    test.setTimeout(180_000);
+    await conquer(page, testInfo);
+  });
 });

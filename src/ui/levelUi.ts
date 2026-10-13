@@ -80,15 +80,36 @@ export function layoutChips(chips: readonly ChipPlace[], free: { top: number; bo
   return ys;
 }
 
+/**
+ * Spread chips that would overlap (STORY-053, the planet level on a phone): the first stays
+ * on its region, and each later one that covers a placed chip steps outward from the first
+ * until it is clear.
+ */
+export function spreadChips(chips: readonly ChipPlace[]): { x: number; y: number }[] {
+  const at = chips.map(c => ({ x: c.x, y: c.y }));
+  if (!chips.length) return at;
+  const covers = (i: number, j: number) => Math.abs(at[i].x - at[j].x) < (chips[i].w + chips[j].w) / 2 + 4 && Math.abs(at[i].y - at[j].y) < 2 * CHIP_HALF;
+  for (let i = 1; i < chips.length; i++) {
+    let dx = at[i].x - at[0].x, dy = at[i].y - at[0].y;
+    const len = Math.hypot(dx, dy);
+    [dx, dy] = len < 1 ? [0, 1] : [dx / len, dy / len];
+    for (let k = 0; k < 100 && Array.from({ length: i }, (_, j) => j).some(j => covers(i, j)); k++) {
+      at[i].x += dx * 6;
+      at[i].y += dy * 6;
+    }
+  }
+  return at;
+}
+
 /** Region chips over the map (design 6a, 7a). Tapping one selects it; tapping it again dives in. */
-export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }): void } {
+export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }, spread?: boolean): void } {
   const layer = document.createElement('div');
   layer.className = 'chips';
   root.appendChild(layer);
   const pool: HTMLButtonElement[] = [];
   return {
-    /** `free`: the screen band between the HUD panels; chips are kept inside it so they can be tapped. */
-    update(chips, free) {
+    /** `free`: the screen band between the HUD panels; chips are kept inside it so they can be tapped. `spread`: move overlapping chips apart. */
+    update(chips, free, spread = false) {
       while (pool.length < chips.length) {
         const b = document.createElement('button');
         b.type = 'button';
@@ -110,6 +131,10 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
         b.querySelector('.chip-sub')!.textContent = c.sub;
         shown.push({ b, x: c.x!, y: c.y! });
       });
+      if (spread) {
+        const moved = spreadChips(shown.map(c => ({ x: c.x, y: c.y, w: c.b.offsetWidth })));
+        shown.forEach((c, i) => { c.x = moved[i].x; c.y = moved[i].y; });
+      }
       // Widths matter only when a chip is held at an edge (reading them costs a layout)
       const held = shown.some(c => c.y < free.top + CHIP_HALF || c.y > free.bottom - CHIP_HALF);
       const ys = layoutChips(shown.map(c => ({ x: c.x, y: c.y, w: held ? c.b.offsetWidth : 0 })), free);

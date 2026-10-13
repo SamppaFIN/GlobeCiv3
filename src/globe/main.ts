@@ -249,8 +249,20 @@ renderer.domElement.addEventListener('pointercancel', e => release(e, false));
 
 const hud = document.getElementById('hud')!;
 const hud_root = hud;
+/**
+ * One level up. In the game the planet level stops just past its threshold, where the open
+ * states' chips have room (STORY-053); the whole planet is a zoom further out.
+ */
+function upTarget(point: THREE.Vector3): FlightTarget | null {
+  const to = backTarget(regions, point, viewLevel, frames);
+  if (to && to.level === 0 && screen === 'playing') to.dist = planetDist();
+  return to;
+}
+/** The game's planet-level distance: 15 % past the state level's threshold. */
+const planetDist = () => Math.sqrt(frames[0] * frames[1]) * 1.15;
+
 const levelBar = createLevelBar(hud, () => {
-  const to = backTarget(regions, flight ? flight.point : rig.target, viewLevel, frames);
+  const to = upTarget(flight ? flight.point : rig.target);
   if (to) fly(to);
 });
 
@@ -1605,7 +1617,7 @@ function chooseRaid(index: number) {
 // Mapping 60 % of the home province opens the province level, and 60 % of the home
 // state the state level. Each level has its own chips and actions.
 const unlockCard = createUnlockCard(hud_root, () => {
-  const to = backTarget(regions, rig.target, viewLevel, frames);
+  const to = upTarget(rig.target);
   if (to) fly(to);
 });
 const chips = createChips(hud_root, id => {
@@ -1715,7 +1727,10 @@ function updateLevels() {
     }
   }
   if (viewLevel === 0) {
+    // Zoomed out to the whole planet the states are too small for their chips: home only
+    const room = rig.dist <= planetDist() * 2;
     for (const id of won.open) {
+      if (!room && id !== homeState()) continue;
       const at = toScreen(regions.centers[0][id]);
       const sub = won.conquered.has(id) ? 'Vallattu' : `Lääniä hallussa ${heldIn(won, id)}/7`;
       const isSelected = selection?.level === 0 && selection.id === id;
@@ -1745,13 +1760,13 @@ function updateLevels() {
   chips.update(list, {
     top: topPanel && !topPanel.hidden ? topPanel.getBoundingClientRect().bottom : 0,
     bottom: bottomPanel ? bottomPanel.getBoundingClientRect().top : window.innerHeight,
-  });
+  }, viewLevel === 0);
 }
 
 // "−" zooms out a level on a desktop (the unlock card's hint)
 window.addEventListener('keydown', e => {
   if ((e.key === '-' || e.key === 'Subtract') && viewLevel > lockedLevel) {
-    const to = backTarget(regions, rig.target, viewLevel, frames);
+    const to = upTarget(rig.target);
     if (to) fly(to);
   }
 });
