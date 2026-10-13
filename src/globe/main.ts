@@ -1304,6 +1304,9 @@ function checkGoals() {
     improvements: play.improvements.entries().length,
     buildings: play.cities.reduce((sum, c) => sum + c.buildings.length, 0),
     openLevel: play.progress.openLevel,
+    advisor: play.cityAdvisor !== 'none' || play.provinceAdvisor !== 'none' || play.stateAdvisor !== 'none',
+    monarchy: play.gov === 'monarchy',
+    provinces: heldIn(conquestNow(), homeState()),
   });
   if (!r.done.length) return;
   play.goal = r.index;
