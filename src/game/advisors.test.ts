@@ -4,7 +4,7 @@ import type { Build } from './cities';
 import { foundCity } from './cities';
 
 const needs = (over: Partial<CityNeeds> = {}): CityNeeds => ({
-  available: ['warrior', 'settler', 'coinage'], soldiers: 0, unrestNear: false, threat: false, soldier: 'warrior', ...over,
+  available: ['warrior', 'settler', 'coinage'], soldiers: 0, unrestNear: false, threat: false, soldier: 'warrior', settlers: 0, disorder: false, ...over,
 });
 const city = (size: number) => {
   const c = foundCity([], 0);
@@ -21,8 +21,11 @@ describe('city advisors', () => {
     expect(cityAdvice('growth', city(1), needs({ available: ['granary'] }))).toEqual({ focus: 'food', build: null });
     expect(cityAdvice('growth', city(2), needs({ available: ['granary'] }))).toEqual({ focus: 'food', build: 'granary' });
     expect(cityAdvice('growth', city(4), needs({ available: ['granary', 'temple'], unrestNear: true }))).toEqual({ focus: 'food', build: 'temple' });
-    // Not known yet: nothing to build
-    expect(cityAdvice('growth', city(4), needs({ unrestNear: true }))!.build).toBeNull();
+    // Not known yet: nothing to build (a settler of its own is there already)
+    expect(cityAdvice('growth', city(4), needs({ unrestNear: true, settlers: 1 }))!.build).toBeNull();
+    // A settler of its own to improve the land from size 3 (STORY-060)
+    expect(cityAdvice('growth', city(3), needs({ available: ['settler', 'granary'] }))!.build).toBe('settler');
+    expect(cityAdvice('growth', city(2), needs({ available: ['settler', 'granary'] }))!.build).toBe('granary');
   });
 
   it('Vartija: production and a soldier in every city; two soldiers and walls under threat', () => {
@@ -85,7 +88,9 @@ describe('state advisors', () => {
 
 describe('Kasvattaja and the size limit (STORY-054)', () => {
   it('an arena once the temple is there, and an aqueduct a size before the limit', () => {
-    expect(cityAdvice('growth', city(6), needs({ available: ['colosseum'], unrestNear: true }))!.build).toBe('colosseum');
+    expect(cityAdvice('growth', city(6), needs({ available: ['colosseum'], unrestNear: true, disorder: true }))!.build).toBe('colosseum');
+    // Only near disorder: no arena for its upkeep of 4 (STORY-060)
+    expect(cityAdvice('growth', city(6), needs({ available: ['colosseum'], unrestNear: true, settlers: 1 }))!.build).toBeNull();
     expect(cityAdvice('growth', city(9), needs({ available: ['aqueduct', 'granary'] }))!.build).toBe('aqueduct');
     expect(cityAdvice('growth', city(8), needs({ available: ['aqueduct', 'granary'] }))!.build).toBe('granary');
   });

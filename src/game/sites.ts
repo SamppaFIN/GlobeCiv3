@@ -15,6 +15,10 @@ export const GOOD_SITE = 75;
 export const SITE_SPACING = 4;
 /** Days between two suggestions, so they do not nag. */
 export const OFFER_EVERY_DAYS = 10;
+/** The median land score (the measurement above): the floor of a site offered for lack of good ones (STORY-060). */
+export const FAIR_SITE = 61;
+/** Days without an offer before the best known site is offered instead (STORY-060). */
+export const QUIET_DAYS = 30;
 
 /**
  * Whether a tile is a good city site: land, a score of GOOD_SITE or more, no better land

@@ -4,9 +4,10 @@
  * puolesta"). At the city area level one of three runs the cities and the units each day, and
  * with none (Oma ohjaus) the player does. Own design; it uses the game's own rules.
  *
- *   Kasvattaja   food focus; a temple before a citizen more would bring disorder (then an
- *                arena), an aqueduct a size before the limit, then a granary from size 2;
- *                settlers the cities built improve the land
+ *   Kasvattaja   food focus; a temple before a citizen more would bring disorder, an arena
+ *                in disorder, an aqueduct a size before the limit, a settler of its own from size
+ *                3, then a granary from size 2; settlers the cities built improve the land; in
+ *                disorder, when no shields come, it buys the temple or arena (main.ts)
  *   Kartoittaja  balanced focus; the scouts explore, toward the home province's least mapped
  *                area when there is no flag
  *   Vartija      production focus; a soldier in every city, two and walls while bandits are
@@ -33,10 +34,14 @@ export interface CityNeeds {
   soldiers: number;
   /** The city is in disorder, or would be with one citizen more. */
   unrestNear: boolean;
+  /** The city is in disorder now (STORY-060: an arena only then, for its upkeep of 4). */
+  disorder: boolean;
   /** Bandits are on their way to the city. */
   threat: boolean;
   /** The best soldier the city can build. */
   soldier: 'warrior' | 'phalanx';
+  /** Settlers the city supports (STORY-060). */
+  settlers: number;
 }
 
 /** A city advisor's focus and build for a city (build null: as it is); null with no advisor. */
@@ -48,8 +53,11 @@ export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { fo
     case 'growth':
       return {
         focus: 'food',
-        build: n.unrestNear && can('temple') ? 'temple' : n.unrestNear && can('colosseum') ? 'colosseum'
-          : city.size >= SIZE_LIMIT - 1 && can('aqueduct') ? 'aqueduct' : city.size >= 2 && can('granary') ? 'granary' : null,
+        build: n.unrestNear && can('temple') ? 'temple' : n.disorder && can('colosseum') ? 'colosseum'
+          : city.size >= SIZE_LIMIT - 1 && can('aqueduct') ? 'aqueduct'
+          // A settler of its own to improve the land, from size 3 (STORY-060: without one, no roads and no trade)
+          : city.size >= 3 && n.settlers === 0 && can('settler') ? 'settler'
+          : city.size >= 2 && can('granary') ? 'granary' : null,
       };
     case 'explore':
       return { focus: 'balanced', build: null };

@@ -256,3 +256,12 @@ describe('size limit and arena (STORY-054, Freeciv civ1)', () => {
     expect(cityMood(c, 0, 1)).toMatchObject({ unhappy: 0, calmed: 4, disorder: false });
   });
 });
+
+describe('city names (STORY-060)', () => {
+  it('24 own names, then the same with a number', () => {
+    const cities: City[] = [];
+    for (let i = 0; i < 26; i++) foundCity(cities, i);
+    expect(new Set(cities.map(c => c.name)).size).toBe(26);
+    expect(cities[24].name).toBe('Aamuranta 2');
+  });
+});
