@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cityAdvice, expeditionTarget, exploreTarget, provinceBuild, settleAreas, type CityNeeds } from './advisors';
+import { STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
 
@@ -63,5 +63,22 @@ describe('province advisors', () => {
     expect(provinceBuild('defend', { ...n, soldiers: 1, border: false })).toBeNull();
     expect(provinceBuild('defend', { ...n, soldiers: 1, walls: true })).toBeNull();
     expect(provinceBuild('settle', n)).toBeNull();
+  });
+});
+
+describe('state advisors', () => {
+  it('the next advance follows the order, else any that can be researched', () => {
+    expect(nextAdvance(STATE_PLANS.science.order, ['bronze', 'pottery', 'alphabet'])).toBe('alphabet');
+    expect(nextAdvance(STATE_PLANS.war.order, ['pottery', 'alphabet'])).toBe('alphabet');
+    expect(nextAdvance(['monarchy'], ['pottery'])).toBe('pottery');
+    expect(nextAdvance(STATE_PLANS.expand.order, [])).toBeNull();
+  });
+
+  it('luxury goes up a step in disorder and back a step after ten calm days', () => {
+    expect(luxuryStep(0, true, 0, [0, 10, 20, 30])).toBe(10);
+    expect(luxuryStep(30, true, 0, [0, 10, 20, 30])).toBe(30);
+    expect(luxuryStep(20, false, 9, [0, 10, 20, 30])).toBe(20);
+    expect(luxuryStep(20, false, 10, [0, 10, 20, 30])).toBe(10);
+    expect(luxuryStep(0, false, 30, [0, 10, 20, 30])).toBe(0);
   });
 });
