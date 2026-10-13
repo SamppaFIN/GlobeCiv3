@@ -36,7 +36,11 @@ describe('progress', () => {
     expect(advance(p, 1, UNLOCK_SHARE - 0.01)).toBeNull();
     expect(advance(p, 1, UNLOCK_SHARE)).toBe(1);
     expect(advance(p, 1, 1)).toBeNull();
-    expect(p.openLevel).toBe(1);
+    expect(p).toEqual({ openLevel: 1, meter: 'conquest' });
+    // The planet opens with the home state conquered (STORY-016)
+    expect(advance(p, 1, 1, true)).toBe(0);
+    expect(p).toEqual({ openLevel: 0, meter: 'done' });
+    expect(advance(p, 1, 1, true)).toBeNull();
   });
 });
 

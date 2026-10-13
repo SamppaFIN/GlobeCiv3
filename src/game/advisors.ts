@@ -112,7 +112,7 @@ export function provinceBuild(advisor: ProvinceAdvisor, n: { soldiers: number; b
  * revolution to Monarchy, and the state's target province. Sami chose that science belongs here.
  *
  *   Laajentaja  the state line Laajentuminen, tax 50 %, advances for growth first, and the
- *               nearest province of the home state under 60 % mapped as the target
+ *               nearest province without a city as the target (STORY-016: a city holds it)
  *   Oppinut     the state line Tutkimus, tax 30 %, writing and trade first
  *   Kenraali    the state line Puolustus, tax 70 %, bronze and masonry first; it buys the
  *               soldier or walls a city under threat is building when the treasury allows
@@ -124,7 +124,7 @@ export const STATE_ADVISOR_LIST: readonly StateAdvisor[] = ['none', 'expand', 's
 
 export const STATE_ADVISORS: Record<StateAdvisor, { name: string; does: string }> = {
   none: { name: 'Oma ohjaus', does: 'Hoidat tutkimuksen, verot, valtion linjan ja tavoitteen itse.' },
-  expand: { name: 'Laajentaja', does: 'Valtion linja Laajentuminen, vero 50 %, kasvun keksinnöt ensin. Tavoitteeksi lähin valtion lääni, joka on alle 60 % kartoitettu.' },
+  expand: { name: 'Laajentaja', does: 'Valtion linja Laajentuminen, vero 50 %, kasvun keksinnöt ensin. Tavoitteeksi lähin lääni, jossa ei vielä ole kaupunkia.' },
   science: { name: 'Oppinut', does: 'Valtion linja Tutkimus, vero 30 %, kirjoitus ja kauppa ensin.' },
   war: { name: 'Kenraali', does: 'Valtion linja Puolustus, vero 70 %, pronssi ja muuraus ensin. Ostaa uhatun kaupungin sotilaan tai muurin, kun kassa riittää.' },
 };

@@ -93,6 +93,8 @@ export class Units {
   stateLine: StateLine = 'research';
   /** The province Vartija keeps the scouts in the home province (STORY-050); set each day, not saved. */
   keepHome = false;
+  /** States open to scouts, flags and city sites (STORY-016), or null for all; set by the game, not saved. */
+  openStates: Set<number> | null = null;
   /** The home province: Puolustus keeps exploring scouts inside it. */
   homeProvince = -1;
   private nextId = 0;
@@ -139,6 +141,11 @@ export class Units {
    * Candidate city sites around the camp, best first: within three rings (four with the
    * state line Laajentuminen), with the best site of every area marked Asuta in front.
    */
+  /** A tile in an open state (STORY-016). */
+  isOpen(tile: number, world: World): boolean {
+    return !this.openStates || this.openStates.has(Math.floor(world.cityOf(tile) / 49));
+  }
+
   findSites(world: World) {
     const rings = this.stateLine === 'expand' ? 4 : 3;
     const settler = this.settler;
@@ -148,7 +155,7 @@ export class Units {
       return;
     }
     const scored = tilesInRings(settler.tile, rings)
-      .filter(id => Number.isFinite(world.cost(id)))
+      .filter(id => Number.isFinite(world.cost(id)) && this.isOpen(id, world))
       .map(id => [world.siteScore(id), id] as const)
       .sort((a, b) => b[0] - a[0] || a[1] - b[1])
       .map(([, id]) => id);
@@ -172,7 +179,7 @@ export class Units {
 
   /** Send the exploring scouts toward a tile (an expedition or a target province). */
   sendTo(tile: number, world: World) {
-    if (!Number.isFinite(world.cost(tile))) return false;
+    if (!Number.isFinite(world.cost(tile)) || !this.isOpen(tile, world)) return false;
     this.flag = tile;
     for (const u of this.units) if (u.kind === 'scout' && u.mode === 'explore') u.path = [];
     return true;
@@ -210,7 +217,7 @@ export class Units {
   setSite(tile: number, world: World): boolean {
     const cost = (id: number) => world.cost(id);
     const land = Number.isFinite(cost(tile)) ? tile : nearestTile(tile, () => 1, id => Number.isFinite(cost(id)));
-    if (land === null || !this.settler) return false;
+    if (land === null || !this.settler || !this.isOpen(land, world)) return false;
     this.sites = [land, ...this.sites.filter(id => id !== land)];
     this.site = 0;
     this.founding = false;
@@ -343,7 +350,7 @@ export class Units {
     // Unmapped land, not in areas marked Ohita, and inside the home province with Puolustus or the province Vartija
     const allowed = (id: number) => {
       const city = world.cityOf(id);
-      return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince);
+      return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince) && this.isOpen(id, world);
     };
     return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && Number.isFinite(cost(id)) && allowed(id)));
   }

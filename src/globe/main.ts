@@ -29,6 +29,7 @@ import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, LUX_RATES, NEEDS, Research, type Advance } from '../game/science';
 import { GOVERNMENTS, revolutionDays, type Government } from '../game/government';
 import { economy, type CityEconomy } from '../game/economy';
+import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { advanceGoals, GOALS } from '../game/goals';
@@ -43,7 +44,7 @@ import { SAVE_VERSION, validateSave, type SaveData } from '../game/save';
 import { loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
-import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, type RegionName } from '../game/names';
+import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, stateName, type RegionName } from '../game/names';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
@@ -86,9 +87,11 @@ const regions = new Regions(nodes);
 // ─── Camera rig ───────────────────────────────────
 // Starts where the old OrbitControls view was. With the tiled surface the camera
 // can descend to quadtree level 17.
+/** The farthest the camera goes: the whole planet (open in the game once the home state is conquered). */
+const MAX_DIST = RADIUS * 8;
 const rig = new GlobeCamera(RADIUS, camera, {
   minDist: RADIUS * 2e-5,
-  maxDist: RADIUS * 8,
+  maxDist: MAX_DIST,
   startDist: Math.hypot(0, 3, 12) - RADIUS,
 });
 rig.target.set(0, 3, 12).normalize();
@@ -832,7 +835,7 @@ function noteSiteOffer(fresh: number[]) {
   const site = play.units.settler ? play.units.currentSite() : null;
   const taken = [...play.cities.map(c => c.tile), ...play.offered, ...(site !== null ? [site] : []), ...(play.pendingSite !== null ? [play.pendingSite] : [])];
   const isLand = (id: number) => Number.isFinite(world.cost(id));
-  const tile = fresh.find(id => goodSite(id, world.siteScore, isLand, taken));
+  const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken));
   if (tile === undefined) return;
   play.offers.push({ tile, finder: finderOf(tile) });
   play.offered.push(tile);
@@ -1109,12 +1112,14 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
     advise(`ylellisyys ${lux} %`, 'state');
   }
   if (a === 'expand') {
+    // The nearest province without a city: the home state's first, then the open states' (STORY-016)
     const current = p.targetProvince;
-    if (current < 0 || provinceShare(current) >= UNLOCK_SHARE) {
-      const state = Math.floor(p.units.homeProvince / 7);
+    const won = conquestNow();
+    if (current < 0 || won.held.has(current)) {
+      const states = won.conquered.has(homeState()) ? [...won.open] : [homeState()];
       const from = tileCenter(p.units.camp);
-      const provinces = Array.from({ length: 7 }, (_, k) => state * 7 + k);
-      const target = expeditionTarget(provinces.map(id => ({ area: id, share: provinceShare(id), distance: from.angleTo(regions.centers[1][id]) })), UNLOCK_SHARE);
+      const provinces = states.flatMap(s => Array.from({ length: 7 }, (_, k) => s * 7 + k));
+      const target = expeditionTarget(provinces.map(id => ({ area: id, share: won.held.has(id) ? 1 : 0, distance: from.angleTo(regions.centers[1][id]) })), 1);
       if (target !== null && target !== current) {
         p.targetProvince = target;
         p.units.sendTo(pointToTile(regions.centers[1][target]), world);
@@ -1641,6 +1646,21 @@ function childNames(level: 1 | 2, parent: number): RegionName[] {
 }
 const nameOf = (level: 1 | 2, id: number) => childNames(level, Math.floor(id / 7))[id % 7];
 
+/** The home state: where the game starts (STORY-016). */
+const homeState = () => Math.floor((game?.startCity ?? 0) / 49);
+
+/** Provinces held, states conquered and states open, from the cities (conquest.ts). */
+function conquestNow(): Conquest {
+  const table = regions.tileTable();
+  return conquest(play ? play.cities.map(c => table[c.tile]) : [], homeState(), regions.neighbors);
+}
+
+/** A state's name at the planet level: home, else its direction from home. */
+function stateNameOf(id: number): RegionName {
+  const home = homeState();
+  return stateName(id === home, directionFrom(pointToTile(regions.centers[0][home]), pointToTile(regions.centers[0][id])));
+}
+
 /** The selected area at the province level, else the area under the view. */
 function selectedArea(): number | null {
   if (viewLevel !== 2) return null;
@@ -1670,11 +1690,13 @@ const toScreen = (v: THREE.Vector3): [number, number] | null => {
 /** Chips and panels of the province and state levels, and the unlocks. */
 function updateLevels() {
   if (!play || !game) return;
-  const opened = discoveryCard.visible ? null : advance(play.progress, mapState.share(play.province), mapState.share(play.state));
+  const won = conquestNow();
+  const opened = discoveryCard.visible ? null : advance(play.progress, mapState.share(play.province), mapState.share(play.state), won.conquered.has(homeState()));
   if (opened !== null) {
     lockedLevel = opened;
-    rig.maxDist = lockDist(opened);
-    unlockCard.show(opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : 'Valtio kartoitettu, zoomaa ulos');
+    rig.maxDist = opened > 0 ? lockDist(opened) : MAX_DIST;
+    unlockCard.show(opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : opened === 1 ? 'Valtio kartoitettu, zoomaa ulos' : 'Valtio vallattu, zoomaa ulos');
+    if (opened === 0) discoveryCard.notice('Kotivaltio vallattu: naapurivaltiot avautuivat');
     moment('unlock', play.cities[0]?.tile ?? pointToTile(rig.target));
   }
   const list: Chip[] = [];
@@ -1687,9 +1709,17 @@ function updateLevels() {
       const share = level === 2 ? areaShare(id) : provinceShare(id);
       const sub = level === 2
         ? share === 0 ? 'Sumussa' : AREA_PLAN_NAMES[play.units.areaPlans.get(id) ?? 'explore']
-        : id === play.targetProvince ? 'Tavoite' : `Kartoitettu ${Math.round(share * 100)} %`;
+        : id === play.targetProvince ? 'Tavoite' : won.held.has(id) ? 'Hallussa' : `Kartoitettu ${Math.round(share * 100)} %`;
       const isSelected = selection?.level === level && selection.id === id;
       list.push({ id, name: nameOf(level, id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
+    }
+  }
+  if (viewLevel === 0) {
+    for (const id of won.open) {
+      const at = toScreen(regions.centers[0][id]);
+      const sub = won.conquered.has(id) ? 'Vallattu' : `Lääniä hallussa ${heldIn(won, id)}/7`;
+      const isSelected = selection?.level === 0 && selection.id === id;
+      list.push({ id, name: stateNameOf(id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
     }
   }
   const area = selectedArea();
@@ -1705,7 +1735,7 @@ function updateLevels() {
     province === null ? null : {
       line: play.units.stateLine,
       name: nameOf(1, province).name,
-      detail: `Kartoitettu ${Math.round(provinceShare(province) * 100)} %`,
+      detail: `${won.held.has(province) ? 'Hallussa · ' : ''}Kartoitettu ${Math.round(provinceShare(province) * 100)} %`,
       isTarget: province === play.targetProvince,
     },
   );
@@ -1731,7 +1761,7 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
   if (!play) return false;
   if (play.flagTool && hit) {
     const tile = pointToTile(hit);
-    if (Number.isFinite(world.cost(tile))) {
+    if (Number.isFinite(world.cost(tile)) && play.units.isOpen(tile, world)) {
       play.units.flag = tile;
       for (const u of play.units.units) if (u.kind === 'scout' && u.mode === 'explore') u.path = [];
     }
@@ -1757,11 +1787,29 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
   return false;
 }
 
+/** The top panel's meter: the mapping of the home province or state, then the provinces held (STORY-016). */
+function meterOf(meter: Progress['meter']): Pick<GameHudState, 'mapped' | 'meterName' | 'unlockAt' | 'meterText'> {
+  if (meter === 'conquest') {
+    const held = heldIn(conquestNow(), homeState());
+    return { mapped: held / 7, meterName: 'Läänit', unlockAt: 1, meterText: { value: `${held} / 7 hallussa`, label: `Kotivaltion lääneistä hallussa ${held} seitsemästä` } };
+  }
+  if (meter === 'done') {
+    const won = conquestNow().conquered.size;
+    return { mapped: 1, meterName: 'Valtiot', unlockAt: null, meterText: { value: `${won} vallattu`, label: `Valtioita vallattu ${won}` } };
+  }
+  return {
+    mapped: mapState.share(meter === 'province' ? play!.province : play!.state),
+    meterName: meter === 'province' ? 'Lääni' : 'Valtio',
+    unlockAt: UNLOCK_SHARE,
+  };
+}
+
 /** Distance between tile centres in world units near the camera target. */
 const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 
 function updatePlay(dt: number) {
   if (!play) return;
+  play.units.openStates = conquestNow().open;
   const days = play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
@@ -1790,9 +1838,7 @@ function updatePlay(dt: number) {
     day: clock.day,
     speed: clock.speed,
     paused: clock.paused,
-    mapped: mapState.share(play.progress.meter === 'province' ? play.province : play.state),
-    meterName: play.progress.meter === 'province' ? 'Lääni' : 'Valtio',
-    unlockAt: play.progress.meter === 'done' ? null : UNLOCK_SHARE,
+    ...meterOf(play.progress.meter),
     level: viewLevel,
     unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null },
     flagTool: play.flagTool,
@@ -1845,7 +1891,7 @@ function updateGameFlow(dt: number) {
   screen = 'playing';
   introTarget = null;
   lockedLevel = continuing?.progress.openLevel ?? 3;
-  rig.maxDist = lockDist(lockedLevel);
+  rig.maxDist = lockedLevel > 0 ? lockDist(lockedLevel) : MAX_DIST;
   continuing = null;
   startScreen?.remove();
 }
@@ -2007,6 +2053,18 @@ frameStartPlanet();
   /** Discoveries, site offers and raids all stop the game: off together, site offers or raids back on alone. */
   setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; raidsOn = on; },
   setRaids: (on: boolean) => { raidsOn = on; },
+  /** Found a city on the first land tile of a province that has none (STORY-016). */
+  foundIn: (province: number) => {
+    if (!play) return null;
+    const table = regions.tileTable();
+    for (let id = 0; id < table.length; id++) {
+      if (Math.floor(table[id] / 7) !== province || !Number.isFinite(world.cost(id)) || play.cities.some(c => c.tile === id)) continue;
+      foundAt(id);
+      play.openCity = null;
+      return id;
+    }
+    return null;
+  },
   /** Bandits set off toward a city now (STORY-034). */
   raidNow: (city: number) => (play ? startRaid(play.cities[city]) : false),
   setSiteOffers: (on: boolean) => { siteOffersOn = on; },
