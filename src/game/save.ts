@@ -17,7 +17,7 @@ import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './u
 import type { Progress } from './progress';
 import { ADVANCE_LIST, LUX_RATES, TAX_RATES, type Advance } from './science';
 import { GOVERNMENT_LIST, type Government } from './government';
-import { CITY_ADVISOR_LIST, type CityAdvisor } from './advisors';
+import { CITY_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, type CityAdvisor, type ProvinceAdvisor } from './advisors';
 
 export const SAVE_VERSION = 1;
 
@@ -81,6 +81,8 @@ export interface SaveData {
   anarchyUntil: number;
   /** The city-level advisor (STORY-049); saves from before have none. */
   cityAdvisor: CityAdvisor;
+  /** The province-level advisor (STORY-050); saves from before have none. */
+  provinceAdvisor: ProvinceAdvisor;
 }
 
 /** Ranges the save is checked against. */
@@ -240,6 +242,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       gov: s.gov === undefined ? 'despotism' : oneOf(s.gov, GOVERNMENT_LIST, 'gov'),
       anarchyUntil: s.anarchyUntil === undefined ? -1 : int(s.anarchyUntil, 'anarchyUntil', -1),
       cityAdvisor: s.cityAdvisor === undefined ? 'none' : oneOf(s.cityAdvisor, CITY_ADVISOR_LIST, 'cityAdvisor'),
+      provinceAdvisor: s.provinceAdvisor === undefined ? 'none' : oneOf(s.provinceAdvisor, PROVINCE_ADVISOR_LIST, 'provinceAdvisor'),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;

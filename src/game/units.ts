@@ -91,6 +91,8 @@ export class Units {
   readonly areaPlans = new Map<number, AreaPlan>();
   /** The state line: Tutkimus widens sight, Laajentuminen the search for sites, Puolustus keeps scouts home. */
   stateLine: StateLine = 'research';
+  /** The province Vartija keeps the scouts in the home province (STORY-050); set each day, not saved. */
+  keepHome = false;
   /** The home province: Puolustus keeps exploring scouts inside it. */
   homeProvince = -1;
   private nextId = 0;
@@ -338,10 +340,10 @@ export class Units {
       if (path.length) return path;
       this.flag = null;
     }
-    // Unmapped land, not in areas marked Ohita, and inside the home province with Puolustus
+    // Unmapped land, not in areas marked Ohita, and inside the home province with Puolustus or the province Vartija
     const allowed = (id: number) => {
       const city = world.cityOf(id);
-      return this.areaPlans.get(city) !== 'skip' && (this.stateLine !== 'defend' || Math.floor(city / 7) === this.homeProvince);
+      return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince);
     };
     return to(nearestTile(u.tile, cost, id => !world.isMapped(id) && Number.isFinite(cost(id)) && allowed(id)));
   }

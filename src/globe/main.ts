@@ -29,7 +29,7 @@ import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, NEEDS, Research, type Advance } from '../game/science';
 import { GOVERNMENTS, revolutionDays, type Government } from '../game/government';
 import { economy, type CityEconomy } from '../game/economy';
-import { CITY_ADVISORS, CITY_ADVISOR_LIST, cityAdvice, exploreTarget, type CityAdvisor } from '../game/advisors';
+import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, cityAdvice, expeditionTarget, exploreTarget, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
@@ -450,7 +450,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, goal: play.goal,
+    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, goal: play.goal,
   };
 }
 
@@ -545,6 +545,9 @@ interface Play {
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
   advisorLog: string[];
+  /** The province-level advisor and what it did lately (STORY-050). */
+  provinceAdvisor: ProvinceAdvisor;
+  provinceLog: string[];
   researchOpen: boolean;
   /** The current goal (STORY-041). */
   goal: number;
@@ -633,7 +636,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, discoveries: [], findOpen: false, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
@@ -641,7 +644,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     discoveries: saved.discoveries, bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
     improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, goal: saved.goal,
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, goal: saved.goal,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -995,49 +998,82 @@ function updateCityCard() {
   }));
 }
 
-// ─── Advisors (STORY-049) ─────────────────────────
-// The advisor of the city area level runs the cities and the units each day (advisors.ts).
+// ─── Advisors (STORY-049, STORY-050) ──────────────
+// The advisors of the city area and province levels run their level each day (advisors.ts).
+// The province advisor's builds and expeditions go first.
 
 /** Builds a city may start: known, not built, and no wonder another city has. */
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!)));
 
-function advise(text: string) {
-  play!.advisorLog = [`Päivä ${clock.day}: ${text}`, ...play!.advisorLog].slice(0, 4);
+type AdvisorLevel = 'city' | 'province';
+
+function advise(text: string, level: AdvisorLevel = 'city') {
+  const log = level === 'city' ? 'advisorLog' : 'provinceLog';
+  play![log] = [`Päivä ${clock.day}: ${text}`, ...play![log]].slice(0, 4);
 }
+
+/** The best city site among the mapped land of an area (STORY-050). */
+const bestSite = (area: number) => {
+  if (!tilesOfArea.has(area)) tilesOfArea.set(area, cityTiles(regions, area));
+  return Math.max(0, ...tilesOfArea.get(area)!.filter(t => mapState.isMapped(t) && Number.isFinite(world.cost(t))).map(world.siteScore));
+};
 
 function advisorDay() {
   const p = play;
-  if (!p || p.cityAdvisor === 'none') return;
-  const a = p.cityAdvisor;
+  if (!p) return;
+  p.units.keepHome = p.provinceAdvisor === 'defend';
+  if (p.cityAdvisor === 'none' && p.provinceAdvisor === 'none') return;
+  const home = p.units.homeProvince;
+  const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
   const yields = cityYields();
   p.cities.forEach((c, i) => {
     const soldiers = soldiersIn(c.tile).length;
+    const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
     const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, hasWonder('gardens'), luxury, p.gov);
-    const advice = cityAdvice(a, c, {
-      available: startable(c), soldiers, unrestNear: !!yields[i].disorder || bigger.disorder,
+    const advice = cityAdvice(p.cityAdvisor, c, {
+      available, soldiers, unrestNear: !!yields[i].disorder || bigger.disorder,
       threat: p.raids.band?.city === c.tile, soldier: bestSoldier(),
     });
-    if (!advice) return;
-    if (c.focus !== advice.focus) c.focus = advice.focus;
-    if (advice.build && advice.build !== c.build) {
-      c.build = advice.build;
-      advise(`${c.name} rakentaa: ${BUILDS[advice.build].name}`);
-    }
+    if (advice && c.focus !== advice.focus) c.focus = advice.focus;
+    const border = tilesInRings(c.tile, 3).some(t => Math.floor(world.cityOf(t) / 7) !== home);
+    const ordered = provinceBuild(p.provinceAdvisor, { soldiers, border, available, soldier: bestSoldier(), walls: hasWalls(c) });
+    const build = ordered ?? advice?.build ?? null;
+    // A settler for a waiting city site is not changed
+    if (!build || build === c.build || (c.build === 'settler' && p.pendingSite !== null)) return;
+    c.build = build;
+    advise(`${c.name} rakentaa: ${BUILDS[build].name}`, ordered ? 'province' : 'city');
   });
-  if (a === 'explore') {
+  if (p.provinceAdvisor === 'settle') {
+    const withCity = new Set(p.cities.map(c => world.cityOf(c.tile)));
+    const chosen = settleAreas(homeAreas.map(area => ({ area, hasCity: withCity.has(area), share: areaShare(area), best: bestSite(area) })));
+    for (const area of homeAreas) {
+      const plan = chosen.includes(area) ? 'settle' : 'explore';
+      if ((p.units.areaPlans.get(area) ?? 'explore') === plan) continue;
+      p.units.setAreaPlan(area, plan, world);
+      if (plan === 'settle') advise(`${nameOf(2, area).name} asutettavaksi`, 'province');
+    }
+  }
+  if (p.provinceAdvisor === 'explore') {
+    for (const area of homeAreas) if (p.units.areaPlans.get(area) === 'skip') p.units.setAreaPlan(area, 'explore', world);
+    if (p.units.flag === null) {
+      // The home province first, then the home state
+      const areas = provinceShare(home) < UNLOCK_SHARE ? homeAreas : Array.from({ length: 49 }, (_, k) => Math.floor(home / 7) * 49 + k);
+      const from = tileCenter(p.units.camp);
+      const target = expeditionTarget(areas.map(area => ({ area, share: areaShare(area), distance: from.angleTo(regions.centers[2][area]) })), UNLOCK_SHARE);
+      if (target !== null && p.units.sendTo(pointToTile(regions.centers[2][target]), world)) advise(`retkikunta kohti: ${nameOf(2, target).name}`, 'province');
+    }
+  }
+  if (p.cityAdvisor === 'explore') {
     for (const u of p.units.units) if (u.kind === 'scout' && u.mode !== 'explore') p.units.setMode(u, 'explore');
     if (p.units.flag === null) {
-      const home = p.units.homeProvince;
-      const shares = Array.from({ length: 7 }, (_, k) => home * 7 + k)
-        .filter(area => p.units.areaPlans.get(area) !== 'skip')
-        .map(area => [area, areaShare(area)] as const);
+      const shares = homeAreas.filter(area => p.units.areaPlans.get(area) !== 'skip').map(area => [area, areaShare(area)] as const);
       const target = exploreTarget(shares);
       if (target !== null && p.units.sendTo(pointToTile(regions.centers[2][target]), world)) advise(`tiedustelijat kohti: ${nameOf(2, target).name}`);
     }
   }
-  if (a === 'growth' && p.pendingSite === null) {
+  if (p.cityAdvisor === 'growth' && p.pendingSite === null) {
     for (const u of p.units.units) {
       if (u.kind !== 'settler' || u.home === null || u.task !== 'found' || (p.units.founding && u === p.units.settler)) continue;
       p.units.setTask(u, 'improve', world);
@@ -1046,24 +1082,38 @@ function advisorDay() {
   }
 }
 
+/** The level whose advisor the card and the button show: the city area or the province, else none. */
+const advisorLevel = (): AdvisorLevel | null => (viewLevel === 3 ? 'city' : viewLevel === 2 ? 'province' : null);
+
 const advisorCard = createAdvisorCard(hud_root, {
   close: () => { if (play) play.advisorOpen = false; },
   choose: (id: string) => {
-    if (!play || !(CITY_ADVISOR_LIST as readonly string[]).includes(id)) return;
-    play.cityAdvisor = id as CityAdvisor;
-    play.advisorLog = [];
+    const level = advisorLevel();
+    if (!play || !level) return;
+    if (level === 'city' && (CITY_ADVISOR_LIST as readonly string[]).includes(id)) {
+      play.cityAdvisor = id as CityAdvisor;
+      play.advisorLog = [];
+    } else if (level === 'province' && (PROVINCE_ADVISOR_LIST as readonly string[]).includes(id)) {
+      play.provinceAdvisor = id as ProvinceAdvisor;
+      play.provinceLog = [];
+    }
   },
 });
 
 function updateAdvisorCard() {
-  if (!play || !play.advisorOpen || viewLevel !== 3 || discoveryCard.visible) {
+  const level = advisorLevel();
+  if (!play || !play.advisorOpen || !level || discoveryCard.visible) {
     if (advisorCard.visible) advisorCard.hide();
     return;
   }
-  const view = {
+  const view = level === 'city' ? {
     level: 'Kaupunkialue',
     options: CITY_ADVISOR_LIST.map(id => ({ id, name: CITY_ADVISORS[id].name, does: CITY_ADVISORS[id].does, selected: id === play!.cityAdvisor })),
     log: play.advisorLog,
+  } : {
+    level: 'Lääni',
+    options: PROVINCE_ADVISOR_LIST.map(id => ({ id, name: PROVINCE_ADVISORS[id].name, does: PROVINCE_ADVISORS[id].does, selected: id === play!.provinceAdvisor })),
+    log: play.provinceLog,
   };
   if (advisorCard.visible) advisorCard.update(view);
   else advisorCard.show(view);
@@ -1319,6 +1369,12 @@ function updateSiteOffer() {
   const o = play.offers[0];
   if (!o) {
     updateRaidAlert();
+    return;
+  }
+  // The Asuttaja takes the site itself (STORY-050)
+  if (play.provinceAdvisor === 'settle') {
+    chooseSite(0);
+    advise(`kaupunkipaikka hyväksytty: ${nameOf(2, regions.tileTable()[o.tile]).name}`, 'province');
     return;
   }
   if (!discoveryCard.visible) {
@@ -1695,7 +1751,7 @@ function updatePlay(dt: number) {
     city: play.cities[0]?.name ?? null,
     finds: play.discoveries.length,
     goal: GOALS[play.goal] ? { text: GOALS[play.goal].text, reward: GOALS[play.goal].reward } : null,
-    advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : null,
+    advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[play.provinceAdvisor].name : null,
     chooseResearch: play.cities.length > 0 && play.research.target === null && play.research.available().length > 0 && !play.researchOpen,
   };
   play.hud.update(state);
@@ -1936,7 +1992,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, goal: play?.goal ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, goal: play?.goal ?? null,
     };
   },
 };
