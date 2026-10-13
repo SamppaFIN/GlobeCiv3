@@ -1,0 +1,81 @@
+{
+  "id": "TICKET-TEST-045",
+  "story": "STORY-054",
+  "implementation_ticket": "TICKET-IMPL-045",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi ominaisuus. Rakennusmäärät (12 → 14, 11 → 13) ja NEEDS-luettelo päivitettiin tarkoituksella. Oma testivirhe: koon 10 kaupunki muutamalla ruudulla näkee nälkää, jolloin kortti sanoo oikein \"nälkää\"; E2E tarkistaa rajan vihjeen, ja laatikko rajalla on yksikkötesti.",
+    "files_changed": [
+      "tests/e2e/city.e2e.ts",
+      "tests/e2e/buildings.e2e.ts",
+      "src/game/science.test.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: raja ja vesijohto",
+        "expected": "Koko 10 pysyy, laatikko täynnä; vesijohdolla kasvaa 11:een",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: areena ja Kasvattaja",
+        "expected": "Areena rauhoittaa kolme; Kasvattaja areena ja vesijohto",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kaupunkikortti",
+        "expected": "14 vaihtoehtoa, vesijohto vaatii Rakentamisen, rajan vihje koossa 10",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 154/154; E2E 64/64",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38422567172 (3eee7e7, 39 min; kattaa myös STORY-053:n, jonka oma ajo peruttiin uudemman tieltä) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Raja ja vesijohto tuntuvat järkeviltä",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kokoraja 10",
+        "checked": true
+      },
+      {
+        "item": "Vesijohto ja areena",
+        "checked": true
+      },
+      {
+        "item": "Kortti ja ilmoitus",
+        "checked": true
+      },
+      {
+        "item": "Neuvonantajat",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

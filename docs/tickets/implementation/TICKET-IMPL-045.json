@@ -1,0 +1,41 @@
+{
+  "id": "TICKET-IMPL-045",
+  "story": "STORY-054",
+  "plan": "PLAN-045",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/save.ts",
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/city.e2e.ts",
+    "tests/e2e/buildings.e2e.ts"
+  ],
+  "change_summary": "SIZE_LIMIT ja sizeLimit(); cityDay pitää laatikon rajalla; daysToGrow null rajalla. Vesijohto ja Areena rakennuksiksi, cityMood laskee areenan. Rakentaminen keksinnöksi. Kortin vihje ja kasvuteksti, ilmoitus kerran. Kasvattaja ja valtion keksintöjärjestykset päivitetty.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "BUILDINGS, UPKEEP, BUILDS",
+      "Advance (construction)",
+      "cityDay, daysToGrow, cityMood",
+      "cityAdvice (growth)"
+    ],
+    "call_sites_found": [
+      "rakennusvaihtoehtojen määrä E2E-testeissä"
+    ],
+    "call_sites_updated": [
+      "tests/e2e/city.e2e.ts",
+      "tests/e2e/buildings.e2e.ts",
+      "src/game/science.test.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Rakennusvaihtoehtoja on nyt neljätoista."
+  },
+  "commit": "3eee7e7",
+  "progress": 100
+}

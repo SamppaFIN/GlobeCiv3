@@ -1,0 +1,39 @@
+{
+  "id": "PLAN-045",
+  "story": "STORY-054",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "Peruspeli: Civ I:n kasvun raja. Luvut Freecivin civ1-sääntösarjasta (effects.ruleset, buildings.ruleset, techs.ruleset, server/cityturn.c city_increase_size). Areena on Colosseumin oma nimi (sääntö 4).",
+  "alternatives_considered": [
+    {
+      "name": "Raja ilman vesijohtoa",
+      "pros": "Pienempi",
+      "cons": "Raja ilman keinoa on turhauttava",
+      "rejected_because": "Raja ja keino kuuluvat yhteen"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts, science.ts, save.ts, advisors.ts ja testit",
+    "src/globe/main.ts",
+    "tests/e2e/city.e2e.ts ja buildings.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Raja, rakennukset, keksintö ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Kortti, ilmoitus, neuvonantajat",
+      "verify": "E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

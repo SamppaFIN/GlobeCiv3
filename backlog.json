@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T15:40:21Z",
+    "generated_at": "2026-10-13T16:16:15Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "ceba488",
+    "git_commit": "3eee7e7",
     "git_branch": "main",
     "language": "fi"
   },
@@ -154,7 +154,9 @@
         "STORY-049",
         "STORY-050",
         "STORY-051",
-        "STORY-052"
+        "STORY-052",
+        "STORY-053",
+        "STORY-054"
       ],
       "progress": 97
     }
@@ -1424,6 +1426,54 @@
         "plan": "PLAN-042",
         "implementation": "TICKET-IMPL-042",
         "testing": "TICKET-TEST-042"
+      }
+    },
+    {
+      "id": "STORY-053",
+      "epic": "EPIC-006",
+      "title": "Planeettatason sirut",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä planeettatasolla avoimet valtiot nimineen päällekkäin menemättä myös puhelimella, ja päästä zoomaamaan ulos kortista.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-016"
+      ],
+      "acceptance_criteria": [
+        "Pelissä planeettataso pysähtyy heti tasorajan yli, jossa avoimien valtioiden sirut mahtuvat; koko planeetan näkymässä näkyy vain kotivaltion siru.",
+        "Puhelimella päällekkäin menevät sirut siirtyvät kotivaltion sirusta poispäin, kunnes ne ovat erillään.",
+        "Avautumiskortti on alueiden sirujen päällä, joten Zoomaa ulos -napautus osuu korttiin myös puhelimella."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-044",
+        "implementation": "TICKET-IMPL-044",
+        "testing": "TICKET-TEST-044"
+      }
+    },
+    {
+      "id": "STORY-054",
+      "epic": "EPIC-006",
+      "title": "Rakentaminen: vesijohto, kokoraja ja areena",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kaupungin kasvulla on raja, jonka vesijohto avaa, ja että isompia kaupunkeja voi rauhoittaa areenalla.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-044",
+        "STORY-049",
+        "STORY-051"
+      ],
+      "acceptance_criteria": [
+        "Kaupunki ei kasva yli koon 10 ilman vesijohtoa, ja rajalla ruokalaatikko ei täyty yli (Freeciv civ1 Size_Adj 10, Size_Unlimit; cityturn.c, aqueductloss 0).",
+        "Rakentaminen (Muuraus ja Rahatalous) avaa vesijohdon (120, ylläpito 2) ja areenan (Colosseum 100, ylläpito 4, kolme tyytyväiseksi).",
+        "Kaupunkikortti kertoo rajasta, ja ilmoitus tulee kerran, kun laatikko on rajalla täynnä. Kasvattaja rakentaa areenan temppelin jälkeen ja vesijohdon kokoa ennen rajaa; valtion neuvonantajat tutkivat Rakentamisen."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-045",
+        "implementation": "TICKET-IMPL-045",
+        "testing": "TICKET-TEST-045"
       }
     }
   ],
@@ -3642,6 +3692,85 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-044",
+      "story": "STORY-053",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "STORY-016:n tunnettu puute (sirut päällekkäin) ja puhelinajossa löytynyt vika: sirut peittivät avautumiskortin napin. upTarget() asettaa pelin planeettatason etäisyyden 15 % tasorajan yli, spreadChips() levittää sirut ja avautumiskortti saa z-indexin.",
+      "alternatives_considered": [
+        {
+          "name": "Pienemmät sirut planeetalla",
+          "pros": "Yksinkertainen",
+          "cons": "Kosketuskohde alle 44 px",
+          "rejected_because": "Saavutettavuus"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/main.ts",
+        "src/ui/levelUi.ts ja testi",
+        "src/ui/hud.css",
+        "tests/e2e/conquest.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Etäisyys ja sirujen levitys",
+          "verify": "Yksikkötesti ja kuvakaappaukset"
+        },
+        {
+          "step": 2,
+          "action": "Puhelintesti",
+          "verify": "E2E 390 × 844"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
+    },
+    {
+      "id": "PLAN-045",
+      "story": "STORY-054",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-13",
+      "approach": "Peruspeli: Civ I:n kasvun raja. Luvut Freecivin civ1-sääntösarjasta (effects.ruleset, buildings.ruleset, techs.ruleset, server/cityturn.c city_increase_size). Areena on Colosseumin oma nimi (sääntö 4).",
+      "alternatives_considered": [
+        {
+          "name": "Raja ilman vesijohtoa",
+          "pros": "Pienempi",
+          "cons": "Raja ilman keinoa on turhauttava",
+          "rejected_because": "Raja ja keino kuuluvat yhteen"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts, science.ts, save.ts, advisors.ts ja testit",
+        "src/globe/main.ts",
+        "tests/e2e/city.e2e.ts ja buildings.e2e.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Raja, rakennukset, keksintö ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Kortti, ilmoitus, neuvonantajat",
+          "verify": "E2E"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -5367,6 +5496,80 @@
         "notes": "Vanha tallennus tasolla 1 ja mittarilla done jatkaa conquest-mittarilla."
       },
       "commit": "ceba488",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-044",
+      "story": "STORY-053",
+      "plan": "PLAN-044",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/main.ts",
+        "src/ui/levelUi.ts",
+        "src/ui/levelUi.test.ts",
+        "src/ui/hud.css",
+        "tests/e2e/conquest.e2e.ts"
+      ],
+      "change_summary": "upTarget() korvaa kolme backTarget-kutsua (tasopalkki, avautumiskortti, miinusnäppäin). planetDist() on pelin planeettaetäisyys. spreadChips() on puhdas funktio, ja chips.update levittää sirut planeettatasolla. .unlock-card z-index 1.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "chips.update(spread)",
+          "upTarget, planetDist",
+          ".unlock-card z-index"
+        ],
+        "call_sites_found": [
+          "backTarget kolmessa kohdassa"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Aloitusnäyttö ja ?free-tila käyttävät edelleen koko planeetan kehystä."
+      },
+      "commit": "9727cb1",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-045",
+      "story": "STORY-054",
+      "plan": "PLAN-045",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/save.ts",
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/globe/main.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/buildings.e2e.ts"
+      ],
+      "change_summary": "SIZE_LIMIT ja sizeLimit(); cityDay pitää laatikon rajalla; daysToGrow null rajalla. Vesijohto ja Areena rakennuksiksi, cityMood laskee areenan. Rakentaminen keksinnöksi. Kortin vihje ja kasvuteksti, ilmoitus kerran. Kasvattaja ja valtion keksintöjärjestykset päivitetty.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "BUILDINGS, UPKEEP, BUILDS",
+          "Advance (construction)",
+          "cityDay, daysToGrow, cityMood",
+          "cityAdvice (growth)"
+        ],
+        "call_sites_found": [
+          "rakennusvaihtoehtojen määrä E2E-testeissä"
+        ],
+        "call_sites_updated": [
+          "tests/e2e/city.e2e.ts",
+          "tests/e2e/buildings.e2e.ts",
+          "src/game/science.test.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Rakennusvaihtoehtoja on nyt neljätoista."
+      },
+      "commit": "3eee7e7",
       "progress": 100
     }
   ],
@@ -9373,6 +9576,157 @@
           },
           {
             "item": "Tieto tekstinä",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-044",
+      "story": "STORY-053",
+      "implementation_ticket": "TICKET-IMPL-044",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Puhelinajo löysi vian: alueiden sirut olivat DOMissa avautumiskortin jälkeen ja ottivat sen napautukset. Korjattu z-indexillä; valloitustesti ajetaan nyt myös puhelimella.",
+        "files_changed": [
+          "src/ui/hud.css",
+          "tests/e2e/conquest.e2e.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: spreadChips",
+            "expected": "Ensimmäinen paikallaan, kaukainen paikallaan, päällekkäiset erilleen poispäin",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valloitus työpöydällä ja puhelimella",
+            "expected": "Zoomaa ulos osuu korttiin; planeetan sirut eivät mene päällekkäin",
+            "result": "pass (planet.png molemmissa)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 151/151; E2E 64/64",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38422567172 (39 min) vihreä ja julkaistu: STORY-054:n ajo, joka sisältää tämän; oma ajo (9727cb1) peruttiin uudemman tieltä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Sirut luettavia ja napautettavia",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Planeetan etäisyys",
+            "checked": true
+          },
+          {
+            "item": "Sirujen levitys puhelimella",
+            "checked": true
+          },
+          {
+            "item": "Avautumiskortti sirujen päällä",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-045",
+      "story": "STORY-054",
+      "implementation_ticket": "TICKET-IMPL-045",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi ominaisuus. Rakennusmäärät (12 → 14, 11 → 13) ja NEEDS-luettelo päivitettiin tarkoituksella. Oma testivirhe: koon 10 kaupunki muutamalla ruudulla näkee nälkää, jolloin kortti sanoo oikein \"nälkää\"; E2E tarkistaa rajan vihjeen, ja laatikko rajalla on yksikkötesti.",
+        "files_changed": [
+          "tests/e2e/city.e2e.ts",
+          "tests/e2e/buildings.e2e.ts",
+          "src/game/science.test.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: raja ja vesijohto",
+            "expected": "Koko 10 pysyy, laatikko täynnä; vesijohdolla kasvaa 11:een",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: areena ja Kasvattaja",
+            "expected": "Areena rauhoittaa kolme; Kasvattaja areena ja vesijohto",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kaupunkikortti",
+            "expected": "14 vaihtoehtoa, vesijohto vaatii Rakentamisen, rajan vihje koossa 10",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 154/154; E2E 64/64",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38422567172 (3eee7e7, 39 min; kattaa myös STORY-053:n, jonka oma ajo peruttiin uudemman tieltä) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Raja ja vesijohto tuntuvat järkeviltä",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kokoraja 10",
+            "checked": true
+          },
+          {
+            "item": "Vesijohto ja areena",
+            "checked": true
+          },
+          {
+            "item": "Kortti ja ilmoitus",
+            "checked": true
+          },
+          {
+            "item": "Neuvonantajat",
             "checked": true
           }
         ],

@@ -1,0 +1,70 @@
+{
+  "id": "TICKET-TEST-044",
+  "story": "STORY-053",
+  "implementation_ticket": "TICKET-IMPL-044",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Puhelinajo löysi vian: alueiden sirut olivat DOMissa avautumiskortin jälkeen ja ottivat sen napautukset. Korjattu z-indexillä; valloitustesti ajetaan nyt myös puhelimella.",
+    "files_changed": [
+      "src/ui/hud.css",
+      "tests/e2e/conquest.e2e.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: spreadChips",
+        "expected": "Ensimmäinen paikallaan, kaukainen paikallaan, päällekkäiset erilleen poispäin",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valloitus työpöydällä ja puhelimella",
+        "expected": "Zoomaa ulos osuu korttiin; planeetan sirut eivät mene päällekkäin",
+        "result": "pass (planet.png molemmissa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 151/151; E2E 64/64",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38422567172 (39 min) vihreä ja julkaistu: STORY-054:n ajo, joka sisältää tämän; oma ajo (9727cb1) peruttiin uudemman tieltä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Sirut luettavia ja napautettavia",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Planeetan etäisyys",
+        "checked": true
+      },
+      {
+        "item": "Sirujen levitys puhelimella",
+        "checked": true
+      },
+      {
+        "item": "Avautumiskortti sirujen päällä",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-13"
+  }
+}

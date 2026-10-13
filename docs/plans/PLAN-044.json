@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-044",
+  "story": "STORY-053",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-13",
+  "approach": "STORY-016:n tunnettu puute (sirut päällekkäin) ja puhelinajossa löytynyt vika: sirut peittivät avautumiskortin napin. upTarget() asettaa pelin planeettatason etäisyyden 15 % tasorajan yli, spreadChips() levittää sirut ja avautumiskortti saa z-indexin.",
+  "alternatives_considered": [
+    {
+      "name": "Pienemmät sirut planeetalla",
+      "pros": "Yksinkertainen",
+      "cons": "Kosketuskohde alle 44 px",
+      "rejected_because": "Saavutettavuus"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts",
+    "src/ui/levelUi.ts ja testi",
+    "src/ui/hud.css",
+    "tests/e2e/conquest.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Etäisyys ja sirujen levitys",
+      "verify": "Yksikkötesti ja kuvakaappaukset"
+    },
+    {
+      "step": 2,
+      "action": "Puhelintesti",
+      "verify": "E2E 390 × 844"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}
