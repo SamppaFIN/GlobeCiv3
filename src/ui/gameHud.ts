@@ -21,6 +21,9 @@ const SPARK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColo
 // A list (own icon) for the list of cities and units (STORY-042)
 const LIST = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6 H20 M9 12 H20 M9 18 H20"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>';
 
+// A bust (own icon) for the advisor of the level (STORY-049)
+const ADVISOR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20 C5.5 15.5 8.5 13.5 12 13.5 C15.5 13.5 18.5 15.5 19.5 20"/></svg>';
+
 export interface GameHudState {
   day: number;
   speed: Speed;
@@ -43,6 +46,8 @@ export interface GameHudState {
   chooseResearch: boolean;
   /** The current goal and its reward, or null when all are done (STORY-041). */
   goal: { text: string; reward: number } | null;
+  /** The advisor of the level in view, or null where the level has none (STORY-049). */
+  advisor: string | null;
 }
 
 export interface GameHudHandlers {
@@ -57,6 +62,8 @@ export interface GameHudHandlers {
   nextUnit(): void;
   /** Open the list of cities and units (STORY-042). */
   openList(): void;
+  /** Open the advisor of the level in view (STORY-049). */
+  openAdvisor(): void;
   /** Open the oldest waiting discovery. */
   openFind(): void;
   /** Open the science card. */
@@ -76,6 +83,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
           ${SPEEDS.map(s => `<label class="seg-opt"><input type="radio" name="hud-speed" value="${s}">${s}×</label>`).join('')}
         </div>
         <button class="btn btn-secondary hud-icon hud-city" type="button" aria-label="Luettelo: kaupungit, yksiköt ja talous">${LIST}</button>
+        <button class="btn btn-secondary hud-icon hud-advisor" type="button" hidden>${ADVISOR}</button>
         <div class="hud-spacer"></div>
         <div class="hud-day"><span class="hud-day-n"></span><span class="hud-day-label"></span></div>
       </div>
@@ -124,6 +132,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openList);
+  q<HTMLButtonElement>('.hud-advisor').addEventListener('click', on.openAdvisor);
   q<HTMLButtonElement>('.hud-finds').addEventListener('click', on.openFind);
   q<HTMLButtonElement>('.hud-research').addEventListener('click', on.openResearch);
   q<HTMLButtonElement>('.hud-goal').addEventListener('click', on.goalHint);
@@ -157,6 +166,9 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       finds.hidden = s.finds === 0;
       finds.innerHTML = `${SPARK}<span>${s.finds === 1 ? 'Löytö odottaa' : `${s.finds} löytöä odottaa`}</span>`;
       q<HTMLElement>('.hud-research').hidden = !s.chooseResearch;
+      const advisor = q<HTMLButtonElement>('.hud-advisor');
+      advisor.hidden = s.advisor === null;
+      advisor.setAttribute('aria-label', `Neuvonantaja: ${s.advisor ?? ''}`);
       const bottom = q<HTMLElement>('.hud-bottom');
       bottom.hidden = !s.unit || s.level !== 3;
       if (!s.unit) return;

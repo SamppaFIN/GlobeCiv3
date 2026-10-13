@@ -36,6 +36,8 @@ export interface CityView {
   focus: Focus;
   areaText: string;
   hint: string | null;
+  /** The advisor running the city, if one does (STORY-049). */
+  advisor: string | null;
   /** Food left over (may be negative), shields and trade a day. */
   yields: [number, number, number];
   /** Every build: "Soturi", "10 tuotantoa", what it does, "valmis 5 pv", and the one chosen. */
@@ -79,6 +81,7 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     <span class="city-food"></span>
     <span class="city-mood"></span>
     <span class="city-disorder"></span>
+    <span class="city-advisor"></span>
     <div class="city-focus-row">
       <span id="city-focus-label" class="city-build-label">Kansalaiset työstävät</span>
       <div class="seg city-focus" role="radiogroup" aria-labelledby="city-focus-label">
@@ -121,6 +124,8 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     q('.city-disorder').hidden = !v.disorder;
     q('.city-disorder').textContent = v.disorder ?? '';
     q('.city-area').textContent = v.areaText;
+    q('.city-advisor').hidden = !v.advisor;
+    q('.city-advisor').textContent = v.advisor ?? '';
     const hint = q('.city-hint');
     hint.hidden = !v.hint;
     hint.textContent = v.hint ?? '';
