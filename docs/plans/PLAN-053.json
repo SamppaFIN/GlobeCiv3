@@ -1,0 +1,41 @@
+{
+  "id": "PLAN-053",
+  "story": "STORY-062",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "Koodaussääntö 6: mittaus ennen ja jälkeen. Pitkä peli (siemen 42, neuvonantajat, 16–17 kaupunkia), sitten Chromen näytteenottoprofiloija CDP:n kautta 5 s ajan, ja kuumat kohdat lähdekarttaan. Mittaus Playwrightin headless-Chromiumissa Samin työpöytäkoneella.",
+  "alternatives_considered": [
+    {
+      "name": "Harvempi chips-päivitys",
+      "pros": "Yksinkertainen",
+      "cons": "Sirut nykisivät kameran liikkuessa",
+      "rejected_because": "Pakotettu asettelu oli juurisyy, ei päivitys sinänsä"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/cityLabels.ts"
+  ],
+  "open_questions": [
+    "Planeettatasolla framet putoavat yhä (198 framea 4 s:ssa, p95 33 ms), vaikka pääsäie on 60 % joutilas: GPU-puoli, mitattava oikealla GPU:lla (avoin kysymys 9)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Mittaus ja profiilit",
+      "verify": "Kuumat kohdat lähdekartasta"
+    },
+    {
+      "step": 2,
+      "action": "Korjaukset",
+      "verify": "Profiili uudelleen"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,0 +1,31 @@
+{
+  "id": "TICKET-IMPL-053",
+  "story": "STORY-062",
+  "plan": "PLAN-053",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/main.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/cityLabels.ts"
+  ],
+  "change_summary": "panelEdges() välimuisti, window.innerHeight canvasin korkeudeksi, sirujen ja lappujen avainvertailu ennen kirjoitusta, sirujen leveyksien välimuisti (nolla ei jää välimuistiin).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "updateLevels, panelEdges",
+      "createChips.update",
+      "createCityLabels.update"
+    ],
+    "call_sites_found": [
+      "chips.update, cityLabels.update"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kortin alle piilotettu siru mittaa 0, joten nollaa ei tallenneta."
+  },
+  "commit": "7cdb0ec",
+  "progress": 100
+}

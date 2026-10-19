@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-19T11:35:26Z",
+    "generated_at": "2026-10-19T12:53:00Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "2e8b40d",
+    "git_commit": "7cdb0ec",
     "git_branch": "main",
     "language": "fi"
   },
@@ -163,7 +163,8 @@
         "STORY-058",
         "STORY-059",
         "STORY-060",
-        "STORY-061"
+        "STORY-061",
+        "STORY-062"
       ],
       "progress": 98
     }
@@ -1656,6 +1657,30 @@
         "plan": "PLAN-052",
         "implementation": "TICKET-IMPL-052",
         "testing": "TICKET-TEST-052"
+      }
+    },
+    {
+      "id": "STORY-062",
+      "epic": "EPIC-006",
+      "title": "Myöhäisen pelin framen kustannus",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että peli pysyy sulavana myös silloin, kun kaupunkeja on kymmeniä.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-016",
+        "STORY-053",
+        "STORY-060"
+      ],
+      "acceptance_criteria": [
+        "Myöhäisen pelin frame ei pakota asettelua: sirut ja kaupunkilaput kirjoittavat vain muuttuneen tekstin, sirun leveys mitataan uudelleen vain tekstin muuttuessa, paneelien reunat luetaan uudelleen vain tason, alapaneelin tai ikkunan muuttuessa (tai puolen sekunnin välein), ja canvasin korkeus tulee ikkunasta.",
+        "Mittaus ennen ja jälkeen kirjataan (laite, selain, menetelmä)."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-053",
+        "implementation": "TICKET-IMPL-053",
+        "testing": "TICKET-TEST-053"
       }
     }
   ],
@@ -4226,6 +4251,47 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-053",
+      "story": "STORY-062",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "Koodaussääntö 6: mittaus ennen ja jälkeen. Pitkä peli (siemen 42, neuvonantajat, 16–17 kaupunkia), sitten Chromen näytteenottoprofiloija CDP:n kautta 5 s ajan, ja kuumat kohdat lähdekarttaan. Mittaus Playwrightin headless-Chromiumissa Samin työpöytäkoneella.",
+      "alternatives_considered": [
+        {
+          "name": "Harvempi chips-päivitys",
+          "pros": "Yksinkertainen",
+          "cons": "Sirut nykisivät kameran liikkuessa",
+          "rejected_because": "Pakotettu asettelu oli juurisyy, ei päivitys sinänsä"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/main.ts",
+        "src/ui/levelUi.ts",
+        "src/ui/cityLabels.ts"
+      ],
+      "open_questions": [
+        "Planeettatasolla framet putoavat yhä (198 framea 4 s:ssa, p95 33 ms), vaikka pääsäie on 60 % joutilas: GPU-puoli, mitattava oikealla GPU:lla (avoin kysymys 9)"
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Mittaus ja profiilit",
+          "verify": "Kuumat kohdat lähdekartasta"
+        },
+        {
+          "step": 2,
+          "action": "Korjaukset",
+          "verify": "Profiili uudelleen"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6257,6 +6323,37 @@
         "notes": "Kenttä kaupungissa, joten jokainen laskukohta käyttää samaa järjestelyä."
       },
       "commit": "2e8b40d",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-053",
+      "story": "STORY-062",
+      "plan": "PLAN-053",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/main.ts",
+        "src/ui/levelUi.ts",
+        "src/ui/cityLabels.ts"
+      ],
+      "change_summary": "panelEdges() välimuisti, window.innerHeight canvasin korkeudeksi, sirujen ja lappujen avainvertailu ennen kirjoitusta, sirujen leveyksien välimuisti (nolla ei jää välimuistiin).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "updateLevels, panelEdges",
+          "createChips.update",
+          "createCityLabels.update"
+        ],
+        "call_sites_found": [
+          "chips.update, cityLabels.update"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kortin alle piilotettu siru mittaa 0, joten nollaa ei tallenneta."
+      },
+      "commit": "7cdb0ec",
       "progress": 100
     }
   ],
@@ -10913,6 +11010,85 @@
           },
           {
             "item": "Pitkä peli",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-053",
+      "story": "STORY-062",
+      "implementation_ticket": "TICKET-IMPL-053",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Joka framessa kirjoitetut tekstit ja heti perään luetut mitat pakottivat asettelun keskellä framea.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "src/ui/levelUi.ts",
+          "src/ui/cityLabels.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; Chrome DevTools Protocol Profiler, näyteväli 0,2 ms, 5 s; siemen 42, neuvonantajat, 16–17 kaupunkia.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0, source-map-js",
+        "cases": [
+          {
+            "steps": "Frame-väli alussa ja myöhään (ennen)",
+            "expected": "60 fps",
+            "result": "Alussa 240 framea 4 s:ssa, p95 16,8 ms; myöhään 202 framea, p95 33,4 ms",
+            "outcome": "fail"
+          },
+          {
+            "steps": "Profiili ennen",
+            "expected": "Pääsäie joutilas",
+            "result": "Joutilas 24 %; getBoundingClientRect 517 ms, (program) 1 136 ms, sirujen leveydet 660 ms / 5 s",
+            "outcome": "fail"
+          },
+          {
+            "steps": "Profiili jälkeen",
+            "expected": "Ei pakotettua asettelua",
+            "result": "Joutilas 60 %; getBoundingClientRect 1 ms, (program) 272 ms / 5 s",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Frame-väli planeettatasolla jälkeen",
+            "expected": "60 fps",
+            "result": "198 framea 4 s:ssa, p95 33,4 ms: ei pääsäikeen työtä, GPU-puoli mitattava oikealla GPU:lla",
+            "outcome": "not_run"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 161/161; E2E 66/66",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39251839042 (7cdb0ec, 26 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "30 fps myöhäisessä pelissä",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Ei pakotettua asettelua",
+            "checked": true
+          },
+          {
+            "item": "Mittaus ennen ja jälkeen",
             "checked": true
           }
         ],
