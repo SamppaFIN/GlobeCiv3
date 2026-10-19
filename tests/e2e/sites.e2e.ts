@@ -93,3 +93,24 @@ test('a scout suggests a good city site; the settler founds the city there, and 
   expect([waiting.cities[0].build, waiting.pendingSite]).toEqual(['settler', second.tile]);
   expect(errors).toEqual([]);
 });
+
+test('no site in the mountains: a city that cannot feed its first citizen is not founded (STORY-065)', async ({ page }) => {
+  const errors = await startGame(page);
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  // Land of the home state whose centre and neighbours are all mountains: no food at all
+  const found = await page.evaluate(() => {
+    const w = window as any;
+    const home = Math.floor(w.globeGame.state.startCity / 49);
+    const table = w.globeRegions.tileTable();
+    const terrain = (id: number) => w.globeTileTypes.tileInfo(id).terrain;
+    const barren: number[] = [];
+    for (let id = 0; id < table.length; id++) {
+      if (Math.floor(table[id] / 49) !== home || terrain(id) !== 'mountains') continue;
+      if (w.globeHexTiles.neighbors(id).every((n: number) => terrain(n) === 'mountains')) barren.push(id);
+    }
+    return { barren: barren.length, scored: barren.filter(id => w.globeDebug.siteScore(id) > 0).length };
+  });
+  expect(found.barren).toBeGreaterThan(0);
+  expect(found.scored).toBe(0);
+  expect(errors).toEqual([]);
+});

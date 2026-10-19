@@ -21,7 +21,7 @@ import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
 import { GameClock, type Speed } from '../game/clock';
 import { findPath, tilesInRings } from '../game/pathfinding';
-import { FAIR_SITE, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
+import { FAIR_SITE, feedsCity, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
@@ -621,8 +621,9 @@ const world: World = {
     if (scouting) noteDiscoveries(fresh);
   },
   cityOf: id => regions.tileTable()[id],
-  // A city site is as good as the food, shields and trade within two rings (food counts twice)
-  siteScore: id => tilesInRings(id, 2).reduce((sum, t) => sum + siteValue(t), 0),
+  // A city site is as good as the food, shields and trade within two rings (food counts twice);
+  // one that cannot feed its first citizen is no site (STORY-065)
+  siteScore: id => (feedsCity(id, (t, centre) => terrainYield(t, centre).food) ? tilesInRings(id, 2).reduce((sum, t) => sum + siteValue(t), 0) : 0),
   nextJob: u => nextJob(u),
   improve: (tile, kind) => {
     if (!play) return;
@@ -703,10 +704,16 @@ const START_GOLD = 50;
 /** Half the trade is gold at the start (own; Freeciv's player default is all science). */
 const START_TAX = 50;
 
+/** A tile's food, shields and trade from its terrain and resource alone, as the centre or worked: the same in every game of a seed. */
+function terrainYield(id: number, centre: boolean) {
+  const terrain = terrainOf(id);
+  return workedYield({ terrain, resource: tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null }, centre);
+}
+
 /** A worked tile's food, shields and trade: terrain, resource, an irrigated centre and improvements (Freeciv civ1), plus finds. */
 function yieldOf(id: number, centre: boolean) {
   const terrain = terrainOf(id);
-  const y = workedYield({ terrain, resource: tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null }, centre);
+  const y = terrainYield(id, centre);
   const b = play?.bonuses.get(id) ?? NO_YIELD;
   const imp = play?.improvements.yieldOf(id, terrain) ?? NO_YIELD;
   // The centre's irrigation and road are counted already
@@ -2612,6 +2619,8 @@ frameStartPlanet();
   /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */
   natives: () => natives.map(n => ({ ...n, mapped: mapState.isMapped(n.tile), size: nativeStrength(n, clock.day).size })),
   nativeMs: () => nativeMs,
+  /** A tile's score as a city site (STORY-065). */
+  siteScore: (id: number) => world.siteScore(id),
   /** The card a tapped hex would show (STORY-055). */
   tileView: (id: number) => (play ? tileView(id) : null),
   /** Found a city on the first land tile of a province that has none (STORY-016). */
