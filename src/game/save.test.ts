@@ -39,7 +39,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
     mapped: [...map.mapped.keys()].filter(i => map.mapped[i]), units: units.save(), selected: 1,
     progress: { openLevel: 3, meter: 'province' }, targetProvince: -1,
     discoveries: [{ tile: START_TILE, finder: 1 }], bonuses: [[START_TILE, { food: 2, shield: 0, trade: 0 }]], found: 1,
-    cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food' }],
+    cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food', entertainers: 1 }],
     offers: [], offered: [START_TILE], lastOfferDay: 9, pendingSite: null,
     improvements: imp.entries(), raids: raids.save(), raidAlert: true, gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4 }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
   };

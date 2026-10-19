@@ -204,6 +204,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), BUILDINGS.length))],
           // Saves from before STORY-039 have no focus
           focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
+          entertainers: c.entertainers === undefined ? 0 : int(c.entertainers, 'entertainers', 0, 1000),
         };
       }, 10_000),
       offers: list(s.offers, 'offers', v => {

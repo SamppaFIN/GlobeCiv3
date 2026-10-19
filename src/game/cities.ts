@@ -143,6 +143,11 @@ export interface City {
   buildings: Building[];
   /** What the citizens work for (STORY-039). */
   focus: Focus;
+  /**
+   * Citizens off the tiles as entertainers, 2 luxury each (STORY-061; Freeciv civ1
+   * cities.ruleset specialist elvis, effects.ruleset Specialist_Output 2). Chosen each day.
+   */
+  entertainers?: number;
 }
 
 export function foundCity(cities: City[], tile: number): City {
@@ -166,13 +171,15 @@ export const granary = (size: number) => 20 + 10 * (size - 1);
  * the city's focus (balanced: 2 × food + shields + trade).
  */
 export function workedTiles(city: City, yieldOf: YieldOf, taken: ReadonlySet<number> = new Set()): number[] {
+  // Entertainers work no tile (STORY-061)
+  const workers = city.size - (city.entertainers ?? 0);
   const score = FOCUS_SCORE[city.focus ?? 'balanced'];
   const around = tilesInRings(city.tile, cityRings(city.size))
     .filter(id => id !== city.tile && !taken.has(id))
     .map(id => [score(yieldOf(id, false)), id] as const)
     .sort((a, b) => b[0] - a[0] || a[1] - b[1])
     .map(([, id]) => id);
-  return [city.tile, ...around.slice(0, city.size)];
+  return [city.tile, ...around.slice(0, workers)];
 }
 
 export interface CityYield extends Yield {
@@ -212,8 +219,10 @@ export interface Mood {
  * (common/city.c city_unhappy: happy < unhappy).
  */
 export function cityMood(city: City, soldiers: number, cities: number, gardens = false, luxury = 0, gov: Government = 'despotism'): Mood {
-  let content = Math.min(city.size, baseContent(cities, gov));
-  let unhappy = city.size - content;
+  // Entertainers come out of the content ones and are never unhappy (common/city.c citizen_base_mood)
+  const spes = city.entertainers ?? 0;
+  let content = Math.max(0, Math.min(city.size, baseContent(cities, gov)) - spes);
+  let unhappy = city.size - spes - content;
   let happy = 0;
   // Luxury first (STORY-046, common/city.c citizen_luxury_happy, happy_cost 2): content to
   // happy for 2, unhappy to happy for 4, then unhappy to content for 2
@@ -233,7 +242,7 @@ export function cityMood(city: City, soldiers: number, cities: number, gardens =
 
 /** Luxury a city makes: its share of trade, +50 % with a marketplace (effects.ruleset). */
 export const cityLuxury = (city: City, y: Yield & { disorder?: boolean }, tax: number, lux: number) =>
-  Math.floor(splitTrade(y.trade, tax, lux).luxury * (city.buildings.includes('market') ? 1.5 : 1));
+  Math.floor((splitTrade(y.trade, tax, lux).luxury + 2 * (city.entertainers ?? 0)) * (city.buildings.includes('market') ? 1.5 : 1));
 
 /**
  * A city's yield in disorder (common/city.c, output_types: food and shields lose their

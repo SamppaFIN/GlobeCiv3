@@ -771,6 +771,27 @@ function foundAt(tile: number) {
   play.openCity = city.id;
 }
 
+/**
+ * Each day a city takes the fewest citizens off the tiles as entertainers that keeps it out of
+ * disorder, as Freeciv's city governor does (STORY-061: in a long game the empire size put
+ * more and more cities in disorder, which makes no shields, gold or science). If none helps,
+ * all work.
+ */
+function arrangeEntertainers() {
+  const p = play!;
+  const taken = new Set<number>();
+  for (const c of p.cities) {
+    let best = 0;
+    for (let e = 0; e <= c.size; e++) {
+      c.entertainers = e;
+      const y = cityYield(c, yieldOf, taken, supportOf(c), p.gov);
+      if (!moodOf(c, y).disorder) { best = e; break; }
+    }
+    c.entertainers = best;
+    for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
+  }
+}
+
 /** A day of every city: units it cannot pay for leave first (newest first), then it grows and builds. */
 function cityDays() {
   if (!play) return;
@@ -781,6 +802,7 @@ function cityDays() {
     discoveryCard.notice('Anarkia päättyi: Monarkia on hallitusmuoto');
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
   }
+  arrangeEntertainers();
   let yields = cityYields();
   // Disorder starts or ends
   play.cities.forEach((c, i) => {
@@ -1028,7 +1050,7 @@ function cityView(c: City, y: CityYield): CityView {
     ...(() => {
       const m = moodOf(c, y);
       return {
-        moodText: `Asukkaat: ${m.happy ? `${m.happy} ${m.happy === 1 ? 'onnellinen' : 'onnellista'} · ` : ''}${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}`,
+        moodText: `Asukkaat: ${m.happy ? `${m.happy} ${m.happy === 1 ? 'onnellinen' : 'onnellista'} · ` : ''}${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}${c.entertainers ? ` · ${c.entertainers} ${c.entertainers === 1 ? 'viihdyttäjä' : 'viihdyttäjää'}` : ''}`,
         disorder: m.disorder
           ? 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Neljä asukasta on tyytyväisiä; jokainen kaupungissa oleva sotilas ja temppeli rauhoittavat yhden lisää, ja ylellisyys (Tutkimus-kortissa) tekee asukkaista onnellisia.'
           : null,
