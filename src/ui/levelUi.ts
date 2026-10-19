@@ -107,6 +107,8 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
   layer.className = 'chips';
   root.appendChild(layer);
   const pool: HTMLButtonElement[] = [];
+  /** Chip widths as measured after their text last changed. */
+  const widths = new Map<HTMLButtonElement, number>();
   return {
     /** `free`: the screen band between the HUD panels; chips are kept inside it so they can be tapped. `spread`: move overlapping chips apart. */
     update(chips, free, spread = false) {
@@ -122,22 +124,37 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
       const shown: { b: HTMLButtonElement; x: number; y: number }[] = [];
       pool.forEach((b, i) => {
         const c = chips[i];
-        b.hidden = !c || c.x === null || c.y === null;
-        if (!c || b.hidden) return;
-        b.dataset.id = String(c.id);
-        b.classList.toggle('chip-selected', c.selected);
-        b.setAttribute('aria-pressed', String(c.selected));
-        b.querySelector('.chip-name')!.textContent = c.name;
-        b.querySelector('.chip-sub')!.textContent = c.sub;
+        const hidden = !c || c.x === null || c.y === null;
+        if (b.hidden !== hidden) b.hidden = hidden;
+        if (!c || hidden) return;
+        // Only what changed is written, and the width measured again only then (STORY-062:
+        // a write and a read in every frame forced a layout each time)
+        const key = `${c.id}|${c.name}|${c.sub}|${c.selected}`;
+        if (b.dataset.key !== key) {
+          b.dataset.key = key;
+          b.dataset.id = String(c.id);
+          b.classList.toggle('chip-selected', c.selected);
+          b.setAttribute('aria-pressed', String(c.selected));
+          b.querySelector('.chip-name')!.textContent = c.name;
+          b.querySelector('.chip-sub')!.textContent = c.sub;
+          widths.delete(b);
+        }
         shown.push({ b, x: c.x!, y: c.y! });
       });
+      const width = (b: HTMLButtonElement) => {
+        if (widths.has(b)) return widths.get(b)!;
+        // A chip hidden under a card measures 0: measured again once it shows
+        const w = b.offsetWidth;
+        if (w > 0) widths.set(b, w);
+        return w;
+      };
       if (spread) {
-        const moved = spreadChips(shown.map(c => ({ x: c.x, y: c.y, w: c.b.offsetWidth })));
+        const moved = spreadChips(shown.map(c => ({ x: c.x, y: c.y, w: width(c.b) })));
         shown.forEach((c, i) => { c.x = moved[i].x; c.y = moved[i].y; });
       }
       // Widths matter only when a chip is held at an edge (reading them costs a layout)
       const held = shown.some(c => c.y < free.top + CHIP_HALF || c.y > free.bottom - CHIP_HALF);
-      const ys = layoutChips(shown.map(c => ({ x: c.x, y: c.y, w: held ? c.b.offsetWidth : 0 })), free);
+      const ys = layoutChips(shown.map(c => ({ x: c.x, y: c.y, w: held ? width(c.b) : 0 })), free);
       // Centred on the region, whatever the chip's width
       shown.forEach((c, i) => { c.b.style.transform = `translate(${c.x.toFixed(1)}px, ${ys[i].toFixed(1)}px) translate(-50%, -50%)`; });
     },

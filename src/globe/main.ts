@@ -1894,6 +1894,28 @@ const toScreen = (v: THREE.Vector3): [number, number] | null => {
   return [((p.x + 1) / 2) * window.innerWidth, ((1 - p.y) / 2) * window.innerHeight];
 };
 
+/**
+ * The free band between the top panel and the bottom panel, for the chips. After the panels, so
+ * that a panel shown in this frame already bounds them. Reading an edge forces a layout in
+ * mid-frame, so the edges are read again only when the level, the bottom panel or the window
+ * changes, or every half second (STORY-062: they cost a tenth of a late game's frame time).
+ */
+let chipBand: { key: string; at: number; top: number; bottom: number } | null = null;
+function panelEdges(): { top: number; bottom: number } {
+  const bottomPanel = hud_root.querySelector<HTMLElement>('.level-bottom:not([hidden])');
+  const key = `${viewLevel} ${bottomPanel?.className ?? ''} ${window.innerWidth}x${window.innerHeight}`;
+  const now = performance.now();
+  if (!chipBand || chipBand.key !== key || now - chipBand.at > 500) {
+    const topPanel = hud_root.querySelector<HTMLElement>('.hud-top');
+    chipBand = {
+      key, at: now,
+      top: topPanel && !topPanel.hidden ? topPanel.getBoundingClientRect().bottom : 0,
+      bottom: bottomPanel ? bottomPanel.getBoundingClientRect().top : window.innerHeight,
+    };
+  }
+  return chipBand;
+}
+
 /** Chips and panels of the province and state levels, and the unlocks. */
 function updateLevels() {
   if (!play || !game) return;
@@ -1950,13 +1972,7 @@ function updateLevels() {
     },
     viewLevel === 0 ? planetPanel(won) : null,
   );
-  // After the panels, so that a panel shown in this frame already bounds the chips
-  const topPanel = hud_root.querySelector<HTMLElement>('.hud-top');
-  const bottomPanel = hud_root.querySelector<HTMLElement>('.level-bottom:not([hidden])');
-  chips.update(list, {
-    top: topPanel && !topPanel.hidden ? topPanel.getBoundingClientRect().bottom : 0,
-    bottom: bottomPanel ? bottomPanel.getBoundingClientRect().top : window.innerHeight,
-  }, viewLevel === 0);
+  chips.update(list, list.length ? panelEdges() : { top: 0, bottom: window.innerHeight }, viewLevel === 0);
 }
 
 // "−" zooms out a level on a desktop (the unlock card's hint)
@@ -2246,7 +2262,8 @@ function animate(now = performance.now()) {
   tiles.screenUp.value.copy(lightY);
   updateTileTypes(now);
   updatePlay(dt);
-  tiles.update(camera, renderer.domElement.clientHeight, dt);
+  // The canvas fills the window: its height without a layout read (STORY-062)
+  tiles.update(camera, window.innerHeight, dt);
   starCamera.quaternion.copy(spinInverse).multiply(camera.quaternion);
   stepWell(well, dt);
   wellU.wellPos.value.set(well.x, well.y);
@@ -2255,7 +2272,7 @@ function animate(now = performance.now()) {
   wellU.aspect.value = camera.aspect;
   wellU.time.value = now / 1000;
   starsMat.uniforms.scale.value = renderer.getDrawingBufferSize(bufferSize).y / 2;
-  pulses.update(now, camera, renderer.domElement.clientHeight, reduceMotion());
+  pulses.update(now, camera, window.innerHeight, reduceMotion());
   renderer.clear();
   renderer.render(starScene, starCamera);
   renderer.clearDepth();
