@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
-import { baseContent, cityMood, withMood, BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
+import { baseContent, cityLuxury, cityMood, withMood, BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
@@ -263,5 +263,20 @@ describe('city names (STORY-060)', () => {
     for (let i = 0; i < 26; i++) foundCity(cities, i);
     expect(new Set(cities.map(c => c.name)).size).toBe(26);
     expect(cities[24].name).toBe('Aamuranta 2');
+  });
+});
+
+describe('entertainers (STORY-061, Freeciv civ1)', () => {
+  it('work no tile, come out of the content ones, and make 2 luxury each', () => {
+    const c = city(6);
+    expect(cityMood(c, 0, 1)).toMatchObject({ content: 4, unhappy: 2, disorder: true });
+    c.entertainers = 2;
+    expect(workedTiles(c, yieldOf)).toHaveLength(1 + 4);
+    // Two out of the content ones; their 4 luxury makes the other two content ones happy
+    const lux = cityLuxury(c, { food: 0, shield: 0, trade: 0 }, 50, 0);
+    expect(lux).toBe(4);
+    expect(cityMood(c, 0, 1, false, lux)).toMatchObject({ happy: 2, content: 0, unhappy: 2, disorder: false });
+    c.buildings.push('market');
+    expect(cityLuxury(c, { food: 0, shield: 0, trade: 0 }, 50, 0)).toBe(6);
   });
 });
