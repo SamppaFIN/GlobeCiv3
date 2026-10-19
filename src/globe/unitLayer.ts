@@ -28,7 +28,7 @@ const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 25
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'city' | 'native' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -79,6 +79,20 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.beginPath(); g.moveTo(48, 50); g.quadraticCurveTo(64, 8, 80, 50); g.closePath(); g.fill(); g.stroke();
     g.lineWidth = 9;
     g.beginPath(); g.moveTo(90, 100); g.lineTo(104, 34); g.stroke();
+  } else if (kind === 'catapult') {
+    // A frame on two wheels with a throwing arm and its stone (STORY-064)
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.beginPath(); g.ellipse(64, 116, 50, 9, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = INK_CSS;
+    g.strokeStyle = INK_DARK;
+    g.lineWidth = 5;
+    g.fillRect(18, 78, 92, 18); g.strokeRect(18, 78, 92, 18);
+    g.lineWidth = 8;
+    g.beginPath(); g.moveTo(40, 80); g.lineTo(96, 22); g.stroke();
+    g.fillStyle = INK_DARK;
+    g.beginPath(); g.arc(98, 20, 11, 0, Math.PI * 2); g.fill();
+    g.lineWidth = 6;
+    for (const x of [36, 92]) { g.fillStyle = INK_CSS; g.beginPath(); g.arc(x, 102, 13, 0, Math.PI * 2); g.fill(); g.stroke(); }
   } else if (kind === 'city' || kind === 'native') {
     // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs; a
     // city-state's walls are rust (STORY-063)
@@ -101,6 +115,21 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
       g.fillStyle = INK_DARK;
       g.fillRect(70, 52, 26, 34);
     }
+    // Attackers (STORY-064): a horse under the rider, or a wheel beside the driver
+    if (kind === 'horseman') {
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.ellipse(64, 92, 46, 16, 0, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(106, 70, 10, 18, 0.5, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = INK_DARK;
+      g.lineWidth = 7;
+      for (const x of [30, 46, 82, 98]) { g.beginPath(); g.moveTo(x, 100); g.lineTo(x, 120); g.stroke(); }
+    }
+    if (kind === 'chariot') {
+      g.strokeStyle = INK_DARK;
+      g.lineWidth = 7;
+      g.beginPath(); g.arc(36, 96, 22, 0, Math.PI * 2); g.stroke();
+      for (let k = 0; k < 4; k++) { const a = (k * Math.PI) / 4; g.beginPath(); g.moveTo(36 - 22 * Math.cos(a), 96 - 22 * Math.sin(a)); g.lineTo(36 + 22 * Math.cos(a), 96 + 22 * Math.sin(a)); g.stroke(); }
+    }
     g.fillStyle = INK_CSS;
     g.strokeStyle = INK_DARK;
     g.lineWidth = 5;
@@ -117,6 +146,11 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
       g.strokeStyle = INK_CSS;
       g.lineWidth = 3;
       g.beginPath(); g.arc(44, 80, 14, 0, Math.PI * 2); g.stroke();
+    }
+    if (kind === 'swordsman' || kind === 'horseman' || kind === 'chariot') {
+      // A short sword with a crossguard
+      g.beginPath(); g.moveTo(88, 96); g.lineTo(104, 20); g.stroke();
+      g.beginPath(); g.moveTo(84, 82); g.lineTo(102, 86); g.stroke();
     }
     if (kind === 'warrior') {
       g.beginPath(); g.moveTo(96, 8); g.lineTo(88, 116); g.stroke();
@@ -183,6 +217,7 @@ export class UnitLayer {
     this.radius = radius;
     this.textures = {
       scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
+      horseman: figureTexture('horseman'), swordsman: figureTexture('swordsman'), chariot: figureTexture('chariot'), catapult: figureTexture('catapult'),
       city: figureTexture('city'), native: figureTexture('native'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };

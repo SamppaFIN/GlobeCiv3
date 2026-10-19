@@ -35,13 +35,13 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   await page.getByRole('button', { name: 'Tauko' }).click();
   await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
 
-  // The pill opens the science card: five advances to start, 10 bulbs each
+  // The pill opens the science card: seven advances to start (Ratsastus and Pyörä: STORY-064), 10 bulbs each
   await page.getByRole('button', { name: 'Valitse tutkimus', exact: true }).click();
   const card = page.getByRole('dialog', { name: 'Tutkimus' });
   await expect(card).toBeVisible();
   await expect(card.locator('.research-current')).toHaveText('Valitse, mitä tutkitaan. Tiede kertyy odottamaan.');
   const options = card.getByRole('radiogroup', { name: 'Tutki seuraavaksi' }).getByRole('radio');
-  await expect(options).toHaveCount(5);
+  await expect(options).toHaveCount(7);
   const pottery = options.filter({ hasText: 'Keramiikka' });
   await expect(pottery).toContainText('10 tiedettä');
   await expect(pottery).toContainText('Avaa: Viljavarasto');
@@ -90,7 +90,7 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   await city.locator('.city-research').click();
   await expect(card).toBeVisible();
   await expect(card.locator('.research-known')).toHaveText('Tunnetut: Keramiikka');
-  await expect(options).toHaveCount(4);
+  await expect(options).toHaveCount(6);
   await page.screenshot({ path: testInfo.outputPath('learned.png') });
   expect(errors).toEqual([]);
 });

@@ -20,6 +20,7 @@
  * 2 × food + shields + trade, and a starving city shrinks with an empty food box.
  */
 import { GOVERNMENTS, governed, type Government } from './government';
+import { isAttacker, type Attacker } from './war';
 import { improvementYield } from './improvements';
 import { splitTrade } from './science';
 import { tilesInRings } from './pathfinding';
@@ -89,13 +90,18 @@ export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly st
  * genus Convert, data/classic/buildings.ruleset commit 27a6a0c1; Civ I has none). After a
  * soldier or a building the city goes on to it (STORY-039).
  */
-export type Build = 'warrior' | 'phalanx' | 'settler' | Building | 'coinage';
+export type Build = 'warrior' | 'phalanx' | 'settler' | Attacker | Building | 'coinage';
 /** Soldiers defend their city; a phalanx twice as well (STORY-043). */
 export const isSoldier = (b: Build): b is 'warrior' | 'phalanx' => b === 'warrior' || b === 'phalanx';
 export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> = {
   warrior: { name: 'Soturi', cost: 10, pop: 0 },
   // Freeciv civ1 units.ruleset Phalanx: build_cost 20, attack 1, defense 2 (Bronze Working)
   phalanx: { name: 'Falangi', cost: 20, pop: 0 },
+  // Freeciv civ1 units.ruleset (STORY-064): Cavalry 20, Legion 20, Chariot 40, Catapult 40 (war.ts)
+  horseman: { name: 'Ratsumies', cost: 20, pop: 0 },
+  swordsman: { name: 'Miekkamies', cost: 20, pop: 0 },
+  chariot: { name: 'Sotavaunut', cost: 40, pop: 0 },
+  catapult: { name: 'Katapultti', cost: 40, pop: 0 },
   settler: { name: 'Uudisasukas', cost: 40, pop: 1 },
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
@@ -148,6 +154,8 @@ export interface City {
    * cities.ruleset specialist elvis, effects.ruleset Specialist_Output 2). Chosen each day.
    */
   entertainers?: number;
+  /** A city-state taken (STORY-064): its land was the city-state's, not one of the player's sites. */
+  native?: boolean;
 }
 
 export function foundCity(cities: City[], tile: number): City {
@@ -316,7 +324,7 @@ export function cityDay(city: City, y: CityYield): Build | null {
   // settlers next (STORY-033) took a citizen at each growth and ate the city's food.
   // A building is there once, and the city goes on to gold after it too.
   if (isBuilding(done) && !city.buildings.includes(done)) city.buildings.push(done);
-  if (isSoldier(done) || isBuilding(done)) city.build = 'coinage';
+  if (isSoldier(done) || isAttacker(done) || isBuilding(done)) city.build = 'coinage';
   return done;
 }
 

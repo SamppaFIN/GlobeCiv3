@@ -85,8 +85,8 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   await expect(card.locator('.city-grow')).toHaveText(/^(kasvaa \d+ pv|ei kasva|nälkää)$/);
   // The builds to choose from; a Soturi first (a slow runner may have finished it before
   // the pause, and the city gone on to gold)
-  // Three units (Falangi: STORY-043), seven buildings (STORY-038, 040, 044, 054), three wonders (STORY-045) and Kultaa (STORY-039)
-  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(14);
+  // Seven units (Falangi: STORY-043, four attackers: STORY-064), seven buildings (STORY-038, 040, 044, 054), three wonders (STORY-045) and Kultaa (STORY-039)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(18);
   await expect(buildOption(card, 'aqueduct')).toContainText('vaatii: Rakentaminen');
   await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');
   await expect(buildOption(card, 'settler')).toContainText('40 tuotantoa ja 1 asukas · Perustaa uuden kaupungin tai kehittää maata');
