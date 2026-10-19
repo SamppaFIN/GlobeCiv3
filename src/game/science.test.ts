@@ -13,11 +13,13 @@ describe('science (STORY-040, Freeciv civ1)', () => {
 
   it('only what an advance needs opens it; a building needs its advance', () => {
     const r = new Research();
-    expect(r.available()).toEqual(['alphabet', 'bronze', 'ceremonial', 'pottery', 'masonry']);
+    // Horseback Riding and The Wheel need nothing (STORY-064, techs.ruleset), Iron Working Bronze Working
+    expect(r.available()).toEqual(['alphabet', 'bronze', 'ceremonial', 'pottery', 'masonry', 'horseback', 'wheel']);
     r.known.add('bronze');
     expect(r.available()).toContain('currency');
+    expect(r.available()).toContain('iron');
     expect(r.available()).not.toContain('writing');
-    expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry' });
+    expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics' });
   });
 
   it('bulbs gather even without a target; the target is learned when they reach its cost, and the rest carries over', () => {

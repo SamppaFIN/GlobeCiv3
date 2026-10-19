@@ -19,8 +19,9 @@ import { compassIndex } from './names';
 import { IMPROVEMENT_NAMES, type ImprovementKind, type Job } from './improvements';
 import type { UnitsSave } from './save';
 import { tileCenter } from '../globe/hexTiles';
+import { ATTACKER_NAMES, isAttacker, type Attacker } from './war';
 
-export type UnitKind = 'scout' | 'settler' | 'warrior' | 'phalanx';
+export type UnitKind = 'scout' | 'settler' | 'warrior' | 'phalanx' | Attacker;
 export type Mode = 'explore' | 'gather' | 'defend';
 export const MODE_NAMES: Record<Mode, string> = { explore: 'Tutki', gather: 'Kerää', defend: 'Puolusta' };
 /** Rings a scout maps around itself (the state line Tutkimus adds one). */
@@ -202,12 +203,12 @@ export class Units {
   /** A new unit on a tile: a find's scout, or a city's soldier or settler (STORY-028). */
   spawn(kind: UnitKind, tile: number, world: World, home: number | null = null): Unit {
     const n = this.units.filter(u => u.kind === kind).length + 1;
-    const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'warrior' ? `Soturi ${n}` : kind === 'phalanx' ? `Falangi ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
+    const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'warrior' ? `Soturi ${n}` : kind === 'phalanx' ? `Falangi ${n}` : isAttacker(kind) ? `${ATTACKER_NAMES[kind]} ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
     this.add(kind, name, tile);
     const u = this.units[this.units.length - 1];
     u.home = home;
     if (kind === 'scout') world.reveal(tilesInRings(tile, this.sight));
-    if (kind === 'warrior' || kind === 'phalanx') u.mode = 'defend';
+    if (kind === 'warrior' || kind === 'phalanx' || isAttacker(kind)) u.mode = 'defend';
     if (kind === 'settler' && this.settler === u) this.findSites(world);
     return u;
   }
@@ -382,6 +383,8 @@ export function directionName(from: number, to: number): string {
 /** Status line under a unit's name (design 2b). */
 export function unitStatus(units: Units, u: Unit, world: World, terrainName: (id: number) => string): string {
   if (u.kind === 'warrior' || u.kind === 'phalanx') return 'Puolustaa kaupunkia';
+  // Attackers go where the Kenraali sends them (STORY-064)
+  if (isAttacker(u.kind)) return u.path.length ? `Sotaretki · kohti ${directionName(u.tile, u.path.at(-1)!)}` : 'Valmiina sotaretkeen';
   if (u.kind === 'settler' && u.task === 'improve') {
     if (!u.job) return 'Kehittää · ei työtä lähellä';
     const name = IMPROVEMENT_NAMES[u.job.kind].toLowerCase();

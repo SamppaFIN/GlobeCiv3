@@ -14,7 +14,7 @@
  */
 import type { Build } from './cities';
 
-export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction' | 'mapmaking';
+export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction' | 'mapmaking' | 'horseback' | 'iron' | 'wheel' | 'mathematics';
 
 export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
   alphabet: { name: 'Aakkoset', needs: [] },
@@ -31,11 +31,17 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[] }> = {
   construction: { name: 'Rakentaminen', needs: ['masonry', 'currency'] },
   // Map Making (STORY-059, techs.ruleset: Alphabet): units go along the coast as by trireme
   mapmaking: { name: 'Kartanteko', needs: ['alphabet'] },
+  // The attack units' advances (STORY-064): Horseback Riding, Iron Working (Bronze Working),
+  // The Wheel and Mathematics (Alphabet and Masonry)
+  horseback: { name: 'Ratsastus', needs: [] },
+  iron: { name: 'Rautatyö', needs: ['bronze'] },
+  wheel: { name: 'Pyörä', needs: [] },
+  mathematics: { name: 'Matematiikka', needs: ['alphabet', 'masonry'] },
 };
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 
 /** The advance each building and unit needs (buildings.ruleset and units.ruleset reqs). */
-export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry' };
+export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics' };
 
 /** Bulbs for the next advance when `known` advances are known. */
 export const advanceCost = (known: number) => 10 * (1 + known);

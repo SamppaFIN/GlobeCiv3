@@ -32,12 +32,13 @@ import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
+import { armyNeeded, attackWins, ATTACK, ATTACKERS, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
 import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { advanceGoals, GOALS } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
-import { unitStatus, Units, type Mode, type SettlerTask, type Unit, type World } from '../game/units';
+import { directionName, unitStatus, Units, type Mode, type SettlerTask, type Unit, type UnitKind, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
 import { banditWins, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { UnitLayer } from './unitLayer';
@@ -467,7 +468,7 @@ function snapshot(): SaveData | null {
     bonuses: [...play.bonuses].map(([t, y]) => [t, { ...y }] as [number, Yield]),
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
-    improvements: play.improvements.entries(), raids: play.raids.save(), raidAlert: play.raidAlert, gold: play.gold,
+    improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), raidAlert: play.raidAlert, gold: play.gold,
     research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, goal: play.goal,
   };
 }
@@ -544,6 +545,7 @@ interface Play {
   improvements: Improvements;
   /** Bandits on their way to a city, and whether their card waits to be answered (STORY-034). */
   raids: Raids;
+  war: War;
   raidAlert: boolean;
   /** The treasury: trade comes in as gold, and buildings and buying cost it (STORY-038). */
   gold: number;
@@ -670,14 +672,14 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
     selected: Math.min(saved.selected, units.units.length - 1), progress: saved.progress, targetProvince: saved.targetProvince,
     bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
-    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), raidAlert: saved.raidAlert, gold: saved.gold,
+    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), war: new War(saved.war), raidAlert: saved.raidAlert, gold: saved.gold,
     research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, goal: saved.goal,
   });
   clock.day = saved.day;
@@ -842,7 +844,7 @@ function cityDays() {
     }
     if (!done) return;
     if (isBuilding(done)) moment(isWonder(done) ? 'unlock' : 'city', c.tile);
-    else if (isSoldier(done) || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
+    else if (isSoldier(done) || isAttacker(done) || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
   });
   // The cities' science; an advance learned opens what needs it (STORY-040)
@@ -1061,7 +1063,7 @@ function scanNatives(budgetMs: number) {
     const rough = scan.rough.sort((a, b) => b.score - a.score || a.tile - b.tile);
     // Not next to a city of the player's founded before the state's were found (an older save);
     // later cities keep away from them, so leaving those tiles out gives the same city-states
-    const ours = play.cities.map(c => tileCenter(c.tile));
+    const ours = play.cities.filter(c => !c.native).map(c => tileCenter(c.tile));
     const land = rough.slice(0, NATIVE_CANDIDATES)
       .filter(l => !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE))
       .map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
@@ -1084,15 +1086,17 @@ function nextNativeState(): number | null {
 
 /** City-states found so far, not taken, on mapped tiles. */
 function visibleNatives(): NativeCity[] {
-  return natives.filter(n => mapState.isMapped(n.tile));
+  return natives.filter(n => mapState.isMapped(n.tile) && !nativeGone(n));
 }
 
-const nativeAt = (tile: number) => natives.find(n => n.tile === tile) ?? null;
+/** A city-state taken by the player or destroyed (STORY-064). */
+const nativeGone = (n: NativeCity) => play!.war.razed.has(n.tile) || play!.cities.some(c => c.tile === n.tile);
+const nativeAt = (tile: number) => natives.find(n => n.tile === tile && !nativeGone(n)) ?? null;
 /** Near a city-state: no city may be founded there. */
 const nearNative = (tile: number) => {
   if (!natives.length) return false;
   const at = tileCenter(tile);
-  return nativeCenters.some(c => c.angleTo(at) < NATIVE_CLEARANCE * TILE_ANGLE);
+  return natives.some((n, i) => nativeCenters[i].angleTo(at) < NATIVE_CLEARANCE * TILE_ANGLE && !nativeGone(n));
 };
 
 const cityCard = createCityCard(hud_root, {
@@ -1120,6 +1124,10 @@ const BUILD_PURPOSE: Record<Build, string> = {
   warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
   coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
   phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
+  horseman: 'Hyökkäys 2: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
+  swordsman: 'Hyökkäys 3: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
+  chariot: 'Hyökkäys 4: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
+  catapult: 'Hyökkäys 6, muureja vastaan: Kenraali vie sen sotaretkelle',
   library: 'Tieteeseen 50 % lisää',
   temple: 'Rauhoittaa yhden tyytymättömän asukkaan',
   aqueduct: 'Kaupunki voi kasvaa yli koon 10',
@@ -1243,6 +1251,8 @@ function advisorDay() {
   if (p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
+  // The campaign first: a city taken today gets its yields with the others
+  if (p.stateAdvisor === 'war') warDay();
   const yields = cityYields();
   if (p.stateAdvisor !== 'none') stateAdvisorDay(p.stateAdvisor, yields);
   p.cities.forEach((c, i) => {
@@ -1257,11 +1267,13 @@ function advisorDay() {
     if (advice && c.focus !== advice.focus) c.focus = advice.focus;
     const border = tilesInRings(c.tile, 3).some(t => Math.floor(world.cityOf(t) / 7) !== home);
     const ordered = provinceBuild(p.provinceAdvisor, { soldiers, border, available, soldier: bestSoldier(), walls: hasWalls(c) });
-    const build = ordered ?? advice?.build ?? null;
+    // The state's campaign goes first (STORY-064), then the province's builds
+    const war = p.stateAdvisor === 'war' ? warBuild(c, available) : null;
+    const build = war ?? ordered ?? advice?.build ?? null;
     // A settler for a waiting city site is not changed
     if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null)) {
       c.build = build;
-      advise(`${c.name} rakentaa: ${BUILDS[build].name}`, ordered ? 'province' : 'city');
+      advise(`${c.name} rakentaa: ${BUILDS[build].name}`, war ? 'state' : ordered ? 'province' : 'city');
     }
     // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
     if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
@@ -1453,7 +1465,7 @@ function updateAdvisorCard() {
 }
 
 // ─── The list of cities and units (STORY-042) ─────
-const KIND_NAMES: Record<string, string> = { scout: 'tiedustelija', settler: 'uudisasukas', warrior: 'soturi', phalanx: 'falangi' };
+const KIND_NAMES: Record<string, string> = { scout: 'tiedustelija', settler: 'uudisasukas', warrior: 'soturi', phalanx: 'falangi', horseman: 'ratsumies', swordsman: 'miekkamies', chariot: 'sotavaunut', catapult: 'katapultti' };
 
 const listCard = createListCard(hud_root, {
   close: () => { if (play) play.listOpen = false; },
@@ -1790,6 +1802,124 @@ const raidWorld: RaidWorld = {
 };
 
 /** The day's fights in a few words: "Rosvo kaatoi soturin · Soturit torjuivat 2 rosvoa". */
+// ─── Campaigns (STORY-064) ────────────────────────
+// The Kenraali sends an army against the nearest city-state of an open state: the three cities
+// nearest to it build attackers, which gather in the nearest; it sets off once it can expect
+// to beat the defenders, and takes the city.
+const army = () => play!.units.units.filter(u => isAttacker(u.kind));
+const stagingCity = (tile: number) => {
+  const at = tileCenter(tile);
+  return play!.cities.reduce<City | null>((best, c) => (!best || tileCenter(c.tile).angleTo(at) < tileCenter(best.tile).angleTo(at) ? c : best), null);
+};
+/** The cities that build the army: the three nearest to the target (one alone could not pay for it in a long game). */
+const armyCities = (tile: number) => {
+  const at = tileCenter(tile);
+  return play!.cities.map(c => [tileCenter(c.tile).angleTo(at), c] as const).sort((a, b) => a[0] - b[0]).slice(0, 3).map(([, c]) => c);
+};
+const unitPath = (from: number, to: number) => findPath(from, to, id => world.travel!(id));
+/** Campaign paths found not to exist, by city, target and sea travel: a search for one costs up to 20 000 tiles (not saved). */
+const noWay = new Set<string>();
+function reachable(from: number, to: number): boolean {
+  const key = `${from}>${to}>${canSail()}`;
+  if (noWay.has(key)) return false;
+  if (unitPath(from, to) !== null) return true;
+  noWay.add(key);
+  return false;
+}
+
+const warWorld: WarWorld = {
+  defence: tile => {
+    const s = nativeStrength(nativeAt(tile)!, clock.day);
+    return { full: s.defenders, defense: defenseOf(s.defender), walls: s.walls, terrain: terrainOf(tile) };
+  },
+  path: unitPath,
+  roll: k => warRoll(game!.seed, clock.day, k),
+  lose: u => play!.units.disband(u, world),
+  // Freeciv: the city loses a citizen, and one of size 1 is destroyed
+  take: (tile, u) => {
+    const p = play!;
+    const n = nativeAt(tile)!;
+    const size = nativeStrength(n, clock.day).size;
+    if (size <= 1) return false;
+    const c = foundCity(p.cities, tile);
+    Object.assign(c, { name: n.name, size: size - 1, native: true });
+    u.tile = tile;
+    u.path = [];
+    reveal(tilesInRings(tile, CITY_RINGS));
+    return true;
+  },
+};
+
+/** The Kenraali's campaign day: the target, the army gathering, and the fights. */
+function warDay() {
+  const p = play!;
+  const open = visibleNatives().filter(n => p.units.isOpen(n.tile, world));
+  if (p.war.target === null || !open.some(n => n.tile === p.war.target)) {
+    // The planet's target state first, then the nearest to the capital that the army can reach
+    const aim = open.filter(n => n.state === p.targetState);
+    const from = tileCenter(p.cities[0]?.tile ?? p.units.camp);
+    const near = (aim.length ? aim : open).sort((a, b) => from.angleTo(tileCenter(a.tile)) - from.angleTo(tileCenter(b.tile)));
+    const next = near.slice(0, 3).find(n => { const c = stagingCity(n.tile); return c !== null && reachable(c.tile, n.tile); }) ?? null;
+    p.war.setTarget(next?.tile ?? null);
+    if (next) advise(`sotaretken kohde: ${next.name}`, 'state');
+  }
+  const target = p.war.target;
+  if (target === null) {
+    // None in sight: the scouts look for the nearest of an open state (the Puolustus line keeps them home otherwise)
+    const from = tileCenter(p.cities[0]?.tile ?? p.units.camp);
+    const hidden = natives.filter(n => !nativeGone(n) && !mapState.isMapped(n.tile) && p.units.isOpen(n.tile, world))
+      .sort((a, b) => from.angleTo(tileCenter(a.tile)) - from.angleTo(tileCenter(b.tile)));
+    if (p.units.flag === null && hidden.length && p.units.sendTo(hidden[0].tile, world)) advise(`tiedustelijat etsivät kaupunkivaltiota kohti ${directionName(p.cities[0]?.tile ?? p.units.camp, hidden[0].tile)}`, 'state');
+    return;
+  }
+  const name = nativeAt(target)!.name;
+  const troops = army();
+  // Before the march the army gathers in the city nearest to the target, and gold buys
+  // attackers, at half the treasury at most
+  const camp = stagingCity(target);
+  if (!p.war.marching && camp) {
+    for (const u of troops) if (u.tile !== camp.tile && !u.path.length) u.path = unitPath(u.tile, camp.tile) ?? [];
+    for (const c of armyCities(target)) {
+      const price = buyCost(c);
+      if (!isAttacker(c.build) || price <= 0 || price * 2 > p.gold || !buy(c, p.gold)) continue;
+      p.gold -= price;
+      advise(`osti: ${c.name} · ${BUILDS[c.build].name} (${price} kultaa)`, 'state');
+    }
+  }
+  const events = p.war.day(troops, warWorld, clock.day, warNeed(target));
+  if (!events.length) return;
+  discoveryCard.notice(`${warNotice(events)} · ${name}`);
+  moment(events.some(e => e === 'lost' || e === 'razed') ? 'raid' : 'victory', target);
+  if (events.includes('taken')) advise(`${name} vallattu`, 'state');
+  if (events.includes('razed')) advise(`${name} tuhoutui`, 'state');
+}
+
+/** Attackers the Kenraali gathers against a city-state, by the odds of the strongest attacker known. */
+function warNeed(target: number): number {
+  const d = warWorld.defence(target);
+  const best = [...ATTACKERS].reverse().find(k => play!.research.known.has(NEEDS[k]!)) ?? 'horseman';
+  return armyNeeded(play!.war.left(target, d.full, clock.day), attackWins(ATTACK[best], d.terrain, d.walls, d.defense));
+}
+
+/** What the Kenraali has the cities nearest to the target build: the strongest attacker they can, until the army is big enough. */
+function warBuild(c: City, available: Build[]): Build | null {
+  const p = play!;
+  const target = p.war.target;
+  if (target === null || p.war.marching || !armyCities(target).includes(c)) return null;
+  if (army().length >= warNeed(target)) return null;
+  return [...ATTACKERS].reverse().find(k => available.includes(k)) ?? null;
+}
+
+function warNotice(events: WarEvent[]): string {
+  const n = (e: WarEvent) => events.filter(x => x === e).length;
+  return [
+    n('won') === 1 ? 'Hyökkääjä kaatoi puolustajan' : n('won') ? `Hyökkääjät kaatoivat ${n('won')} puolustajaa` : '',
+    n('lost') === 1 ? 'Hyökkääjä kaatui' : n('lost') ? `${n('lost')} hyökkääjää kaatui` : '',
+    n('taken') ? 'Kaupunki vallattu: se on nyt sinun' : '',
+    n('razed') ? 'Kaupunki tuhoutui valtauksessa' : '',
+  ].filter(Boolean).join(' · ');
+}
+
 function raidNotice(events: RaidEvent[]): string {
   const n = (e: RaidEvent) => events.filter(x => x === e).length;
   return [
@@ -2137,7 +2267,8 @@ function tileYieldNow(id: number) {
 /** A city-state on the hex card: its size and defence. */
 function nativeLine(n: NativeCity): string {
   const s = nativeStrength(n, clock.day);
-  return `${n.name}, koko ${s.size} · ${s.defenders} ${s.defender === 'phalanx' ? (s.defenders === 1 ? 'falangi' : 'falangia') : (s.defenders === 1 ? 'soturi' : 'soturia')}${s.walls ? ' · muuri' : ''}`;
+  const left = play!.war.left(n.tile, s.defenders, clock.day);
+  return `${n.name}, koko ${s.size} · ${left} ${s.defender === 'phalanx' ? (left === 1 ? 'falangi' : 'falangia') : (left === 1 ? 'soturi' : 'soturia')}${s.walls ? ' · muuri' : ''}`;
 }
 
 /** The tapped hex's card: terrain, resource, yield, improvements, city, units, crossing. */
@@ -2158,6 +2289,7 @@ function tileView(id: number): TileView {
     ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }] : []),
     { label: 'Parannukset', value: city ? 'kaupungin keskus: kastelu ja tie' : done.length ? done.join(', ') : 'ei' },
     ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
+    ...(native && p.war.target === id ? [{ label: 'Sotaretki', value: `Kenraalin kohde · ${army().length} / ${warNeed(id)} hyökkääjää${p.war.marching ? ' · hyökkäys käynnissä' : ''}` }] : []),
     native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
     ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
@@ -2473,6 +2605,10 @@ frameStartPlanet();
     if (a.state) play.stateAdvisor = a.state;
     if (a.planet) play.planetAdvisor = a.planet;
   },
+  /** A unit of any kind in a city, supported by none (STORY-064). */
+  spawnUnit: (kind: UnitKind, city: number) => (play ? play.units.spawn(kind, play.cities[city].tile, world, null).name : null),
+  /** The campaign (STORY-064). */
+  war: () => (play ? { ...play.war.save(), army: army().length } : null),
   /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */
   natives: () => natives.map(n => ({ ...n, mapped: mapState.isMapped(n.tile), size: nativeStrength(n, clock.day).size })),
   nativeMs: () => nativeMs,

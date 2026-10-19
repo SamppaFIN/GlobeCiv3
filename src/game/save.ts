@@ -9,6 +9,7 @@
  * else makes the whole save invalid. Nothing in it is ever run as code.
  */
 import { SPEEDS, type Speed } from './clock';
+import { ATTACKERS, type Losses, type WarSave } from './war';
 import type { City, Build, Building, Focus } from './cities';
 import type { Discovery, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
@@ -67,6 +68,8 @@ export interface SaveData {
   improvements: [number, ImprovementKind[]][];
   raids: RaidsSave;
   raidAlert: boolean;
+  /** The campaign against the city-states (STORY-064); saves from before have none. */
+  war: WarSave;
   /** The treasury (STORY-038); a save from before it has the start gold. */
   gold: number;
   /** Advances, research and the tax rate (STORY-040); saves from before have none and half. */
@@ -93,13 +96,13 @@ export interface SaveData {
 /** Ranges the save is checked against. */
 export interface SaveLimits { tiles: number; cityAreas: number }
 
-const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'warrior', 'phalanx'];
+const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'warrior', 'phalanx', ...ATTACKERS];
 const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall'];
-const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...BUILDINGS, 'coinage'];
+const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;
@@ -205,6 +208,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           // Saves from before STORY-039 have no focus
           focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
           entertainers: c.entertainers === undefined ? 0 : int(c.entertainers, 'entertainers', 0, 1000),
+          ...(c.native === undefined ? {} : { native: bool(c.native, 'native') }),
         };
       }, 10_000),
       offers: list(s.offers, 'offers', v => {
@@ -232,6 +236,19 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         nextId: int(r.nextId, 'bandit next id'),
       },
       raidAlert: bool(s.raidAlert, 'raid alert'),
+      war: s.war === undefined ? { target: null, marching: false, losses: [], razed: [] } : (() => {
+        const w = obj(s.war, 'war');
+        return {
+          target: orNull(w.target, tile),
+          marching: bool(w.marching, 'marching'),
+          losses: list(w.losses, 'losses', v => {
+            const e = list(v, 'loss', x => x, 2);
+            const l = obj(e[1], 'loss');
+            return [tile(e[0]), { lost: int(l.lost, 'lost', 0, 1000), day: int(l.day, 'loss day') }] as [number, Losses];
+          }, 10_000),
+          razed: tiles(w.razed, 10_000),
+        };
+      })(),
       gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),
       research: s.research === undefined ? { known: [], target: null, bulbs: 0 } : (() => {
         const r = obj(s.research, 'research');
