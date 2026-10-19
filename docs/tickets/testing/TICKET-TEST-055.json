@@ -1,0 +1,90 @@
+{
+  "id": "TICKET-TEST-055",
+  "story": "STORY-064",
+  "implementation_ticket": "TICKET-IMPL-055",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Kaupunkivaltioita (STORY-063) ei voinut vallata.",
+    "files_changed": [
+      "src/game/war.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone (Intel UHD); siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "war.test.ts",
+        "expected": "A/(A+D), palautuminen, mitoitus, marssi, valtaus ja tuho",
+        "result": "5/5",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save.test.ts: war ja native",
+        "expected": "Tallentuu, vanha tallennus saa oletuksen, virheellinen hylätään",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E war: Kenraali, rakennus, marssi ja valtaus",
+        "expected": "Lähin kaupunkivaltio vallataan",
+        "result": "Palvala (koko 2) vallattiin päivänä 118, kuvat march.png ja taken.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pitkä peli siemenellä 42: Laajentaja, sitten Kenraali kotivaltion valtauksen jälkeen",
+        "expected": "Sotaretket ilman jumia ja konsolivirheitä",
+        "result": "Kotivaltio vallattiin päivänä 640, ja Kenraali otettiin käyttöön päivänä 644. Tiedustelijat löysivät kohteet, ja kolme kaupunkivaltiota vallattiin päivään 947 mennessä (Suvsaari, Ilmlahti, Honmäki). Neljäs sotaretki marssi päivänä 1070. Ensimmäinen hyökkäys menetti kaksi hyökkääjää, ja joukko koottiin uudelleen. Ei konsolivirheitä. Havainto: kassaan kertyy silti 3 000–6 000 kultaa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 171/171; E2E 68/68",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39279938807 (7bf3573, 57 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Sotaretki näkyy ja ymmärtää",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Hyökkäysyksiköt Freecivin luvuin",
+        "checked": true
+      },
+      {
+        "item": "Taistelu A/(A+D)",
+        "checked": true
+      },
+      {
+        "item": "Vain Kenraali hyökkää",
+        "checked": true
+      },
+      {
+        "item": "Valtaus",
+        "checked": true
+      },
+      {
+        "item": "Kortti ja ilmoitukset",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-19"
+  }
+}

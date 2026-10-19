@@ -1,0 +1,51 @@
+{
+  "id": "TICKET-IMPL-055",
+  "story": "STORY-064",
+  "plan": "PLAN-055",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/war.ts",
+    "src/game/war.test.ts",
+    "src/game/units.ts",
+    "src/game/cities.ts",
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/advisors.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "tests/e2e/war.e2e.ts",
+    "tests/e2e/city.e2e.ts",
+    "tests/e2e/buildings.e2e.ts",
+    "tests/e2e/science.e2e.ts"
+  ],
+  "change_summary": "war.ts: Attacker-tyypit ja luvut, attackWins, defendersLeft, armyNeeded ja War (kohde, marssi, tappiot, tuhotut, day). Keksinnöt horseback, iron, wheel ja mathematics, ja NEEDS. Build ja UnitKind laajenivat, ja hyökkääjän jälkeen kaupunki tekee kultaa kuten sotilaan jälkeen. Tallennukseen war ja City.native (valinnaisia). main.ts: warDay (kohde, tiedustelu, kokoontuminen ja osto), warBuild ja armyCities (kolme lähintä kaupunkia), warNeed, warWorld (valtaus foundCityllä), reachable-muisti, heksan kortin Sotaretki-rivi, ilmoitukset ja testihookit spawnUnit ja war. Yksikkökerrokseen ratsumiehen, miekkamiehen, sotavaunujen ja katapultin hahmot.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Build, BUILDS, UnitKind, Advance, ADVANCES, NEEDS",
+      "STATE_PLANS, STATE_ADVISORS.war",
+      "SaveData.war, City.native",
+      "advisorDay (sotaretki ennen tuottoja)",
+      "nativeGone, visibleNatives, nativeAt, nearNative"
+    ],
+    "call_sites_found": [
+      "startable (BUILDS)",
+      "cityDays spawn",
+      "validateSave",
+      "unitLayer textures",
+      "KIND_NAMES, BUILD_PURPOSE"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/game/save.ts",
+      "src/globe/unitLayer.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Testit, jotka laskivat rakennusvaihtoehdot (14 ja 13, nyt 18 ja 17) ja aloituksen tutkimukset (5 ja 4, nyt 7 ja 6), päivitettiin tietoisesti: uudet yksiköt ja keksinnöt kasvattavat niitä. Vallattu kaupunki merkitään nativeksi, jotta se ei rajaa kaupunkivaltioiden hakua latauksessa."
+  },
+  "commit": "7bf3573",
+  "progress": 100
+}

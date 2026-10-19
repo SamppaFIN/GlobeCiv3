@@ -1,0 +1,65 @@
+{
+  "id": "PLAN-055",
+  "story": "STORY-064",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "Puhdas moduuli src/game/war.ts rosvojen (raids.ts) mallilla: War-luokka pitää kohteen, marssin, tappiot ja tuhotut kaupungit ja tallentuu, ja WarWorld antaa puolustuksen, reitit, heitot ja valtauksen. main.ts:n Kenraali valitsee kohteen, mitoittaa joukon ja tilaa rakennukset ennen läänin ja kaupungin neuvonantajia.",
+  "alternatives_considered": [
+    {
+      "name": "Hyökkäysyksiköt ja sotaretket erillisinä storyina",
+      "pros": "Pienemmät palat",
+      "cons": "Pelkät yksiköt eivät tekisi mitään, koska vain neuvonantaja hyökkää",
+      "rejected_because": "Ei käyttäjälle näkyvää arvoa"
+    },
+    {
+      "name": "Joukko = puolustajat + 1",
+      "pros": "Yksinkertainen",
+      "cons": "Muurin takana kukkulalla oleva falangi kaatuu ratsumiehelle 14 %:n todennäköisyydellä",
+      "rejected_because": "Joukot kuolisivat turhaan; odotusarvoinen mitoitus"
+    },
+    {
+      "name": "Vain kohdetta lähin kaupunki rakentaa",
+      "pros": "Talous ennallaan muualla",
+      "cons": "Pitkässä pelissä pieni kaupunki ei jaksanut ylläpitoa, ja joukko jäi neljään",
+      "rejected_because": "Pitkän pelin mittaus: kolme kaupunkia ja kullalla ostaminen"
+    },
+    {
+      "name": "Liikkumisnopeus 2 ratsuille ja vaunuille",
+      "pros": "Freecivin mukainen",
+      "cons": "Muut yksiköt ja rosvot liikkuvat ruudun päivässä",
+      "rejected_because": "Yksinkertaisuus; kirjattu omaksi yksinkertaistukseksi"
+    }
+  ],
+  "files_to_change": [
+    "src/game/war.ts",
+    "src/game/units.ts",
+    "src/game/cities.ts",
+    "src/game/science.ts",
+    "src/game/advisors.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts"
+  ],
+  "open_questions": [
+    "Paimentolaiset ja tekoälysivilisaatiot tulevat myöhemmin (Samin valinta: kaikki kolme vastustajalajia).",
+    "Hyökkääjät eivät puolusta kaupunkeja rosvoilta (vain soturit ja falangit), kuten aiemmin."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "war.ts ja yksikkötestit",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "Keksinnöt, yksiköt, tallennus ja Kenraali",
+      "verify": "E2E war ja pitkä peli"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

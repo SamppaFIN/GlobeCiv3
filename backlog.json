@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-19T15:10:37Z",
+    "generated_at": "2026-10-19T16:58:30Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "70c4fc9",
+    "git_commit": "7bf3573",
     "git_branch": "main",
     "language": "fi"
   },
@@ -165,7 +165,8 @@
         "STORY-060",
         "STORY-061",
         "STORY-062",
-        "STORY-063"
+        "STORY-063",
+        "STORY-064"
       ],
       "progress": 98
     }
@@ -1710,6 +1711,33 @@
         "plan": "PLAN-054",
         "implementation": "TICKET-IMPL-054",
         "testing": "TICKET-TEST-054"
+      }
+    },
+    {
+      "id": "STORY-064",
+      "epic": "EPIC-006",
+      "title": "Sotaretket kaupunkivaltioita vastaan",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että Kenraali valtaa naapurivaltioiden kaupunkivaltiot puolestani, jotta valtakunta kasvaa muutenkin kuin asuttamalla.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-051",
+        "STORY-057",
+        "STORY-063"
+      ],
+      "acceptance_criteria": [
+        "Uudet keksinnöt ja hyökkäysyksiköt Freecivin civ1-luvuin omilla nimillä: Ratsastus → Ratsumies (Cavalry: 20 tuotantoa, hyökkäys 2), Rautatyö (vaatii Pronssityön) → Miekkamies (Legion: 20, hyökkäys 3), Pyörä → Sotavaunut (Chariot: 40, hyökkäys 4), Matematiikka (vaatii Aakkoset ja Muurauksen) → Katapultti (Catapult: 40, hyökkäys 6). Kaupunki voi rakentaa ne, ja niillä on ylläpito kuten muillakin yksiköillä.",
+        "Taistelu Freecivin säännöin: yksi kierros ratkaisee, ja hyökkääjä voittaa todennäköisyydellä A / (A + D), jossa puolustus saa maaston bonuksen ja +50 % linnoittautuneena tai +200 % muurin takana. Kaatuneet puolustajat palaavat yksi kymmenessä päivässä (oma sääntö).",
+        "Hyökkäyksen käynnistää vain Kenraali (Sami). Se valitsee kohteeksi lähimmän näkyvän kaupunkivaltion avoimessa valtiossa (ensin Valloittajan kohdevaltiosta), jonne joukko pääsee, ja jos yhtään ei näy, se lähettää tiedustelijat etsimään. Kohdetta lähimmät kolme kaupunkia rakentavat vahvinta hyökkääjää ja ostavat sen, kun hinta on enintään puolet kassasta, kunnes joukko riittää odotusarvoisesti puolustajiin ja yksi lisää valtaukseen (enintään 10). Joukko kokoontuu lähimpään kaupunkiin, marssii, hyökkää ja valtaa kaupungin.",
+        "Vallattu kaupunki on pelaajan, ja se pitää läänin. Se menettää asukkaan, ja koon 1 kaupunki tuhoutuu (Freeciv). Valtaus ei muuta kaupunkivaltioiden sijoittelua tallennuksen latauksen jälkeen.",
+        "Heksan kortti kertoo puolustajat jäljellä ja Kenraalin kohteen tilan. Ilmoitus ja hehku kertovat taisteluista ja valtauksesta."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-055",
+        "implementation": "TICKET-IMPL-055",
+        "testing": "TICKET-TEST-055"
       }
     }
   ],
@@ -4377,6 +4405,71 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-055",
+      "story": "STORY-064",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "Puhdas moduuli src/game/war.ts rosvojen (raids.ts) mallilla: War-luokka pitää kohteen, marssin, tappiot ja tuhotut kaupungit ja tallentuu, ja WarWorld antaa puolustuksen, reitit, heitot ja valtauksen. main.ts:n Kenraali valitsee kohteen, mitoittaa joukon ja tilaa rakennukset ennen läänin ja kaupungin neuvonantajia.",
+      "alternatives_considered": [
+        {
+          "name": "Hyökkäysyksiköt ja sotaretket erillisinä storyina",
+          "pros": "Pienemmät palat",
+          "cons": "Pelkät yksiköt eivät tekisi mitään, koska vain neuvonantaja hyökkää",
+          "rejected_because": "Ei käyttäjälle näkyvää arvoa"
+        },
+        {
+          "name": "Joukko = puolustajat + 1",
+          "pros": "Yksinkertainen",
+          "cons": "Muurin takana kukkulalla oleva falangi kaatuu ratsumiehelle 14 %:n todennäköisyydellä",
+          "rejected_because": "Joukot kuolisivat turhaan; odotusarvoinen mitoitus"
+        },
+        {
+          "name": "Vain kohdetta lähin kaupunki rakentaa",
+          "pros": "Talous ennallaan muualla",
+          "cons": "Pitkässä pelissä pieni kaupunki ei jaksanut ylläpitoa, ja joukko jäi neljään",
+          "rejected_because": "Pitkän pelin mittaus: kolme kaupunkia ja kullalla ostaminen"
+        },
+        {
+          "name": "Liikkumisnopeus 2 ratsuille ja vaunuille",
+          "pros": "Freecivin mukainen",
+          "cons": "Muut yksiköt ja rosvot liikkuvat ruudun päivässä",
+          "rejected_because": "Yksinkertaisuus; kirjattu omaksi yksinkertaistukseksi"
+        }
+      ],
+      "files_to_change": [
+        "src/game/war.ts",
+        "src/game/units.ts",
+        "src/game/cities.ts",
+        "src/game/science.ts",
+        "src/game/advisors.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts"
+      ],
+      "open_questions": [
+        "Paimentolaiset ja tekoälysivilisaatiot tulevat myöhemmin (Samin valinta: kaikki kolme vastustajalajia).",
+        "Hyökkääjät eivät puolusta kaupunkeja rosvoilta (vain soturit ja falangit), kuten aiemmin."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "war.ts ja yksikkötestit",
+          "verify": "Vitest"
+        },
+        {
+          "step": 2,
+          "action": "Keksinnöt, yksiköt, tallennus ja Kenraali",
+          "verify": "E2E war ja pitkä peli"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6481,6 +6574,57 @@
         "notes": "Pelaajan kaupungit, jotka perustettiin ennen valtion hakua, rajaavat maan: myöhemmät kaupungit pysyvät poissa kaupunkivaltioiden luota, joten ahne valinta antaa saman tuloksen latauksen jälkeen."
       },
       "commit": "70c4fc9",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-055",
+      "story": "STORY-064",
+      "plan": "PLAN-055",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/war.ts",
+        "src/game/war.test.ts",
+        "src/game/units.ts",
+        "src/game/cities.ts",
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/advisors.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "tests/e2e/war.e2e.ts",
+        "tests/e2e/city.e2e.ts",
+        "tests/e2e/buildings.e2e.ts",
+        "tests/e2e/science.e2e.ts"
+      ],
+      "change_summary": "war.ts: Attacker-tyypit ja luvut, attackWins, defendersLeft, armyNeeded ja War (kohde, marssi, tappiot, tuhotut, day). Keksinnöt horseback, iron, wheel ja mathematics, ja NEEDS. Build ja UnitKind laajenivat, ja hyökkääjän jälkeen kaupunki tekee kultaa kuten sotilaan jälkeen. Tallennukseen war ja City.native (valinnaisia). main.ts: warDay (kohde, tiedustelu, kokoontuminen ja osto), warBuild ja armyCities (kolme lähintä kaupunkia), warNeed, warWorld (valtaus foundCityllä), reachable-muisti, heksan kortin Sotaretki-rivi, ilmoitukset ja testihookit spawnUnit ja war. Yksikkökerrokseen ratsumiehen, miekkamiehen, sotavaunujen ja katapultin hahmot.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Build, BUILDS, UnitKind, Advance, ADVANCES, NEEDS",
+          "STATE_PLANS, STATE_ADVISORS.war",
+          "SaveData.war, City.native",
+          "advisorDay (sotaretki ennen tuottoja)",
+          "nativeGone, visibleNatives, nativeAt, nearNative"
+        ],
+        "call_sites_found": [
+          "startable (BUILDS)",
+          "cityDays spawn",
+          "validateSave",
+          "unitLayer textures",
+          "KIND_NAMES, BUILD_PURPOSE"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/save.ts",
+          "src/globe/unitLayer.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Testit, jotka laskivat rakennusvaihtoehdot (14 ja 13, nyt 18 ja 17) ja aloituksen tutkimukset (5 ja 4, nyt 7 ja 6), päivitettiin tietoisesti: uudet yksiköt ja keksinnöt kasvattavat niitä. Vallattu kaupunki merkitään nativeksi, jotta se ei rajaa kaupunkivaltioiden hakua latauksessa."
+      },
+      "commit": "7bf3573",
       "progress": 100
     }
   ],
@@ -11318,6 +11462,96 @@
           },
           {
             "item": "Frame-budjetti",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-055",
+      "story": "STORY-064",
+      "implementation_ticket": "TICKET-IMPL-055",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Kaupunkivaltioita (STORY-063) ei voinut vallata.",
+        "files_changed": [
+          "src/game/war.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone (Intel UHD); siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "war.test.ts",
+            "expected": "A/(A+D), palautuminen, mitoitus, marssi, valtaus ja tuho",
+            "result": "5/5",
+            "outcome": "pass"
+          },
+          {
+            "steps": "save.test.ts: war ja native",
+            "expected": "Tallentuu, vanha tallennus saa oletuksen, virheellinen hylätään",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E war: Kenraali, rakennus, marssi ja valtaus",
+            "expected": "Lähin kaupunkivaltio vallataan",
+            "result": "Palvala (koko 2) vallattiin päivänä 118, kuvat march.png ja taken.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pitkä peli siemenellä 42: Laajentaja, sitten Kenraali kotivaltion valtauksen jälkeen",
+            "expected": "Sotaretket ilman jumia ja konsolivirheitä",
+            "result": "Kotivaltio vallattiin päivänä 640, ja Kenraali otettiin käyttöön päivänä 644. Tiedustelijat löysivät kohteet, ja kolme kaupunkivaltiota vallattiin päivään 947 mennessä (Suvsaari, Ilmlahti, Honmäki). Neljäs sotaretki marssi päivänä 1070. Ensimmäinen hyökkäys menetti kaksi hyökkääjää, ja joukko koottiin uudelleen. Ei konsolivirheitä. Havainto: kassaan kertyy silti 3 000–6 000 kultaa.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 171/171; E2E 68/68",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39279938807 (7bf3573, 57 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Sotaretki näkyy ja ymmärtää",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Hyökkäysyksiköt Freecivin luvuin",
+            "checked": true
+          },
+          {
+            "item": "Taistelu A/(A+D)",
+            "checked": true
+          },
+          {
+            "item": "Vain Kenraali hyökkää",
+            "checked": true
+          },
+          {
+            "item": "Valtaus",
+            "checked": true
+          },
+          {
+            "item": "Kortti ja ilmoitukset",
             "checked": true
           }
         ],
