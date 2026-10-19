@@ -1,0 +1,34 @@
+{
+  "id": "TICKET-IMPL-052",
+  "story": "STORY-061",
+  "plan": "PLAN-052",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts"
+  ],
+  "change_summary": "City.entertainers; workedTiles, cityMood ja cityLuxury ottavat ne huomioon. main.ts: arrangeEntertainers() päivän alussa, kaupunkikortin mielialarivi. Tallennus lukee kentän (vanhoissa 0).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "City.entertainers",
+      "workedTiles",
+      "cityMood",
+      "cityLuxury"
+    ],
+    "call_sites_found": [
+      "kaikki tuotto- ja mielialalaskut"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kenttä kaupungissa, joten jokainen laskukohta käyttää samaa järjestelyä."
+  },
+  "commit": "2e8b40d",
+  "progress": 100
+}

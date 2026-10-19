@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-19T10:51:17Z",
+    "generated_at": "2026-10-19T11:35:26Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "3c5c6ab",
+    "git_commit": "2e8b40d",
     "git_branch": "main",
     "language": "fi"
   },
@@ -162,7 +162,8 @@
         "STORY-057",
         "STORY-058",
         "STORY-059",
-        "STORY-060"
+        "STORY-060",
+        "STORY-061"
       ],
       "progress": 98
     }
@@ -1630,6 +1631,31 @@
         "plan": "PLAN-051",
         "implementation": "TICKET-IMPL-051",
         "testing": "TICKET-TEST-051"
+      }
+    },
+    {
+      "id": "STORY-061",
+      "epic": "EPIC-006",
+      "title": "Viihdyttäjät",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kaupungit välttävät levottomuuden itse, jotta suuri valtakunta ei ajaudu kierteeseen, jossa mikään ei valmistu eikä kultaa tule.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-044",
+        "STORY-046",
+        "STORY-060"
+      ],
+      "acceptance_criteria": [
+        "Joka päivä kaupunki ottaa ruuduilta niin vähän asukkaita viihdyttäjiksi kuin levottomuuden välttämiseen tarvitaan (Freecivin kaupunkikuvernöörin tapaan); jos mikään määrä ei auta, kaikki työskentelevät.",
+        "Viihdyttäjä tuottaa 2 ylellisyyttä (tori lisää), ei työstä ruutua mutta syö, ja se otetaan tyytyväisistä (Freeciv civ1 elvis, Specialist_Output 2; common/city.c citizen_base_mood).",
+        "Kaupunkikortti kertoo viihdyttäjien määrän, ja se tallentuu."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-052",
+        "implementation": "TICKET-IMPL-052",
+        "testing": "TICKET-TEST-052"
       }
     }
   ],
@@ -4162,6 +4188,44 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-052",
+      "story": "STORY-061",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "STORY-060:n pitkän pelin löydös: valtakunnan koon myötä 15/24 kaupunkia oli levottomuudessa ja kassa tyhjä. Viihdyttäjien määrä tallennetaan kaupunkiin ja valitaan kerran päivässä, joten framen laskenta ei kasva.",
+      "alternatives_considered": [
+        {
+          "name": "Ylellisyyden yläraja ylös",
+          "pros": "Pieni muutos",
+          "cons": "Vie tieteen ja kullan kaikista kaupungeista",
+          "rejected_because": "Viihdyttäjät korjaavat vain levottomat kaupungit"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cities.ts, save.ts ja testit",
+        "src/globe/main.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Säännöt ja testit",
+          "verify": "npm test"
+        },
+        {
+          "step": 2,
+          "action": "Päivittäinen järjestely ja kortti",
+          "verify": "Pitkä peli ja E2E"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6159,6 +6223,40 @@
         "notes": "Kasvattajan testin \"ei mitään rakennettavaa\" -tapaus sai oman uudisasukkaan, jotta se testaa yhä alkuperäistä asiaa."
       },
       "commit": "3c5c6ab",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-052",
+      "story": "STORY-061",
+      "plan": "PLAN-052",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts"
+      ],
+      "change_summary": "City.entertainers; workedTiles, cityMood ja cityLuxury ottavat ne huomioon. main.ts: arrangeEntertainers() päivän alussa, kaupunkikortin mielialarivi. Tallennus lukee kentän (vanhoissa 0).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "City.entertainers",
+          "workedTiles",
+          "cityMood",
+          "cityLuxury"
+        ],
+        "call_sites_found": [
+          "kaikki tuotto- ja mielialalaskut"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kenttä kaupungissa, joten jokainen laskukohta käyttää samaa järjestelyä."
+      },
+      "commit": "2e8b40d",
       "progress": 100
     }
   ],
@@ -10742,6 +10840,79 @@
           },
           {
             "item": "Nimet",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-052",
+      "story": "STORY-061",
+      "implementation_ticket": "TICKET-IMPL-052",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Uusi sääntö. Tallennustestien esimerkkikaupunki sai uuden kentän (tallennus kirjoittaa sen aina).",
+        "files_changed": [
+          "src/game/save.test.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Yksikkö: viihdyttäjät",
+            "expected": "Eivät työstä, otetaan tyytyväisistä, 2 ylellisyyttä (tori 3), levottomuus päättyy",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pitkä peli (siemen 42, neuvonantajat)",
+            "expected": "Levottomuus ei kasaannu",
+            "result": "Ennen: 15/24 levottomuudessa ja kulta 0. Jälkeen: 0–1 levottomuudessa, kulta 1 100–3 300, kotivaltio vallattu päivänä 698",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 161/161; E2E 66/66",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39241942662 (2e8b40d, 29 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Isot kaupungit pysyvät toiminnassa",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Viihdyttäjät",
+            "checked": true
+          },
+          {
+            "item": "Ylellisyys",
+            "checked": true
+          },
+          {
+            "item": "Kortti ja tallennus",
+            "checked": true
+          },
+          {
+            "item": "Pitkä peli",
             "checked": true
           }
         ],

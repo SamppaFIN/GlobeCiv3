@@ -1,0 +1,73 @@
+{
+  "id": "TICKET-TEST-052",
+  "story": "STORY-061",
+  "implementation_ticket": "TICKET-IMPL-052",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Uusi sääntö. Tallennustestien esimerkkikaupunki sai uuden kentän (tallennus kirjoittaa sen aina).",
+    "files_changed": [
+      "src/game/save.test.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Yksikkö: viihdyttäjät",
+        "expected": "Eivät työstä, otetaan tyytyväisistä, 2 ylellisyyttä (tori 3), levottomuus päättyy",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pitkä peli (siemen 42, neuvonantajat)",
+        "expected": "Levottomuus ei kasaannu",
+        "result": "Ennen: 15/24 levottomuudessa ja kulta 0. Jälkeen: 0–1 levottomuudessa, kulta 1 100–3 300, kotivaltio vallattu päivänä 698",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 161/161; E2E 66/66",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39241942662 (2e8b40d, 29 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Isot kaupungit pysyvät toiminnassa",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Viihdyttäjät",
+        "checked": true
+      },
+      {
+        "item": "Ylellisyys",
+        "checked": true
+      },
+      {
+        "item": "Kortti ja tallennus",
+        "checked": true
+      },
+      {
+        "item": "Pitkä peli",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-19"
+  }
+}

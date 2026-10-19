@@ -1,0 +1,38 @@
+{
+  "id": "PLAN-052",
+  "story": "STORY-061",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "STORY-060:n pitkän pelin löydös: valtakunnan koon myötä 15/24 kaupunkia oli levottomuudessa ja kassa tyhjä. Viihdyttäjien määrä tallennetaan kaupunkiin ja valitaan kerran päivässä, joten framen laskenta ei kasva.",
+  "alternatives_considered": [
+    {
+      "name": "Ylellisyyden yläraja ylös",
+      "pros": "Pieni muutos",
+      "cons": "Vie tieteen ja kullan kaikista kaupungeista",
+      "rejected_because": "Viihdyttäjät korjaavat vain levottomat kaupungit"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cities.ts, save.ts ja testit",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Säännöt ja testit",
+      "verify": "npm test"
+    },
+    {
+      "step": 2,
+      "action": "Päivittäinen järjestely ja kortti",
+      "verify": "Pitkä peli ja E2E"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}
