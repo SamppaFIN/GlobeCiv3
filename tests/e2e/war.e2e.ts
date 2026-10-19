@@ -19,8 +19,9 @@ test('the Kenraali builds an army against the nearest city-state, marches and ta
     const home = Math.floor(w.globeGame.state.startCity / 49);
     for (let k = 0; k < 7; k++) w.globeDebug.foundIn(home * 7 + k);
   });
-  // Past day 60 every city-state is of size 2 at least, so it is taken, not destroyed
-  await page.evaluate(() => (window as any).globeDebug.fastForward(32));
+  // Past day 60 every city-state is of size 2 at least, so it is taken, not destroyed; not much
+  // faster, as a slow runner finds the city-states over many frames
+  await page.evaluate(() => (window as any).globeDebug.fastForward(8));
   await page.waitForFunction(() => {
     const w = window as any;
     const home = Math.floor(w.globeGame.state.startCity / 49);

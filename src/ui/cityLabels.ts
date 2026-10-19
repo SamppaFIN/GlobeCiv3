@@ -12,8 +12,8 @@ export interface CityLabel {
   /** Screen position in CSS pixels, or null when not in view. */
   x: number | null;
   y: number | null;
-  /** A city-state, not the player's (STORY-063). */
-  native?: boolean;
+  /** A city-state (STORY-063) or a tribe of nomads (STORY-066), not the player's. */
+  foe?: 'native' | 'tribe';
 }
 
 export function createCityLabels(root: HTMLElement, onTap: (id: number) => void): { update(labels: CityLabel[]): void } {
@@ -38,12 +38,12 @@ export function createCityLabels(root: HTMLElement, onTap: (id: number) => void)
         if (b.hidden !== hidden) b.hidden = hidden;
         if (!l || hidden) return;
         // Only what changed is written: a text written in every frame costs a layout (STORY-062)
-        const key = `${l.id}|${l.name}|${l.size}|${l.native ? 1 : 0}`;
+        const key = `${l.id}|${l.name}|${l.size}|${l.foe ?? ''}`;
         if (b.dataset.key !== key) {
           b.dataset.key = key;
           b.dataset.id = String(l.id);
-          b.classList.toggle('city-label-native', !!l.native);
-          b.setAttribute('aria-label', `${l.native ? 'Kaupunkivaltio' : 'Kaupunki'} ${l.name}, koko ${l.size}`);
+          b.classList.toggle('city-label-native', !!l.foe);
+          b.setAttribute('aria-label', l.foe === 'tribe' ? `Paimentolaisheimo ${l.name}, ${l.size} soturia` : `${l.foe ? 'Kaupunkivaltio' : 'Kaupunki'} ${l.name}, koko ${l.size}`);
           b.querySelector('.city-label-name')!.textContent = l.name;
           b.querySelector('.city-label-size')!.textContent = String(l.size);
         }
