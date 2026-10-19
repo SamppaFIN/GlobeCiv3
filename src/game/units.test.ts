@@ -256,3 +256,18 @@ describe('scouts map the focus first (STORY-060)', () => {
     expect(north(scout.path.at(-1) ?? scout.tile)).toBe(false);
   });
 });
+
+describe('no city beside a city-state (STORY-063)', () => {
+  it('the settler is offered no site and may not mark one where the game forbids a city', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    const best = units.currentSite()!;
+    const near = new Set(tilesInRings(best, 1));
+    units.noCity = id => near.has(id);
+    units.findSites(world);
+    expect(units.sites.length).toBeGreaterThan(0);
+    expect(units.sites.some(id => near.has(id))).toBe(false);
+    expect(units.setSite(best, world)).toBe(false);
+    expect(units.currentSite()).not.toBe(best);
+  });
+});

@@ -31,6 +31,7 @@ import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
+import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
 import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
@@ -601,6 +602,13 @@ let raidsOn = true;
 const coastal = (id: number) => terrainOf(id) === 'ocean' && neighbors(id).some(n => terrainOf(n) !== 'ocean');
 const canSail = () => play?.research.known.has('mapmaking') ?? false;
 
+/** A tile's part of a site score: its food twice, shields and trade. */
+function siteValue(t: number) {
+  const rule = TERRAIN_RULES[terrainOf(t)];
+  const res = tileTypes.codes[t] & 16 ? RESOURCES[rule.resource] : NO_YIELD;
+  return 2 * (rule.food + res.food) + rule.shield + res.shield + rule.trade + res.trade;
+}
+
 const world: World = {
   cost: id => (terrainOf(id) === 'ocean' ? Infinity : TERRAIN_RULES[terrainOf(id)].move),
   travel: id => (terrainOf(id) !== 'ocean' ? TERRAIN_RULES[terrainOf(id)].move : canSail() && coastal(id) ? 1 : Infinity),
@@ -612,12 +620,7 @@ const world: World = {
   },
   cityOf: id => regions.tileTable()[id],
   // A city site is as good as the food, shields and trade within two rings (food counts twice)
-  siteScore: id => tilesInRings(id, 2).reduce((sum, t) => {
-    const terrain = terrainOf(t);
-    const rule = TERRAIN_RULES[terrain];
-    const res = tileTypes.codes[t] & 16 ? RESOURCES[rule.resource] : { food: 0, shield: 0, trade: 0 };
-    return sum + 2 * (rule.food + res.food) + rule.shield + res.shield + rule.trade + res.trade;
-  }, 0),
+  siteScore: id => tilesInRings(id, 2).reduce((sum, t) => sum + siteValue(t), 0),
   nextJob: u => nextJob(u),
   improve: (tile, kind) => {
     if (!play) return;
@@ -683,6 +686,8 @@ function startPlay(startCity: number, saved?: SaveData) {
   lastSaveDay = saved.day;
   // Finds waiting in a save from before STORY-052 open as ruins
   for (const d of saved.discoveries) openRuin(d.tile, d.finder);
+  // A save's city-states are found at once, before a settler can come near one not yet found
+  while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
@@ -927,7 +932,7 @@ function provinceSite(taken: readonly number[]): number | undefined {
     for (let a = pr * 7; a < pr * 7 + 7; a++) {
       if (!tilesOfArea.has(a)) tilesOfArea.set(a, cityTiles(regions, a));
       for (const t of tilesOfArea.get(a)!) {
-        if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t)) continue;
+        if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || nearNative(t)) continue;
         const s = world.siteScore(t);
         if (s > top) { top = s; best = t; }
       }
@@ -946,7 +951,7 @@ function nearbySite(taken: readonly number[]): number | undefined {
   const near = new Set(taken.flatMap(t => tilesInRings(t, SITE_SPACING - 1)));
   let best: number | undefined, top = FAIR_SITE - 1;
   for (const t of tilesInRings(p.cities[0].tile, 12)) {
-    if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || !p.units.isOpen(t, world)) continue;
+    if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || !p.units.isOpen(t, world) || nearNative(t)) continue;
     const s = world.siteScore(t);
     if (s > top) { top = s; best = t; }
   }
@@ -981,6 +986,14 @@ function chooseSite(index: number) {
 
 const cityLabels = createCityLabels(hud_root, id => {
   if (!play) return;
+  // A city-state's label opens its hex card (STORY-063)
+  if (id < 0) {
+    const n = visibleNatives()[-1 - id];
+    if (!n) return;
+    if (viewLevel !== 3) fly({ point: tileCenter(n.tile), dist: frames[3], level: 3 });
+    play.tileOpen = n.tile;
+    return;
+  }
   play.openCity = id;
   // From the province or state level, fly to the city
   if (viewLevel !== 3) fly({ point: tileCenter(play.cities[id].tile), dist: frames[3], level: 3 });
@@ -991,12 +1004,96 @@ const tileYields = createTileYields(hud_root);
 
 function updateCityLabels() {
   if (!play) return;
-  cityLabels.update(viewLevel === 0 ? [] : play.cities.map(c => {
-    const at = toScreen(tileCenter(c.tile));
-    // Above the city's houses at the city-area level, on the city further out
-    return { id: c.id, name: c.name, size: c.size, x: at?.[0] ?? null, y: at ? at[1] - (viewLevel === 3 ? 48 : 0) : null };
-  }));
+  const lift = viewLevel === 3 ? 48 : 0;
+  // City-states have negative ids: -1 - their place among those in view (STORY-063)
+  const shown = visibleNatives();
+  cityLabels.update(viewLevel === 0 ? [] : [
+    ...play.cities.map(c => {
+      const at = toScreen(tileCenter(c.tile));
+      // Above the city's houses at the city-area level, on the city further out
+      return { id: c.id, name: c.name, size: c.size, x: at?.[0] ?? null, y: at ? at[1] - lift : null };
+    }),
+    ...shown.map((n, k) => {
+      const at = toScreen(tileCenter(n.tile));
+      return { id: -1 - k, name: n.name, size: nativeStrength(n, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, native: true };
+    }),
+  ]);
 }
+
+// ─── City-states (STORY-063) ──────────────────────
+// The states next to the player's (home and conquered) hold 2 to 4 native cities each, from
+// the seed (cityStates.ts; Sami: only in the neighbouring states). A state's are found once,
+// its land scored a few milliseconds a frame; they show once mapped.
+const nativesOf = new Map<number, NativeCity[]>();
+const natives: NativeCity[] = [];
+const nativeCenters: THREE.Vector3[] = [];
+const TILE_ANGLE = Math.acos(1 / Math.sqrt(5)) / 330;
+
+/** Land tiles of a state given the full site score: the best by the yield of a tile and its neighbours. */
+const NATIVE_CANDIDATES = 300;
+/**
+ * Milliseconds a frame for finding them: a state's terrain takes 60 to 150 ms (a province
+ * 7 to 26 ms, Intel UHD, Chromium), too long for a frame.
+ */
+const NATIVE_BUDGET_MS = 3;
+/** The state whose land is being scored: its tiles, how far, and the scores so far. */
+let nativeScan: { state: number; tiles: number[]; at: number; rough: { tile: number; score: number }[] } | null = null;
+let nativeMs = 0;
+/** Score the land of the next state wanted for a while; when it is done, its city-states are found. */
+function scanNatives(budgetMs: number) {
+  if (!game || !play) return;
+  const t0 = performance.now();
+  if (!nativeScan) {
+    const state = nextNativeState();
+    if (state === null) return;
+    const table = regions.tileTable();
+    const tiles: number[] = [];
+    for (let t = 0; t < table.length; t++) if (table[t] >= state * 49 && table[t] < state * 49 + 49) tiles.push(t);
+    nativeScan = { state, tiles, at: 0, rough: [] };
+  }
+  const scan = nativeScan;
+  while (scan.at < scan.tiles.length && performance.now() - t0 < budgetMs) {
+    const t = scan.tiles[scan.at++];
+    if (Number.isFinite(world.cost(t))) scan.rough.push({ tile: t, score: neighbors(t).reduce((sum, n) => sum + siteValue(n), siteValue(t)) });
+  }
+  if (scan.at === scan.tiles.length) {
+    nativeScan = null;
+    const rough = scan.rough.sort((a, b) => b.score - a.score || a.tile - b.tile);
+    // Not next to a city of the player's founded before the state's were found (an older save);
+    // later cities keep away from them, so leaving those tiles out gives the same city-states
+    const ours = play.cities.map(c => tileCenter(c.tile));
+    const land = rough.slice(0, NATIVE_CANDIDATES)
+      .filter(l => !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE))
+      .map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
+    const near = (a: number, b: number) => tileCenter(a).angleTo(tileCenter(b)) < NATIVE_SPACING * TILE_ANGLE;
+    const found = nativeCities(game.seed, scan.state, land, near);
+    nativesOf.set(scan.state, found);
+    natives.push(...found);
+    nativeCenters.push(...found.map(n => tileCenter(n.tile)));
+  }
+  if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
+}
+
+/** The next state whose city-states are wanted: next to home or a conquered state, not home. */
+function nextNativeState(): number | null {
+  for (const s of [homeState(), ...conquestNow().conquered]) {
+    for (const t of regions.neighbors[s]) if (t !== homeState() && !nativesOf.has(t)) return t;
+  }
+  return null;
+}
+
+/** City-states found so far, not taken, on mapped tiles. */
+function visibleNatives(): NativeCity[] {
+  return natives.filter(n => mapState.isMapped(n.tile));
+}
+
+const nativeAt = (tile: number) => natives.find(n => n.tile === tile) ?? null;
+/** Near a city-state: no city may be founded there. */
+const nearNative = (tile: number) => {
+  if (!natives.length) return false;
+  const at = tileCenter(tile);
+  return nativeCenters.some(c => c.angleTo(at) < NATIVE_CLEARANCE * TILE_ANGLE);
+};
 
 const cityCard = createCityCard(hud_root, {
   close: () => { if (play) play.openCity = null; },
@@ -2037,6 +2134,12 @@ function tileYieldNow(id: number) {
   return { city, owner, worked: by >= 0, y: owner ? tileOutput(owner, raw, p.gov) : governed(raw, p.gov) };
 }
 
+/** A city-state on the hex card: its size and defence. */
+function nativeLine(n: NativeCity): string {
+  const s = nativeStrength(n, clock.day);
+  return `${n.name}, koko ${s.size} · ${s.defenders} ${s.defender === 'phalanx' ? (s.defenders === 1 ? 'falangi' : 'falangia') : (s.defenders === 1 ? 'soturi' : 'soturia')}${s.walls ? ' · muuri' : ''}`;
+}
+
 /** The tapped hex's card: terrain, resource, yield, improvements, city, units, crossing. */
 function tileView(id: number): TileView {
   const p = play!;
@@ -2049,12 +2152,13 @@ function tileView(id: number): TileView {
   const units = p.units.units.filter(u => u.tile === id).map(u => u.name);
   const bonus = p.bonuses.get(id);
   const cost = world.cost(id);
+  const native = nativeAt(id);
   const rows: TileView['rows'] = [
     { label: 'Tuottaa', value: `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade} päivässä` },
     ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }] : []),
     { label: 'Parannukset', value: city ? 'kaupungin keskus: kastelu ja tie' : done.length ? done.join(', ') : 'ei' },
     ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
-    { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
+    native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
     ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
     { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : coastal(id) ? (canSail() ? 'rannikkovesi: 1 pv' : 'rannikkovesi: Kartanteko avaa kulun') : 'avomeri: ei kulkua' },
@@ -2111,6 +2215,8 @@ function updatePlay(dt: number) {
   play.units.focus = meter === 'province' ? id => Math.floor(world.cityOf(id) / 7) === play!.units.homeProvince
     : meter === 'state' ? id => Math.floor(world.cityOf(id) / 49) === homeState()
     : held ? id => Math.floor(world.cityOf(id) / 49) === homeState() && !held.has(Math.floor(world.cityOf(id) / 7)) : null;
+  play.units.noCity = nearNative;
+  scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
   const days = play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
@@ -2157,6 +2263,7 @@ function updatePlay(dt: number) {
   unitLayer.update({
     units: play.units.units,
     cities: play.cities.map(c => c.tile),
+    natives: visibleNatives().map(n => n.tile),
     selected: play.selected,
     flag: play.units.flag,
     site: play.units.currentSite(),
@@ -2366,6 +2473,9 @@ frameStartPlanet();
     if (a.state) play.stateAdvisor = a.state;
     if (a.planet) play.planetAdvisor = a.planet;
   },
+  /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */
+  natives: () => natives.map(n => ({ ...n, mapped: mapState.isMapped(n.tile), size: nativeStrength(n, clock.day).size })),
+  nativeMs: () => nativeMs,
   /** The card a tapped hex would show (STORY-055). */
   tileView: (id: number) => (play ? tileView(id) : null),
   /** Found a city on the first land tile of a province that has none (STORY-016). */

@@ -28,7 +28,7 @@ const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 25
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'city' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'city' | 'native' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -79,14 +79,15 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.beginPath(); g.moveTo(48, 50); g.quadraticCurveTo(64, 8, 80, 50); g.closePath(); g.fill(); g.stroke();
     g.lineWidth = 9;
     g.beginPath(); g.moveTo(90, 100); g.lineTo(104, 34); g.stroke();
-  } else if (kind === 'city') {
-    // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs
+  } else if (kind === 'city' || kind === 'native') {
+    // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs; a
+    // city-state's walls are rust (STORY-063)
     g.fillStyle = 'rgba(0,0,0,0.35)';
     g.beginPath(); g.ellipse(64, 112, 58, 12, 0, 0, Math.PI * 2); g.fill();
     g.strokeStyle = INK_DARK;
     g.lineWidth = 5;
     for (const [x, y, w, h] of [[14, 70, 34, 38], [46, 50, 38, 58], [82, 72, 32, 36]]) {
-      g.fillStyle = INK_CSS;
+      g.fillStyle = kind === 'native' ? RUST : INK_CSS;
       g.fillRect(x, y, w, h);
       g.strokeRect(x, y, w, h);
       g.fillStyle = INK_DARK;
@@ -139,6 +140,8 @@ export interface UnitView {
   units: readonly Unit[];
   /** Tiles of the cities (STORY-028). */
   cities: readonly number[];
+  /** Tiles of the city-states in view (STORY-063). */
+  natives: readonly number[];
   selected: number | null;
   flag: number | null;
   site: number | null;
@@ -160,6 +163,7 @@ export class UnitLayer {
   private readonly textures: Record<Figure, THREE.CanvasTexture>;
   private readonly figures: THREE.Sprite[] = [];
   private readonly cities: THREE.Sprite[] = [];
+  private readonly natives: THREE.Sprite[] = [];
   private readonly marks: THREE.Sprite[] = [];
   private readonly bandits: THREE.Sprite[] = [];
   private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false });
@@ -179,7 +183,7 @@ export class UnitLayer {
     this.radius = radius;
     this.textures = {
       scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
-      city: figureTexture('city'), ring: figureTexture('ring'), flag: figureTexture('flag'),
+      city: figureTexture('city'), native: figureTexture('native'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };
     this.roads.renderOrder = 6;
@@ -224,6 +228,18 @@ export class UnitLayer {
       s.visible = i < view.cities.length;
       if (!s.visible) return;
       this.at(view.cities[i], s.position);
+      s.scale.set(size * 1.25, size * 1.25, 1);
+      s.visible = facing(s.position);
+    });
+    while (this.natives.length < view.natives.length) {
+      const s = sprite(this.textures.native, 7);
+      this.natives.push(s);
+      this.group.add(s);
+    }
+    this.natives.forEach((s, i) => {
+      s.visible = i < view.natives.length;
+      if (!s.visible) return;
+      this.at(view.natives[i], s.position);
       s.scale.set(size * 1.25, size * 1.25, 1);
       s.visible = facing(s.position);
     });
