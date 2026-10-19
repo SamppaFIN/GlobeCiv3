@@ -1,0 +1,91 @@
+{
+  "id": "TICKET-TEST-051",
+  "story": "STORY-060",
+  "implementation_ticket": "TICKET-IMPL-051",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Pitkä peli: (1) rosvokortin soturi korvasi odottavan paikan uudisasukkaan, ja laajentuminen pysähtyi 4 369 päiväksi; (2) maata ei kehitetty, joten tiede jäi Keramiikkaan 3 000 päiväksi; (3) tiedustelijat ajautuivat kotiläänistä, joka jäi 41 %:iin; (4) hyvät paikat tulivat vain tuoreesta kartasta, ja valloitus pysähtyi 4/7:ään; (5) levottomuudessa kaupunki ei saanut areenaa valmiiksi. Lisäksi kaupunkinimet toistuivat. Sites-testi paljasti, että fokus vie tiedustelijat kauas, mikä johti hiljaisen jakson paikkaan.",
+    "files_changed": [
+      "src/globe/main.ts",
+      "src/game/advisors.ts",
+      "src/game/units.ts",
+      "src/game/cities.ts",
+      "src/game/sites.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Pitkä peli ennen",
+        "expected": "Etenee",
+        "result": "Yksi kaupunki 4 369 päivässä, tiede jumissa, lääni 41 %",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Pitkä peli jälkeen",
+        "expected": "Kotivaltio vallattu",
+        "result": "Päivä 678: kotivaltio vallattu; päivä 794: 24 kaupunkia, ei konsolivirheitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Yksikkö: fokus, nimet, Kasvattaja",
+        "expected": "Fokus ensin, 26 eri nimeä, uudisasukas koosta 3, areena vain levottomuudessa",
+        "result": "pass",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 160/160; E2E 66/66",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 38467538280 (3c5c6ab, 46 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin pelitesti",
+        "expected": "Peli etenee",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Odottava paikka",
+        "checked": true
+      },
+      {
+        "item": "Maan kehitys",
+        "checked": true
+      },
+      {
+        "item": "Tiedustelijoiden fokus",
+        "checked": true
+      },
+      {
+        "item": "Paikkatarjoukset",
+        "checked": true
+      },
+      {
+        "item": "Levottomuus",
+        "checked": true
+      },
+      {
+        "item": "Nimet",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-19"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "TICKET-IMPL-051",
+  "story": "STORY-060",
+  "plan": "PLAN-051",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/game/units.ts",
+    "src/game/units.test.ts",
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/sites.ts",
+    "src/globe/main.ts"
+  ],
+  "change_summary": "cityDays: odottava paikka palauttaa uudisasukkaan rakentamisen. CityNeeds: settlers ja disorder; Kasvattaja: uudisasukas koosta 3, areena levottomuudessa, osto levottomuudessa. Units.focus ja main.ts:n fokus mittarin mukaan. noteSiteOffer: nearbySite ja provinceSite, myös päivittäin. CITY_NAMES 24 ja numerointi. Testikoukut fastForward ja setAdvisors.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "CityNeeds (settlers, disorder)",
+      "Units.focus",
+      "noteSiteOffer",
+      "CITY_NAMES, foundCity"
+    ],
+    "call_sites_found": [
+      "cityAdvice, plan, noteSiteOffer"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/game/units.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kasvattajan testin \"ei mitään rakennettavaa\" -tapaus sai oman uudisasukkaan, jotta se testaa yhä alkuperäistä asiaa."
+  },
+  "commit": "3c5c6ab",
+  "progress": 100
+}

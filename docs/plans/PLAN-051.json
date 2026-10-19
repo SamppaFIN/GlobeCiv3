@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-051",
+  "story": "STORY-060",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "Pitkä testipeli (siemen 42, nopeutettu kello, neuvonantajat kaikilla tasoilla, kortteihin vastataan kuten pelaaja) uusilla testikoukuilla fastForward ja setAdvisors. Jokainen jumi selvitettiin tilan seurannalla ja korjattiin, ja peli ajettiin uudelleen.",
+  "alternatives_considered": [
+    {
+      "name": "Korjata vain löydetyt bugit ilman pitkää peliä",
+      "pros": "Nopeampi",
+      "cons": "Jumit näkyvät vasta satojen päivien jälkeen",
+      "rejected_because": "Pitkä peli löysi viisi jumia, joita yksikkötestit eivät näe"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts, units.ts, cities.ts, sites.ts ja testit",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Kaupunkimäärän kasvaessa yhä useampi kaupunki on levottomuudessa (valtakunnan koko), ja kulta loppuu: STORY-061 viihdyttäjät"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Pitkä peli ja jumien seuranta",
+      "verify": "Tilanäytteet"
+    },
+    {
+      "step": 2,
+      "action": "Korjaukset ja testit",
+      "verify": "npm test, E2E"
+    },
+    {
+      "step": 3,
+      "action": "Pitkä peli uudelleen",
+      "verify": "Kotivaltio vallattu"
+    }
+  ],
+  "status": "approved"
+}

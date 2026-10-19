@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-13T19:55:17Z",
+    "generated_at": "2026-10-19T10:51:17Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "fb6941f",
+    "git_commit": "3c5c6ab",
     "git_branch": "main",
     "language": "fi"
   },
@@ -161,9 +161,10 @@
         "STORY-056",
         "STORY-057",
         "STORY-058",
-        "STORY-059"
+        "STORY-059",
+        "STORY-060"
       ],
-      "progress": 97
+      "progress": 98
     }
   ],
   "stories": [
@@ -1601,6 +1602,34 @@
         "plan": "PLAN-050",
         "implementation": "TICKET-IMPL-050",
         "testing": "TICKET-TEST-050"
+      }
+    },
+    {
+      "id": "STORY-060",
+      "epic": "EPIC-006",
+      "title": "Pitkän pelin korjaukset",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että peli etenee kotivaltion valtaukseen asti neuvonantajien avulla jumiutumatta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-016",
+        "STORY-049",
+        "STORY-050",
+        "STORY-051"
+      ],
+      "acceptance_criteria": [
+        "Odottava kaupunkipaikka pitää uudisasukkaan tulossa, vaikka rakennus vaihtuisi välillä (rosvot, neuvonantaja, pelaaja).",
+        "Kasvattaja rakentaa jokaiselle kaupungille koosta 3 oman maata kehittävän uudisasukkaan, areenan vasta levottomuudessa, ja ostaa levottomuudessa temppelin tai areenan enintään puolella kassasta.",
+        "Tiedustelijat kartoittavat ensin kotiläänin, sitten kotivaltion ja valloituksessa sen läänit ilman kaupunkia, muuten lähimmän maan.",
+        "Hiljaisen jakson (30 pv) jälkeen ja valloituksessa tarjotaan paras tunnettu kaupunkipaikka (vähintään maaruutujen mediaani 61; valloituksessa lähimmän läänin ilman kaupunkia paras).",
+        "Kaupunkinimiä on 24 omaa, sitten numeroituina."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-051",
+        "implementation": "TICKET-IMPL-051",
+        "testing": "TICKET-TEST-051"
       }
     }
   ],
@@ -4093,6 +4122,46 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-051",
+      "story": "STORY-060",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "Pitkä testipeli (siemen 42, nopeutettu kello, neuvonantajat kaikilla tasoilla, kortteihin vastataan kuten pelaaja) uusilla testikoukuilla fastForward ja setAdvisors. Jokainen jumi selvitettiin tilan seurannalla ja korjattiin, ja peli ajettiin uudelleen.",
+      "alternatives_considered": [
+        {
+          "name": "Korjata vain löydetyt bugit ilman pitkää peliä",
+          "pros": "Nopeampi",
+          "cons": "Jumit näkyvät vasta satojen päivien jälkeen",
+          "rejected_because": "Pitkä peli löysi viisi jumia, joita yksikkötestit eivät näe"
+        }
+      ],
+      "files_to_change": [
+        "src/game/advisors.ts, units.ts, cities.ts, sites.ts ja testit",
+        "src/globe/main.ts"
+      ],
+      "open_questions": [
+        "Kaupunkimäärän kasvaessa yhä useampi kaupunki on levottomuudessa (valtakunnan koko), ja kulta loppuu: STORY-061 viihdyttäjät"
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Pitkä peli ja jumien seuranta",
+          "verify": "Tilanäytteet"
+        },
+        {
+          "step": 2,
+          "action": "Korjaukset ja testit",
+          "verify": "npm test, E2E"
+        },
+        {
+          "step": 3,
+          "action": "Pitkä peli uudelleen",
+          "verify": "Kotivaltio vallattu"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6052,6 +6121,44 @@
         "notes": "Rosvot kulkevat yhä maitse."
       },
       "commit": "fb6941f",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-051",
+      "story": "STORY-060",
+      "plan": "PLAN-051",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/game/units.ts",
+        "src/game/units.test.ts",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/sites.ts",
+        "src/globe/main.ts"
+      ],
+      "change_summary": "cityDays: odottava paikka palauttaa uudisasukkaan rakentamisen. CityNeeds: settlers ja disorder; Kasvattaja: uudisasukas koosta 3, areena levottomuudessa, osto levottomuudessa. Units.focus ja main.ts:n fokus mittarin mukaan. noteSiteOffer: nearbySite ja provinceSite, myös päivittäin. CITY_NAMES 24 ja numerointi. Testikoukut fastForward ja setAdvisors.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "CityNeeds (settlers, disorder)",
+          "Units.focus",
+          "noteSiteOffer",
+          "CITY_NAMES, foundCity"
+        ],
+        "call_sites_found": [
+          "cityAdvice, plan, noteSiteOffer"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/units.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kasvattajan testin \"ei mitään rakennettavaa\" -tapaus sai oman uudisasukkaan, jotta se testaa yhä alkuperäistä asiaa."
+      },
+      "commit": "3c5c6ab",
       "progress": 100
     }
   ],
@@ -10550,6 +10657,97 @@
         "decision": "accepted",
         "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-13"
+      }
+    },
+    {
+      "id": "TICKET-TEST-051",
+      "story": "STORY-060",
+      "implementation_ticket": "TICKET-IMPL-051",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Pitkä peli: (1) rosvokortin soturi korvasi odottavan paikan uudisasukkaan, ja laajentuminen pysähtyi 4 369 päiväksi; (2) maata ei kehitetty, joten tiede jäi Keramiikkaan 3 000 päiväksi; (3) tiedustelijat ajautuivat kotiläänistä, joka jäi 41 %:iin; (4) hyvät paikat tulivat vain tuoreesta kartasta, ja valloitus pysähtyi 4/7:ään; (5) levottomuudessa kaupunki ei saanut areenaa valmiiksi. Lisäksi kaupunkinimet toistuivat. Sites-testi paljasti, että fokus vie tiedustelijat kauas, mikä johti hiljaisen jakson paikkaan.",
+        "files_changed": [
+          "src/globe/main.ts",
+          "src/game/advisors.ts",
+          "src/game/units.ts",
+          "src/game/cities.ts",
+          "src/game/sites.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Vitest ja Playwright paikallisesti; GitHub Actions.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Pitkä peli ennen",
+            "expected": "Etenee",
+            "result": "Yksi kaupunki 4 369 päivässä, tiede jumissa, lääni 41 %",
+            "outcome": "fail"
+          },
+          {
+            "steps": "Pitkä peli jälkeen",
+            "expected": "Kotivaltio vallattu",
+            "result": "Päivä 678: kotivaltio vallattu; päivä 794: 24 kaupunkia, ei konsolivirheitä",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Yksikkö: fokus, nimet, Kasvattaja",
+            "expected": "Fokus ensin, 26 eri nimeä, uudisasukas koosta 3, areena vain levottomuudessa",
+            "result": "pass",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 160/160; E2E 66/66",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 38467538280 (3c5c6ab, 46 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin pelitesti",
+            "expected": "Peli etenee",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Odottava paikka",
+            "checked": true
+          },
+          {
+            "item": "Maan kehitys",
+            "checked": true
+          },
+          {
+            "item": "Tiedustelijoiden fokus",
+            "checked": true
+          },
+          {
+            "item": "Paikkatarjoukset",
+            "checked": true
+          },
+          {
+            "item": "Levottomuus",
+            "checked": true
+          },
+          {
+            "item": "Nimet",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
       }
     }
   ]
