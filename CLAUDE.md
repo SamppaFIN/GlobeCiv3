@@ -1,6 +1,6 @@
 # CLAUDE.md — GlobeCiv3
 
-> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · päivitetty 2026-10-12
+> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · päivitetty 2026-10-19
 > Lue tämä kokonaan ennen ensimmäistä vastausta jokaisessa uudessa keskustelussa.
 > Osiot 1–11 syntyivät haastattelusta. Osiot 12 ja 13 kasvavat projektin mukana —
 > päivitä päivämäärä aina, kun muutat tiedostoa.
@@ -448,7 +448,7 @@ docs/tickets/testing/TICKET-TEST-NNN.json
 6. ~~**Dependabotin 9 PR:ää.**~~ Ratkaistu 2026-10-09: mergetty yhtenä päivityksenä (päätöstaulukko).
 7. ~~**Haarasuojaus.**~~ Ratkaistu 2026-10-09: kehitysvaiheessa omat haarat mergetään mainiin kysymättä (päätöstaulukko). Haarasuojaus arvioidaan uudelleen, kun peli jaetaan muille.
 8. ~~**STORY-004:n lopullinen vahvistus.**~~ Ratkaistu 2026-10-09: STORY-004 hyväksyttiin, ja Phaser-päätös vahvistui (päätöstaulukko).
-9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi. STORY-026:n tasot mitattiin uudelleen GPU:n ollessa vapaa: kaupunkialue, lääni ja valtio 56,8–57,1 fps, sama kuin tyhjä aloitusnäyttö (TICKET-TEST-017).
+9. **Rajashaderin kustannus keskitason puhelimella.** Osittain ratkaistu 2026-10-09: Intel UHD:lla 56–61 fps kaikilla etäisyyksillä (TICKET-TEST-010). Keskitason puhelinta ei ole mitattu. Seuraava keino tarvittaessa on pienempi pikselioktaavien määrä. Syvä zoom maalla on Intel UHD:lla noin 52–54 fps (TICKET-TEST-014), eli tavoitteen 60 alla. Mahdollinen keino on harventaa pikselioktaaveja tai heksalaskentaa, kun ruutu on näyttöä suurempi. STORY-026:n tasot mitattiin uudelleen GPU:n ollessa vapaa: kaupunkialue, lääni ja valtio 56,8–57,1 fps, sama kuin tyhjä aloitusnäyttö (TICKET-TEST-017). Myöhäinen peli 2026-10-19 (siemen 42, neuvonantajat, 16–17 kaupunkia, valtiotaso etäisyydellä 0,37 R ja 116 ruutua, Intel UHD, Playwrightin Chromium): 157 framea 3 s:ssa (noin 52 fps), ja pääsäie on joutilas (JS 3,7 ms framessa). Pinnan piilotus palauttaa 60 fps:n, sumun pois kytkentä lähes (172 framea), pintakuviot eivät vaikuta, ja lähempänä (0,25 R, 74 ruutua) 60 fps. Frame on Intel UHD:lla budjetin rajalla, joten seuraava keino on pinnan pikselikustannus kaukana (oktaavit, sumu).
 10. ~~**Assets-maastoshaderit.**~~ Ratkaistu 2026-10-10: vesi kirjoitettiin omana, ja pelto, metsä ja korkokuva näkyvät ruuduissa pintakuvioina (päätöstaulukko, muistion kohta 6).
 11. **Pelattavuuden uudistus.** Sami 2026-10-12: "Pelaaminen vaatii isomman revampin, mut toteutetaan nyt itse peruspeli." Uudistus suunnitellaan peruspelin jälkeen.
 
