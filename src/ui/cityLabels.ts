@@ -32,12 +32,18 @@ export function createCityLabels(root: HTMLElement, onTap: (id: number) => void)
       }
       pool.forEach((b, i) => {
         const l = labels[i];
-        b.hidden = !l || l.x === null || l.y === null;
-        if (!l || b.hidden) return;
-        b.dataset.id = String(l.id);
-        b.setAttribute('aria-label', `Kaupunki ${l.name}, koko ${l.size}`);
-        b.querySelector('.city-label-name')!.textContent = l.name;
-        b.querySelector('.city-label-size')!.textContent = String(l.size);
+        const hidden = !l || l.x === null || l.y === null;
+        if (b.hidden !== hidden) b.hidden = hidden;
+        if (!l || hidden) return;
+        // Only what changed is written: a text written in every frame costs a layout (STORY-062)
+        const key = `${l.id}|${l.name}|${l.size}`;
+        if (b.dataset.key !== key) {
+          b.dataset.key = key;
+          b.dataset.id = String(l.id);
+          b.setAttribute('aria-label', `Kaupunki ${l.name}, koko ${l.size}`);
+          b.querySelector('.city-label-name')!.textContent = l.name;
+          b.querySelector('.city-label-size')!.textContent = String(l.size);
+        }
         b.style.transform = `translate(${l.x!.toFixed(1)}px, ${l.y!.toFixed(1)}px) translate(-50%, -50%)`;
       });
     },
