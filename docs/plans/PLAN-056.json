@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-056",
+  "story": "STORY-065",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "Bugikorjaus alkaa testistä (testaussääntö 3). Pitkän pelin diagnostiikka näytti keskusruudun ja naapurit. Puhdas feedsCity (sites.ts) ja yksikkötesti, ja world.siteScore palauttaa 0 paikalle, joka ei ruoki kaupunkia.",
+  "alternatives_considered": [
+    {
+      "name": "Ruutujen valinta, joka pitää ruoan ylijäämän vähintään yhdessä",
+      "pros": "Freecivin hallinnan mukainen",
+      "cons": "Vuoristossa ei ole ruokaa valittavaksi",
+      "rejected_because": "Ei auta, kun keskus ja naapurit ovat kaikki vuoria"
+    },
+    {
+      "name": "Ruoan suurempi paino paikkapisteessä",
+      "pros": "Yksi kerroin",
+      "cons": "Kultavuoret voittaisivat yhä joskus",
+      "rejected_because": "Ehto on varma, kerroin ei"
+    }
+  ],
+  "files_to_change": [
+    "src/game/sites.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Jo perustetut vuoristokaupungit jäävät kokoon 1 (niiden ympärillä ei ole ruokaa). Freecivissä nälkä tuhoaisi ne, mutta tätä ei tehdä tallennuksille.",
+    "Kaupunkivaltioiden paikat muuttuvat niissä valtioissa, joissa jokin oli ruoattomalla paikalla, koska paikkoja ei tallenneta."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Diagnostiikka ja vian toistava E2E",
+      "verify": "Testi punainen: 362 ruutua > 0"
+    },
+    {
+      "step": 2,
+      "action": "feedsCity ja siteScore",
+      "verify": "Testi vihreä, yksikkötesti"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

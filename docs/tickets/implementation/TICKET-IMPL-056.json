@@ -1,0 +1,32 @@
+{
+  "id": "TICKET-IMPL-056",
+  "story": "STORY-065",
+  "plan": "PLAN-056",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/sites.ts",
+    "src/game/sites.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/sites.e2e.ts"
+  ],
+  "change_summary": "feedsCity(tile, food) sites.ts:ssä. main.ts: terrainYield erotettiin yieldOfista, ja world.siteScore on 0 paikalle, joka ei ruoki ensimmäistä asukastaan. Testihook siteScore.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "World.siteScore (main.ts)",
+      "yieldOf (terrainYield)"
+    ],
+    "call_sites_found": [
+      "Units.findSites",
+      "goodSite (kaupunkiehdotukset)",
+      "nearbySite, provinceSite, bestSite",
+      "scanNatives (kaupunkivaltiot)"
+    ],
+    "call_sites_updated": [],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Kaikki paikkojen valinnat käyttävät world.siteScorea, joten yksi muutos kattaa ne."
+  },
+  "commit": "3244704",
+  "progress": 100
+}

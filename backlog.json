@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-19T16:58:30Z",
+    "generated_at": "2026-10-19T17:35:29Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "7bf3573",
+    "git_commit": "3244704",
     "git_branch": "main",
     "language": "fi"
   },
@@ -166,7 +166,8 @@
         "STORY-061",
         "STORY-062",
         "STORY-063",
-        "STORY-064"
+        "STORY-064",
+        "STORY-065"
       ],
       "progress": 98
     }
@@ -1738,6 +1739,30 @@
         "plan": "PLAN-055",
         "implementation": "TICKET-IMPL-055",
         "testing": "TICKET-TEST-055"
+      }
+    },
+    {
+      "id": "STORY-065",
+      "epic": "EPIC-006",
+      "title": "Ei kaupunkia, joka ei ruoki asukastaan",
+      "type": "story",
+      "narrative": "Pelaajana haluan, ettei neuvonantaja eikä uudisasukas perusta kaupunkia paikkaan, jossa se ei voi koskaan kasvaa.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-032",
+        "STORY-060"
+      ],
+      "acceptance_criteria": [
+        "Paikka kelpaa kaupungiksi vain, jos keskusruutu ja sen paras naapuri tuottavat vähintään 3 ruokaa (asukas syö 2, ja 1 jää yli). Muuten paikkapiste on 0, eikä paikkaa ehdoteta eikä valita.",
+        "Sääntö lasketaan pelkästä maastosta ja resurssista, joten se on siemenen funktio (sääntö 3), ja kaupunkivaltiot noudattavat sitä samoin.",
+        "Vian toistava testi: siemenen 42 kotivaltion täysin vuoristoiset ruudut saavat paikkapisteen 0."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-056",
+        "implementation": "TICKET-IMPL-056",
+        "testing": "TICKET-TEST-056"
       }
     }
   ],
@@ -4470,6 +4495,53 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-056",
+      "story": "STORY-065",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "Bugikorjaus alkaa testistä (testaussääntö 3). Pitkän pelin diagnostiikka näytti keskusruudun ja naapurit. Puhdas feedsCity (sites.ts) ja yksikkötesti, ja world.siteScore palauttaa 0 paikalle, joka ei ruoki kaupunkia.",
+      "alternatives_considered": [
+        {
+          "name": "Ruutujen valinta, joka pitää ruoan ylijäämän vähintään yhdessä",
+          "pros": "Freecivin hallinnan mukainen",
+          "cons": "Vuoristossa ei ole ruokaa valittavaksi",
+          "rejected_because": "Ei auta, kun keskus ja naapurit ovat kaikki vuoria"
+        },
+        {
+          "name": "Ruoan suurempi paino paikkapisteessä",
+          "pros": "Yksi kerroin",
+          "cons": "Kultavuoret voittaisivat yhä joskus",
+          "rejected_because": "Ehto on varma, kerroin ei"
+        }
+      ],
+      "files_to_change": [
+        "src/game/sites.ts",
+        "src/globe/main.ts"
+      ],
+      "open_questions": [
+        "Jo perustetut vuoristokaupungit jäävät kokoon 1 (niiden ympärillä ei ole ruokaa). Freecivissä nälkä tuhoaisi ne, mutta tätä ei tehdä tallennuksille.",
+        "Kaupunkivaltioiden paikat muuttuvat niissä valtioissa, joissa jokin oli ruoattomalla paikalla, koska paikkoja ei tallenneta."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Diagnostiikka ja vian toistava E2E",
+          "verify": "Testi punainen: 362 ruutua > 0"
+        },
+        {
+          "step": 2,
+          "action": "feedsCity ja siteScore",
+          "verify": "Testi vihreä, yksikkötesti"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6625,6 +6697,38 @@
         "notes": "Testit, jotka laskivat rakennusvaihtoehdot (14 ja 13, nyt 18 ja 17) ja aloituksen tutkimukset (5 ja 4, nyt 7 ja 6), päivitettiin tietoisesti: uudet yksiköt ja keksinnöt kasvattavat niitä. Vallattu kaupunki merkitään nativeksi, jotta se ei rajaa kaupunkivaltioiden hakua latauksessa."
       },
       "commit": "7bf3573",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-056",
+      "story": "STORY-065",
+      "plan": "PLAN-056",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/sites.ts",
+        "src/game/sites.test.ts",
+        "src/globe/main.ts",
+        "tests/e2e/sites.e2e.ts"
+      ],
+      "change_summary": "feedsCity(tile, food) sites.ts:ssä. main.ts: terrainYield erotettiin yieldOfista, ja world.siteScore on 0 paikalle, joka ei ruoki ensimmäistä asukastaan. Testihook siteScore.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "World.siteScore (main.ts)",
+          "yieldOf (terrainYield)"
+        ],
+        "call_sites_found": [
+          "Units.findSites",
+          "goodSite (kaupunkiehdotukset)",
+          "nearbySite, provinceSite, bestSite",
+          "scanNatives (kaupunkivaltiot)"
+        ],
+        "call_sites_updated": [],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Kaikki paikkojen valinnat käyttävät world.siteScorea, joten yksi muutos kattaa ne."
+      },
+      "commit": "3244704",
       "progress": 100
     }
   ],
@@ -11552,6 +11656,94 @@
           },
           {
             "item": "Kortti ja ilmoitukset",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-056",
+      "story": "STORY-065",
+      "implementation_ticket": "TICKET-IMPL-056",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Pitkässä pelissä neljä kaupunkia jäi kokoon 1 satojen päivien ajaksi, ja niiden ruoan ylijäämä oli −2. Diagnostiikka näytti, että ne oli perustettu vuoristoon, jossa keskus ja kaikki naapurit olivat vuoria (0 ruokaa) ja osassa oli kultaa (0/1/6). Paikkapiste laskee kahden renkaan ruoan, tuotannon ja kaupan, ja kulta nosti vuoriston rajan 61 yli, vaikka ruokaa ei ollut.",
+        "files_changed": [
+          "src/game/sites.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Pitkän pelin diagnostiikka (siemen 42, neuvonantajat)",
+            "expected": "Pienten kaupunkien keskus ja naapurit",
+            "result": "Ruskovaara, Myllysalmi ja Kalliokoski: keskus vuori tai kultavuori, kaikki kuusi naapuria vuoria; ruoka 0 ja ylijäämä −2",
+            "outcome": "pass"
+          },
+          {
+            "steps": "sites.e2e: vuoristo ilman ruokaa (ennen korjausta)",
+            "expected": "Paikkapiste 0",
+            "result": "362 kotivaltion vuoristoruutua sai pisteen yli 0",
+            "outcome": "fail"
+          },
+          {
+            "steps": "sites.e2e: sama korjauksen jälkeen",
+            "expected": "Paikkapiste 0",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pitkä peli korjauksen jälkeen (siemen 42, neuvonantajat, 1 000 päivää)",
+            "expected": "Ei nälkäisiä kaupunkeja",
+            "result": "Yhdenkään kaupungin ylijäämä ei ole negatiivinen. Ruskovaara on nyt ruokkivalla paikalla (ylijäämä +1, ennen −2), ja kahden koon 1 kaupungin ylijäämä on 0, koska paras ruoka on toisen kaupungin työstämä.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "sites.test.ts: feedsCity",
+            "expected": "Keskus ja paras naapuri vähintään 3 ruokaa",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 172/172; E2E 69/69",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39286929448 (3244704, 54 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Ei kasvamattomia vuoristokaupunkeja",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Vian toistava testi",
+            "checked": true
+          },
+          {
+            "item": "feedsCity",
+            "checked": true
+          },
+          {
+            "item": "Siemenen funktio",
             "checked": true
           }
         ],

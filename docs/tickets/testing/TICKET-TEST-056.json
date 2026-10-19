@@ -1,0 +1,88 @@
+{
+  "id": "TICKET-TEST-056",
+  "story": "STORY-065",
+  "implementation_ticket": "TICKET-IMPL-056",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Pitkässä pelissä neljä kaupunkia jäi kokoon 1 satojen päivien ajaksi, ja niiden ruoan ylijäämä oli −2. Diagnostiikka näytti, että ne oli perustettu vuoristoon, jossa keskus ja kaikki naapurit olivat vuoria (0 ruokaa) ja osassa oli kultaa (0/1/6). Paikkapiste laskee kahden renkaan ruoan, tuotannon ja kaupan, ja kulta nosti vuoriston rajan 61 yli, vaikka ruokaa ei ollut.",
+    "files_changed": [
+      "src/game/sites.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Pitkän pelin diagnostiikka (siemen 42, neuvonantajat)",
+        "expected": "Pienten kaupunkien keskus ja naapurit",
+        "result": "Ruskovaara, Myllysalmi ja Kalliokoski: keskus vuori tai kultavuori, kaikki kuusi naapuria vuoria; ruoka 0 ja ylijäämä −2",
+        "outcome": "pass"
+      },
+      {
+        "steps": "sites.e2e: vuoristo ilman ruokaa (ennen korjausta)",
+        "expected": "Paikkapiste 0",
+        "result": "362 kotivaltion vuoristoruutua sai pisteen yli 0",
+        "outcome": "fail"
+      },
+      {
+        "steps": "sites.e2e: sama korjauksen jälkeen",
+        "expected": "Paikkapiste 0",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pitkä peli korjauksen jälkeen (siemen 42, neuvonantajat, 1 000 päivää)",
+        "expected": "Ei nälkäisiä kaupunkeja",
+        "result": "Yhdenkään kaupungin ylijäämä ei ole negatiivinen. Ruskovaara on nyt ruokkivalla paikalla (ylijäämä +1, ennen −2), ja kahden koon 1 kaupungin ylijäämä on 0, koska paras ruoka on toisen kaupungin työstämä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "sites.test.ts: feedsCity",
+        "expected": "Keskus ja paras naapuri vähintään 3 ruokaa",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 172/172; E2E 69/69",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39286929448 (3244704, 54 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Ei kasvamattomia vuoristokaupunkeja",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Vian toistava testi",
+        "checked": true
+      },
+      {
+        "item": "feedsCity",
+        "checked": true
+      },
+      {
+        "item": "Siemenen funktio",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-19"
+  }
+}
