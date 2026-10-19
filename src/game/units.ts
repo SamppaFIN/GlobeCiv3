@@ -102,6 +102,8 @@ export class Units {
    * then the home state. Set by the game, not saved; null for anywhere.
    */
   focus: ((id: number) => boolean) | null = null;
+  /** Tiles where no city may be founded: near a city-state (STORY-063). Set by the game, not saved. */
+  noCity: ((id: number) => boolean) | null = null;
   /** The home province: Puolustus keeps exploring scouts inside it. */
   homeProvince = -1;
   private nextId = 0;
@@ -162,7 +164,7 @@ export class Units {
       return;
     }
     const scored = tilesInRings(settler.tile, rings)
-      .filter(id => Number.isFinite(world.cost(id)) && this.isOpen(id, world))
+      .filter(id => Number.isFinite(world.cost(id)) && this.isOpen(id, world) && !this.noCity?.(id))
       .map(id => [world.siteScore(id), id] as const)
       .sort((a, b) => b[0] - a[0] || a[1] - b[1])
       .map(([, id]) => id);
@@ -224,7 +226,7 @@ export class Units {
   setSite(tile: number, world: World): boolean {
     const cost = (id: number) => world.cost(id);
     const land = Number.isFinite(cost(tile)) ? tile : nearestTile(tile, () => 1, id => Number.isFinite(cost(id)));
-    if (land === null || !this.settler || !this.isOpen(land, world)) return false;
+    if (land === null || !this.settler || !this.isOpen(land, world) || this.noCity?.(land)) return false;
     this.sites = [land, ...this.sites.filter(id => id !== land)];
     this.site = 0;
     this.founding = false;

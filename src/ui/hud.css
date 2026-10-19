@@ -308,6 +308,9 @@
   background: var(--ink); color: var(--c-bg); font-size: 12px; font-variant-numeric: tabular-nums;
 }
 #hud.discovering .city-labels { display: none; }
+/* City-states (STORY-063): rust, not ink */
+.city-label-native { border-color: var(--c-rust, #b5532f); border-style: dashed; }
+.city-label-native .city-label-size { background: var(--c-rust, #b5532f); }
 
 /* What a tapped hex holds (STORY-055) */
 .tile-rows { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13px; }
