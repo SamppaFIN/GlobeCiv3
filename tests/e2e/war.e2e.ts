@@ -53,11 +53,12 @@ test('the Kenraali builds an army against the nearest city-state, marches and ta
   // A slow runner may have finished an attacker before the pause
   expect(card).toMatch(/^Kenraalin kohde · \d+ \/ \d+ hyökkääjää( · hyökkäys käynnissä)?$/);
 
-  // An army in that city: it sets off, beats the defenders and takes the city
+  // An army in that city, strong enough that the dice of a slow runner's days cannot stop it:
+  // it sets off, beats the defenders and takes the city
   await page.evaluate(() => {
     const w = window as any;
     const at = w.globeGame.state.cities.findIndex((c: { build: string }) => c.build === 'swordsman');
-    for (let k = 0; k < 5; k++) w.globeDebug.spawnUnit('swordsman', at);
+    for (let k = 0; k < 12; k++) w.globeDebug.spawnUnit('swordsman', at);
   });
   await page.getByRole('button', { name: 'Jatka' }).click();
   await page.waitForFunction(() => (window as any).globeDebug.war().marching, null, { timeout: 30_000 });
