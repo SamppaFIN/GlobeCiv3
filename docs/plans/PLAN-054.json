@@ -1,0 +1,56 @@
+{
+  "id": "PLAN-054",
+  "story": "STORY-063",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "Puhdas moduuli src/game/cityStates.ts (paikat, nimet ja vahvuus siemenestä ja päivästä) ja kytkentä main.ts:ään: valtion maa pisteytetään taustalla, kaupunkivaltiot näkyvät yksikkökerroksessa ja nimilapuissa, heksan kortti kertoo niistä ja Units.noCity estää kaupunkipaikat niiden vierestä. Omat säännöt, koska Civilization I:ssä ei ole kaupunkivaltioita.",
+  "alternatives_considered": [
+    {
+      "name": "Kaupunkivaltiot jokaiseen valtioon heti",
+      "pros": "Yksi haku",
+      "cons": "Koko planeetan maaston laskenta",
+      "rejected_because": "Sami: vain naapurivaltioissa, ja haku vie 25–48 ms valtiota kohden"
+    },
+    {
+      "name": "Valtio tai lääni päivässä",
+      "pros": "Yksinkertainen",
+      "cons": "Lääninkin haku vei 7–26 ms yhdessä framessa",
+      "rejected_because": "Frame-budjetti"
+    },
+    {
+      "name": "Kaupunkivaltiot tallennukseen",
+      "pros": "Ei hakua latauksessa",
+      "cons": "Generoitu data tilana",
+      "rejected_because": "Sääntö 3: generoitu data on funktio"
+    }
+  ],
+  "files_to_change": [
+    "src/game/cityStates.ts",
+    "src/game/units.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityLabels.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Hyökkäys ja valtaus tulevat seuraavissa storyissa: hyökkäysyksiköt (STORY-064) ja Kenraalin ja Valloittajan sotaretket (STORY-065). Paimentolaiset ja tekoälysivilisaatiot sen jälkeen."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "cityStates.ts ja yksikkötestit",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "Kytkentä peliin ja haun mittaus",
+      "verify": "E2E ja frame-mittaus"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

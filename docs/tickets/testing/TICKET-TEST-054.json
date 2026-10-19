@@ -1,0 +1,102 @@
+{
+  "id": "TICKET-TEST-054",
+  "story": "STORY-063",
+  "implementation_ticket": "TICKET-IMPL-054",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Naapurivaltioissa ei ollut ketään, eikä valloitettavaa ollut.",
+    "files_changed": [
+      "src/game/cityStates.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone (Intel UHD); siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "cityStates.test.ts",
+        "expected": "2–4 valtiossa, välit, determinismi, nimet ja kasvu",
+        "result": "3/3",
+        "outcome": "pass"
+      },
+      {
+        "steps": "units.test.ts: noCity",
+        "expected": "Ei paikkaa eikä merkintää kielletyllä ruudulla",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E city-states: määrät, vain naapurivaltiot",
+        "expected": "2–4 jokaisessa naapurissa, ei kotivaltiossa",
+        "result": "14 kaupunkivaltiota 6 naapurivaltiossa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kartoittamaton ja kartoitettu, nimilappu ja kortti",
+        "expected": "Näkyy vasta kartoitettuna, kortissa Kaupunkivaltio-rivi",
+        "result": "Läpi, kuvakaappaus city-state.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: tallennus ja Jatka",
+        "expected": "Samat kaupunkivaltiot",
+        "result": "Samat ruudut ja nimet",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Haun kesto (performance.now, Intel UHD, headless Chromium)",
+        "expected": "Ei frameja yli budjetin",
+        "result": "Ennen: 49 alueen ruutuhaku 113–155 ms valtiota kohden. Yhdellä taulukkokierroksella valtio 21–48 ms ja lääni 7–26 ms. Frame-budjetilla pisin frame 11,8 ms (taulukkokierros); latauksessa kaikki kuusi valtiota 156 ms kerran.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 165/165; E2E 67/67",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39267242548 (70c4fc9, 51 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Kaupunkivaltiot erottuvat omista kaupungeista",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kaupunkivaltiot naapurivaltioissa",
+        "checked": true
+      },
+      {
+        "item": "Siemenen funktio",
+        "checked": true
+      },
+      {
+        "item": "Näkyvät kartoitettuina",
+        "checked": true
+      },
+      {
+        "item": "Ei kaupunkia viereen",
+        "checked": true
+      },
+      {
+        "item": "Frame-budjetti",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-19"
+  }
+}

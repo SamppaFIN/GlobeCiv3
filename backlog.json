@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-19T12:53:00Z",
+    "generated_at": "2026-10-19T15:10:37Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "7cdb0ec",
+    "git_commit": "70c4fc9",
     "git_branch": "main",
     "language": "fi"
   },
@@ -164,7 +164,8 @@
         "STORY-059",
         "STORY-060",
         "STORY-061",
-        "STORY-062"
+        "STORY-062",
+        "STORY-063"
       ],
       "progress": 98
     }
@@ -1681,6 +1682,34 @@
         "plan": "PLAN-053",
         "implementation": "TICKET-IMPL-053",
         "testing": "TICKET-TEST-053"
+      }
+    },
+    {
+      "id": "STORY-063",
+      "epic": "EPIC-006",
+      "title": "Kaupunkivaltiot naapurivaltioissa",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että naapurivaltioissa on vastustajia, ensimmäisinä kaupunkivaltiot, jotta valloitettavaa on muutakin kuin tyhjää maata.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-016",
+        "STORY-055",
+        "STORY-059"
+      ],
+      "acceptance_criteria": [
+        "Jokaisessa kotivaltion ja vallattujen valtioiden naapurivaltiossa on 2–4 kaupunkivaltiota hyvällä maalla, vähintään kuuden renkaan päässä toisistaan. Kotivaltiossa niitä ei ole.",
+        "Kaupunkivaltiot ovat siemenen funktio (sääntö 3): sama siemen antaa samat kaupunkivaltiot myös tallennuksen latauksen jälkeen, eikä niitä tallenneta.",
+        "Kaupunkivaltio näkyy kartalla omalla ilmeellään (ruosteiset talot ja katkoviivainen nimilappu) vasta, kun sen ruutu on kartoitettu. Nimilapun napautus avaa heksan kortin, joka kertoo nimen, koon, puolustajat ja muurin.",
+        "Kaupunkivaltio kasvaa päivien mukaan kokoon 8 asti, ja sen puolustajien määrä seuraa kokoa (soturit, päivästä 200 falangit, koosta 5 muuri).",
+        "Kaupunkivaltion viereen (alle neljän ruudun päähän) ei voi perustaa kaupunkia: uudisasukas ei valitse paikkaa, pelaaja ei voi merkitä sitä, eikä kaupunkiehdotus tarjoa sitä.",
+        "Haku ei pudota frameja: se tehdään 3 ms:n paloissa framea kohden, ja mittaus kirjataan."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-054",
+        "implementation": "TICKET-IMPL-054",
+        "testing": "TICKET-TEST-054"
       }
     }
   ],
@@ -4292,6 +4321,62 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-054",
+      "story": "STORY-063",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "Puhdas moduuli src/game/cityStates.ts (paikat, nimet ja vahvuus siemenestä ja päivästä) ja kytkentä main.ts:ään: valtion maa pisteytetään taustalla, kaupunkivaltiot näkyvät yksikkökerroksessa ja nimilapuissa, heksan kortti kertoo niistä ja Units.noCity estää kaupunkipaikat niiden vierestä. Omat säännöt, koska Civilization I:ssä ei ole kaupunkivaltioita.",
+      "alternatives_considered": [
+        {
+          "name": "Kaupunkivaltiot jokaiseen valtioon heti",
+          "pros": "Yksi haku",
+          "cons": "Koko planeetan maaston laskenta",
+          "rejected_because": "Sami: vain naapurivaltioissa, ja haku vie 25–48 ms valtiota kohden"
+        },
+        {
+          "name": "Valtio tai lääni päivässä",
+          "pros": "Yksinkertainen",
+          "cons": "Lääninkin haku vei 7–26 ms yhdessä framessa",
+          "rejected_because": "Frame-budjetti"
+        },
+        {
+          "name": "Kaupunkivaltiot tallennukseen",
+          "pros": "Ei hakua latauksessa",
+          "cons": "Generoitu data tilana",
+          "rejected_because": "Sääntö 3: generoitu data on funktio"
+        }
+      ],
+      "files_to_change": [
+        "src/game/cityStates.ts",
+        "src/game/units.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityLabels.ts",
+        "src/ui/hud.css"
+      ],
+      "open_questions": [
+        "Hyökkäys ja valtaus tulevat seuraavissa storyissa: hyökkäysyksiköt (STORY-064) ja Kenraalin ja Valloittajan sotaretket (STORY-065). Paimentolaiset ja tekoälysivilisaatiot sen jälkeen."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "cityStates.ts ja yksikkötestit",
+          "verify": "Vitest"
+        },
+        {
+          "step": 2,
+          "action": "Kytkentä peliin ja haun mittaus",
+          "verify": "E2E ja frame-mittaus"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6354,6 +6439,48 @@
         "notes": "Kortin alle piilotettu siru mittaa 0, joten nollaa ei tallenneta."
       },
       "commit": "7cdb0ec",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-054",
+      "story": "STORY-063",
+      "plan": "PLAN-054",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/cityStates.ts",
+        "src/game/cityStates.test.ts",
+        "src/game/units.ts",
+        "src/game/units.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityLabels.ts",
+        "src/ui/hud.css",
+        "tests/e2e/city-states.e2e.ts"
+      ],
+      "change_summary": "nativeCities, nativeName ja nativeStrength (cityStates.ts). main.ts: scanNatives pisteyttää valtion maaruudut (ruutu ja naapurit) 3 ms framessa, täysi paikkapiste 300 parhaalle, ja tallennuksen latauksessa kaikki kerralla. siteValue erotettiin world.siteScoresta. Units.noCity estää kaupunkipaikat findSitesissa ja setSitessa, ja nearbySite ja provinceSite ohittavat kaupunkivaltioiden viereiset ruudut. Yksikkökerroksessa native-hahmo, nimilapuissa city-label-native ja negatiivinen id, heksan kortissa Kaupunkivaltio-rivi.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Units.noCity, Units.findSites, Units.setSite",
+          "World.siteScore (siteValue)",
+          "UnitView.natives",
+          "CityLabel.native",
+          "tileView",
+          "nearbySite, provinceSite"
+        ],
+        "call_sites_found": [
+          "unitLayer.update (main.ts)",
+          "cityLabels.update (main.ts)",
+          "setSite (tapPlay)"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Pelaajan kaupungit, jotka perustettiin ennen valtion hakua, rajaavat maan: myöhemmät kaupungit pysyvät poissa kaupunkivaltioiden luota, joten ahne valinta antaa saman tuloksen latauksen jälkeen."
+      },
+      "commit": "70c4fc9",
       "progress": 100
     }
   ],
@@ -11089,6 +11216,108 @@
           },
           {
             "item": "Mittaus ennen ja jälkeen",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-054",
+      "story": "STORY-063",
+      "implementation_ticket": "TICKET-IMPL-054",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Naapurivaltioissa ei ollut ketään, eikä valloitettavaa ollut.",
+        "files_changed": [
+          "src/game/cityStates.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone (Intel UHD); siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "cityStates.test.ts",
+            "expected": "2–4 valtiossa, välit, determinismi, nimet ja kasvu",
+            "result": "3/3",
+            "outcome": "pass"
+          },
+          {
+            "steps": "units.test.ts: noCity",
+            "expected": "Ei paikkaa eikä merkintää kielletyllä ruudulla",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E city-states: määrät, vain naapurivaltiot",
+            "expected": "2–4 jokaisessa naapurissa, ei kotivaltiossa",
+            "result": "14 kaupunkivaltiota 6 naapurivaltiossa",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kartoittamaton ja kartoitettu, nimilappu ja kortti",
+            "expected": "Näkyy vasta kartoitettuna, kortissa Kaupunkivaltio-rivi",
+            "result": "Läpi, kuvakaappaus city-state.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: tallennus ja Jatka",
+            "expected": "Samat kaupunkivaltiot",
+            "result": "Samat ruudut ja nimet",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Haun kesto (performance.now, Intel UHD, headless Chromium)",
+            "expected": "Ei frameja yli budjetin",
+            "result": "Ennen: 49 alueen ruutuhaku 113–155 ms valtiota kohden. Yhdellä taulukkokierroksella valtio 21–48 ms ja lääni 7–26 ms. Frame-budjetilla pisin frame 11,8 ms (taulukkokierros); latauksessa kaikki kuusi valtiota 156 ms kerran.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 165/165; E2E 67/67",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39267242548 (70c4fc9, 51 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Kaupunkivaltiot erottuvat omista kaupungeista",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kaupunkivaltiot naapurivaltioissa",
+            "checked": true
+          },
+          {
+            "item": "Siemenen funktio",
+            "checked": true
+          },
+          {
+            "item": "Näkyvät kartoitettuina",
+            "checked": true
+          },
+          {
+            "item": "Ei kaupunkia viereen",
+            "checked": true
+          },
+          {
+            "item": "Frame-budjetti",
             "checked": true
           }
         ],
