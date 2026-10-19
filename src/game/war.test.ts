@@ -18,7 +18,7 @@ function makeWorld(full: number, rolls: number[], army: Unit[], size = 3): WarWo
     path: (from, to) => findPath(from, to, () => 1),
     roll: () => rolls.shift() ?? 0.5,
     lose(u) { army.splice(army.indexOf(u), 1); this.fallen++; },
-    take(_, u) { u.tile = CITY; this.taken++; return size > 1; },
+    take(_, u) { u.tile = CITY; this.taken++; return size > 1 ? 'taken' : 'razed'; },
   };
 }
 
@@ -56,9 +56,13 @@ describe('campaigns (Freeciv civ1 combat)', () => {
     // Three attackers wanted
     expect(war.day(army, world, 100, 3)).toEqual([]);
     expect(war.marching).toBe(false);
-    army.push(attacker(3, far));
-    const events: string[] = [];
-    for (let d = 100; d < 120 && war.target !== null; d++) {
+    // One still on its way to the gathering city turns to the target as the army sets off
+    army.push({ ...attacker(3, far), path: [far, far, far] });
+    const events: string[] = [...war.day(army, world, 100, 3)];
+    expect(war.marching).toBe(true);
+    expect(neighbors(CITY)).toContain(army[2].path.at(-1));
+    walk(army);
+    for (let d = 101; d < 120 && war.target !== null; d++) {
       events.push(...war.day(army, world, d, 3));
       walk(army);
     }
@@ -84,5 +88,17 @@ describe('campaigns (Freeciv civ1 combat)', () => {
     expect(war.day(again, small, 11, 2)).toEqual(['won', 'razed']);
     expect(war.razed.has(CITY)).toBe(true);
     expect(new War(war.save()).razed.has(CITY)).toBe(true);
+  });
+
+  it('a tribe of nomads (STORY-066) is scattered, not taken, and stays so in the save', () => {
+    const next = neighbors(CITY)[0];
+    const army = [attacker(1, next), attacker(2, next)];
+    const war = new War();
+    war.setTarget(CITY);
+    const world: WarWorld = { ...makeWorld(1, [0.1], army), take: () => 'routed' };
+    expect(war.day(army, world, 5, 2)).toEqual(['won', 'routed']);
+    expect([war.target, war.marching, war.razed.size]).toEqual([null, false, 0]);
+    war.routed.add(9);
+    expect(new War(war.save()).routed.has(9)).toBe(true);
   });
 });

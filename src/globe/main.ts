@@ -32,6 +32,7 @@ import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
+import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS, TRIBE_REACH, type Tribe } from '../game/nomads';
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
 import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
@@ -995,12 +996,12 @@ function chooseSite(index: number) {
 
 const cityLabels = createCityLabels(hud_root, id => {
   if (!play) return;
-  // A city-state's label opens its hex card (STORY-063)
+  // A city-state's or a tribe's label opens its hex card (STORY-063, STORY-066)
   if (id < 0) {
-    const n = visibleNatives()[-1 - id];
-    if (!n) return;
-    if (viewLevel !== 3) fly({ point: tileCenter(n.tile), dist: frames[3], level: 3 });
-    play.tileOpen = n.tile;
+    const tile = id <= -1001 ? visibleTribes()[-1001 - id]?.camp : visibleNatives()[-1 - id]?.tile;
+    if (tile === undefined) return;
+    if (viewLevel !== 3) fly({ point: tileCenter(tile), dist: frames[3], level: 3 });
+    play.tileOpen = tile;
     return;
   }
   play.openCity = id;
@@ -1024,7 +1025,12 @@ function updateCityLabels() {
     }),
     ...shown.map((n, k) => {
       const at = toScreen(tileCenter(n.tile));
-      return { id: -1 - k, name: n.name, size: nativeStrength(n, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, native: true };
+      return { id: -1 - k, name: n.name, size: nativeStrength(n, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, foe: 'native' as const };
+    }),
+    // Tribes from −1001 down (STORY-066), with their band's size
+    ...visibleTribes().map((t, k) => {
+      const at = toScreen(tileCenter(t.camp));
+      return { id: -1001 - k, name: t.tribe.name, size: tribeBand(game!.seed, t.tribe, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, foe: 'tribe' as const };
     }),
   ]);
 }
@@ -1037,6 +1043,46 @@ const nativesOf = new Map<number, NativeCity[]>();
 const natives: NativeCity[] = [];
 const nativeCenters: THREE.Vector3[] = [];
 const TILE_ANGLE = Math.acos(1 / Math.sqrt(5)) / 330;
+
+// ─── Nomad tribes (STORY-066) ─────────────────────
+// A tribe in each state next to the player's (nomads.ts): its camp moves over the state's land,
+// from day 120 it raids the nearest city within reach, and the Kenraali can scatter it.
+const tribeLand = new Map<number, number[]>();
+
+interface TribeNow { tribe: Tribe; camp: number }
+/** The tribes not scattered, with today's camps; none on a city of the player's. */
+function tribesNow(): TribeNow[] {
+  if (!game || !play) return [];
+  const out: TribeNow[] = [];
+  for (const [state, land] of tribeLand) {
+    if (play.war.routed.has(state)) continue;
+    const tribe = tribeOf(game.seed, state);
+    const camp = tribeCamp(game.seed, tribe, clock.day, land);
+    if (camp !== null && !play.cities.some(c => c.tile === camp)) out.push({ tribe, camp });
+  }
+  return out;
+}
+const visibleTribes = () => tribesNow().filter(t => mapState.isMapped(t.camp));
+const tribeAt = (tile: number) => tribesNow().find(t => t.camp === tile) ?? null;
+
+/** The tribe's band sets off at the nearest city of the player's, within reach unless `anywhere`. */
+function sendTribe(t: TribeNow, anywhere = false): boolean {
+  const p = play!;
+  const at = tileCenter(t.camp);
+  const city = p.cities.reduce<City | null>((best, c) => (!best || tileCenter(c.tile).angleTo(at) < tileCenter(best.tile).angleTo(at) ? c : best), null);
+  if (!city || (!anywhere && tileCenter(city.tile).angleTo(at) > TRIBE_REACH * TILE_ANGLE)) return false;
+  const band = tribeBand(game!.seed, t.tribe, clock.day);
+  if (!p.raids.start(city.tile, t.camp, band.size, id => world.cost(id), { attack: band.attack, tribe: t.tribe.name })) return false;
+  p.raidAlert = true;
+  return true;
+}
+
+/** A tribe on the hex card: its band and when its camp moves on. */
+function tribeLine(t: TribeNow): string {
+  const b = tribeBand(game!.seed, t.tribe, clock.day);
+  const moves = TRIBE_MOVE_DAYS - ((clock.day + t.tribe.phase) % TRIBE_MOVE_DAYS);
+  return `${t.tribe.name} · ${b.size} ${b.unit === 'legion' ? 'miekkamiestä' : 'ratsumiestä'} · leiri siirtyy ${moves} pv päästä`;
+}
 
 /** Land tiles of a state given the full site score: the best by the yield of a tile and its neighbours. */
 const NATIVE_CANDIDATES = 300;
@@ -1077,6 +1123,7 @@ function scanNatives(budgetMs: number) {
     const near = (a: number, b: number) => tileCenter(a).angleTo(tileCenter(b)) < NATIVE_SPACING * TILE_ANGLE;
     const found = nativeCities(game.seed, scan.state, land, near);
     nativesOf.set(scan.state, found);
+    tribeLand.set(scan.state, scan.rough.map(l => l.tile).filter(t => !found.some(n => n.tile === t)).sort((a, b) => a - b));
     natives.push(...found);
     nativeCenters.push(...found.map(n => tileCenter(n.tile)));
   }
@@ -1836,7 +1883,10 @@ function reachable(from: number, to: number): boolean {
 
 const warWorld: WarWorld = {
   defence: tile => {
-    const s = nativeStrength(nativeAt(tile)!, clock.day);
+    const n = nativeAt(tile);
+    // A tribe's camp: its band, defense 1 (Cavalry and Legion)
+    if (!n) return { full: tribeBand(game!.seed, tribeAt(tile)!.tribe, clock.day).size, defense: 1, walls: false, terrain: terrainOf(tile) };
+    const s = nativeStrength(n, clock.day);
     return { full: s.defenders, defense: defenseOf(s.defender), walls: s.walls, terrain: terrainOf(tile) };
   },
   path: unitPath,
@@ -1845,22 +1895,29 @@ const warWorld: WarWorld = {
   // Freeciv: the city loses a citizen, and one of size 1 is destroyed
   take: (tile, u) => {
     const p = play!;
-    const n = nativeAt(tile)!;
+    const n = nativeAt(tile);
+    // A tribe scattered pays the ransom (STORY-066)
+    if (!n) {
+      p.war.routed.add(tribeAt(tile)!.tribe.state);
+      p.gold += RANSOM_GOLD;
+      return 'routed';
+    }
     const size = nativeStrength(n, clock.day).size;
-    if (size <= 1) return false;
+    if (size <= 1) return 'razed';
     const c = foundCity(p.cities, tile);
     Object.assign(c, { name: n.name, size: size - 1, native: true });
     u.tile = tile;
     u.path = [];
     reveal(tilesInRings(tile, CITY_RINGS));
-    return true;
+    return 'taken';
   },
 };
 
 /** The Kenraali's campaign day: the target, the army gathering, and the fights. */
 function warDay() {
   const p = play!;
-  const open = visibleNatives().filter(n => p.units.isOpen(n.tile, world));
+  // City-states and the camps of the tribes (STORY-066)
+  const open = [...visibleNatives(), ...visibleTribes().map(t => ({ tile: t.camp, state: t.tribe.state, name: t.tribe.name }))].filter(n => p.units.isOpen(n.tile, world));
   if (p.war.target === null || !open.some(n => n.tile === p.war.target)) {
     // The planet's target state first, then the nearest to the capital that the army can reach
     const aim = open.filter(n => n.state === p.targetState);
@@ -1879,12 +1936,13 @@ function warDay() {
     if (p.units.flag === null && hidden.length && p.units.sendTo(hidden[0].tile, world)) advise(`tiedustelijat etsivät kaupunkivaltiota kohti ${directionName(p.cities[0]?.tile ?? p.units.camp, hidden[0].tile)}`, 'state');
     return;
   }
-  const name = nativeAt(target)!.name;
+  const name = nativeAt(target)?.name ?? tribeAt(target)!.tribe.name;
   const troops = army();
   // Before the march the army gathers in the city nearest to the target, and gold buys
   // attackers, at half the treasury at most
   const camp = stagingCity(target);
-  if (!p.war.marching && camp) {
+  const need = warNeed(target);
+  if (!p.war.marching && camp && troops.length < need) {
     for (const u of troops) if (u.tile !== camp.tile && !u.path.length) u.path = unitPath(u.tile, camp.tile) ?? [];
     for (const c of armyCities(target)) {
       const price = buyCost(c);
@@ -1893,12 +1951,13 @@ function warDay() {
       advise(`osti: ${c.name} · ${BUILDS[c.build].name} (${price} kultaa)`, 'state');
     }
   }
-  const events = p.war.day(troops, warWorld, clock.day, warNeed(target));
+  const events = p.war.day(troops, warWorld, clock.day, need);
   if (!events.length) return;
   discoveryCard.notice(`${warNotice(events)} · ${name}`);
   moment(events.some(e => e === 'lost' || e === 'razed') ? 'raid' : 'victory', target);
   if (events.includes('taken')) advise(`${name} vallattu`, 'state');
   if (events.includes('razed')) advise(`${name} tuhoutui`, 'state');
+  if (events.includes('routed')) advise(`${name} hajosi · ${RANSOM_GOLD} kultaa lunnaita`, 'state');
 }
 
 /** Attackers the Kenraali gathers against a city-state, by the odds of the strongest attacker known. */
@@ -1924,15 +1983,17 @@ function warNotice(events: WarEvent[]): string {
     n('lost') === 1 ? 'Hyökkääjä kaatui' : n('lost') ? `${n('lost')} hyökkääjää kaatui` : '',
     n('taken') ? 'Kaupunki vallattu: se on nyt sinun' : '',
     n('razed') ? 'Kaupunki tuhoutui valtauksessa' : '',
+    n('routed') ? `Heimo hajosi: ${RANSOM_GOLD} kultaa lunnaita` : '',
   ].filter(Boolean).join(' · ');
 }
 
-function raidNotice(events: RaidEvent[]): string {
+function raidNotice(events: RaidEvent[], nomads = false): string {
   const n = (e: RaidEvent) => events.filter(x => x === e).length;
+  const [one, many, some] = nomads ? ['Paimentolainen', 'Paimentolaiset', 'paimentolaista'] : ['Rosvo', 'Rosvot', 'rosvoa'];
   return [
-    n('won') === 1 ? 'Rosvo kaatoi soturin' : n('won') ? `Rosvot kaatoivat ${n('won')} soturia` : '',
-    n('repelled') === 1 ? 'Soturi torjui rosvon' : n('repelled') ? `Soturit torjuivat ${n('repelled')} rosvoa` : '',
-    n('plundered') ? 'Rosvot ryöstivät kaupungin' : '',
+    n('won') === 1 ? `${one} kaatoi soturin` : n('won') ? `${many} kaatoivat ${n('won')} soturia` : '',
+    n('repelled') === 1 ? `Soturi torjui ${nomads ? 'paimentolaisen' : 'rosvon'}` : n('repelled') ? `Soturit torjuivat ${n('repelled')} ${some}` : '',
+    n('plundered') ? `${many} ryöstivät kaupungin` : '',
   ].filter(Boolean).join(' · ');
 }
 
@@ -1943,10 +2004,12 @@ function raidDay() {
   const city = band && play.cities.find(c => c.tile === band.city);
   const events = play.raids.day(raidWorld);
   if (city && events.length) {
-    discoveryCard.notice(`${raidNotice(events)} · ${city.name}`);
+    discoveryCard.notice(`${raidNotice(events, !!band.tribe)} · ${city.name}`);
     moment(events.includes('plundered') || events.includes('won') ? 'raid' : 'victory', city.tile);
   }
-  if (play.raids.band || !raidsOn || !play.cities.length || !uprising(game.seed, clock.day, play.cities.length)) return;
+  if (play.raids.band || !raidsOn || !play.cities.length) return;
+  for (const t of tribesNow()) if (tribeRaids(game.seed, t.tribe, clock.day) && sendTribe(t)) return;
+  if (!uprising(game.seed, clock.day, play.cities.length)) return;
   startRaid(play.cities[Math.floor(raidRoll(game.seed, clock.day, 100) * play.cities.length)]);
 }
 
@@ -1984,11 +2047,11 @@ function updateRaidAlert() {
     discoveryCard.show({
       day: clock.day,
       kicker: `Uhka · ${c.name}`,
-      title: 'Rosvoja liikkeellä',
-      body: `${n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
+      title: band.tribe ? `${band.tribe} hyökkää` : 'Rosvoja liikkeellä',
+      body: `${band.tribe ? `${n} paimentolaista` : n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
       options: [
         { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
-        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa rosvon ${Math.round((1 - banditWins(terrainOf(c.tile), hasWalls(c), raidWorld.defense(c.tile))) * 100)} %:n todennäköisyydellä` : 'Ilman soturia rosvot ryöstävät kaupungin' },
+        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa ${band.tribe ? 'paimentolaisen' : 'rosvon'} ${Math.round((1 - banditWins(terrainOf(c.tile), hasWalls(c), raidWorld.defense(c.tile), band.attack)) * 100)} %:n todennäköisyydellä` : `Ilman soturia ${band.tribe ? 'paimentolaiset' : 'rosvot'} ryöstävät kaupungin` },
       ],
       note: 'Ryöstö vie kaupungin varastot ja asukkaan.',
     });
@@ -2291,12 +2354,14 @@ function tileView(id: number): TileView {
   const bonus = p.bonuses.get(id);
   const cost = world.cost(id);
   const native = nativeAt(id);
+  const tribe = tribeAt(id);
   const rows: TileView['rows'] = [
     { label: 'Tuottaa', value: `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade} päivässä` },
     ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }] : []),
     { label: 'Parannukset', value: city ? 'kaupungin keskus: kastelu ja tie' : done.length ? done.join(', ') : 'ei' },
     ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
-    ...(native && p.war.target === id ? [{ label: 'Sotaretki', value: `Kenraalin kohde · ${army().length} / ${warNeed(id)} hyökkääjää${p.war.marching ? ' · hyökkäys käynnissä' : ''}` }] : []),
+    ...(tribe ? [{ label: 'Paimentolaiset', value: tribeLine(tribe) }] : []),
+    ...((native || tribe) && p.war.target === id ? [{ label: 'Sotaretki', value: `Kenraalin kohde · ${army().length} / ${warNeed(id)} hyökkääjää${p.war.marching ? ' · hyökkäys käynnissä' : ''}` }] : []),
     native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
     ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
@@ -2403,6 +2468,7 @@ function updatePlay(dt: number) {
     units: play.units.units,
     cities: play.cities.map(c => c.tile),
     natives: visibleNatives().map(n => n.tile),
+    camps: visibleTribes().map(t => t.camp),
     selected: play.selected,
     flag: play.units.flag,
     site: play.units.currentSite(),
@@ -2614,6 +2680,11 @@ frameStartPlanet();
   },
   /** A unit of any kind in a city, supported by none (STORY-064). */
   spawnUnit: (kind: UnitKind, city: number) => (play ? play.units.spawn(kind, play.cities[city].tile, world, null).name : null),
+  /** The tribes and their camps (STORY-066), and a tribe's band sent now at the nearest city. */
+  tribes: () => tribesNow().map(t => ({ state: t.tribe.state, name: t.tribe.name, camp: t.camp, mapped: mapState.isMapped(t.camp), band: tribeBand(game!.seed, t.tribe, clock.day), moves: TRIBE_MOVE_DAYS - ((clock.day + t.tribe.phase) % TRIBE_MOVE_DAYS) })),
+  tribeRaidNow: (state: number) => { const t = tribesNow().find(x => x.tribe.state === state); return !!t && !play?.raids.band && sendTribe(t, true); },
+  /** A unit on any tile, supported by none (STORY-066). */
+  spawnUnitAt: (kind: UnitKind, tile: number) => (play ? play.units.spawn(kind, tile, world, null).name : null),
   /** The campaign (STORY-064). */
   war: () => (play ? { ...play.war.save(), army: army().length } : null),
   /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */

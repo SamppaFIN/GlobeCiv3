@@ -97,4 +97,20 @@ describe('raids (Freeciv civ1 barbarians)', () => {
     expect(raids.start(CITY, from, 1, id => (id === CITY ? Infinity : 1))).toBe(false);
     expect(raids.band).toBeNull();
   });
+
+  it('nomads (STORY-066) fight with their own attack and keep their tribe in the save', () => {
+    // A roll of 0.6: over a bandit's 2 / 3.5 against a soldier on grass, under a Legion's 3 / 4.5
+    expect(banditWins('grassland', false, 1, 3)).toBeCloseTo(3 / 4.5);
+    const fight = (nomads?: { attack: number; tribe: string }) => {
+      const raids = new Raids();
+      raids.start(CITY, raidStart(CITY, 0.5, () => true, () => true)!, 1, land, nomads);
+      const world = makeWorld(1, Array(40).fill(0.6));
+      return { events: runOut(raids, world), saved: raids };
+    };
+    expect(fight().events).toEqual(['repelled']);
+    expect(fight({ attack: 3, tribe: 'Susiheimo' }).events).toEqual(['won', 'plundered']);
+    const raids = new Raids();
+    raids.start(CITY, raidStart(CITY, 0.5, () => true, () => true)!, 2, land, { attack: 3, tribe: 'Susiheimo' });
+    expect(new Raids(raids.save()).band).toMatchObject({ attack: 3, tribe: 'Susiheimo' });
+  });
 });

@@ -231,12 +231,15 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
               const o = obj(x, 'bandit');
               return { id: int(o.id, 'bandit id'), tile: tile(o.tile), path: tiles(o.path, 10_000), wait: int(o.wait, 'bandit wait', 0, 100) };
             }, 100),
+            // A band of nomads (STORY-066)
+            ...(b.attack === undefined ? {} : { attack: int(b.attack, 'band attack', 1, 100) }),
+            ...(b.tribe === undefined ? {} : { tribe: str(b.tribe, 'band tribe') }),
           };
         }),
         nextId: int(r.nextId, 'bandit next id'),
       },
       raidAlert: bool(s.raidAlert, 'raid alert'),
-      war: s.war === undefined ? { target: null, marching: false, losses: [], razed: [] } : (() => {
+      war: s.war === undefined ? { target: null, marching: false, losses: [], razed: [], routed: [] } : (() => {
         const w = obj(s.war, 'war');
         return {
           target: orNull(w.target, tile),
@@ -247,6 +250,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
             return [tile(e[0]), { lost: int(l.lost, 'lost', 0, 1000), day: int(l.day, 'loss day') }] as [number, Losses];
           }, 10_000),
           razed: tiles(w.razed, 10_000),
+          // Saves from before STORY-066 have no tribes scattered
+          routed: w.routed === undefined ? [] : list(w.routed, 'routed', v => int(v, 'routed state', 0, Math.ceil(limits.cityAreas / 49)), 1000),
         };
       })(),
       gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),

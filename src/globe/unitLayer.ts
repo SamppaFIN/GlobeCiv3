@@ -28,7 +28,7 @@ const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 25
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -79,6 +79,18 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.beginPath(); g.moveTo(48, 50); g.quadraticCurveTo(64, 8, 80, 50); g.closePath(); g.fill(); g.stroke();
     g.lineWidth = 9;
     g.beginPath(); g.moveTo(90, 100); g.lineTo(104, 34); g.stroke();
+  } else if (kind === 'camp') {
+    // Two tents of the nomads in rust (STORY-066)
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    g.beginPath(); g.ellipse(64, 112, 54, 10, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = INK_DARK;
+    g.lineWidth = 5;
+    for (const [x, w, h] of [[16, 52, 56], [58, 58, 70]]) {
+      g.fillStyle = RUST;
+      g.beginPath(); g.moveTo(x, 110); g.lineTo(x + w / 2, 110 - h); g.lineTo(x + w, 110); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.moveTo(x + w / 2 - 7, 110); g.lineTo(x + w / 2, 88); g.lineTo(x + w / 2 + 7, 110); g.closePath(); g.fill();
+    }
   } else if (kind === 'catapult') {
     // A frame on two wheels with a throwing arm and its stone (STORY-064)
     g.fillStyle = 'rgba(0,0,0,0.35)';
@@ -176,6 +188,8 @@ export interface UnitView {
   cities: readonly number[];
   /** Tiles of the city-states in view (STORY-063). */
   natives: readonly number[];
+  /** Camps of the nomads in view (STORY-066). */
+  camps: readonly number[];
   selected: number | null;
   flag: number | null;
   site: number | null;
@@ -198,6 +212,7 @@ export class UnitLayer {
   private readonly figures: THREE.Sprite[] = [];
   private readonly cities: THREE.Sprite[] = [];
   private readonly natives: THREE.Sprite[] = [];
+  private readonly camps: THREE.Sprite[] = [];
   private readonly marks: THREE.Sprite[] = [];
   private readonly bandits: THREE.Sprite[] = [];
   private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false });
@@ -218,7 +233,7 @@ export class UnitLayer {
     this.textures = {
       scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
       horseman: figureTexture('horseman'), swordsman: figureTexture('swordsman'), chariot: figureTexture('chariot'), catapult: figureTexture('catapult'),
-      city: figureTexture('city'), native: figureTexture('native'), ring: figureTexture('ring'), flag: figureTexture('flag'),
+      city: figureTexture('city'), native: figureTexture('native'), camp: figureTexture('camp'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };
     this.roads.renderOrder = 6;
@@ -276,6 +291,18 @@ export class UnitLayer {
       if (!s.visible) return;
       this.at(view.natives[i], s.position);
       s.scale.set(size * 1.25, size * 1.25, 1);
+      s.visible = facing(s.position);
+    });
+    while (this.camps.length < view.camps.length) {
+      const s = sprite(this.textures.camp, 7);
+      this.camps.push(s);
+      this.group.add(s);
+    }
+    this.camps.forEach((s, i) => {
+      s.visible = i < view.camps.length;
+      if (!s.visible) return;
+      this.at(view.camps[i], s.position);
+      s.scale.set(size * 1.1, size * 1.1, 1);
       s.visible = facing(s.position);
     });
     this.ring.visible = view.selected !== null;

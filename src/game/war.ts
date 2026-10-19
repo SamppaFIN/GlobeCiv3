@@ -55,7 +55,7 @@ export function defendersLeft(full: number, losses: Losses | undefined, day: num
   return Math.max(0, full - Math.max(0, losses.lost - back));
 }
 
-export interface WarSave { target: number | null; marching: boolean; losses: [number, Losses][]; razed: number[] }
+export interface WarSave { target: number | null; marching: boolean; losses: [number, Losses][]; razed: number[]; routed: number[] }
 
 /** What a campaign needs to know about the world. */
 export interface WarWorld {
@@ -66,11 +66,11 @@ export interface WarWorld {
   roll(k: number): number;
   /** An attacker fell. */
   lose(u: Unit): void;
-  /** The city is taken by a unit; false when it was destroyed. */
-  take(tile: number, u: Unit): boolean;
+  /** A unit takes the city or destroys it, or scatters a tribe of nomads (STORY-066). */
+  take(tile: number, u: Unit): 'taken' | 'razed' | 'routed';
 }
 
-export type WarEvent = 'won' | 'lost' | 'taken' | 'razed';
+export type WarEvent = 'won' | 'lost' | 'taken' | 'razed' | 'routed';
 
 export class War {
   /** The city-state the army is sent against, or null. */
@@ -80,6 +80,8 @@ export class War {
   readonly losses = new Map<number, Losses>();
   /** City-states destroyed. */
   readonly razed = new Set<number>();
+  /** States whose tribe of nomads is scattered (STORY-066). */
+  readonly routed = new Set<number>();
 
   constructor(saved?: WarSave) {
     if (!saved) return;
@@ -87,10 +89,11 @@ export class War {
     this.marching = saved.marching;
     for (const [tile, l] of saved.losses) this.losses.set(tile, l);
     for (const tile of saved.razed) this.razed.add(tile);
+    for (const state of saved.routed) this.routed.add(state);
   }
 
   save(): WarSave {
-    return { target: this.target, marching: this.marching, losses: [...this.losses], razed: [...this.razed] };
+    return { target: this.target, marching: this.marching, losses: [...this.losses], razed: [...this.razed], routed: [...this.routed] };
   }
 
   setTarget(tile: number | null) {
@@ -114,6 +117,8 @@ export class War {
     if (target === null) return [];
     const d = world.defence(target);
     if (!this.marching && army.length < need) return [];
+    // Setting off, the army leaves the way to its gathering city
+    if (!this.marching) for (const u of army) u.path = [];
     this.marching = army.length > 0;
     const size = army.length;
     const events: WarEvent[] = [];
@@ -126,8 +131,9 @@ export class War {
       if (u.path.length || u.wait > 0) continue;
       const left = this.left(target, d.full, day);
       if (left === 0) {
-        events.push(world.take(target, u) ? 'taken' : 'razed');
-        if (events.at(-1) === 'razed') this.razed.add(target);
+        const result = world.take(target, u);
+        events.push(result);
+        if (result === 'razed') this.razed.add(target);
         this.losses.delete(target);
         this.target = null;
         this.marching = false;

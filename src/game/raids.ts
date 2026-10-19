@@ -46,8 +46,8 @@ export function uprising(seed: number, day: number, cities: number): boolean {
 /** A soldier's defence in a city on this terrain: fortified, or behind walls; a phalanx has defense 2. */
 export const defencePower = (terrain: Terrain, walls = false, defense = SOLDIER_DEFENSE) => defense * (1 + (DEFENSE_BONUS[terrain] ?? 0) / 100) * (walls ? WALLS : FORTIFIED);
 
-/** The chance that a bandit beats a soldier defending a city on this terrain. */
-export const banditWins = (terrain: Terrain, walls = false, defense = SOLDIER_DEFENSE) => BANDIT_ATTACK / (BANDIT_ATTACK + defencePower(terrain, walls, defense));
+/** The chance that a bandit (of attack 2, or a nomad's, STORY-066) beats a soldier defending a city on this terrain. */
+export const banditWins = (terrain: Terrain, walls = false, defense = SOLDIER_DEFENSE, attack = BANDIT_ATTACK) => attack / (attack + defencePower(terrain, walls, defense));
 
 /** Where an uprising starts: a known land tile 5 to 8 tiles from the city, from a roll in [0, 1). */
 export function raidStart(city: number, roll: number, known: (id: number) => boolean, isLand: (id: number) => boolean): number | null {
@@ -57,7 +57,8 @@ export function raidStart(city: number, roll: number, known: (id: number) => boo
 }
 
 export interface Bandit { id: number; tile: number; path: number[]; wait: number }
-export interface Band { city: number; bandits: Bandit[] }
+/** A band; nomads (STORY-066) have their attack and their tribe's name. */
+export interface Band { city: number; bandits: Bandit[]; attack?: number; tribe?: string }
 
 export interface RaidWorld {
   cost(id: number): number;
@@ -89,14 +90,14 @@ export class Raids {
   }
 
   save(): RaidsSave {
-    return { band: this.band && { city: this.band.city, bandits: this.band.bandits.map(b => ({ ...b, path: [...b.path] })) }, nextId: this.nextId };
+    return { band: this.band && { ...this.band, bandits: this.band.bandits.map(b => ({ ...b, path: [...b.path] })) }, nextId: this.nextId };
   }
 
-  /** A band of `size` bandits sets off from a tile toward a city; false when no way leads there. */
-  start(city: number, from: number, size: number, cost: (id: number) => number): boolean {
+  /** A band of `size` bandits (or nomads of a tribe) sets off from a tile toward a city; false when no way leads there. */
+  start(city: number, from: number, size: number, cost: (id: number) => number, nomads?: { attack: number; tribe: string }): boolean {
     const path = findPath(from, city, cost);
     if (!path?.length) return false;
-    this.band = { city, bandits: Array.from({ length: size }, () => ({ id: this.nextId++, tile: from, path: [...path], wait: 0 })) };
+    this.band = { city, bandits: Array.from({ length: size }, () => ({ id: this.nextId++, tile: from, path: [...path], wait: 0 })), ...nomads };
     return true;
   }
 
@@ -120,7 +121,7 @@ export class Raids {
         this.band = null;
         return [...events, 'plundered'];
       }
-      if (world.roll(events.length) < banditWins(world.terrainOf(band.city), world.walls(band.city), world.defense(band.city))) {
+      if (world.roll(events.length) < banditWins(world.terrainOf(band.city), world.walls(band.city), world.defense(band.city), band.attack)) {
         world.loseDefender(band.city);
         events.push('won');
       } else {
