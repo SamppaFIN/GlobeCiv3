@@ -3,7 +3,8 @@
  * Minimal working version for T-GC3-001.
  */
 import * as THREE from 'three';
-import { buildCityTerrain, risingMaterial, type CityTerrain, type Site } from './cityView';
+import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
+import { isUp, move, placeAll, spots, standsOnTile, BEST, PLACE_RINGS, type Ground } from '../game/placement';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
@@ -216,8 +217,8 @@ function fly(to: FlightTarget, durationS = 1) {
 function onTap(clientX: number, clientY: number) {
   const rect = renderer.domElement.getBoundingClientRect();
   const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
-  // Ray against the sphere itself: works at every zoom level
-  const hit = rig.raycast(ndc);
+  // Ray against the sphere itself: works at every zoom level; at the city level against the risen ground
+  const hit = cityLevel.pick(ndc) ?? rig.raycast(ndc);
   if (play && viewLevel === 3 && tapPlay(clientX - rect.left, clientY - rect.top, rect.width, rect.height, hit)) return;
   const ref = hit ? regionAt(regions, hit, viewLevel) : null;
   if (ref && sameRegion(ref, selection)) fly(diveTarget(regions, ref, frames));
@@ -592,6 +593,8 @@ interface Play {
   anarchyUntil: number;
   /** The tapped hex whose card is open (STORY-055). */
   tileOpen: number | null;
+  /** The building the player is moving, by its city's tile (STORY-071). */
+  moving: { city: number; building: Building } | null;
   /** The city-level advisor, its card, and what it did lately (STORY-049). */
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
@@ -709,7 +712,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
     if (!classic && game?.capital !== undefined) {
@@ -736,6 +739,7 @@ function startPlay(startCity: number, saved?: SaveData) {
   clock.speed = saved.speed;
   clock.paused = saved.paused;
   lastSaveDay = saved.day;
+  for (const c of play.cities) placeAll(c, ground);
   // Finds waiting in a save from before STORY-052 open as ruins
   for (const d of saved.discoveries) openRuin(d.tile, d.finder);
   // A save's city-states are found at once, before a settler can come near one not yet found
@@ -903,6 +907,8 @@ function cityDays() {
     else if (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
   });
+  // The governor puts new buildings on their best ground, and the bonuses follow (STORY-071)
+  for (const c of play.cities) placeAll(c, ground);
   // The cities' science; an advance learned opens what needs it (STORY-040)
   const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
   if (learned) {
@@ -1103,6 +1109,10 @@ const TILE_ANGLE = Math.acos(1 / Math.sqrt(5)) / 330;
 // shadows, trees, rocks, houses and buildings (cityView.ts, docs/design/kaupunkitaso.md).
 // It rises in 0.6 s by the wall clock and sinks back as the camera leaves.
 const CITY_LEVEL_RINGS = 3;
+/** Relief noise of the city level at a point of the unit sphere, about −1 to 1. */
+const cityDetail = (p: THREE.Vector3) => heightRange(p, 9, 11) / (0.5 ** 10 + 0.5 ** 11);
+/** The city level's ground, for where buildings stand and do best (STORY-071). */
+const ground: Ground = { terrainOf: t => terrainOf(t), heightOf: t => groundHeight(terrainOf(t), cityDetail(tileCenter(t))) };
 /** The city level begins below this share of the city area's framing distance. */
 const CITY_LEVEL_AT = 0.5;
 const RISE_SECONDS = 0.6;
@@ -1118,7 +1128,7 @@ const cityLevel = (() => {
   sun.shadow.normalBias = 0.0005;
   group.add(sun, sun.target, new THREE.HemisphereLight(0xe4ecff, 0x40382a, 0.9));
   const flat = (color: number) => new THREE.MeshLambertMaterial({ color, flatShading: true });
-  const ground = risingMaterial(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }), relief);
+  const groundMaterial = risingMaterial(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }), relief);
   const groundDepth = risingMaterial(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), relief);
   /** Things on the ground, raised with it: where each stands at rest and how far it rises. */
   let props: { object: THREE.Object3D | THREE.InstancedMesh; spots: { base: THREE.Vector3; rise: THREE.Vector3; yaw: number; scale: number }[] }[] = [];
@@ -1126,6 +1136,11 @@ const cityLevel = (() => {
   let mesh: THREE.Mesh | null = null;
   let city: number | null = null;
   let dressed = '';
+  /** Tiles a moved building may go to, the best ones gold (STORY-071). */
+  let marked: { tile: number; best: boolean }[] = [];
+  /** The ground at full relief, for taps on it. */
+  let pickMesh: THREE.Mesh | null = null;
+  const ray = new THREE.Raycaster();
   const up = new THREE.Quaternion();
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
@@ -1270,8 +1285,20 @@ const cityLevel = (() => {
       if (site) { used.add(site.key); placed.push(site.base); }
       return site;
     };
-    const shown = c.buildings.filter(b => b !== 'walls' && b !== 'greatwall');
-    for (const b of shown) { const site = isTerrainBuilding(b) ? onTerrain(b) : take(); if (site) building(b, site, s); }
+    // Each building on its tile (STORY-071): the free site nearest the tile's centre
+    const { sites, origin } = terrain;
+    const onTile = (t: number) => {
+      const at = tileCenter(t).multiplyScalar(RADIUS).sub(origin);
+      const site = sites.filter(x => x.tile === t && !used.has(x.key) && placed.every(p => p.distanceTo(x.base) > 0.2 * s))
+        .sort((a, b) => a.base.distanceToSquared(at) - b.base.distanceToSquared(at))[0];
+      if (site) { used.add(site.key); placed.push(site.base); }
+      return site;
+    };
+    for (const b of c.buildings.filter(standsOnTile)) {
+      const t = c.placed?.[b];
+      const site = t !== undefined ? onTile(t) : isTerrainBuilding(b) ? onTerrain(b) : take();
+      if (site) building(b, site, s);
+    }
     const houses: Site[] = [];
     for (let k = 0; k < Math.min(24, c.size * 2); k++) { const site = take(); if (site) houses.push(site); }
     for (const site of houses) building('house', site, s);
@@ -1301,6 +1328,16 @@ const cityLevel = (() => {
       const im = props[props.length - 1].object as THREE.InstancedMesh;
       gemColors.forEach((c, i) => im.setColorAt(i, c));
     }
+    // Where a moved building may go: a hexagonal ring over each tile, gold where it does best
+    if (marked.length) {
+      instanced(new THREE.RingGeometry(0.3 * s, 0.4 * s, 6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true, opacity: 0.9 }), marked.map(m => {
+        const at = tileCenter(m.tile);
+        return { base: at.clone().multiplyScalar(RADIUS * (1 + 2e-6)).sub(origin), rise: at.clone().multiplyScalar(terrain!.heightAt(m.tile) + 0.06 * s), yaw: 0, scale: 1 };
+      }));
+      const im = props[props.length - 1].object as THREE.InstancedMesh;
+      im.castShadow = false;
+      marked.forEach((m, i) => im.setColorAt(i, new THREE.Color(m.best ? 0xe8c547 : 0xf2efe6)));
+    }
     place();
   };
 
@@ -1318,10 +1355,17 @@ const cityLevel = (() => {
       if (mesh) { group.remove(mesh); mesh.geometry.dispose(); }
       terrain = buildCityTerrain({
         centre: c.tile, rings: CITY_LEVEL_RINGS, terrainOf, radius: RADIUS, lift: 2e-6, colorOf: terrainColor,
-        detail: p => heightRange(p, 9, 11) / (0.5 ** 10 + 0.5 ** 11),
+        detail: cityDetail,
       });
-      mesh = new THREE.Mesh(terrain.geometry, ground);
+      mesh = new THREE.Mesh(terrain.geometry, groundMaterial);
       mesh.customDepthMaterial = groundDepth;
+      // The ground at full relief, for taps (STORY-071)
+      if (pickMesh) pickMesh.geometry.dispose();
+      const pos = terrain.geometry.getAttribute('position').array;
+      const rise = terrain.geometry.getAttribute('rise').array;
+      const full = new Float32Array(pos.length);
+      for (let i = 0; i < full.length; i++) full[i] = pos[i] + rise[i];
+      pickMesh = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(full, 3)), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
       mesh.castShadow = mesh.receiveShadow = true;
       group.add(mesh);
       group.position.copy(terrain.origin);
@@ -1330,8 +1374,21 @@ const cityLevel = (() => {
       dressed = '';
     },
     /** Dress the city again when it has grown or built. */
+    /** Mark the tiles a moved building may go to, or none (STORY-071). */
+    mark(list: { tile: number; best: boolean }[]) {
+      marked = list;
+      dressed = '';
+    },
+    /** The point of the risen ground under the screen point, once the land has risen. */
+    pick(ndc: THREE.Vector2): THREE.Vector3 | null {
+      if (!pickMesh || !terrain || relief.value < 1) return null;
+      pickMesh.position.copy(terrain.origin);
+      pickMesh.updateMatrixWorld();
+      ray.setFromCamera(ndc, camera);
+      return ray.intersectObject(pickMesh)[0]?.point ?? null;
+    },
     dressFor(c: City) {
-      const key = `${c.size}|${c.capital}|${c.buildings.join(',')}|${hasWonder('greatwall')}`;
+      const key = `${c.size}|${c.capital}|${c.buildings.join(',')}|${JSON.stringify(c.placed ?? {})}|${hasWonder('greatwall')}`;
       if (key === dressed) return;
       dressed = key;
       dress(c);
@@ -1601,20 +1658,20 @@ const BUILD_PURPOSE: Record<Build, string> = {
   scout: 'Kartoittaa maata, ja ensimmäinen avaa seuraavan kartan',
   fishery: 'Rannalle: +1 ruoka päivässä',
   sawmill: 'Metsän reunaan: +1 tuotanto päivässä',
-  quarry: 'Kukkulalle tai vuorelle: +1 tuotanto päivässä',
-  field: 'Tasaiselle maalle: +1 ruoka päivässä',
+  quarry: 'Kukkulalle tai vuorelle: +1 tuotanto päivässä, vuorella +2',
+  field: 'Tasaiselle maalle: +1 ruoka päivässä, alhaalla +2',
   horseman: 'Hyökkäys 2: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
   swordsman: 'Hyökkäys 3: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
   chariot: 'Hyökkäys 4: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
   catapult: 'Hyökkäys 6, muureja vastaan: Kenraali vie sen sotaretkelle',
-  library: 'Tieteeseen 50 % lisää',
-  temple: 'Rauhoittaa yhden tyytymättömän asukkaan',
+  library: 'Tieteeseen 50 % lisää, ylhäällä +1 päivässä',
+  temple: 'Rauhoittaa yhden tyytymättömän asukkaan, ylhäällä kaksi',
   aqueduct: 'Kaupunki voi kasvaa yli koon 10',
   colosseum: 'Rauhoittaa kolme tyytymätöntä asukasta',
   colossus: 'Ihme: +1 kauppa jokaiseen kaupungin ruutuun, jossa on kauppaa',
   gardens: 'Ihme: yksi onnellinen asukas joka kaupunkiin',
   greatwall: 'Ihme: muurin suoja kaikkiin kaupunkeihin',
-  granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa',
+  granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa; alhaalla +1 ruoka päivässä', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa; alhaalla +1 kauppa päivässä',
 };
 
 function cityView(c: City, y: CityYield): CityView {
@@ -2738,6 +2795,16 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
     play.flagTool = false;
     return true;
   }
+  // Moving a building (STORY-071): a tap on a marked tile puts it there
+  if (play.moving) {
+    const { city, building } = play.moving;
+    const c = play.cities.find(x => x.tile === city);
+    if (hit && c && move(c, building, pointToTile(hit), ground)) {
+      play.tileOpen = c.placed![building]!;
+      stopMoving();
+    }
+    return true;
+  }
   const city = play.cities.find(c => {
     const at = toScreen(tileCenter(c.tile));
     return at !== null && Math.hypot(at[0] - x, at[1] - y) < 30;
@@ -2756,7 +2823,9 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
   if (!hit) return false;
   const tile = pointToTile(hit);
   // With the settler selected a tap picks its site, and its actions stay in view
-  if (play.units.units[play.selected] === play.units.settler) return play.units.setSite(tile, world);
+  // (With no units yet, at the new start, neither is there: the tap opens the hex's card)
+  const selected = play.units.units[play.selected];
+  if (selected && selected === play.units.settler) return play.units.setSite(tile, world);
   // What the hex holds (STORY-055)
   play.tileOpen = tile;
   play.openCity = null;
@@ -2767,12 +2836,18 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
 const tileCard = createTileCard(hud_root, {
   close: () => {
     if (!play) return;
+    if (play.moving) stopMoving();
     play.tileOpen = null;
     // A region's card closed: the selection stays for the level's actions (STORY-067)
     regionCard = null;
   },
-  // Into the region, as a second tap does
-  action: () => { if (selection) fly(diveTarget(regions, selection, frames)); },
+  // Cancel a move; move a building on the hex (STORY-071); or into the region, as a second tap does
+  action: i => {
+    if (play?.moving) return stopMoving();
+    const moves = play && play.tileOpen !== null && viewLevel === 3 ? movable(play.tileOpen) : [];
+    if (moves[i]) return startMoving(moves[i]);
+    if (selection) fly(diveTarget(regions, selection, frames));
+  },
 });
 
 const plus = (y: { food: number; shield: number; trade: number }) =>
@@ -2856,7 +2931,7 @@ function regionView(ref: RegionRef): TileView {
   if (tribes.length) rows.push({ label: 'Paimentolaiset', value: tribes.map(t => t.tribe.name).join(', ') });
   const kicker = ref.level === 0 ? 'Valtio' : ref.level === 1 ? `Lääni · ${stateNameOf(Math.floor(ref.id / 7)).name}` : `Kaupunkialue · ${nameOf(1, Math.floor(ref.id / 7)).name}`;
   const title = ref.level === 0 ? stateNameOf(ref.id).name : nameOf(ref.level, ref.id).name;
-  const view: TileView = { kicker, title, rows, action: 'Sukella sisään' };
+  const view: TileView = { kicker, title, rows, actions: ['Sukella sisään'] };
   regionCache = { key, view };
   return view;
 }
@@ -2896,8 +2971,59 @@ function tileView(id: number): TileView {
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
     { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : coastal(id) ? (canSail() ? 'rannikkovesi: 1 pv' : 'rannikkovesi: Kartanteko avaa kulun') : 'avomeri: ei kulkua' },
     ...(p.units.isOpen(id, world) ? [] : [{ label: 'Valtio', value: 'lukossa, kunnes kotivaltio on vallattu' }]),
+    ...placementRows(id),
   ];
-  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : TERRAIN_RULES[terrain].name, rows };
+  const moves = movable(id).map(m => `Siirrä ${BUILDS[m.building].name.toLowerCase()}`);
+  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : TERRAIN_RULES[terrain].name, rows, ...(moves.length ? { actions: moves } : {}) };
+}
+
+// ─── Buildings on their tiles (STORY-071) ──────────
+// The governor puts each building on its best ground (placement.ts); at the city level the
+// player may move one: its card's button marks where it may go, and a tap puts it there.
+
+const PLACE_NAMES = { up: 'ylhäällä, keskustaa korkeammalla', low: 'alhaalla, keskustan tasolla tai alempana', mountains: 'vuorella' } as const;
+
+/** A hex's height and buildings next to one of the player's cities. */
+function placementRows(id: number): TileView['rows'] {
+  const c = play!.cities.find(x => x.tile !== id && tilesInRings(x.tile, PLACE_RINGS).includes(id));
+  if (!c || terrainOf(id) === 'ocean') return [];
+  const here = c.buildings.filter(b => c.placed?.[b] === id);
+  return [
+    { label: 'Korkeus', value: terrainOf(id) === 'mountains' ? 'jyrkkä vuori: vain louhos' : isUp(c, id, ground) ? PLACE_NAMES.up : PLACE_NAMES.low },
+    ...(here.length ? [{ label: 'Rakennukset', value: here.map(b => `${BUILDS[b].name}${c.best?.includes(b) ? ` (paras paikka: ${BEST[b]!.gives})` : ''}`).join(', ') }] : []),
+  ];
+}
+
+/** Buildings on a hex the player may move: at the city level of their city, risen. */
+function movable(tile: number): { city: number; building: Building }[] {
+  const c = play?.cities.find(x => x.tile === cityLevel.city);
+  if (!c || cityLevel.relief.value < 1) return [];
+  return c.buildings.filter(b => c.placed?.[b] === tile).map(b => ({ city: c.tile, building: b }));
+}
+
+function startMoving(m: { city: number; building: Building }) {
+  const c = play!.cities.find(x => x.tile === m.city)!;
+  play!.moving = m;
+  play!.tileOpen = null;
+  cityLevel.mark(spots(c, m.building, ground));
+}
+
+function stopMoving() {
+  if (play) play.moving = null;
+  cityLevel.mark([]);
+}
+
+/** The card while a building moves: where it does best, and how to put it there. */
+function movingView(c: City, b: Building): TileView {
+  const best = BEST[b];
+  return {
+    kicker: c.name, title: `Siirrä: ${BUILDS[b].name}`,
+    rows: [
+      { label: 'Paras paikka', value: best ? `${PLACE_NAMES[best.at]}: ${best.gives}` : 'ei erityistä paikkaa' },
+      { label: 'Valitse', value: 'Napauta merkittyä ruutua. Kultainen merkki on paras paikka.' },
+    ],
+    actions: ['Peru'],
+  };
 }
 
 function updateTileCard() {
@@ -2905,6 +3031,17 @@ function updateTileCard() {
   // Another card closes this one
   const other = play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible;
   if (other) play.tileOpen = null;
+  // A building on the move: its card, until a tile is tapped, it is cancelled or the land sinks (STORY-071)
+  if (play.moving) {
+    const c = play.cities.find(x => x.tile === play!.moving!.city);
+    if (!c || other || cityLevel.city !== c.tile || cityLevel.relief.value < 1) stopMoving();
+    else {
+      const view = movingView(c, play.moving.building);
+      if (tileCard.visible) tileCard.update(view);
+      else tileCard.show(view);
+      return;
+    }
+  }
   // Above the city areas the card of the region tapped on the map (STORY-067), until it is closed
   if (viewLevel < 3) {
     if (!selection || other || introTarget || `${selection.level}:${selection.id}` !== regionCard) {
@@ -3233,7 +3370,18 @@ frameStartPlanet();
   },
   /** Found a city on a tile, and give a city buildings (STORY-069 tests). */
   foundHere: (tile: number) => { if (play) { foundAt(tile); play.openCity = null; } },
-  giveBuildings: (city: number, list: Building[]) => { if (play) play.cities[city].buildings.push(...list.filter(b => !play!.cities[city].buildings.includes(b))); },
+  giveBuildings: (city: number, list: Building[]) => {
+    if (!play) return;
+    play.cities[city].buildings.push(...list.filter(b => !play!.cities[city].buildings.includes(b)));
+    placeAll(play.cities[city], ground);
+  },
+  /** Where a city's buildings stand, which do best, and where one may move (STORY-071). */
+  placement: (city: number, building?: Building) => {
+    const c = play!.cities[city];
+    return { placed: { ...c.placed }, best: [...(c.best ?? [])], spots: building ? spots(c, building, ground) : [], moving: play!.moving };
+  },
+  /** A tile's centre on the screen, on the risen ground at the city level. */
+  tileScreen: (tile: number) => toScreen(tileCenter(tile).multiplyScalar(1 + cityLevel.raise(tile) / RADIUS)),
   /** The city level (STORY-069): its city, relief, triangles and things on the ground. */
   cityLevel: () => cityLevel.stats,
   cityShadows: (on: boolean) => cityLevel.shadows(on),

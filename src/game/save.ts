@@ -158,6 +158,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
         entertainers: c.entertainers === undefined ? 0 : int(c.entertainers, 'entertainers', 0, 1000),
         ...(c.native === undefined ? {} : { native: bool(c.native, 'native') }),
+        // Where the buildings stand (STORY-071); the bonuses follow from it when the game goes on
+        ...(c.placed === undefined ? {} : { placed: Object.fromEntries(Object.entries(obj(c.placed, 'placed')).map(([b, t]) => [oneOf(b, BUILDINGS, 'placed building'), tile(t)])) }),
       };
     };
 

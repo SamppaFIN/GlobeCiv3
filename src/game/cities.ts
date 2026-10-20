@@ -170,7 +170,14 @@ export interface City {
   entertainers?: number;
   /** A city-state taken (STORY-064): its land was the city-state's, not one of the player's sites. */
   native?: boolean;
+  /** The tile each building stands on at the city level (STORY-071, placement.ts). */
+  placed?: Partial<Record<Building, number>>;
+  /** Buildings on their best ground, which give a bonus (STORY-071); set by placeAll. */
+  best?: Building[];
 }
+
+/** 1 when the building stands on its best ground (STORY-071, placement.ts). */
+const onBest = (city: City, b: Building) => (city.best?.includes(b) ? 1 : 0);
 
 export function foundCity(cities: City[], tile: number): City {
   const city: City = {
@@ -254,7 +261,7 @@ export function cityMood(city: City, soldiers: number, cities: number, gardens =
   if (lux >= 2 && unhappy > 0) { unhappy--; content++; }
   // Then the temple and the soldiers, then the gardens make a content citizen happy
   // An arena calms three (STORY-054, Freeciv civ1 effects.ruleset Colosseum Make_Content 3)
-  const buildings = (city.buildings.includes('temple') ? 1 : 0) + (city.buildings.includes('colosseum') ? 3 : 0);
+  const buildings = (city.buildings.includes('temple') ? 1 + onBest(city, 'temple') : 0) + (city.buildings.includes('colosseum') ? 3 : 0);
   const calmed = Math.min(unhappy, buildings + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
   unhappy -= calmed;
   content += calmed;
@@ -289,10 +296,11 @@ export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<numb
     y.shield += t.shield;
     y.trade += t.trade;
   }
-  // The terrain buildings' +1 a day (STORY-070)
+  // The terrain buildings' +1 a day (STORY-070), and the buildings on their best ground (STORY-071)
   const has = (b: Building) => (city.buildings.includes(b) ? 1 : 0);
-  y.food += has('fishery') + has('field');
-  y.shield += has('sawmill') + has('quarry');
+  y.food += has('fishery') + has('field') + onBest(city, 'field') + onBest(city, 'granary');
+  y.shield += has('sawmill') + has('quarry') + onBest(city, 'quarry');
+  y.trade += onBest(city, 'market');
   return {
     food: y.food,
     shield: y.shield - Math.max(0, support.units - GOVERNMENTS[gov].freeUnits),
@@ -353,9 +361,9 @@ export function cityDay(city: City, y: CityYield): Build | null {
 export const cityGold = (city: City, y: Yield & { disorder?: boolean }, tax = 100, lux = 0) => y.disorder ? 0 :
   Math.floor(splitTrade(y.trade, tax, lux).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
 
-/** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040). */
+/** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040), +1 with it up high (STORY-071). */
 export const cityScience = (city: City, y: Yield & { disorder?: boolean }, tax: number, lux = 0) => y.disorder ? 0 :
-  Math.floor(splitTrade(y.trade, tax, lux).science * (city.buildings.includes('library') ? 1.5 : 1));
+  Math.floor(splitTrade(y.trade, tax, lux).science * (city.buildings.includes('library') ? 1.5 : 1)) + onBest(city, 'library');
 
 /**
  * Pay a city's building upkeep from the treasury. When it would fall below zero, buildings

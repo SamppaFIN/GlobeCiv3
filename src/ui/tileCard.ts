@@ -15,8 +15,8 @@ export interface TileView {
   title: string;
   /** Label and value rows: "Tuottaa" — "ruokaa 2 · tuotantoa 1 · kauppaa 0". */
   rows: { label: string; value: string }[];
-  /** A button under the rows, e.g. "Sukella sisään" (STORY-067). */
-  action?: string;
+  /** Buttons under the rows, e.g. "Sukella sisään" (STORY-067) or "Siirrä temppeli" (STORY-071). */
+  actions?: string[];
 }
 
 export interface TileCard {
@@ -26,7 +26,7 @@ export interface TileCard {
   readonly visible: boolean;
 }
 
-export function createTileCard(root: HTMLElement, on: { close(): void; action?(): void }): TileCard {
+export function createTileCard(root: HTMLElement, on: { close(): void; action?(index: number): void }): TileCard {
   const el = document.createElement('section');
   el.className = 'city-card tile-card';
   el.setAttribute('role', 'dialog');
@@ -38,11 +38,10 @@ export function createTileCard(root: HTMLElement, on: { close(): void; action?()
       <button class="btn btn-secondary hud-icon city-close" type="button" aria-label="Sulje">${CLOSE}</button>
     </div>
     <dl class="tile-rows"></dl>
-    <button class="btn btn-primary tile-action" type="button" hidden></button>`;
+    <div class="tile-actions"></div>`;
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
-  q('.tile-action').addEventListener('click', () => on.action?.());
   let last = '';
   const update = (v: TileView) => {
     const key = JSON.stringify(v);
@@ -50,8 +49,14 @@ export function createTileCard(root: HTMLElement, on: { close(): void; action?()
     last = key;
     q('.tile-kicker').textContent = v.kicker;
     q('.tile-title').textContent = v.title;
-    q('.tile-action').hidden = !v.action;
-    q('.tile-action').textContent = v.action ?? '';
+    q('.tile-actions').replaceChildren(...(v.actions ?? []).map((label, i) => {
+      const b = document.createElement('button');
+      b.className = 'btn btn-primary tile-action';
+      b.type = 'button';
+      b.textContent = label;
+      b.addEventListener('click', () => on.action?.(i));
+      return b;
+    }));
     q('.tile-rows').replaceChildren(...v.rows.flatMap(r => {
       const dt = document.createElement('dt');
       dt.textContent = r.label;
