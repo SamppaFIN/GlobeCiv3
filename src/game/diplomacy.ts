@@ -20,9 +20,11 @@ export interface Ties {
   lost: number;
   /** The day of the rival's last proposal. */
   offered: number;
+  /** The day maps were last traded with it (STORY-078). */
+  maps: number;
 }
 
-export const newTies = (): Ties => ({ met: false, state: 'peace', attitude: 0, since: 0, lost: 0, offered: -1000 });
+export const newTies = (): Ties => ({ met: false, state: 'peace', attitude: 0, since: 0, lost: 0, offered: -1000, maps: -1000 });
 
 /** Tiles between cities that make borders near. */
 export const BORDER_TILES = 8;

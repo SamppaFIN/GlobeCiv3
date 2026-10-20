@@ -321,3 +321,10 @@
 .tile-rows dd { margin: 0; }
 .tile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .tile-actions:empty { display: none; }
+/* What the rival thinks of a trade (STORY-078) */
+.tile-verdict { margin: 0; font-size: 13px; }
+.trade-foot {
+  position: sticky; bottom: -16px; margin: 0 -16px -16px; padding: 12px 16px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--c-surface); border-top: 1px solid var(--c-divider);
+}

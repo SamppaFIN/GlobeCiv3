@@ -47,7 +47,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       id: 1, nextId: 2,
       cities: [{ id: 0, name: 'Mielikkälä', tile: START_TILE + 40, capital: true, size: 2, food: 5, shields: 9, build: 'settler', buildings: [], focus: 'balanced', entertainers: 0 }],
       units: [{ id: 0, kind: 'warrior', tile: START_TILE + 40, path: [], wait: 0, home: 0, site: null }, { id: 1, kind: 'settler', tile: START_TILE + 41, path: [START_TILE + 42], wait: 1, home: 0, site: START_TILE + 43 }],
-    }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
+    }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000, maps: 3 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }

@@ -6,6 +6,8 @@ import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
 import { isUp, move, placeAll, spots, standsOnTile, BEST, PLACE_RINGS, type Ground } from '../game/placement';
 import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
+import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
+import { createTradeCard, type TradeView } from '../ui/tradeCard';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
@@ -29,7 +31,7 @@ import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
-import { ADVANCES, LUX_RATES, NEEDS, Research, isKind, opensFrom, studyName, type Advance, type Study } from '../game/science';
+import { ADVANCES, LUX_RATES, NEEDS, Research, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type Study } from '../game/science';
 import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
@@ -638,6 +640,8 @@ interface Play {
   /** The ties with each rival, in the rivals' order, and the rival whose diplomacy card is open (STORY-076). */
   ties: Ties[];
   diplomacyOpen: number | null;
+  /** The rival whose trade card is open (STORY-078). */
+  tradeOpen: number | null;
   /** The city-level advisor, its card, and what it did lately (STORY-049). */
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
@@ -755,7 +759,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -3386,7 +3390,7 @@ function diplomacyView(k: number): TileView {
       { label: 'Rajat', value: near.length ? `lähellä: ${near.map(c => c.name).join(', ')}` : 'kaukana' },
       ...(t.state === 'war' ? [{ label: 'Rauha', value: clock.day - t.since < 10 ? `ei ennen kuin sota on kestänyt 10 päivää (${10 - (clock.day - t.since)} pv)` : t.attitude >= -60 || t.lost > 0 ? 'se voi hyväksyä rauhan' : 'liian vihamielinen rauhaan' }] : []),
     ],
-    actions: t.state === 'peace' ? ['Julista sota', 'Ehdota liittoa'] : t.state === 'war' ? ['Ehdota rauhaa'] : ['Pura liitto'],
+    actions: t.state === 'peace' ? ['Vaihda', 'Julista sota', 'Ehdota liittoa'] : t.state === 'war' ? ['Ehdota rauhaa'] : ['Vaihda', 'Pura liitto'],
   };
 }
 
@@ -3398,7 +3402,11 @@ const diplomacyCard = createTileCard(hud_root, {
     const r = play.rivals[k];
     const t = play.ties[k];
     const act = diplomacyView(k).actions![i];
-    if (act === 'Julista sota') {
+    if (act === 'Vaihda') {
+      play.diplomacyOpen = null;
+      play.tradeOpen = k;
+      tradeGive = tradeGet = 'nothing';
+    } else if (act === 'Julista sota') {
       setState(t, 'war', clock.day, true);
       discoveryCard.notice(`Julistitte sodan: ${r.name}`);
     } else if (act === 'Pura liitto') {
@@ -3416,7 +3424,7 @@ const diplomacyCard = createTileCard(hud_root, {
 
 function updateDiplomacyCard() {
   if (!play) return;
-  const other = play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible || tileCard.visible;
+  const other = play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible || tileCard.visible || tradeCard.visible;
   if (other && play.diplomacyOpen !== null && diplomacyCard.visible) play.diplomacyOpen = null;
   const k = play.diplomacyOpen;
   if (k === null || other || !play.ties[k]?.met) {
@@ -3426,6 +3434,121 @@ function updateDiplomacyCard() {
   const view = diplomacyView(k);
   if (diplomacyCard.visible) diplomacyCard.update(view);
   else diplomacyCard.show(view);
+}
+
+// ─── Trades (STORY-078) ────────────────────────────
+// Sami 2026-10-20: maps, advances and kinds of resource are traded, and the rival weighs a
+// trade by its worth and its attitude (trade.ts). Maps once in MAPS_EVERY days each way.
+
+let tradeGive = 'nothing';
+let tradeGet = 'nothing';
+
+/** What the player may give a rival and get from it, each with its id and name. */
+function tradeItems(k: number): { give: { id: string; item: TradeItem; name: string }[]; get: { id: string; item: TradeItem; name: string }[] } {
+  const p = play!;
+  const r = p.rivals[k];
+  const maps = clock.day - p.ties[k].maps >= MAPS_EVERY;
+  const nothing = { id: 'nothing', item: { kind: 'nothing' } as TradeItem, name: 'Ei mitään' };
+  const advances = (from: Research, to: Research) => [...from.known].filter(a => !to.known.has(a)).map(a => ({ id: `advance:${a}`, item: { kind: 'advance', id: a } as TradeItem, name: `Keksintö: ${ADVANCES[a].name}` }));
+  return {
+    give: [
+      nothing,
+      ...(maps ? [{ id: 'maps', item: { kind: 'maps' } as TradeItem, name: 'Kartat' }] : []),
+      ...advances(p.research, r.research),
+      ...[25, 50, 100].filter(n => n <= p.gold).map(n => ({ id: `gold:${n}`, item: { kind: 'gold', amount: n } as TradeItem, name: `${n} kultaa` })),
+    ],
+    get: [
+      nothing,
+      ...(maps ? [{ id: 'maps', item: { kind: 'maps' } as TradeItem, name: `Kartat: ${r.name}n kaupunkien ympäristö` }] : []),
+      ...advances(r.research, p.research),
+      // The rivals know every kind; one the player does not know yet keeps its unknown name
+      ...RESOURCE_KINDS.filter(kd => !p.research.kinds.has(kd) && r.research.kinds.has(kd)).map(kd => ({ id: `resource:${kd}`, item: { kind: 'resource', id: kd } as TradeItem, name: `Resurssilaji: ${studyName(kd)}` })),
+    ],
+  };
+}
+
+/** A trade weighed: what the rival gets and gives, as worth to each, and whether it accepts. */
+function weighTrade(k: number) {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  const items = tradeItems(k);
+  const give = items.give.find(x => x.id === tradeGive) ?? items.give[0];
+  const get = items.get.find(x => x.id === tradeGet) ?? items.get[0];
+  const got = worth(give.item, r.research.known.size);
+  const given = worth(get.item, p.research.known.size);
+  return { items, give, get, got, given, ok: acceptsTrade(t.attitude, t.state, got, given), f: factor(t.attitude, t.state) };
+}
+
+function tradeView(k: number): TradeView {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  const w = weighTrade(k);
+  const verdict = w.f === null ? `${r.name} ei vaihda: ${t.state === 'war' ? 'olette sodassa' : 'se on vihamielinen'}`
+    : !w.got && !w.given ? 'Valitse, mitä annat ja mitä saat.'
+    : w.ok ? `${r.name} hyväksyy (${attitudeWord(t.attitude)}: arvo ${w.got} vastaan ${w.given})`
+    : `${r.name} haluaa enemmän: tarjoat arvoa ${w.got}, se vaatii ${Math.ceil(w.given * w.f)} (${attitudeWord(t.attitude)})`;
+  return {
+    title: r.name,
+    give: w.items.give.map(x => ({ id: x.id, name: x.name, worth: x.id === 'nothing' ? '' : `arvo ${worth(x.item, r.research.known.size)}`, selected: x.id === w.give.id })),
+    get: w.items.get.map(x => ({ id: x.id, name: x.name, worth: x.id === 'nothing' ? '' : `arvo ${worth(x.item, p.research.known.size)}`, selected: x.id === w.get.id })),
+    verdict,
+    canOffer: w.f !== null && (w.got > 0 || w.given > 0),
+  };
+}
+
+/** The player offers the trade: accepted, both sides get their part and the attitude rises. */
+function offerTrade(k: number) {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  const w = weighTrade(k);
+  if (!w.ok) {
+    discoveryCard.notice(`${r.name} kieltäytyi vaihdosta`);
+    return;
+  }
+  const take = (item: TradeItem, toPlayer: boolean) => {
+    if (item.kind === 'maps') {
+      t.maps = clock.day;
+      if (toPlayer) for (const c of r.cities) reveal(tilesInRings(c.tile, 3));
+    } else if (item.kind === 'advance') {
+      if (toPlayer) {
+        p.research.known.add(item.id);
+        if (p.research.target === item.id) p.research.target = null;
+      } else r.research.known.add(item.id);
+    } else if (item.kind === 'resource' && toPlayer) {
+      p.research.kinds.add(item.id);
+      if (p.research.target === item.id) p.research.target = null;
+    } else if (item.kind === 'gold' && !toPlayer) p.gold -= item.amount;
+  };
+  take(w.give.item, false);
+  take(w.get.item, true);
+  t.attitude = Math.min(100, t.attitude + TRADE_ATTITUDE);
+  discoveryCard.notice(`Vaihto: ${r.name} · annoit ${w.give.name.toLowerCase()}, sait ${w.get.name.toLowerCase()}`);
+  tradeGive = tradeGet = 'nothing';
+}
+
+const tradeCard = createTradeCard(hud_root, {
+  // Back to the rival's diplomacy card
+  close: () => { if (play && play.tradeOpen !== null) { play.diplomacyOpen = play.tradeOpen; play.tradeOpen = null; } },
+  give: id => { tradeGive = id; },
+  get: id => { tradeGet = id; },
+  offer: () => { if (play?.tradeOpen !== null && play?.tradeOpen !== undefined) offerTrade(play.tradeOpen); },
+});
+
+function updateTradeCard() {
+  if (!play) return;
+  const k = play.tradeOpen;
+  const other = play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible || tileCard.visible;
+  if (other && k !== null && tradeCard.visible) play.tradeOpen = null;
+  if (play.tradeOpen === null || other || !play.ties[play.tradeOpen]?.met) {
+    if (tradeCard.visible) tradeCard.hide();
+    return;
+  }
+  const view = tradeView(play.tradeOpen);
+  if (tradeCard.visible) tradeCard.update(view);
+  else tradeCard.show(view);
 }
 
 // ─── A city here (STORY-074) ───────────────────────
@@ -3647,6 +3770,7 @@ function updatePlay(dt: number) {
   updateAdvisorCard();
   updateTileCard();
   updateDiplomacyCard();
+  updateTradeCard();
   checkGoals();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
