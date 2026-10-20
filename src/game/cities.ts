@@ -22,9 +22,9 @@
 import { GOVERNMENTS, governed, type Government } from './government';
 import { isAttacker, type Attacker } from './war';
 import { improvementYield } from './improvements';
-import { splitTrade } from './science';
+import { splitTrade, type Advance } from './science';
 import { tilesInRings } from './pathfinding';
-import { tileYield, type Terrain, type TileInfo, type Yield } from './terrainTypes';
+import { tileYield, type ResourceKind, type Terrain, type TileInfo, type Yield } from './terrainTypes';
 
 /** Extra food on a city centre: irrigation_food_incr of the terrains that can be irrigated. */
 export const CENTRE_IRRIGATION: Partial<Record<Terrain, number>> = { desert: 1, grassland: 1, hills: 1, plains: 1 };
@@ -71,7 +71,8 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field'] as const;
+export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field',
+  'harbour', 'sealery', 'canal', 'lodge', 'corral', 'farmstead', 'forge', 'stable', 'oilwell', 'jeweller', 'mint'] as const;
 /**
  * The terrain buildings (STORY-070; Sami 2026-10-20, own rules): a city builds them from the
  * start where its two rings hold their terrain, each 30 shields, no upkeep, +1 food or shield
@@ -80,6 +81,43 @@ export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aq
 export const TERRAIN_BUILDINGS = { fishery: ['ocean'], sawmill: ['forest', 'jungle'], quarry: ['hills', 'mountains'], field: ['grassland', 'plains'] } as const satisfies Record<string, readonly Terrain[]>;
 export type TerrainBuilding = keyof typeof TERRAIN_BUILDINGS;
 export const isTerrainBuilding = (b: Build): b is TerrainBuilding => b in TERRAIN_BUILDINGS;
+/**
+ * The resource buildings (STORY-073; Sami 2026-10-20: settling a new resource gives its
+ * building, and the building done gives an advance, a unit or a bonus; own names and numbers).
+ * A city with a known kind of special resource in its area builds the kind's building, 40
+ * shields and no upkeep. It gives its bonus each day, and once, when it is done, its reward:
+ * an advance (KNOWN_REWARD_GOLD gold if it is known already) or a unit of no city.
+ */
+export const RESOURCE_BUILDING_LIST = ['harbour', 'sealery', 'canal', 'lodge', 'corral', 'farmstead', 'forge', 'stable', 'oilwell', 'jeweller', 'mint'] as const;
+export type ResourceBuilding = (typeof RESOURCE_BUILDING_LIST)[number];
+export interface ResourceBuildingRule {
+  kind: ResourceKind;
+  food?: number;
+  shield?: number;
+  /** Citizens it calms, as a temple does. */
+  content?: number;
+  gold?: number;
+  reward: Advance | 'scout' | 'settler' | 'horseman' | null;
+}
+export const RESOURCE_BUILDINGS: Record<ResourceBuilding, ResourceBuildingRule> = {
+  harbour: { kind: 'fish', food: 2, reward: 'mapmaking' },
+  sealery: { kind: 'seals', food: 2, reward: 'scout' },
+  canal: { kind: 'oasis', food: 2, reward: 'pottery' },
+  lodge: { kind: 'game', food: 1, shield: 1, reward: 'scout' },
+  corral: { kind: 'reindeer', food: 2, reward: 'scout' },
+  farmstead: { kind: 'fertile', food: 1, shield: 1, reward: 'settler' },
+  forge: { kind: 'coal', shield: 2, reward: 'iron' },
+  stable: { kind: 'horses', shield: 1, reward: 'horseman' },
+  oilwell: { kind: 'oil', shield: 3, reward: null },
+  jeweller: { kind: 'gems', content: 1, reward: 'ceremonial' },
+  mint: { kind: 'gold', gold: 3, reward: 'currency' },
+};
+export const isResourceBuilding = (b: Build): b is ResourceBuilding => b in RESOURCE_BUILDINGS;
+/** Gold a resource building gives instead of an advance already known (own). */
+export const KNOWN_REWARD_GOLD = 30;
+/** A city's resource buildings' bonus of one kind a day. */
+const fromResources = (city: City, key: 'food' | 'shield' | 'content' | 'gold') =>
+  city.buildings.reduce((sum, b) => sum + (isResourceBuilding(b) ? RESOURCE_BUILDINGS[b][key] ?? 0 : 0), 0);
 /**
  * Wonders (STORY-045), Freeciv civ1 buildings.ruleset and effects.ruleset: once in the game,
  * no upkeep. Kolossi (Colossus, 200, Bronze Working): +1 trade on each tile the city works
@@ -90,7 +128,8 @@ export const isTerrainBuilding = (b: Build): b is TerrainBuilding => b in TERRAI
 export const WONDERS = ['colossus', 'gardens', 'greatwall'] as const;
 export const isWonder = (b: Build): boolean => (WONDERS as readonly string[]).includes(b);
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0, fishery: 0, sawmill: 0, quarry: 0, field: 0 };
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0, fishery: 0, sawmill: 0, quarry: 0, field: 0,
+  harbour: 0, sealery: 0, canal: 0, lodge: 0, corral: 0, farmstead: 0, forge: 0, stable: 0, oilwell: 0, jeweller: 0, mint: 0 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -131,6 +170,18 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   sawmill: { name: 'Saha', cost: 30, pop: 0 },
   quarry: { name: 'Louhos', cost: 30, pop: 0 },
   field: { name: 'Pelto', cost: 30, pop: 0 },
+  // The resource buildings (STORY-073, own)
+  harbour: { name: 'Kalasatama', cost: 40, pop: 0 },
+  sealery: { name: 'Pyyntiasema', cost: 40, pop: 0 },
+  canal: { name: 'Kastelukanava', cost: 40, pop: 0 },
+  lodge: { name: 'Metsästysmaja', cost: 40, pop: 0 },
+  corral: { name: 'Poroaitaus', cost: 40, pop: 0 },
+  farmstead: { name: 'Viljelmä', cost: 40, pop: 0 },
+  forge: { name: 'Paja', cost: 40, pop: 0 },
+  stable: { name: 'Talli', cost: 40, pop: 0 },
+  oilwell: { name: 'Öljylähde', cost: 40, pop: 0 },
+  jeweller: { name: 'Koruverstas', cost: 40, pop: 0 },
+  mint: { name: 'Rahapaja', cost: 40, pop: 0 },
 };
 
 /**
@@ -261,7 +312,7 @@ export function cityMood(city: City, soldiers: number, cities: number, gardens =
   if (lux >= 2 && unhappy > 0) { unhappy--; content++; }
   // Then the temple and the soldiers, then the gardens make a content citizen happy
   // An arena calms three (STORY-054, Freeciv civ1 effects.ruleset Colosseum Make_Content 3)
-  const buildings = (city.buildings.includes('temple') ? 1 + onBest(city, 'temple') : 0) + (city.buildings.includes('colosseum') ? 3 : 0);
+  const buildings = (city.buildings.includes('temple') ? 1 + onBest(city, 'temple') : 0) + (city.buildings.includes('colosseum') ? 3 : 0) + fromResources(city, 'content');
   const calmed = Math.min(unhappy, buildings + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
   unhappy -= calmed;
   content += calmed;
@@ -300,6 +351,9 @@ export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<numb
   const has = (b: Building) => (city.buildings.includes(b) ? 1 : 0);
   y.food += has('fishery') + has('field') + onBest(city, 'field') + onBest(city, 'granary');
   y.shield += has('sawmill') + has('quarry') + onBest(city, 'quarry');
+  // The resource buildings (STORY-073)
+  y.food += fromResources(city, 'food');
+  y.shield += fromResources(city, 'shield');
   y.trade += onBest(city, 'market');
   return {
     food: y.food,
@@ -359,7 +413,7 @@ export function cityDay(city: City, y: CityYield): Build | null {
  * and its shields while it makes gold (Kultaa).
  */
 export const cityGold = (city: City, y: Yield & { disorder?: boolean }, tax = 100, lux = 0) => y.disorder ? 0 :
-  Math.floor(splitTrade(y.trade, tax, lux).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0);
+  Math.floor(splitTrade(y.trade, tax, lux).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0) + fromResources(city, 'gold');
 
 /** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040), +1 with it up high (STORY-071). */
 export const cityScience = (city: City, y: Yield & { disorder?: boolean }, tax: number, lux = 0) => y.disorder ? 0 :

@@ -4,6 +4,8 @@
  * city's two rings. The governor puts it on the best free tile, and the player may move it.
  *
  * - Steep ground holds nothing: no building on mountains but the quarry.
+ * - A resource building (STORY-073) stands on a tile of its kind in the city's area, the
+ *   fish harbour on a shore next to the fish.
  * - The terrain buildings stand on their terrain, the fishery on a shore.
  * - Height gives a bonus. Up means higher than the centre, and low means level with it or
  *   lower. Up, a temple calms one more citizen and a library brings +1 science a day. Low, a
@@ -12,13 +14,15 @@
  */
 import { neighbors } from '../globe/hexTiles';
 import { tilesInRings } from './pathfinding';
-import { TERRAIN_BUILDINGS, isTerrainBuilding, type Building, type City } from './cities';
-import type { Terrain } from './terrainTypes';
+import { cityRings, RESOURCE_BUILDINGS, TERRAIN_BUILDINGS, isResourceBuilding, isTerrainBuilding, type Building, type City } from './cities';
+import type { ResourceKind, Terrain } from './terrainTypes';
 
 /** The ground: its terrain, and its height at the city level in tile spacings. */
 export interface Ground {
   terrainOf(tile: number): Terrain;
   heightOf(tile: number): number;
+  /** The tile's special resource as the people know it (STORY-073). */
+  resourceOf?(tile: number): ResourceKind | null;
 }
 
 /** Rings round the centre where buildings stand. */
@@ -46,7 +50,14 @@ export const isUp = (city: City, tile: number, g: Ground) => g.heightOf(tile) >=
 
 /** Whether a building may stand on a tile of the city: land in its rings, not steep, its terrain. */
 export function fits(city: City, b: Building, tile: number, g: Ground): boolean {
-  if (tile === city.tile || !tilesInRings(city.tile, PLACE_RINGS).includes(tile)) return false;
+  if (tile === city.tile) return false;
+  if (isResourceBuilding(b)) {
+    if (!tilesInRings(city.tile, cityRings(city.size)).includes(tile)) return false;
+    const kind = RESOURCE_BUILDINGS[b].kind;
+    if (kind === 'fish') return g.terrainOf(tile) !== 'ocean' && neighbors(tile).some(n => g.resourceOf?.(n) === 'fish');
+    return g.resourceOf?.(tile) === kind;
+  }
+  if (!tilesInRings(city.tile, PLACE_RINGS).includes(tile)) return false;
   const t = g.terrainOf(tile);
   if (t === 'ocean' || (t === 'mountains' && b !== 'quarry')) return false;
   if (b === 'fishery') return neighbors(tile).some(n => g.terrainOf(n) === 'ocean');
@@ -67,7 +78,7 @@ const on = (city: City, tile: number, but?: Building) =>
 
 /** Tiles a building may move to, nearest the centre first, with whether each is its best. */
 export function spots(city: City, b: Building, g: Ground): { tile: number; best: boolean }[] {
-  return tilesInRings(city.tile, PLACE_RINGS)
+  return tilesInRings(city.tile, isResourceBuilding(b) ? Math.max(PLACE_RINGS, cityRings(city.size)) : PLACE_RINGS)
     .filter(t => fits(city, b, t, g) && on(city, t, b) < ROOM)
     .map(t => ({ tile: t, best: isBest(city, b, t, g) }));
 }

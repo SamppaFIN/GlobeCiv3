@@ -58,7 +58,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, RESOURCE_BUILDING_LIST, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -954,6 +954,7 @@ function cityDays() {
     if (isBuilding(done)) moment(isWonder(done) ? 'unlock' : 'city', c.tile);
     else if (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
+    if (isResourceBuilding(done)) rewardOf(c, done);
   });
   // The governor puts new buildings on their best ground, and the bonuses follow (STORY-071)
   for (const c of play.cities) placeAll(c, ground);
@@ -1181,7 +1182,16 @@ const CITY_LEVEL_RINGS = 3;
 /** Relief noise of the city level at a point of the unit sphere, about −1 to 1. */
 const cityDetail = (p: THREE.Vector3) => heightRange(p, 9, 11) / (0.5 ** 10 + 0.5 ** 11);
 /** The city level's ground, for where buildings stand and do best (STORY-071). */
-const ground: Ground = { terrainOf: t => terrainOf(t), heightOf: t => groundHeight(terrainOf(t), cityDetail(tileCenter(t))) };
+const ground: Ground = {
+  terrainOf: t => terrainOf(t),
+  heightOf: t => groundHeight(terrainOf(t), cityDetail(tileCenter(t))),
+  // A known kind of resource on the tile, for the resource buildings (STORY-073)
+  resourceOf: t => {
+    terrainOf(t);
+    const k = kindAt(t);
+    return k && knownKind(k) ? k : null;
+  },
+};
 /** The city level begins below this share of the city area's framing distance. */
 const CITY_LEVEL_AT = 0.5;
 const RISE_SECONDS = 0.6;
@@ -1305,6 +1315,14 @@ const cityLevel = (() => {
     } else if (kind === 'field') {
       add(box(0.3, 0.012, 0.24), 0xc9b85a);
       for (const z of [-0.08, 0, 0.08]) add(box(0.28, 0.016, 0.02), 0x8f7f38, 0, 0, z * s);
+    } else if (kind in RESOURCE_BUILDINGS) {
+      // A resource building (STORY-073): a hut, its roof and sign in the colour of what it gives
+      const r = RESOURCE_BUILDINGS[kind as ResourceBuilding];
+      const tone = r.food ? 0x6f9a3a : r.shield ? 0xb5652a : 0xc9a227;
+      add(box(0.14, 0.09, 0.12), 0xd8c9a8);
+      add(roof(0.12, 0.08), tone, 0, 0.09 * s, 0);
+      add(new THREE.CylinderGeometry(0.012 * s, 0.012 * s, 0.16 * s, 5).translate(0, 0.08 * s, 0), 0x5d4a3a, 0.11 * s, 0, 0.08 * s);
+      add(box(0.07, 0.045, 0.012), tone, 0.11 * s, 0.13 * s, 0.08 * s);
     }
     group.add(g);
     props.push({ object: g, spots: [{ base: site.base, rise: site.rise, yaw: 0, scale: 1 }] });
@@ -1720,6 +1738,32 @@ const cityCard = createCityCard(hud_root, {
   },
 });
 
+/** A resource building's reward once it is done (STORY-073): an advance, gold if it is known, or a unit of no city. */
+function rewardOf(c: City, b: ResourceBuilding) {
+  const p = play!;
+  const r = RESOURCE_BUILDINGS[b].reward;
+  if (r === null) return;
+  if (r === 'scout' || r === 'settler' || r === 'horseman') {
+    p.units.spawn(r, c.tile, world, null);
+    discoveryCard.notice(`${BUILDS[b].name}: ${BUILDS[r].name.toLowerCase()} liittyi joukkoon`);
+  } else if (p.research.known.has(r)) {
+    p.gold += KNOWN_REWARD_GOLD;
+    discoveryCard.notice(`${BUILDS[b].name}: ${ADVANCES[r].name} on jo tiedossa · +${KNOWN_REWARD_GOLD} kultaa`);
+  } else {
+    p.research.known.add(r);
+    if (p.research.target === r) p.research.target = null;
+    discoveryCard.notice(`${BUILDS[b].name}: keksintö ${ADVANCES[r].name}`);
+  }
+}
+
+/** A resource building's purpose for the city card: its kind, bonus and reward. */
+const resourcePurpose = (b: ResourceBuilding) => {
+  const r = RESOURCE_BUILDINGS[b];
+  const daily = [r.food && `+${r.food} ruoka`, r.shield && `+${r.shield} tuotanto`, r.content && `+${r.content} tyytyväinen`, r.gold && `+${r.gold} kultaa`].filter(Boolean).join(', ');
+  const reward = r.reward === null ? '' : `; valmistuessa ${r.reward in ADVANCES ? `keksintö ${ADVANCES[r.reward as Advance].name}` : BUILDS[r.reward as Build].name.toLowerCase()}`;
+  return `${RESOURCES[r.kind].name} alueella: ${daily} päivässä${reward}`;
+};
+
 /** What each build does, for the city card (STORY-037, buildings STORY-038). */
 const BUILD_PURPOSE: Record<Build, string> = {
   warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
@@ -1741,6 +1785,7 @@ const BUILD_PURPOSE: Record<Build, string> = {
   colossus: 'Ihme: +1 kauppa jokaiseen kaupungin ruutuun, jossa on kauppaa',
   gardens: 'Ihme: yksi onnellinen asukas joka kaupunkiin',
   greatwall: 'Ihme: muurin suoja kaikkiin kaupunkeihin',
+  ...(Object.fromEntries(RESOURCE_BUILDING_LIST.map(b => [b, resourcePurpose(b)])) as Record<ResourceBuilding, string>),
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa; alhaalla +1 ruoka päivässä', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa; alhaalla +1 kauppa päivässä',
 };
 
@@ -1785,7 +1830,7 @@ function cityView(c: City, y: CityYield): CityView {
     growText: y.surplus < 0 ? 'nälkää' : c.size >= sizeLimit(c) ? 'vesijohto puuttuu' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
     yields: [y.surplus, y.shield, y.trade],
     // A terrain building only where its terrain is (STORY-070)
-    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind))).map(kind => {
+    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind)) && !(isResourceBuilding(kind) && !resourceNear(c, kind))).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       const need = NEEDS[kind];
@@ -1838,10 +1883,12 @@ function updateCityCard() {
 /** Builds a city may start: known, not built, and no wonder another city has. */
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
-  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()));
+  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()));
 /** Units the cities build: only after the first building of a new game (STORY-070, Sami). */
 const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
 const unitsOpen = () => !play || play.progress.openLevel < 4 || play.cities.some(c => c.buildings.length > 0);
+/** A resource building needs a known tile of its kind in the city's area (STORY-073). */
+const resourceNear = (c: City, b: ResourceBuilding) => tilesInRings(c.tile, cityRings(c.size)).some(t => ground.resourceOf!(t) === RESOURCE_BUILDINGS[b].kind);
 /** A terrain building needs its terrain within the city's two rings. */
 const terrainNear = (c: City, b: TerrainBuilding) => tilesInRings(c.tile, 2).some(t => (TERRAIN_BUILDINGS[b] as readonly Terrain[]).includes(terrainOf(t)));
 
