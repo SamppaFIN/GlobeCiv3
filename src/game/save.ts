@@ -303,6 +303,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
             met: bool(t.met, 'met'), state: oneOf(t.state, ['peace', 'war', 'alliance'] as readonly Relation[], 'relation'),
             attitude: int(t.attitude, 'attitude', -100, 100), since: int(t.since, 'since', 0, MAX_INT), lost: int(t.lost, 'lost', 0, 1000),
             offered: int(t.offered, 'offered', -1000, MAX_INT),
+            // Saves from before STORY-078 have traded no maps
+            maps: t.maps === undefined ? -1000 : int(t.maps, 'maps', -1000, MAX_INT),
           };
         }, 10),
       }),

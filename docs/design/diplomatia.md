@@ -54,6 +54,22 @@ yli −50 epäluuloinen, muuten vihamielinen.
 - Sodassa Kenraali voi valita kohteeksi kilpailijan kaupungin. Kilpailijan menettämät
   kaupungit lasketaan rauhan ehtoon.
 
+## Vaihdot (STORY-078, Sami 2026-10-20: arvo ja asenne)
+
+- Diplomatiaruudun Vaihda-nappi avaa vaihtokortin rauhassa ja liitossa. Kortissa
+  valitaan, mitä pelaaja antaa (ei mitään, kartat, keksintö, jota kilpailija ei tunne,
+  tai 25, 50 tai 100 kultaa) ja mitä se saa (ei mitään, kilpailijan kartat, sen
+  keksintö tai resurssilaji, jota pelaaja ei tunne).
+- Arvo: keksintö on tutkimuksensa hinnan arvoinen saajalle (10 × (tunnetut + 1)),
+  resurssilaji 10, kartat 10 ja kulta määränsä.
+- Kilpailija hyväksyy, kun se saa vähintään antamansa arvon kerrottuna asenteen
+  kertoimella: myönteinen tai ystävällinen 0,75, varautunut 1 ja epäluuloinen 1,5.
+  Vihamielinen tai sodassa oleva kilpailija ei vaihda. Lahja hyväksytään aina, mutta
+  tyhjää ei vaihdeta tyhjään. Kortti kertoo arvion ennen tarjousta.
+- Hyväksytty vaihto nostaa asennetta 10:llä.
+- Kilpailijan kartat paljastavat sen kaupunkien ympäristön kolmen renkaan säteeltä.
+  Karttoja vaihdetaan enintään kerran 30 päivässä.
+
 ## Storyt
 
 | Story | Sisältö |
@@ -65,4 +81,4 @@ yli −50 epäluuloinen, muuten vihamielinen.
 ## Avoimet kysymykset (kysytään, kun story on vuorossa)
 
 - Jakaako liitto näkyvyyden tai sotaretket (yhteinen vihollinen)?
-- Miten vaihdon reiluus arvioidaan: keksinnön hinta tieteenä, resurssilaji ja kulta?
+- ~~Miten vaihdon reiluus arvioidaan?~~ Ratkaistu: arvo ja asenne (STORY-078).
