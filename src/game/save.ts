@@ -18,6 +18,7 @@ import type { Bandit } from './raids';
 import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './units';
 import type { Progress } from './progress';
 import { ADVANCE_LIST, LUX_RATES, RESOURCE_KINDS, TAX_RATES, type Advance, type Study } from './science';
+import type { Relation, Ties } from './diplomacy';
 import type { ResourceKind } from './terrainTypes';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
@@ -78,6 +79,8 @@ export interface SaveData {
   gold: number;
   /** Advances, research and the tax rate (STORY-040); saves from before have none and half. */
   research: { known: Advance[]; target: Study | null; bulbs: number; kinds?: ResourceKind[] };
+  /** The ties with each rival (STORY-076); saves from before have none. */
+  ties?: Ties[];
   tax: number;
   /** The current goal (STORY-041); saves from before start at the first and catch up. */
   goal: number;
@@ -278,6 +281,16 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           routed: w.routed === undefined ? [] : list(w.routed, 'routed', v => int(v, 'routed state', 0, Math.ceil(limits.cityAreas / 49)), 1000),
         };
       })(),
+      ...(s.ties === undefined ? {} : {
+        ties: list(s.ties, 'ties', v => {
+          const t = obj(v, 'tie');
+          return {
+            met: bool(t.met, 'met'), state: oneOf(t.state, ['peace', 'war', 'alliance'] as readonly Relation[], 'relation'),
+            attitude: int(t.attitude, 'attitude', -100, 100), since: int(t.since, 'since', 0, MAX_INT), lost: int(t.lost, 'lost', 0, 1000),
+            offered: int(t.offered, 'offered', -1000, MAX_INT),
+          };
+        }, 10),
+      }),
       gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),
       research: s.research === undefined ? { known: [], target: null, bulbs: 0 } : (() => {
         const r = obj(s.research, 'research');

@@ -81,7 +81,7 @@ test('a tapped hex opens a card of what it holds; mapped land and the fog alike'
   await page.evaluate(() => (window as any).globeDebug.learn('mapmaking'));
   expect(await coastRow()).toBe('rannikkovesi: 1 pv');
   // Another card closes it
-  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' }).click();
+  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' }).click();
   await expect(card).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Luettelo' })).toBeVisible();
   await expect(page.locator('.hud-bottom')).toBeHidden();

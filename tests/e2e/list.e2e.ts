@@ -14,7 +14,7 @@ test('the list shows the cities and the units; a row opens the city or selects t
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
 
-  const open = page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' });
+  const open = page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' });
   const list = page.getByRole('dialog', { name: 'Luettelo' });
   // Before a city: no cities, three units
   await open.click();

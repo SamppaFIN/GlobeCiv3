@@ -26,15 +26,16 @@ export interface TileCard {
   readonly visible: boolean;
 }
 
-export function createTileCard(root: HTMLElement, on: { close(): void; action?(index: number): void }): TileCard {
+/** A card of rows and buttons; `id` names its title, for a second card of the kind (diplomacy, STORY-076). */
+export function createTileCard(root: HTMLElement, on: { close(): void; action?(index: number): void }, id = 'tile'): TileCard {
   const el = document.createElement('section');
   el.className = 'city-card tile-card';
   el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-labelledby', 'tile-title');
+  el.setAttribute('aria-labelledby', `${id}-title`);
   el.hidden = true;
   el.innerHTML = `
     <div class="city-head">
-      <div class="city-titles"><span class="city-kicker tile-kicker"></span><h2 id="tile-title" class="city-name tile-title"></h2></div>
+      <div class="city-titles"><span class="city-kicker tile-kicker"></span><h2 id="${id}-title" class="city-name tile-title"></h2></div>
       <button class="btn btn-secondary hud-icon city-close" type="button" aria-label="Sulje">${CLOSE}</button>
     </div>
     <dl class="tile-rows"></dl>

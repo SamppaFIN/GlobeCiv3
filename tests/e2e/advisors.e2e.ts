@@ -57,7 +57,7 @@ test('advisors: the city area level has three to choose from, and the chosen one
   await expect(page.getByRole('dialog', { name: 'Rosvoja liikkeellä' })).toHaveCount(0);
   expect((await state(page)).raidAlert).toBe(false);
   await card.getByRole('button', { name: 'Sulje' }).click();
-  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' }).click();
+  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' }).click();
   await page.getByRole('dialog', { name: 'Luettelo' }).locator('.list-row').filter({ hasText: 'Aamuranta' }).click();
   await expect(page.getByRole('dialog', { name: 'Aamuranta' }).locator('.city-advisor')).toHaveText('Neuvonantaja Vartija hoitaa painotuksen ja rakentamisen.');
   await page.screenshot({ path: testInfo.outputPath('city-advisor.png') });
