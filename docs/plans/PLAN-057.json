@@ -1,0 +1,52 @@
+{
+  "id": "PLAN-057",
+  "story": "STORY-066",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-19",
+  "approach": "Puhdas moduuli src/game/nomads.ts (heimo, leiri, joukko ja ryöstöpäivät siemenestä). Ryöstöt käyttävät rosvojen Raids-luokkaa, jonka joukolla on nyt oma hyökkäysvoima ja heimon nimi. War-luokan take palauttaa taken, razed tai routed. Leirien maa saadaan kaupunkivaltioiden hausta.",
+  "alternatives_considered": [
+    {
+      "name": "Paimentolaiset liikkuvina yksiköinä, joiden tila tallennetaan",
+      "pros": "Elävämpi",
+      "cons": "Tallennettava tila ja oma liikelogiikka",
+      "rejected_because": "Leiri siemenestä ja päivästä on yksinkertaisempi ja noudattaa sääntöä 3"
+    },
+    {
+      "name": "Oma ryöstöjärjestelmä heimoille",
+      "pros": "Useita joukkoja yhtä aikaa",
+      "cons": "Toinen kortti ja puolustuslogiikka",
+      "rejected_because": "Rosvojen järjestelmä riittää yhdellä joukolla kerrallaan"
+    }
+  ],
+  "files_to_change": [
+    "src/game/nomads.ts",
+    "src/game/raids.ts",
+    "src/game/war.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityLabels.ts"
+  ],
+  "open_questions": [
+    "Kahdella heimolla voi olla sama nimi (12 eläinnimeä).",
+    "Tekoälysivilisaatiot ovat vielä tekemättä."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "nomads.ts ja yksikkötestit",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "Ryöstöt, leirit, kortti ja Kenraali",
+      "verify": "E2E nomads"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

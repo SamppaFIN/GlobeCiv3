@@ -1,0 +1,47 @@
+{
+  "id": "TICKET-IMPL-057",
+  "story": "STORY-066",
+  "plan": "PLAN-057",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/nomads.ts",
+    "src/game/nomads.test.ts",
+    "src/game/raids.ts",
+    "src/game/raids.test.ts",
+    "src/game/war.ts",
+    "src/game/war.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityLabels.ts",
+    "tests/e2e/nomads.e2e.ts",
+    "tests/e2e/war.e2e.ts"
+  ],
+  "change_summary": "nomads.ts: tribeOf, tribeCamp, tribeBand ja tribeRaids. Raids.start saa valinnaisen hyökkäysvoiman ja heimon, ja banditWins ottaa hyökkäysvoiman. War: routed-joukko ja take-tulos. main.ts: tribeLand kaupunkivaltioiden hausta, tribesNow, sendTribe, tribeLine, heimojen ryöstöt ennen kansannousuja, leirit kohteiksi, lunnaat, nimilaput ja heksan kortti. Leirien telttahahmo. Korjaus samalla: joukko, joka on jo riittävä, ei enää kävele kokoontumiskaupunkiin, ja lähtiessään se jättää kokoontumisreitin (STORY-064:n vika, jonka paimentolaistesti löysi).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Band.attack, Band.tribe, Raids.start, banditWins",
+      "WarWorld.take, WarEvent, WarSave.routed",
+      "CityLabel.foe (oli native)",
+      "UnitView.camps",
+      "raidDay, raidNotice, updateRaidAlert, warDay, warWorld"
+    ],
+    "call_sites_found": [
+      "raidWorld, startRaid",
+      "cityLabels.update",
+      "unitLayer.update",
+      "validateSave"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/game/save.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Sotaretkitestin alkuvaihe nopeudella 8 eikä 32: kuormitetussa ajossa kaupunkivaltioiden haku vie monta framea, ja nopeudella 32 kohde ehti kasvaa kokoon 5."
+  },
+  "commit": "d69749b",
+  "progress": 100
+}

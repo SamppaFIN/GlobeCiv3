@@ -1,0 +1,93 @@
+{
+  "id": "TICKET-TEST-057",
+  "story": "STORY-066",
+  "implementation_ticket": "TICKET-IMPL-057",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Naapurivaltioissa ei ollut paimentolaisia. Testissä löytyi STORY-064:n vika: riittävän suuri joukko käveli ensin kokoontumiskaupunkiin.",
+    "files_changed": [
+      "src/game/nomads.ts",
+      "src/game/war.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "nomads.test.ts",
+        "expected": "Nimi, leirin siirtymät, joukko 2–4, ryöstöt päivästä 120",
+        "result": "3/3",
+        "outcome": "pass"
+      },
+      {
+        "steps": "raids.test.ts: heimon hyökkäysvoima ja tallennus",
+        "expected": "Heitto 0,6 torjutaan rosvolta mutta ei miekkamieheltä",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "war.test.ts: heimon hajotus ja reitin vaihto lähdössä",
+        "expected": "routed, ei razed; lähtiessä reitti kohteeseen",
+        "result": "Läpi; testi kaatuu ilman korjausta",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E nomads: heimot, leiri, kortti, ryöstö ja hajotus",
+        "expected": "Kaikki näkyvät ja toimivat",
+        "result": "Kotkaheimo (2) hajosi päivänä 6, kuva camp.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pitkä peli (siemen 42, Laajentaja ja kotivaltion jälkeen Kenraali, 1 000 päivää)",
+        "expected": "Ryöstöt ja hajotukset ilman jumia",
+        "result": "Paimentolaiset ryöstivät Tuulikallion päivänä 531. Kenraali hajotti kaksi heimoa (valtiot 187 ja 189) ja valtasi kolme kaupunkivaltiota päivään 927 mennessä. Kassa pysyi 60–560 kullassa, kun Kenraali osti hyökkääjiä. Ei konsolivirheitä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 177/177; E2E 70/70",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39290026954 (d69749b, 42 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Heimot näkyvät, ja ryöstöt ovat ymmärrettäviä",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Heimot siemenestä",
+        "checked": true
+      },
+      {
+        "item": "Ryöstöt Freecivin barbaarien koossa",
+        "checked": true
+      },
+      {
+        "item": "Leiri ja kortti",
+        "checked": true
+      },
+      {
+        "item": "Kenraali ja lunnaat",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-19"
+  }
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-19T17:35:29Z",
+    "generated_at": "2026-10-20T06:15:15Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "3244704",
+    "git_commit": "d69749b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -167,7 +167,8 @@
         "STORY-062",
         "STORY-063",
         "STORY-064",
-        "STORY-065"
+        "STORY-065",
+        "STORY-066"
       ],
       "progress": 98
     }
@@ -1763,6 +1764,32 @@
         "plan": "PLAN-056",
         "implementation": "TICKET-IMPL-056",
         "testing": "TICKET-TEST-056"
+      }
+    },
+    {
+      "id": "STORY-066",
+      "epic": "EPIC-006",
+      "title": "Paimentolaisheimot",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että naapurivaltioissa liikkuu paimentolaisheimoja, jotka uhkaavat kaupunkejani ja jotka Kenraali voi hajottaa.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-034",
+        "STORY-063",
+        "STORY-064"
+      ],
+      "acceptance_criteria": [
+        "Jokaisessa kotivaltion ja vallattujen valtioiden naapurivaltiossa on yksi heimo omalla nimellään. Sen leiri siirtyy 40 päivän välein muualle valtion maalle, ja kaikki on siemenen ja päivän funktio (sääntö 3).",
+        "Heimon joukko on Freecivin barbaarien kokoinen, 2–4 (server/barbarian.c), ratsumiehiä (Cavalry, hyökkäys 2) ja päivästä 300 miekkamiehiä (Legion, hyökkäys 3). Päivästä 120 heimo lähettää joukkonsa noin kerran 60 päivässä lähimpään kaupunkiin 12 ruudun säteellä. Uhkakortti nimeää heimon, ja puolustus toimii kuten rosvoja vastaan.",
+        "Leiri näkyy kartoitettuna telttoina omalla nimilapullaan, ja heksan kortti kertoo heimon, joukon ja leirin siirtymisen.",
+        "Kenraali hyökkää näkyviin leireihin samoin kuin kaupunkivaltioihin. Voitettu heimo hajoaa ja maksaa lunnaiksi 100 kultaa (Freeciv RS_DEFAULT_RANSOM_GOLD), ja hajonneet heimot tallentuvat."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-057",
+        "implementation": "TICKET-IMPL-057",
+        "testing": "TICKET-TEST-057"
       }
     }
   ],
@@ -4542,6 +4569,58 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-057",
+      "story": "STORY-066",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-19",
+      "approach": "Puhdas moduuli src/game/nomads.ts (heimo, leiri, joukko ja ryöstöpäivät siemenestä). Ryöstöt käyttävät rosvojen Raids-luokkaa, jonka joukolla on nyt oma hyökkäysvoima ja heimon nimi. War-luokan take palauttaa taken, razed tai routed. Leirien maa saadaan kaupunkivaltioiden hausta.",
+      "alternatives_considered": [
+        {
+          "name": "Paimentolaiset liikkuvina yksiköinä, joiden tila tallennetaan",
+          "pros": "Elävämpi",
+          "cons": "Tallennettava tila ja oma liikelogiikka",
+          "rejected_because": "Leiri siemenestä ja päivästä on yksinkertaisempi ja noudattaa sääntöä 3"
+        },
+        {
+          "name": "Oma ryöstöjärjestelmä heimoille",
+          "pros": "Useita joukkoja yhtä aikaa",
+          "cons": "Toinen kortti ja puolustuslogiikka",
+          "rejected_because": "Rosvojen järjestelmä riittää yhdellä joukolla kerrallaan"
+        }
+      ],
+      "files_to_change": [
+        "src/game/nomads.ts",
+        "src/game/raids.ts",
+        "src/game/war.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityLabels.ts"
+      ],
+      "open_questions": [
+        "Kahdella heimolla voi olla sama nimi (12 eläinnimeä).",
+        "Tekoälysivilisaatiot ovat vielä tekemättä."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "nomads.ts ja yksikkötestit",
+          "verify": "Vitest"
+        },
+        {
+          "step": 2,
+          "action": "Ryöstöt, leirit, kortti ja Kenraali",
+          "verify": "E2E nomads"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6729,6 +6808,53 @@
         "notes": "Kaikki paikkojen valinnat käyttävät world.siteScorea, joten yksi muutos kattaa ne."
       },
       "commit": "3244704",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-057",
+      "story": "STORY-066",
+      "plan": "PLAN-057",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/nomads.ts",
+        "src/game/nomads.test.ts",
+        "src/game/raids.ts",
+        "src/game/raids.test.ts",
+        "src/game/war.ts",
+        "src/game/war.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityLabels.ts",
+        "tests/e2e/nomads.e2e.ts",
+        "tests/e2e/war.e2e.ts"
+      ],
+      "change_summary": "nomads.ts: tribeOf, tribeCamp, tribeBand ja tribeRaids. Raids.start saa valinnaisen hyökkäysvoiman ja heimon, ja banditWins ottaa hyökkäysvoiman. War: routed-joukko ja take-tulos. main.ts: tribeLand kaupunkivaltioiden hausta, tribesNow, sendTribe, tribeLine, heimojen ryöstöt ennen kansannousuja, leirit kohteiksi, lunnaat, nimilaput ja heksan kortti. Leirien telttahahmo. Korjaus samalla: joukko, joka on jo riittävä, ei enää kävele kokoontumiskaupunkiin, ja lähtiessään se jättää kokoontumisreitin (STORY-064:n vika, jonka paimentolaistesti löysi).",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Band.attack, Band.tribe, Raids.start, banditWins",
+          "WarWorld.take, WarEvent, WarSave.routed",
+          "CityLabel.foe (oli native)",
+          "UnitView.camps",
+          "raidDay, raidNotice, updateRaidAlert, warDay, warWorld"
+        ],
+        "call_sites_found": [
+          "raidWorld, startRaid",
+          "cityLabels.update",
+          "unitLayer.update",
+          "validateSave"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/save.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Sotaretkitestin alkuvaihe nopeudella 8 eikä 32: kuormitetussa ajossa kaupunkivaltioiden haku vie monta framea, ja nopeudella 32 kohde ehti kasvaa kokoon 5."
+      },
+      "commit": "d69749b",
       "progress": 100
     }
   ],
@@ -11744,6 +11870,99 @@
           },
           {
             "item": "Siemenen funktio",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-057",
+      "story": "STORY-066",
+      "implementation_ticket": "TICKET-IMPL-057",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Naapurivaltioissa ei ollut paimentolaisia. Testissä löytyi STORY-064:n vika: riittävän suuri joukko käveli ensin kokoontumiskaupunkiin.",
+        "files_changed": [
+          "src/game/nomads.ts",
+          "src/game/war.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "nomads.test.ts",
+            "expected": "Nimi, leirin siirtymät, joukko 2–4, ryöstöt päivästä 120",
+            "result": "3/3",
+            "outcome": "pass"
+          },
+          {
+            "steps": "raids.test.ts: heimon hyökkäysvoima ja tallennus",
+            "expected": "Heitto 0,6 torjutaan rosvolta mutta ei miekkamieheltä",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "war.test.ts: heimon hajotus ja reitin vaihto lähdössä",
+            "expected": "routed, ei razed; lähtiessä reitti kohteeseen",
+            "result": "Läpi; testi kaatuu ilman korjausta",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E nomads: heimot, leiri, kortti, ryöstö ja hajotus",
+            "expected": "Kaikki näkyvät ja toimivat",
+            "result": "Kotkaheimo (2) hajosi päivänä 6, kuva camp.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Pitkä peli (siemen 42, Laajentaja ja kotivaltion jälkeen Kenraali, 1 000 päivää)",
+            "expected": "Ryöstöt ja hajotukset ilman jumia",
+            "result": "Paimentolaiset ryöstivät Tuulikallion päivänä 531. Kenraali hajotti kaksi heimoa (valtiot 187 ja 189) ja valtasi kolme kaupunkivaltiota päivään 927 mennessä. Kassa pysyi 60–560 kullassa, kun Kenraali osti hyökkääjiä. Ei konsolivirheitä.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 177/177; E2E 70/70",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39290026954 (d69749b, 42 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Heimot näkyvät, ja ryöstöt ovat ymmärrettäviä",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Heimot siemenestä",
+            "checked": true
+          },
+          {
+            "item": "Ryöstöt Freecivin barbaarien koossa",
+            "checked": true
+          },
+          {
+            "item": "Leiri ja kortti",
+            "checked": true
+          },
+          {
+            "item": "Kenraali ja lunnaat",
             "checked": true
           }
         ],
