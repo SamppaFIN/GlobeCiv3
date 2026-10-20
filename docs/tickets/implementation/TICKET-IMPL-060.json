@@ -1,0 +1,37 @@
+{
+  "id": "TICKET-IMPL-060",
+  "story": "STORY-069",
+  "plan": "PLAN-060",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/globe/cityView.ts",
+    "src/globe/cityView.test.ts",
+    "src/globe/main.ts",
+    "src/globe/tiles.ts",
+    "src/globe/unitLayer.ts",
+    "tests/e2e/city-level.e2e.ts",
+    "docs/design/kaupunkitaso.md"
+  ],
+  "change_summary": "cityView.ts: centreTriangles, buildCityTerrain (8 × 8 jako, korkeus maastosta ja kohinasta, kärkivärit, ulospäin käännetyt pinnat ja kohteiden paikat) ja risingMaterial. main.ts: cityLevel (suunnattu valo 2048 px:n varjokartalla, puolipallovalo, maa ja sen syvyysmateriaali, puut, kivet, palatsi, talot, rakennukset ja muurirengas), cityInView, updateCityLevel (nousu ja lasku 0,6 s), kaupunkikuvakkeen piilotus, yksiköiden koko ja korkeus, nimilapun nosto, testihookit foundHere, giveBuildings, cityLevel, cityLevelDist ja cityShadows. tiles.ts: terrainColor. unitLayer.ts: raise ja scale.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "renderer.shadowMap (päällä, vain kaupunkitason valo heittää varjoja)",
+      "UnitLayer.at (raise), UnitView.scale",
+      "updateCityLabels (lift)"
+    ],
+    "call_sites_found": [
+      "unitLayer.update",
+      "cityLabels.update",
+      "animate"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Ensimmäisessä kuvassa puolet kolmioista oli sisäänpäin (kärjet ruutunumeron järjestyksessä) ja jäivät näkymättä; nyt kärjet käännetään ulospäin, ja testi tarkistaa sen."
+  },
+  "commit": "9e2d657",
+  "progress": 100
+}

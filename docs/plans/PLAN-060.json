@@ -1,0 +1,56 @@
+{
+  "id": "PLAN-060",
+  "story": "STORY-069",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-20",
+  "approach": "Settlers-testin tekniikka omana koodina pallolle: kärkiväriverkko ruutujen keskipisteiden kautta, flatShading ja varjokartta. src/globe/cityView.ts rakentaa maaston kaupungin origon ympärille, ja korkeus on rise-attribuutti, jota relief-uniformi skaalaa. Varjojen syvyysmateriaali nousee samoin. main.ts:n cityLevel hoitaa valon, varjokameran, puut, kivet ja rakennukset. Kaupunkitaso on zoomausvyöhyke kaupunkialuetason sisällä, joten pelilogiikka ei muutu (sääntö 1).",
+  "alternatives_considered": [
+    {
+      "name": "Uusi näkymätaso 4",
+      "pros": "Selkeä taso",
+      "cons": "Kymmenet viewLevel === 3 -tarkistukset muuttuisivat",
+      "rejected_because": "Zoomausvyöhyke riittää, ja logiikka pysyy ennallaan"
+    },
+    {
+      "name": "Korkeus jatkuvasti etäisyyden mukaan",
+      "pros": "Saumaton",
+      "cons": "Jokaisen framen kohteet ja varjot liikkuisivat",
+      "rejected_because": "Maa nousee -hetki 0,6 s:ssa; Samin pyytämä tuntuma hetkistä"
+    },
+    {
+      "name": "Settlersin koodin kopiointi",
+      "pros": "Valmis",
+      "cons": "Tasokartta eikä pallo, eikä paketissa ole lisenssitekstiä",
+      "rejected_because": "Oma toteutus samalla tekniikalla"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/cityView.ts",
+    "src/globe/main.ts",
+    "src/globe/tiles.ts",
+    "src/globe/unitLayer.ts"
+  ],
+  "open_questions": [
+    "Rakennusten sijoitus ja sen säännöt (STORY-071).",
+    "Uusi alku, kuvernöörit ja resurssipohjainen tutkimus (STORY-070, STORY-072, STORY-073; docs/design/kaupunkitaso.md).",
+    "Materiaalien ensimmäinen käännös voi nykäistä puhelimella kaupunkitasolle tultaessa: Samin puhelintesti."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "cityView.ts ja yksikkötestit",
+      "verify": "Vitest: kolmiot, korkeudet, saumattomuus ja ulospäin katsovat pinnat"
+    },
+    {
+      "step": 2,
+      "action": "Valo, varjot, kohteet ja rakennukset",
+      "verify": "Kuvat kahdella siemenellä työpöydällä ja puhelimella"
+    },
+    {
+      "step": 3,
+      "action": "E2E ja mittaus",
+      "verify": "Nousu, lasku ja framet"
+    }
+  ],
+  "status": "approved"
+}

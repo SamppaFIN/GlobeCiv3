@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-20T08:26:32Z",
+    "generated_at": "2026-10-20T09:58:43Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "8ef2ac7",
+    "git_commit": "9e2d657",
     "git_branch": "main",
     "language": "fi"
   },
@@ -170,7 +170,8 @@
         "STORY-065",
         "STORY-066",
         "STORY-067",
-        "STORY-068"
+        "STORY-068",
+        "STORY-069"
       ],
       "progress": 98
     }
@@ -1845,6 +1846,33 @@
         "plan": "PLAN-059",
         "implementation": "TICKET-IMPL-059",
         "testing": "TICKET-TEST-059"
+      }
+    },
+    {
+      "id": "STORY-069",
+      "epic": "EPIC-006",
+      "title": "Kaupunkitaso: korkeuserot ja rakennukset",
+      "type": "story",
+      "narrative": "Pelaajana haluan zoomata kaupunkiini ja nähdä sen maaston korkeuserot, talot ja rakennukset kuin pienoismaailman.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-028",
+        "STORY-038",
+        "STORY-067"
+      ],
+      "acceptance_criteria": [
+        "Kun kamera tulee lähelle pelaajan kaupunkia (alle puolet kaupunkialueen kehysetäisyydestä), kaupungin kolme rengasta nousevat korkeuseroiksi 0,6 sekunnissa seinäkellon mukaan, ja ne laskevat takaisin, kun kamera loittonee (sääntö 5). Vähennetyllä liikkeellä muutos on välitön.",
+        "Maasto muodostuu ruutujen keskipisteiden välisistä kolmioista, jotka jaetaan 8 × 8 pienempään. Korkeus tulee ruudun maastosta (vuoret korkeimmalla, meri tasaisena) ja maaston kohinasta, ja seuraava rengas viettää takaisin pallon pintaan. Pinta on fasetoitu, värit tulevat maastotokeneista ja liukuvat ruudulta toiselle, ja valo tulee näkymän vasemmasta yläkulmasta varjoineen.",
+        "Metsillä on puita ja kukkuloilla ja vuorilla kiviä. Kaupungilla on palatsi (pääkaupunki), taloja koon mukaan ja rakennuksensa omina malleinaan (viljavarasto, temppeli, kirjasto, tori, vesijohto, areena, Kolossi, puutarhat), ja muuri on rengas. Paikat ovat väliaikaisia, kunnes pelaaja sijoittaa rakennukset (STORY-071).",
+        "Kaupunkitasolla kaupungin 2D-kuvake piiloutuu, yksiköt pienenevät ja seisovat nousseella maalla, ja kaupungin nimilappu nousee muurin yläpuolelle.",
+        "Suorituskyky mitataan (koodaussääntö 6)."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-060",
+        "implementation": "TICKET-IMPL-060",
+        "testing": "TICKET-TEST-060"
       }
     }
   ],
@@ -4779,6 +4807,62 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-060",
+      "story": "STORY-069",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-20",
+      "approach": "Settlers-testin tekniikka omana koodina pallolle: kärkiväriverkko ruutujen keskipisteiden kautta, flatShading ja varjokartta. src/globe/cityView.ts rakentaa maaston kaupungin origon ympärille, ja korkeus on rise-attribuutti, jota relief-uniformi skaalaa. Varjojen syvyysmateriaali nousee samoin. main.ts:n cityLevel hoitaa valon, varjokameran, puut, kivet ja rakennukset. Kaupunkitaso on zoomausvyöhyke kaupunkialuetason sisällä, joten pelilogiikka ei muutu (sääntö 1).",
+      "alternatives_considered": [
+        {
+          "name": "Uusi näkymätaso 4",
+          "pros": "Selkeä taso",
+          "cons": "Kymmenet viewLevel === 3 -tarkistukset muuttuisivat",
+          "rejected_because": "Zoomausvyöhyke riittää, ja logiikka pysyy ennallaan"
+        },
+        {
+          "name": "Korkeus jatkuvasti etäisyyden mukaan",
+          "pros": "Saumaton",
+          "cons": "Jokaisen framen kohteet ja varjot liikkuisivat",
+          "rejected_because": "Maa nousee -hetki 0,6 s:ssa; Samin pyytämä tuntuma hetkistä"
+        },
+        {
+          "name": "Settlersin koodin kopiointi",
+          "pros": "Valmis",
+          "cons": "Tasokartta eikä pallo, eikä paketissa ole lisenssitekstiä",
+          "rejected_because": "Oma toteutus samalla tekniikalla"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/cityView.ts",
+        "src/globe/main.ts",
+        "src/globe/tiles.ts",
+        "src/globe/unitLayer.ts"
+      ],
+      "open_questions": [
+        "Rakennusten sijoitus ja sen säännöt (STORY-071).",
+        "Uusi alku, kuvernöörit ja resurssipohjainen tutkimus (STORY-070, STORY-072, STORY-073; docs/design/kaupunkitaso.md).",
+        "Materiaalien ensimmäinen käännös voi nykäistä puhelimella kaupunkitasolle tultaessa: Samin puhelintesti."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "cityView.ts ja yksikkötestit",
+          "verify": "Vitest: kolmiot, korkeudet, saumattomuus ja ulospäin katsovat pinnat"
+        },
+        {
+          "step": 2,
+          "action": "Valo, varjot, kohteet ja rakennukset",
+          "verify": "Kuvat kahdella siemenellä työpöydällä ja puhelimella"
+        },
+        {
+          "step": 3,
+          "action": "E2E ja mittaus",
+          "verify": "Nousu, lasku ja framet"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -7088,6 +7172,43 @@
         "notes": "Tiedustelijan kaupunkiehdotus ei ohittanut kaupunkivaltioiden läheisyyttä (STORY-063:n aukko); nearForeign kattaa nyt kaikki neljä paikanvalintaa."
       },
       "commit": "8ef2ac7",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-060",
+      "story": "STORY-069",
+      "plan": "PLAN-060",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/cityView.ts",
+        "src/globe/cityView.test.ts",
+        "src/globe/main.ts",
+        "src/globe/tiles.ts",
+        "src/globe/unitLayer.ts",
+        "tests/e2e/city-level.e2e.ts",
+        "docs/design/kaupunkitaso.md"
+      ],
+      "change_summary": "cityView.ts: centreTriangles, buildCityTerrain (8 × 8 jako, korkeus maastosta ja kohinasta, kärkivärit, ulospäin käännetyt pinnat ja kohteiden paikat) ja risingMaterial. main.ts: cityLevel (suunnattu valo 2048 px:n varjokartalla, puolipallovalo, maa ja sen syvyysmateriaali, puut, kivet, palatsi, talot, rakennukset ja muurirengas), cityInView, updateCityLevel (nousu ja lasku 0,6 s), kaupunkikuvakkeen piilotus, yksiköiden koko ja korkeus, nimilapun nosto, testihookit foundHere, giveBuildings, cityLevel, cityLevelDist ja cityShadows. tiles.ts: terrainColor. unitLayer.ts: raise ja scale.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "renderer.shadowMap (päällä, vain kaupunkitason valo heittää varjoja)",
+          "UnitLayer.at (raise), UnitView.scale",
+          "updateCityLabels (lift)"
+        ],
+        "call_sites_found": [
+          "unitLayer.update",
+          "cityLabels.update",
+          "animate"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Ensimmäisessä kuvassa puolet kolmioista oli sisäänpäin (kärjet ruutunumeron järjestyksessä) ja jäivät näkymättä; nyt kärjet käännetään ulospäin, ja testi tarkistaa sen."
+      },
+      "commit": "9e2d657",
       "progress": 100
     }
   ],
@@ -12369,6 +12490,92 @@
           },
           {
             "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "id": "TICKET-TEST-060",
+      "story": "STORY-069",
+      "implementation_ticket": "TICKET-IMPL-060",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Kaupunkia ei voinut nähdä lähempää kuin kaupunkialuetason tasokarttana.",
+        "files_changed": [
+          "src/globe/cityView.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä (Intel UHD); siemenet 42 ja 7.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "cityView.test.ts",
+            "expected": "Kolmiot kerran, korkeudet maastosta, saumattomuus, ulospäin katsovat pinnat ja nouseva materiaali",
+            "result": "4/4",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kuvat työpöydällä ja puhelimella, siemenet 42 (kukkulat) ja 7 (tasanko ja rannikko)",
+            "expected": "Korkeuserot, rakennukset, muuri, puut ja kivet",
+            "result": "Ensimmäisessä kuvassa puolet maasta puuttui, muuri oli sotku ja kuvakkeet peittivät mallit; korjattu, ja uudet kuvat näyttävät kaupungin",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E city-level: nousu, kohteet, lasku ja konsoli",
+            "expected": "relief 0 → 1 → 0, 6 144 kolmiota, kohteita, ei virheitä",
+            "result": "Läpi, kuvat city-area.png ja city-level.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Frame-mittaus samassa istunnossa (Intel UHD, Chrome, 2 s)",
+            "expected": "Lähellä kaupunkialueen tasoa",
+            "result": "Kaupunkitaso 113–114 framea varjojen kanssa ja 114 ilman (kolme A/B-kierrosta), kaupunkialue 115. Varjot ja maasto eivät maksa mitattavasti.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 185/185; E2E 73/73 yhdellä workerilla kuten CI:ssä. Rinnakkain ajettuna kaksi kamerattestiä (seinäkellon ajoitus) kaatui vuorotellen kuormaan; yksinään ja yhdellä workerilla läpi.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39397506256 (9e2d657, 57 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Kaupunkitaso puhelimella, 30 fps",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Maa nousee ja laskee",
+            "checked": true
+          },
+          {
+            "item": "Korkeuserot maastosta",
+            "checked": true
+          },
+          {
+            "item": "Rakennukset ja muuri",
+            "checked": true
+          },
+          {
+            "item": "Suorituskyky mitattu",
             "checked": true
           }
         ],

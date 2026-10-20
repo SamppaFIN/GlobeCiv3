@@ -1,0 +1,86 @@
+{
+  "id": "TICKET-TEST-060",
+  "story": "STORY-069",
+  "implementation_ticket": "TICKET-IMPL-060",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Kaupunkia ei voinut nähdä lähempää kuin kaupunkialuetason tasokarttana.",
+    "files_changed": [
+      "src/globe/cityView.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä (Intel UHD); siemenet 42 ja 7.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "cityView.test.ts",
+        "expected": "Kolmiot kerran, korkeudet maastosta, saumattomuus, ulospäin katsovat pinnat ja nouseva materiaali",
+        "result": "4/4",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvat työpöydällä ja puhelimella, siemenet 42 (kukkulat) ja 7 (tasanko ja rannikko)",
+        "expected": "Korkeuserot, rakennukset, muuri, puut ja kivet",
+        "result": "Ensimmäisessä kuvassa puolet maasta puuttui, muuri oli sotku ja kuvakkeet peittivät mallit; korjattu, ja uudet kuvat näyttävät kaupungin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E city-level: nousu, kohteet, lasku ja konsoli",
+        "expected": "relief 0 → 1 → 0, 6 144 kolmiota, kohteita, ei virheitä",
+        "result": "Läpi, kuvat city-area.png ja city-level.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Frame-mittaus samassa istunnossa (Intel UHD, Chrome, 2 s)",
+        "expected": "Lähellä kaupunkialueen tasoa",
+        "result": "Kaupunkitaso 113–114 framea varjojen kanssa ja 114 ilman (kolme A/B-kierrosta), kaupunkialue 115. Varjot ja maasto eivät maksa mitattavasti.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 185/185; E2E 73/73 yhdellä workerilla kuten CI:ssä. Rinnakkain ajettuna kaksi kamerattestiä (seinäkellon ajoitus) kaatui vuorotellen kuormaan; yksinään ja yhdellä workerilla läpi.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39397506256 (9e2d657, 57 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Kaupunkitaso puhelimella, 30 fps",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Maa nousee ja laskee",
+        "checked": true
+      },
+      {
+        "item": "Korkeuserot maastosta",
+        "checked": true
+      },
+      {
+        "item": "Rakennukset ja muuri",
+        "checked": true
+      },
+      {
+        "item": "Suorituskyky mitattu",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-20"
+  }
+}
