@@ -12,8 +12,12 @@ export interface CityLabel {
   /** Screen position in CSS pixels, or null when not in view. */
   x: number | null;
   y: number | null;
-  /** A city-state (STORY-063) or a tribe of nomads (STORY-066), not the player's. */
-  foe?: 'native' | 'tribe';
+  /** A city-state (STORY-063), a tribe of nomads (STORY-066) or a rival's city (STORY-068), not the player's. */
+  foe?: 'native' | 'tribe' | 'rival';
+  /** A rival's colour (CSS) for the border and the size. */
+  color?: string;
+  /** A rival's name, for the screen reader. */
+  owner?: string;
 }
 
 export function createCityLabels(root: HTMLElement, onTap: (id: number) => void): { update(labels: CityLabel[]): void } {
@@ -38,12 +42,14 @@ export function createCityLabels(root: HTMLElement, onTap: (id: number) => void)
         if (b.hidden !== hidden) b.hidden = hidden;
         if (!l || hidden) return;
         // Only what changed is written: a text written in every frame costs a layout (STORY-062)
-        const key = `${l.id}|${l.name}|${l.size}|${l.foe ?? ''}`;
+        const key = `${l.id}|${l.name}|${l.size}|${l.foe ?? ''}|${l.color ?? ''}`;
         if (b.dataset.key !== key) {
           b.dataset.key = key;
           b.dataset.id = String(l.id);
-          b.classList.toggle('city-label-native', !!l.foe);
-          b.setAttribute('aria-label', l.foe === 'tribe' ? `Paimentolaisheimo ${l.name}, ${l.size} soturia` : `${l.foe ? 'Kaupunkivaltio' : 'Kaupunki'} ${l.name}, koko ${l.size}`);
+          b.classList.toggle('city-label-native', l.foe === 'native' || l.foe === 'tribe');
+          b.classList.toggle('city-label-rival', l.foe === 'rival');
+          b.style.setProperty('--rival', l.color ?? '');
+          b.setAttribute('aria-label', l.foe === 'tribe' ? `Paimentolaisheimo ${l.name}, ${l.size} soturia` : l.foe === 'rival' ? `${l.owner} · kaupunki ${l.name}, koko ${l.size}` : `${l.foe ? 'Kaupunkivaltio' : 'Kaupunki'} ${l.name}, koko ${l.size}`);
           b.querySelector('.city-label-name')!.textContent = l.name;
           b.querySelector('.city-label-size')!.textContent = String(l.size);
         }
