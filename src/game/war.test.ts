@@ -101,4 +101,21 @@ describe('campaigns (Freeciv civ1 combat)', () => {
     war.routed.add(9);
     expect(new War(war.save()).routed.has(9)).toBe(true);
   });
+
+  it('live defenders (STORY-077: the cities of a rival and of the player) fall one by one and do not come back', () => {
+    const army = [attacker(1, neighbors(CITY)[0]), attacker(2, neighbors(CITY)[1]), attacker(3, neighbors(CITY)[2])];
+    let defenders = 2;
+    const world: WarWorld = {
+      ...makeWorld(0, [0.1, 0.1], army),
+      defence: () => ({ full: defenders, defense: 1, walls: false, terrain: 'grassland', live: true }),
+      defeat() { defenders--; },
+      take: () => 'taken',
+    };
+    const war = new War();
+    war.setTarget(CITY);
+    expect(war.day(army, world, 10, 3)).toEqual(['won', 'won', 'taken']);
+    expect(defenders).toBe(0);
+    // Nothing was kept as a city-state's losses
+    expect(war.losses.size).toBe(0);
+  });
 });

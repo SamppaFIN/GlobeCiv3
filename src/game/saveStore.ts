@@ -39,6 +39,15 @@ export async function loadSave(): Promise<unknown> {
   }
 }
 
+/** Forget the save: the game is over (STORY-077). */
+export async function clearSave(): Promise<void> {
+  try {
+    await run('readwrite', s => s.delete(KEY));
+  } catch {
+    // Nothing to forget
+  }
+}
+
 /** Store the save; false when the browser does not let it. */
 export async function storeSave(data: object): Promise<boolean> {
   try {
