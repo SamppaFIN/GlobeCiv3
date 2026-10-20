@@ -1,0 +1,68 @@
+# GlobeCiv3 — kaupunkitaso ja uusi alku
+
+> Samin linjaukset 2026-10-20 (avoin kysymys 11, pelattavuuden uudistus). Suunnitelma,
+> jota tarkennetaan storyittain. Toteutus on omaa koodia; Settlers-testistä otetaan
+> tekniikka (Samin ystävän työ, käyttöön lupa Samin mukaan).
+
+## Samin linjaukset
+
+1. **Kaupunkitaso.** Settlers-testin (argoescobar.github.io/settlers) pinta ja
+   maastonmuodostus: korkeuserot ja rakennukset. Siitä tulee kaupunkitaso, mutta
+   mekaniikka on omaa.
+2. **Pelaaja sijoittaa rakennukset** kaupungin maastoon, ja korkeuserot vaikuttavat.
+3. **Uusi alku.** Kaupungin alkupaikaksi arvotaan monipuolinen maasto, jossa on yksi
+   erikoisresurssi. Rakennuksia on aluksi vain muutama.
+4. **Kuvernööri.** Kaikki toimii valitsemalla kuvernööri. Kuvernööreinä ovat nykyiset
+   kolme: Kasvattaja, Kartoittaja ja Vartija.
+5. **Seuraava kartta.** Kun kaupunki rakentaa tiedustelijan tai uudisasukkaan,
+   pääsee seuraavalle kartalle (kaupunkialuetaso heksaruutuineen).
+6. **Resurssit ja tutkimus.** Kansa tutkii alkupaikan erikoisresurssin ja näkee sen
+   jälkeen saman lajin resurssit kartalla. Resursseja paljastuu sitä mukaa kuin niitä
+   löytyy läänitasolla, ja jokainen löytö avaa uusia tutkimuskohteita.
+7. **Resurssin rakennus.** Kun läänitasolla asuttaa uuden resurssin, saa sen
+   rakennuksen. Valmis rakennus antaa uuden tutkimuksen, yksikön, bonuksen tai muun
+   vastaavan.
+
+## Kaupunkitason tekniikka (Settlers-testistä)
+
+- Kärkipiste jokaisen ruudun keskelle, ja kolmiot naapuriruutujen keskipisteiden
+  välille. Pinta on fasetoitu (flatShading), ja kärkivärit tulevat maastosta ja
+  liukuvat ruudulta toiselle.
+- Korkeus: satunnaiskenttä pehmennetään kuusi kertaa naapureiden keskiarvolla ja
+  jaetaan 16 yhtä suureen kaistaan (vesi, ranta, nurmi, vuoret). Meillä korkeus
+  tulee pelin omasta maastokentästä ja ruudun maastotyypistä, jotta ruutu näyttää
+  siltä, mitä se pelissä on.
+- Suunnattu valo ja varjokartta, ympäristövalo, puut ja kivet instansoituina malleina.
+  Kamera katsoo vinosti.
+
+## Toteutus GlobeCiv3:ssa
+
+- Sääntö 1: sama maailma, renderöijä ja kamera. Kaupunkitaso on zoomausvyöhyke
+  kaupunkialuetason sisällä: kun kamera tulee lähelle kaupunkia, sen alue nousee
+  korkeuseroiksi ("maa nousee" -hetki seinäkellon mukaan, sääntö 5). Pelilogiikka
+  (napautukset, yksiköt, kortit) pysyy ennallaan.
+- Kaupungin alueen ruudut jaetaan pienemmiksi kolmioiksi pallon pinnalla. Verkko
+  rakennetaan kaupungin keskipisteen ympärille omalla origollaan (tarkkuus).
+
+## Storyt
+
+| Story | Sisältö |
+|---|---|
+| STORY-069 | Kaupunkitaso: korkeuserot, fasetoitu pinta, valo ja varjot, puut ja kivet, kaupungin talot ja rakennukset oletuspaikoilla |
+| STORY-070 | Uusi alku: arvottu monipuolinen alkupaikka yhdellä erikoisresurssilla, valmis pääkaupunki, peli alkaa kaupunkitasolta, kuvernöörit, tiedustelija rakennettavaksi, ja tiedustelija tai uudisasukas avaa kaupunkialuetason |
+| STORY-071 | Rakennusten sijoitus kaupunkitasolla: muutama rakennus ja korkeuksiin perustuvat paikkasäännöt |
+| STORY-072 | Resurssit ja tutkimus: alkuresurssin tutkiminen paljastaa lajinsa, löydöt läänitasolla paljastavat lisää, ja resurssit avaavat tutkimuskohteita |
+| STORY-073 | Resurssien rakennukset: uuden resurssin asuttaminen antaa sen rakennuksen, ja valmis rakennus antaa tutkimuksen, yksikön tai bonuksen |
+
+Kilpailijoiden sodat (aiemmin STORY-069) siirtyvät näiden jälkeen.
+
+## Avoimet kysymykset (kysytään yksi kerrallaan, kun story on vuorossa)
+
+- Mitkä muutamat rakennukset kaupunkitasolla on alussa, ja mitä ne tekevät?
+- Miten korkeuserot vaikuttavat sijoitukseen (esim. muuri mäelle, satama rantaan)?
+- Mitkä tutkimuskohteet kukin resurssilaji avaa, ja korvaako resurssipuu nykyiset
+  keksinnöt vai täydentääkö se niitä?
+- Mikä rakennus kullakin resurssilla on, ja mitä se antaa valmistuttuaan?
+- Riittääkö asuttamiseen, että resurssi on kaupungin alueella, vai pitääkö kaupunki
+  perustaa resurssiruudulle?
+- Näkyvätkö resurssit kartalla vasta tutkittuina (piilossa ennen tutkimusta)?

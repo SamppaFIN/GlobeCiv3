@@ -191,6 +191,8 @@ export interface UnitView {
   cities: readonly number[];
   /** Tiles of the city-states in view (STORY-063). */
   natives: readonly number[];
+  /** Size of the figures, smaller at the city level beside its buildings (STORY-069); 1 by default. */
+  scale?: number;
   /** Camps of the nomads in view (STORY-066). */
   camps: readonly number[];
   /** Rival cities in view and whose they are (STORY-068). */
@@ -253,13 +255,16 @@ export class UnitLayer {
   }
 
   /** World position of a tile centre, lifted a little. */
+  /** Height of the ground at a tile where the city level has raised it (STORY-069), else none. */
+  raise: ((tile: number) => number) | null = null;
+
   private at(tile: number, out = new THREE.Vector3()): THREE.Vector3 {
-    return tileCenter(tile, out).multiplyScalar(this.radius * (1 + LIFT));
+    return tileCenter(tile, out).multiplyScalar(this.radius * (1 + LIFT) + (this.raise?.(tile) ?? 0));
   }
 
   /** Place everything; figures on the far side of the globe (from cameraPos) are hidden. */
   update(view: UnitView, cameraPos: THREE.Vector3): void {
-    const size = view.spacing * 0.8;
+    const size = view.spacing * 0.8 * (view.scale ?? 1);
     const facing = (p: THREE.Vector3) => p.dot(cameraPos) > this.radius * this.radius;
     while (this.figures.length < view.units.length) {
       const s = sprite(this.textures.scout, 12);

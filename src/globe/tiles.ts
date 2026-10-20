@@ -70,6 +70,8 @@ const TERRAIN_TOKENS: Record<string, [number, number, number]> = {
   plains: [0.75, 0.09, 105], swamp: [0.48, 0.06, 122], tundra: [0.66, 0.04, 160],
 };
 const terrainColors = TERRAINS.map(t => new THREE.Vector3(...oklchToSrgb(...TERRAIN_TOKENS[t])));
+/** A terrain's token colour, for the city level's ground (STORY-069). */
+export const terrainColor = (t: (typeof TERRAINS)[number]) => new THREE.Color().setRGB(...oklchToSrgb(...TERRAIN_TOKENS[t]), THREE.SRGBColorSpace);
 /**
  * Each terrain's resource marker in the colour of what it gives (tokens.css --yield-food,
  * --yield-prod and --yield-trade; STORY-067: Sami found the markers colourless). The icon

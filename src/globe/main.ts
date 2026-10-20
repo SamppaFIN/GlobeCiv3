@@ -3,13 +3,14 @@
  * Minimal working version for T-GC3-001.
  */
 import * as THREE from 'three';
+import { buildCityTerrain, risingMaterial, type CityTerrain, type Site } from './cityView';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
 import { neighbors, pointToTile, tileCenter, TILE_COUNT } from './hexTiles';
 import { Regions } from './regions';
-import { terrainHeight } from './terrain';
-import { TileManager } from './tiles';
+import { hash, heightRange, terrainHeight } from './terrain';
+import { terrainColor, TileManager } from './tiles';
 import { createLevelBar } from '../ui/levelBar';
 import { createStartScreen, RING_EXTENT } from '../ui/startScreen';
 import { chooseStartCity, cityTiles } from '../game/start';
@@ -56,7 +57,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -68,6 +69,9 @@ const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// Shadows only at the city level, whose light is the only one that casts them (STORY-069)
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Transparent clear: the page's Kartografi gradient is the background, stars are drawn over it
 renderer.setClearColor(0x000000, 0);
 renderer.autoClear = false;
@@ -521,6 +525,7 @@ function flyIn(target: THREE.Vector3) {
 const clock = new GameClock();
 const unitLayer = new UnitLayer(RADIUS);
 scene.add(unitLayer.group);
+unitLayer.raise = tile => cityLevel.raise(tile);
 // The game's moments glow out from their tiles (STORY-035)
 const pulses = new PulseLayer(RADIUS);
 scene.add(pulses.group);
@@ -1026,7 +1031,8 @@ const tileYields = createTileYields(hud_root);
 
 function updateCityLabels() {
   if (!play) return;
-  const lift = viewLevel === 3 ? 48 : 0;
+  // At the city level its label goes up over the walls (STORY-069)
+  const lift = viewLevel === 3 ? 48 + 100 * cityLevel.relief.value : 0;
   // City-states have negative ids: -1 - their place among those in view (STORY-063)
   const shown = visibleNatives();
   cityLabels.update(viewLevel === 0 ? [] : [
@@ -1060,6 +1066,255 @@ const nativesOf = new Map<number, NativeCity[]>();
 const natives: NativeCity[] = [];
 const nativeCenters: THREE.Vector3[] = [];
 const TILE_ANGLE = Math.acos(1 / Math.sqrt(5)) / 330;
+
+// ─── The city level (STORY-069) ───────────────────
+// Close to one of the player's cities its three rings rise into relief, with light and
+// shadows, trees, rocks, houses and buildings (cityView.ts, docs/design/kaupunkitaso.md).
+// It rises in 0.6 s by the wall clock and sinks back as the camera leaves.
+const CITY_LEVEL_RINGS = 3;
+/** The city level begins below this share of the city area's framing distance. */
+const CITY_LEVEL_AT = 0.5;
+const RISE_SECONDS = 0.6;
+const cityLevel = (() => {
+  const group = new THREE.Group();
+  group.visible = false;
+  scene.add(group);
+  const relief = { value: 0 };
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.0005;
+  group.add(sun, sun.target, new THREE.HemisphereLight(0xe4ecff, 0x40382a, 0.9));
+  const flat = (color: number) => new THREE.MeshLambertMaterial({ color, flatShading: true });
+  const ground = risingMaterial(new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }), relief);
+  const groundDepth = risingMaterial(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), relief);
+  /** Things on the ground, raised with it: where each stands at rest and how far it rises. */
+  let props: { object: THREE.Object3D | THREE.InstancedMesh; spots: { base: THREE.Vector3; rise: THREE.Vector3; yaw: number; scale: number }[] }[] = [];
+  let terrain: CityTerrain | null = null;
+  let mesh: THREE.Mesh | null = null;
+  let city: number | null = null;
+  let dressed = '';
+  const up = new THREE.Quaternion();
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const v = new THREE.Vector3();
+  const yawQ = new THREE.Quaternion();
+  const Y = new THREE.Vector3(0, 1, 0);
+
+  const clear = () => {
+    for (const p of props) {
+      group.remove(p.object);
+      p.object.traverse(o => { if (o instanceof THREE.Mesh) o.geometry.dispose(); });
+    }
+    props = [];
+  };
+  /** Place the props at the current relief. */
+  const place = () => {
+    for (const p of props) {
+      p.spots.forEach((s, i) => {
+        v.copy(s.base).addScaledVector(s.rise, relief.value);
+        q.copy(up).multiply(yawQ.setFromAxisAngle(Y, s.yaw));
+        const k = s.scale * Math.max(0.001, relief.value);
+        if (p.object instanceof THREE.InstancedMesh) {
+          p.object.setMatrixAt(i, m.compose(v, q, new THREE.Vector3(k, k, k)));
+        } else {
+          p.object.position.copy(v);
+          p.object.quaternion.copy(q);
+          p.object.scale.setScalar(k);
+        }
+      });
+      if (p.object instanceof THREE.InstancedMesh) p.object.instanceMatrix.needsUpdate = true;
+    }
+  };
+  const instanced = (geometry: THREE.BufferGeometry, material: THREE.Material, spots: typeof props[number]['spots']) => {
+    const im = new THREE.InstancedMesh(geometry, material, Math.max(1, spots.length));
+    im.count = spots.length;
+    im.castShadow = im.receiveShadow = true;
+    im.frustumCulled = false;
+    group.add(im);
+    props.push({ object: im, spots });
+  };
+  /** A building at a site: a few flat-shaded shapes, in tile spacings. */
+  const building = (kind: string, site: Site, s: number) => {
+    const g = new THREE.Group();
+    const add = (geo: THREE.BufferGeometry, color: number, x = 0, y = 0, z = 0) => {
+      const o = new THREE.Mesh(geo, flat(color));
+      o.position.set(x, y, z);
+      o.castShadow = o.receiveShadow = true;
+      g.add(o);
+    };
+    const box = (w: number, h: number, d: number) => new THREE.BoxGeometry(w * s, h * s, d * s).translate(0, (h * s) / 2, 0);
+    const roof = (r: number, h: number, sides = 4) => new THREE.ConeGeometry(r * s, h * s, sides).rotateY(Math.PI / sides).translate(0, (h * s) / 2, 0);
+    if (kind === 'palace') {
+      add(box(0.3, 0.16, 0.3), 0xe8e0cc);
+      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { add(box(0.07, 0.26, 0.07), 0xe8e0cc, x * 0.15 * s, 0, z * 0.15 * s); add(roof(0.06, 0.08, 6), 0x3d5a9e, x * 0.15 * s, 0.26 * s, z * 0.15 * s); }
+      add(roof(0.2, 0.1), 0x8c3b2a, 0, 0.16 * s, 0);
+    } else if (kind === 'house') {
+      add(box(0.13, 0.09, 0.11), 0xe6dcc4);
+      add(roof(0.11, 0.08), 0x9a4630, 0, 0.09 * s, 0);
+    } else if (kind === 'granary') {
+      add(new THREE.CylinderGeometry(0.07 * s, 0.07 * s, 0.18 * s, 8).translate(0, 0.09 * s, 0), 0xd9c38a);
+      add(roof(0.08, 0.07, 8), 0x9a4630, 0, 0.18 * s, 0);
+    } else if (kind === 'temple') {
+      add(box(0.24, 0.03, 0.16), 0xf2efe6);
+      for (const x of [-0.09, -0.03, 0.03, 0.09]) for (const z of [-0.06, 0.06]) add(box(0.025, 0.12, 0.025), 0xf2efe6, x * s, 0.03 * s, z * s);
+      add(roof(0.16, 0.06), 0xf2efe6, 0, 0.15 * s, 0);
+    } else if (kind === 'library') {
+      add(box(0.2, 0.11, 0.16), 0xc9b48a);
+      add(new THREE.SphereGeometry(0.07 * s, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 0.11 * s, 0), 0x6f8fb3);
+    } else if (kind === 'market') {
+      for (const [x, z, c] of [[-0.08, 0, 0xc0392b], [0.02, 0.06, 0xe0a52a], [0.08, -0.05, 0x2f8f6b]] as const) { add(box(0.07, 0.05, 0.07), 0xe6dcc4, x * s, 0, z * s); add(roof(0.06, 0.04), c, x * s, 0.05 * s, z * s); }
+    } else if (kind === 'aqueduct') {
+      for (const x of [-0.12, 0, 0.12]) add(box(0.04, 0.14, 0.05), 0xb7ab98, x * s, 0, 0);
+      add(box(0.32, 0.03, 0.05), 0xb7ab98, 0, 0.14 * s, 0);
+    } else if (kind === 'colosseum') {
+      add(new THREE.CylinderGeometry(0.16 * s, 0.16 * s, 0.1 * s, 14, 1, true).translate(0, 0.05 * s, 0), 0xd8c8a8);
+    } else if (kind === 'colossus') {
+      add(new THREE.CylinderGeometry(0.03 * s, 0.05 * s, 0.32 * s, 6).translate(0, 0.16 * s, 0), 0xb87333);
+      add(new THREE.SphereGeometry(0.04 * s, 6, 4).translate(0, 0.36 * s, 0), 0xb87333);
+    } else if (kind === 'gardens') {
+      for (let k = 0; k < 3; k++) add(box(0.24 - k * 0.07, 0.05, 0.24 - k * 0.07), 0x4f8f3a, 0, k * 0.05 * s, 0);
+    }
+    group.add(g);
+    props.push({ object: g, spots: [{ base: site.base, rise: site.rise, yaw: 0, scale: 1 }] });
+  };
+  /** Walls round the centre: fourteen segments on a ring, each on the ground nearest to it. */
+  const walls = (sites: Site[], s: number, stone: number) => {
+    const n = 14;
+    const r = 0.85 * s;
+    const e1 = new THREE.Vector3(1, 0, 0).applyQuaternion(up);
+    const e2 = new THREE.Vector3(0, 0, 1).applyQuaternion(up);
+    const inverse = up.clone().invert();
+    const geo = new THREE.BoxGeometry(2 * Math.PI * r / n * 1.05, 0.1 * s, 0.05 * s).translate(0, 0.05 * s, 0);
+    instanced(geo, flat(stone), Array.from({ length: n }, (_, k) => {
+      const a = (k / n) * Math.PI * 2;
+      const base = e1.clone().multiplyScalar(Math.cos(a) * r).addScaledVector(e2, Math.sin(a) * r);
+      const nearest = sites.reduce((b, x) => (x.base.distanceToSquared(base) < b.base.distanceToSquared(base) ? x : b));
+      // Along the ring: the segment's length on the local x axis turned to the tangent
+      const t = e1.clone().multiplyScalar(-Math.sin(a)).addScaledVector(e2, Math.cos(a)).applyQuaternion(inverse);
+      return { base, rise: nearest.rise, yaw: Math.atan2(-t.z, t.x), scale: 1 };
+    }));
+  };
+
+  /** Trees, rocks, houses and buildings of a city at its terrain's sites. */
+  const dress = (c: City) => {
+    clear();
+    if (!terrain) return;
+    const s = RADIUS * TILE_ANGLE;
+    const roll = (site: Site, k: number) => hash(Math.round(site.base.x * 1e5), Math.round(site.base.z * 1e5), k, 4242) * 0.5 + 0.5;
+    const land = terrain.sites.filter(site => terrainOf(site.tile) !== 'ocean');
+    const byCentre = [...land].sort((a, b) => a.base.lengthSq() - b.base.lengthSq());
+    // The city: its palace or main house, houses by size, then its buildings, nearest first
+    const town = byCentre.filter(site => site.tile === c.tile || neighbors(c.tile).includes(site.tile));
+    const used = new Set<string>();
+    const placed: THREE.Vector3[] = [];
+    // The nearest free site with room round it: buildings stand apart
+    const take = () => {
+      const site = town.find(x => !used.has(x.key) && placed.every(b => b.distanceTo(x.base) > 0.2 * s));
+      if (site) { used.add(site.key); placed.push(site.base); }
+      return site;
+    };
+    const centre = take();
+    if (centre) building(c.capital ? 'palace' : 'house', centre, s);
+    const shown = c.buildings.filter(b => b !== 'walls' && b !== 'greatwall');
+    for (const b of shown) { const site = take(); if (site) building(b, site, s); }
+    const houses: Site[] = [];
+    for (let k = 0; k < Math.min(24, c.size * 2); k++) { const site = take(); if (site) houses.push(site); }
+    for (const site of houses) building('house', site, s);
+    if (c.buildings.includes('walls') || hasWonder('greatwall')) walls(terrain.sites, s, 0x9a948a);
+    // Trees on forest and jungle, rocks on hills and mountains, a few out in the open
+    const DENSITY: Partial<Record<Terrain, [number, number]>> = { forest: [0.5, 0], jungle: [0.55, 0], swamp: [0.12, 0], grassland: [0.04, 0.01], plains: [0.03, 0.01], tundra: [0.05, 0.03], hills: [0.08, 0.12], mountains: [0.02, 0.3], desert: [0, 0.05], arctic: [0, 0.06] };
+    const free = land.filter(site => !used.has(site.key));
+    const trees = free.filter(site => roll(site, 1) < (DENSITY[terrainOf(site.tile)]?.[0] ?? 0));
+    const rocks = free.filter(site => !trees.includes(site) && roll(site, 2) < (DENSITY[terrainOf(site.tile)]?.[1] ?? 0));
+    const spot = (site: Site, k: number) => ({ base: site.base, rise: site.rise, yaw: roll(site, k) * Math.PI * 2, scale: 0.75 + 0.5 * roll(site, k + 1) });
+    instanced(new THREE.ConeGeometry(0.075 * s, 0.26 * s, 6).translate(0, 0.17 * s, 0), flat(0x2f6b3a), trees.map(site => spot(site, 3)));
+    instanced(new THREE.CylinderGeometry(0.015 * s, 0.02 * s, 0.05 * s, 5).translate(0, 0.025 * s, 0), flat(0x6b4a2f), trees.map(site => spot(site, 3)));
+    instanced(new THREE.IcosahedronGeometry(0.06 * s, 0), flat(0x8d8a84), rocks.map(site => spot(site, 5)));
+    place();
+  };
+
+  return {
+    group,
+    relief,
+    /** Height of the raised ground at a tile, for the units standing on it. */
+    raise: (tile: number) => (terrain && relief.value > 0 ? terrain.heightAt(tile) * relief.value : 0),
+    get city() { return city; },
+    get stats() {
+      return { city, relief: relief.value, triangles: mesh ? mesh.geometry.getAttribute('position').count / 3 : 0, props: props.map(p => (p.object instanceof THREE.InstancedMesh ? p.object.count : 1)).reduce((a, b) => a + b, 0) };
+    },
+    /** Build the ground of a city, once it has sunk from another. */
+    build(c: City) {
+      if (mesh) { group.remove(mesh); mesh.geometry.dispose(); }
+      terrain = buildCityTerrain({
+        centre: c.tile, rings: CITY_LEVEL_RINGS, terrainOf, radius: RADIUS, lift: 2e-6, colorOf: terrainColor,
+        detail: p => heightRange(p, 9, 11) / (0.5 ** 10 + 0.5 ** 11),
+      });
+      mesh = new THREE.Mesh(terrain.geometry, ground);
+      mesh.customDepthMaterial = groundDepth;
+      mesh.castShadow = mesh.receiveShadow = true;
+      group.add(mesh);
+      group.position.copy(terrain.origin);
+      up.setFromUnitVectors(Y, tileCenter(c.tile));
+      city = c.tile;
+      dressed = '';
+    },
+    /** Dress the city again when it has grown or built. */
+    dressFor(c: City) {
+      const key = `${c.size}|${c.capital}|${c.buildings.join(',')}|${hasWonder('greatwall')}`;
+      if (key === dressed) return;
+      dressed = key;
+      dress(c);
+    },
+    /** Shadows on or off, for measuring what they cost. */
+    shadows(on: boolean) { sun.castShadow = on; },
+    setRelief(r: number) {
+      relief.value = r;
+      group.visible = r > 0;
+      place();
+    },
+    /** The light from the top left of the view, over the city, with a shadow camera round its rings. */
+    light(dir: THREE.Vector3) {
+      const s = RADIUS * TILE_ANGLE;
+      const reach = (CITY_LEVEL_RINGS + 1.5) * s * 1.3;
+      sun.position.copy(dir).multiplyScalar(reach * 3);
+      sun.target.position.set(0, 0, 0);
+      const cam = sun.shadow.camera;
+      cam.left = cam.bottom = -reach;
+      cam.right = cam.top = reach;
+      cam.near = reach;
+      cam.far = reach * 5;
+      cam.updateProjectionMatrix();
+    },
+  };
+})();
+
+/** The player's city the camera is close to: within two tiles of the view's centre. */
+function cityInView(): City | null {
+  if (!play || viewLevel !== 3 || rig.dist > frames[3] * CITY_LEVEL_AT) return null;
+  const at = rig.target.clone().normalize();
+  let best: City | null = null;
+  let near = 2.5 * TILE_ANGLE;
+  for (const c of play.cities) {
+    const d = tileCenter(c.tile).angleTo(at);
+    if (d < near) { near = d; best = c; }
+  }
+  return best;
+}
+
+/** The city level's day and frame: rise toward the city in view, or sink. */
+function updateCityLevel(dt: number) {
+  const c = cityInView();
+  const r = cityLevel.relief.value;
+  // A new city waits until the last one has sunk
+  if (c && c.tile !== cityLevel.city && r === 0) cityLevel.build(c);
+  const target = c && c.tile === cityLevel.city ? 1 : 0;
+  if (c && c.tile === cityLevel.city) cityLevel.dressFor(c);
+  const next = reduceMotion() ? target : target > r ? Math.min(target, r + dt / RISE_SECONDS) : Math.max(target, r - dt / RISE_SECONDS);
+  if (next !== r) cityLevel.setRelief(next);
+  if (next > 0) cityLevel.light(tiles.sunDir.value);
+}
 
 // ─── Rival civilizations (STORY-068) ──────────────
 // Two or three rivals start two states from home (rivals.ts): their capitals come from the
@@ -2661,7 +2916,9 @@ function updatePlay(dt: number) {
   void autosave();
   unitLayer.update({
     units: play.units.units,
-    cities: play.cities.map(c => c.tile),
+    // At the city level the city stands in 3D: no flat figure for it (STORY-069)
+    cities: play.cities.map(c => c.tile).filter(t => !(t === cityLevel.city && cityLevel.relief.value > 0)),
+    scale: 1 - 0.6 * cityLevel.relief.value,
     natives: visibleNatives().map(n => n.tile),
     camps: visibleTribes().map(t => t.camp),
     rivals: visibleRivalCities().map(x => ({ tile: x.city.tile, rival: x.rival.id })),
@@ -2770,6 +3027,7 @@ function animate(now = performance.now()) {
   tiles.screenUp.value.copy(lightY);
   updateTileTypes(now);
   updatePlay(dt);
+  updateCityLevel(dt);
   // The canvas fills the window: its height without a layout read (STORY-062)
   tiles.update(camera, window.innerHeight, dt);
   starCamera.quaternion.copy(spinInverse).multiply(camera.quaternion);
@@ -2874,6 +3132,14 @@ frameStartPlanet();
     if (a.state) play.stateAdvisor = a.state;
     if (a.planet) play.planetAdvisor = a.planet;
   },
+  /** Found a city on a tile, and give a city buildings (STORY-069 tests). */
+  foundHere: (tile: number) => { if (play) { foundAt(tile); play.openCity = null; } },
+  giveBuildings: (city: number, list: Building[]) => { if (play) play.cities[city].buildings.push(...list.filter(b => !play!.cities[city].buildings.includes(b))); },
+  /** The city level (STORY-069): its city, relief, triangles and things on the ground. */
+  cityLevel: () => cityLevel.stats,
+  cityShadows: (on: boolean) => cityLevel.shadows(on),
+  /** The city level's distance for a city: the camera there sees it rise. */
+  cityLevelDist: () => frames[3] * CITY_LEVEL_AT * 0.7,
   /** The rivals: start states, cities and units (STORY-068). */
   rivals: () => (play ? play.rivals.map((r, k) => ({ id: r.id, name: r.name, start: rivalStartStates[k], cities: r.cities.map(c => ({ name: c.name, tile: c.tile, size: c.size, build: c.build })), units: r.units.map(u => u.kind) })) : []),
   /** A unit of any kind in a city, supported by none (STORY-064). */
