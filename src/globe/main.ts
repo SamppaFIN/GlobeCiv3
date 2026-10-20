@@ -1096,14 +1096,23 @@ function chooseSite(index: number) {
   const o = play.offers.shift();
   discoveryCard.hide();
   if (!o || index !== 0) return;
+  settleAt(o.tile, true);
+}
+
+/**
+ * A city on a site: a free settler goes there, or the capital builds one for it. The offer's
+ * card selects the settler; from the hex card it stays unselected, so that taps open hexes.
+ */
+function settleAt(tile: number, select = false) {
+  if (!play) return;
   const settler = idleSettler();
   if (settler) {
-    sendSettler(settler, o.tile);
-    play.selected = play.units.units.indexOf(settler);
+    sendSettler(settler, tile);
+    if (select) play.selected = play.units.units.indexOf(settler);
     discoveryCard.notice(`${settler.name} lähti perustamaan kaupunkia`);
   } else if (play.cities.length) {
     play.cities[0].build = 'settler';
-    play.pendingSite = o.tile;
+    play.pendingSite = tile;
     discoveryCard.notice(`${play.cities[0].name} rakentaa uudisasukkaan kaupunkipaikalle`);
   }
 }
@@ -2912,8 +2921,11 @@ const tileCard = createTileCard(hud_root, {
   // Cancel a move; move a building on the hex (STORY-071); or into the region, as a second tap does
   action: i => {
     if (play?.moving) return stopMoving();
-    const moves = play && play.tileOpen !== null && viewLevel === 3 ? movable(play.tileOpen) : [];
+    const tile = play && play.tileOpen !== null && viewLevel === 3 ? play.tileOpen : null;
+    const moves = tile !== null ? movable(tile) : [];
     if (moves[i]) return startMoving(moves[i]);
+    // A city on the hex (STORY-074)
+    if (tile !== null && i === moves.length && settleAction(tile)) return settleAt(tile);
     if (selection) fly(diveTarget(regions, selection, frames));
   },
 });
@@ -3039,14 +3051,75 @@ function tileView(id: number): TileView {
     ...((native || tribe) && p.war.target === id ? [{ label: 'Sotaretki', value: `Kenraalin kohde · ${army().length} / ${warNeed(id)} hyökkääjää${p.war.marching ? ' · hyökkäys käynnissä' : ''}` }] : []),
     rival ? { label: 'Kilpailija', value: `${rival.rival.name}: ${rival.city.name}, koko ${rival.city.size}` } :
     native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
+    ...cityRows(id, city ?? owner ?? null),
     ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
     { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : coastal(id) ? (canSail() ? 'rannikkovesi: 1 pv' : 'rannikkovesi: Kartanteko avaa kulun') : 'avomeri: ei kulkua' },
     ...(p.units.isOpen(id, world) ? [] : [{ label: 'Valtio', value: 'lukossa, kunnes kotivaltio on vallattu' }]),
     ...placementRows(id),
   ];
-  const moves = movable(id).map(m => `Siirrä ${BUILDS[m.building].name.toLowerCase()}`);
-  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : found ? `${TERRAIN_RULES[terrain].name} · tuntematon resurssi` : TERRAIN_RULES[terrain].name, rows, ...(moves.length ? { actions: moves } : {}) };
+  const settle = settleAction(id);
+  const actions = [...movable(id).map(m => `Siirrä ${BUILDS[m.building].name.toLowerCase()}`), ...(settle ? [settle] : [])];
+  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : found ? `${TERRAIN_RULES[terrain].name} · tuntematon resurssi` : TERRAIN_RULES[terrain].name, rows, ...(actions.length ? { actions } : {}) };
+}
+
+// ─── A city here (STORY-074) ───────────────────────
+// Sami 2026-10-20: a tap on a hex also tells the city's whole yield, and sends a settler there.
+
+const yieldText = (y: Yield) => `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade}`;
+
+/** Why no city may be founded on a hex, or null: land in an open state, clear of foreign cities and three rings from the player's. */
+function settleBlock(tile: number): string | null {
+  const p = play!;
+  if (!Number.isFinite(world.cost(tile))) return 'ei maata';
+  if (!p.units.isOpen(tile, world)) return 'valtio on lukossa';
+  if (nearForeign(tile)) return 'liian lähellä vierasta kaupunkia';
+  const near = new Set(tilesInRings(tile, SITE_SPACING - 1));
+  if (p.cities.some(c => near.has(c.tile))) return 'liian lähellä omaa kaupunkia';
+  return null;
+}
+
+/** The hex card's rows of a city: its whole yield, or what a city founded here would yield; once a day. */
+let cityRowsCache: { key: string; rows: TileView['rows'] } | null = null;
+function cityRows(id: number, c: City | null): TileView['rows'] {
+  const p = play!;
+  const key = `${id}|${clock.day}|${p.gov}|${p.pendingSite}|${p.units.settler?.path.length ?? -1}|${p.cities.map(x => `${x.size},${x.buildings.length},${x.best?.length ?? 0},${x.focus}`).join(';')}`;
+  if (cityRowsCache?.key === key) return cityRowsCache.rows;
+  let rows: TileView['rows'];
+  if (c) {
+    const y = cityYields()[p.cities.indexOf(c)];
+    rows = [{ label: 'Kaupungin tuotto', value: `${c.name}: ${yieldText(y)} päivässä · ruoan ylijäämä ${y.surplus}` }];
+  } else if (settleBlock(id) === 'ei maata') {
+    rows = [];
+  } else {
+    // At size 1 the centre and the best free tile; the area is the two rings
+    const taken = new Set(workedByCity().flat());
+    const here: City = { id: -1, name: '', tile: id, capital: false, size: 1, food: 0, shields: 0, build: 'coinage', buildings: [], focus: 'balanced' };
+    const start = cityYield(here, yieldOf, taken, undefined, p.gov);
+    const area = tilesInRings(id, 2).reduce((sum, t) => {
+      const y = tileOutput(here, yieldOf(t, t === id), p.gov);
+      return { food: sum.food + y.food, shield: sum.shield + y.shield, trade: sum.trade + y.trade };
+    }, NO_YIELD);
+    const block = settleBlock(id);
+    const settler = p.units.settler;
+    const going = settler && p.units.founding && p.units.currentSite() === id;
+    rows = [
+      { label: 'Kaupunki tässä', value: `alussa ${yieldText(start)} päivässä` },
+      { label: 'Koko alue', value: `kaksi rengasta: ${yieldText(area)} päivässä` },
+      { label: 'Uudisasukas', value: block ? `ei kaupunkia: ${block}` : going ? 'matkalla perustamaan kaupunkia' : p.pendingSite === id ? `${p.cities[0]?.name ?? 'Kaupunki'} rakentaa uudisasukasta tänne` : !unitsOpen() ? 'avautuu ensimmäisen rakennuksen jälkeen' : idleSettler() ? 'vapaa uudisasukas voi lähteä' : 'pääkaupunki voi rakentaa sellaisen' },
+    ];
+  }
+  cityRowsCache = { key, rows };
+  return rows;
+}
+
+/** The hex card's button for a city here: send a free settler, or have the capital build one. */
+function settleAction(id: number): string | null {
+  const p = play!;
+  if (!mapState.isMapped(id) || p.cities.some(c => tilesInRings(c.tile, cityRings(c.size)).includes(id)) || settleBlock(id)) return null;
+  if (p.pendingSite === id || (p.units.founding && p.units.currentSite() === id)) return null;
+  if (idleSettler()) return 'Lähetä uudisasukas';
+  return unitsOpen() && p.cities.length ? 'Rakenna uudisasukas tänne' : null;
 }
 
 // ─── Buildings on their tiles (STORY-071) ──────────
@@ -3456,6 +3529,8 @@ frameStartPlanet();
     const c = play!.cities[city];
     return { placed: { ...c.placed }, best: [...(c.best ?? [])], spots: building ? spots(c, building, ground) : [], moving: play!.moving };
   },
+  /** A city on a hex (STORY-074): why not, the card's button, the settler on its way, the waiting site, the yields and builds. */
+  site: (tile: number) => ({ block: settleBlock(tile), action: settleAction(tile), going: play!.units.founding ? play!.units.currentSite() : null, pending: play!.pendingSite, yields: cityYields(), builds: play!.cities.map(c => c.build) }),
   /** Kinds of resource known and found, and the study (STORY-072). */
   setKinds: (list: ResourceKind[]) => { if (play) { play.research.kinds.clear(); for (const k of list) play.research.kinds.add(k); } },
   researchOptions: () => (play ? play.research.available(foundKinds) : []),
