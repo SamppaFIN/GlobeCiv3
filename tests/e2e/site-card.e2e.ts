@@ -2,14 +2,18 @@ import { expect, test, type Page } from '@playwright/test';
 
 type Site = { block: string | null; action: string | null; going: number | null; pending: number | null; yields: { food: number; shield: number; trade: number; surplus: number }[]; builds: string[] };
 const site = (page: Page, tile: number) => page.evaluate(t => (window as any).globeDebug.site(t) as Site, tile);
-/** A tile's centre on the screen; the canvas must be what is there. */
+/**
+ * A tile's centre on the screen, once the canvas is what is there: a notice may pass over it
+ * for a while (CI 2026-10-20: the notice of the settler sent covered the next hex).
+ */
 const tapTile = async (page: Page, tile: number) => {
-  const at = await page.evaluate(t => {
+  const clear = () => page.evaluate(t => {
     const p = (window as any).globeDebug.tileScreen(t) as [number, number] | null;
-    return p && { x: p[0], y: p[1], canvas: document.elementFromPoint(p[0], p[1]) === document.querySelector('canvas') };
+    return !!p && document.elementFromPoint(p[0], p[1]) === document.querySelector('canvas');
   }, tile);
-  expect(at?.canvas).toBe(true);
-  await page.mouse.click(at!.x, at!.y);
+  await expect.poll(clear, { timeout: 15_000 }).toBe(true);
+  const at = (await page.evaluate(t => (window as any).globeDebug.tileScreen(t), tile)) as [number, number];
+  await page.mouse.click(at[0], at[1]);
 };
 /**
  * Mapped land hexes on the screen, clear of the panels, nearest the city first, with no unit
@@ -28,7 +32,8 @@ const freeTiles = (page: Page) => page.evaluate(() => {
     for (const id of ring) {
       if (id === centre || out.includes(id) || busy.has(id) || !w.globeMap.isMapped(id) || w.globeTileTypes.tileInfo(id).terrain === 'ocean') continue;
       const p = w.globeDebug.tileScreen(id) as [number, number] | null;
-      if (p && p[1] > 160 && p[1] < innerHeight - 140 && document.elementFromPoint(p[0], p[1]) === document.querySelector('canvas')) out.push(id);
+      // Below the band of the notices, above the bottom panel
+      if (p && p[1] > 240 && p[1] < innerHeight - 140 && document.elementFromPoint(p[0], p[1]) === document.querySelector('canvas')) out.push(id);
     }
   }
   return { centre, ring1: w.globeHexTiles.neighbors(centre) as number[], tiles: out };
@@ -54,6 +59,8 @@ test('a tapped hex tells the whole yield of its city, or of a city founded there
     w.globeDebug.foundHere(scout.tile);
   });
   const card = page.getByRole('dialog', { name: /./ }).filter({ has: page.locator('.tile-rows') });
+  // The city's research pill comes a frame later: hexes under it are not free
+  await expect(page.locator('.hud-research')).toBeVisible();
   const { ring1, tiles } = await freeTiles(page);
 
   // A hex of the city: the city's whole yield today
