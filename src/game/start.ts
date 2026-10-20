@@ -8,6 +8,8 @@
 import { tileCenter, tilesWithin } from '../globe/hexTiles';
 import type { Regions } from '../globe/regions';
 import { hash, terrainHeight } from '../globe/terrain';
+import { tilesInRings } from './pathfinding';
+import type { Terrain } from './terrainTypes';
 
 /** Share of a city area's tiles that must be land. */
 export const MIN_LAND_SHARE = 0.5;
@@ -28,6 +30,27 @@ export function landShare(regions: Regions, city: number): number {
   let land = 0;
   for (const id of tiles) if (terrainHeight(tileCenter(id), TILE_OCTAVES) >= 0) land++;
   return land / tiles.length;
+}
+
+/**
+ * The capital of a new game (STORY-070; Sami 2026-10-20: a varied terrain with one special
+ * resource): in the start city areas of the seed in turn, the first good site whose two rings
+ * hold three kinds of land or more and exactly one special resource.
+ */
+export function chooseStartSite(regions: Regions, seed: number, look: { terrainOf(t: number): Terrain; hasResource(t: number): boolean; good(t: number): boolean }): { city: number; tile: number } {
+  const count = regions.centers[2].length;
+  for (let k = 0; k < 1000; k++) {
+    const city = Math.floor((hash(k, 1, 2, seed) * 0.5 + 0.5) * count) % count;
+    if (Math.abs(regions.centers[2][city].y) > MAX_ABS_Y || landShare(regions, city) < MIN_LAND_SHARE) continue;
+    const tiles = cityTiles(regions, city).sort((a, b) => hash(a, k, 3, seed) - hash(b, k, 3, seed));
+    for (const tile of tiles) {
+      if (!look.good(tile)) continue;
+      const near = tilesInRings(tile, 2);
+      const kinds = new Set(near.map(t => look.terrainOf(t)).filter(t => t !== 'ocean'));
+      if (kinds.size >= 3 && near.filter(t => look.hasResource(t)).length === 1) return { city, tile };
+    }
+  }
+  throw new Error(`No varied start for seed ${seed}`);
 }
 
 /** The start city area for a game seed. */

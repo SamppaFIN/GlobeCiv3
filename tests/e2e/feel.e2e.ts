@@ -27,7 +27,7 @@ const lightAt = (page: Page, x: number, y: number) => page.evaluate(([x, y]) => 
 })), [x, y] as const);
 
 test('a press on the start screen makes a gravity well: a glow gathers while held and fades after', async ({ page }, testInfo) => {
-  const errors = await open(page, './?seed=42');
+  const errors = await open(page, './?classic&seed=42');
   const [x, y] = [1000, 300];
   const dark = await lightAt(page, x, y);
   await page.mouse.move(x, y);
@@ -75,7 +75,7 @@ test('in the game the well comes from a press in space, not from one on the glob
 
 test('moments glow: a new city and bandits on the way send a pulse that lasts 1.6 s', async ({ page }, testInfo) => {
   test.setTimeout(240_000);
-  const errors = await open(page, './?seed=42');
+  const errors = await open(page, './?classic&seed=42');
   // Before the game starts: a slow runner passes days before the first check
   await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Uusi peli' }).click();

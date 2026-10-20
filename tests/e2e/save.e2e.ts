@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function open(page: Page, errors: string[]) {
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./?seed=42');
+  await page.goto('./?classic&seed=42');
   await ready;
 }
 

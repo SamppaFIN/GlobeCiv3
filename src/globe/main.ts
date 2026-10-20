@@ -13,7 +13,7 @@ import { hash, heightRange, terrainHeight } from './terrain';
 import { terrainColor, TileManager } from './tiles';
 import { createLevelBar } from '../ui/levelBar';
 import { createStartScreen, RING_EXTENT } from '../ui/startScreen';
-import { chooseStartCity, cityTiles } from '../game/start';
+import { chooseStartCity, chooseStartSite, cityTiles } from '../game/start';
 import { tileInfo, TileTypeTable } from '../game/terrainTypes';
 import { createGlyphAtlas } from './glyphAtlas';
 import { SURFACE_SIZE, type PatternData } from './surfacePatterns';
@@ -37,7 +37,7 @@ import { RIVALS, Rival, rivalStarts, type RivalWorld } from '../game/rivals';
 import { oklchToSrgb } from './colors';
 import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS, TRIBE_REACH, type Tribe } from '../game/nomads';
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
-import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, type PlanetAdvisor } from '../game/advisors';
+import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, startAdvice, START_DOES, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { advanceGoals, GOALS } from '../game/goals';
@@ -57,7 +57,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
+import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -287,7 +287,12 @@ const levelBar = createLevelBar(hud, () => {
 const params = new URLSearchParams(window.location.search);
 type Screen = 'start' | 'intro' | 'playing' | 'free';
 let screen: Screen = params.has('free') ? 'free' : 'start';
-let game: { seed: number; startCity: number } | null = null;
+let game: { seed: number; startCity: number; capital?: number } | null = null;
+/**
+ * The old start, for the tests of the game's mechanics: scouts and a settler at the city area
+ * (?classic). A new game starts at the city level in a built capital (STORY-070).
+ */
+const classic = params.has('classic');
 /** Zooming out is allowed down to this view level (0: no lock). STORY-026 lowers it. */
 let lockedLevel = 0;
 /** Fly-in legs still to fly, and the start city's centre while flying in. */
@@ -302,6 +307,10 @@ const spinInverse = new THREE.Quaternion();
 
 /** Largest distance that stays at a view level (default: the city area). */
 const lockDist = (level = 3) => Math.sqrt(frames[level - 1] * frames[level]) * 0.97;
+/** The camera's reach for the open level: the city level (4) stays close to the capital (STORY-070). */
+const lockFor = (level: number) => (level === 4 ? frames[3] * CITY_LEVEL_AT * 0.95 : level > 0 ? lockDist(level) : MAX_DIST);
+/** Where the camera stands at the city level: its city rises. */
+const cityViewDist = () => frames[3] * CITY_LEVEL_AT * 0.7;
 
 const startScreen = screen === 'start' ? createStartScreen(hud, newGame) : null;
 /** Radius of the start screen's planet in CSS pixels (frameStartPlanet). */
@@ -415,14 +424,25 @@ function newGame() {
   if (screen !== 'start' || !startScreen) return;
   requestSurfacePatterns();
   const seed = params.has('seed') ? Number(params.get('seed')) : crypto.getRandomValues(new Uint32Array(1))[0] >>> 1;
-  const startCity = chooseStartCity(regions, seed);
-  game = { seed, startCity };
+  if (classic) {
+    const startCity = chooseStartCity(regions, seed);
+    game = { seed, startCity };
+    introTarget = regions.centers[2][startCity].clone();
+  } else {
+    // A varied site with one special resource (STORY-070), and the flight down to it
+    const site = chooseStartSite(regions, seed, {
+      terrainOf,
+      hasResource: t => (terrainOf(t), (tileTypes.codes[t] & 16) !== 0),
+      good: t => Number.isFinite(world.cost(t)) && world.siteScore(t) >= FAIR_SITE,
+    });
+    game = { seed, startCity: site.city, capital: site.tile };
+    introTarget = tileCenter(site.tile);
+  }
   screen = 'intro';
-  introTarget = regions.centers[2][startCity].clone();
   tiles.borderStrength.value = BORDER_STRENGTH;
   // Storyboard 2a: the landing tile and its 6 neighbours are mapped first
   reveal(withNeighbors(pointToTile(introTarget)));
-  flyIn(introTarget);
+  flyIn(introTarget, classic ? frames[3] : cityViewDist());
 }
 
 // ─── Saved game (STORY-036) ───────────────────────
@@ -501,7 +521,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.addEventListener('pagehide', () => { void autosave(true); });
 
 /** Hide the start screen and fly in to a city area: a straight cut with reduced motion. */
-function flyIn(target: THREE.Vector3) {
+function flyIn(target: THREE.Vector3, dist = frames[3]) {
   if (!startScreen) return;
   const reduce = reduceMotion();
   startScreen.hide(!reduce);
@@ -511,11 +531,11 @@ function flyIn(target: THREE.Vector3) {
     cut.className = 'cut-fade';
     document.body.appendChild(cut);
     cut.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 }).finished.then(() => cut.remove());
-    legs.push({ to: { point: target, dist: frames[3], level: 3 }, durationS: 0 });
+    legs.push({ to: { point: target, dist, level: 3 }, durationS: 0 });
   } else {
     // Storyboard 2a: turn onto the target at planet distance (1 s), then descend (2 s)
     legs.push({ to: { point: target, dist: rig.dist, level: 0 }, durationS: 1 });
-    legs.push({ to: { point: target, dist: frames[3], level: 3 }, durationS: 2 });
+    legs.push({ to: { point: target, dist, level: 3 }, durationS: 2 });
   }
 }
 
@@ -689,8 +709,19 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
-  if (!saved) return;
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  if (!saved) {
+    // The new start (STORY-070): the capital stands already, and its first units come later
+    if (!classic && game?.capital !== undefined) {
+      units.units.length = 0;
+      foundAt(game.capital);
+      play.openCity = null;
+      // A building first: the city's units come after it (Sami)
+      play.cities[0].build = startable(play.cities[0]).find(isTerrainBuilding) ?? 'coinage';
+      play.advisorOpen = true;
+    }
+    return;
+  }
   // A saved game goes on where it was
   Object.assign(play, {
     selected: Math.min(saved.selected, units.units.length - 1), progress: saved.progress, targetProvince: saved.targetProvince,
@@ -869,7 +900,7 @@ function cityDays() {
     }
     if (!done) return;
     if (isBuilding(done)) moment(isWonder(done) ? 'unlock' : 'city', c.tile);
-    else if (isSoldier(done) || isAttacker(done) || done === 'settler') play!.units.spawn(done, c.tile, world, c.id);
+    else if (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') play!.units.spawn(done, c.tile, world, c.id);
     discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
   });
   // The cities' science; an advance learned opens what needs it (STORY-040)
@@ -1175,6 +1206,21 @@ const cityLevel = (() => {
       add(new THREE.SphereGeometry(0.04 * s, 6, 4).translate(0, 0.36 * s, 0), 0xb87333);
     } else if (kind === 'gardens') {
       for (let k = 0; k < 3; k++) add(box(0.24 - k * 0.07, 0.05, 0.24 - k * 0.07), 0x4f8f3a, 0, k * 0.05 * s, 0);
+    } else if (kind === 'fishery') {
+      // A hut by the shore and a boat with a sail (STORY-070)
+      add(box(0.1, 0.07, 0.09), 0x8a6a48);
+      add(roof(0.09, 0.06), 0x5d4a3a, 0, 0.07 * s, 0);
+      add(box(0.12, 0.025, 0.04), 0x6b4a2f, 0.12 * s, 0, 0.04 * s);
+      add(new THREE.ConeGeometry(0.03 * s, 0.09 * s, 3).translate(0, 0.07 * s, 0), 0xf2efe6, 0.12 * s, 0, 0.04 * s);
+    } else if (kind === 'sawmill') {
+      add(box(0.12, 0.08, 0.1), 0x9a7650);
+      add(roof(0.1, 0.06), 0x5d4a3a, 0, 0.08 * s, 0);
+      for (let k = 0; k < 3; k++) add(new THREE.CylinderGeometry(0.018 * s, 0.018 * s, 0.14 * s, 6).rotateZ(Math.PI / 2).translate(0, 0.018 * s, 0), 0x7a5232, 0.03 * s, k * 0.034 * s, 0.1 * s);
+    } else if (kind === 'quarry') {
+      for (let k = 0; k < 3; k++) add(box(0.2 - k * 0.05, 0.05, 0.16 - k * 0.04), 0xa9a49a, k * 0.02 * s, k * 0.05 * s, 0);
+    } else if (kind === 'field') {
+      add(box(0.3, 0.012, 0.24), 0xc9b85a);
+      for (const z of [-0.08, 0, 0.08]) add(box(0.28, 0.016, 0.02), 0x8f7f38, 0, 0, z * s);
     }
     group.add(g);
     props.push({ object: g, spots: [{ base: site.base, rise: site.rise, yaw: 0, scale: 1 }] });
@@ -1217,8 +1263,15 @@ const cityLevel = (() => {
     };
     const centre = take();
     if (centre) building(c.capital ? 'palace' : 'house', centre, s);
+    // Terrain buildings stand on their terrain, the fishery on a shore (STORY-070)
+    const onTerrain = (b: TerrainBuilding) => {
+      const fits = (x: Site) => b === 'fishery' ? neighbors(x.tile).some(n => terrainOf(n) === 'ocean') : (TERRAIN_BUILDINGS[b] as readonly Terrain[]).includes(terrainOf(x.tile));
+      const site = byCentre.find(x => !used.has(x.key) && fits(x) && placed.every(p => p.distanceTo(x.base) > 0.2 * s));
+      if (site) { used.add(site.key); placed.push(site.base); }
+      return site;
+    };
     const shown = c.buildings.filter(b => b !== 'walls' && b !== 'greatwall');
-    for (const b of shown) { const site = take(); if (site) building(b, site, s); }
+    for (const b of shown) { const site = isTerrainBuilding(b) ? onTerrain(b) : take(); if (site) building(b, site, s); }
     const houses: Site[] = [];
     for (let k = 0; k < Math.min(24, c.size * 2); k++) { const site = take(); if (site) houses.push(site); }
     for (const site of houses) building('house', site, s);
@@ -1232,6 +1285,22 @@ const cityLevel = (() => {
     instanced(new THREE.ConeGeometry(0.075 * s, 0.26 * s, 6).translate(0, 0.17 * s, 0), flat(0x2f6b3a), trees.map(site => spot(site, 3)));
     instanced(new THREE.CylinderGeometry(0.015 * s, 0.02 * s, 0.05 * s, 5).translate(0, 0.025 * s, 0), flat(0x6b4a2f), trees.map(site => spot(site, 3)));
     instanced(new THREE.IcosahedronGeometry(0.06 * s, 0), flat(0x8d8a84), rocks.map(site => spot(site, 5)));
+    // Special resources: a gem in the colour of what they give, floating over the tile's centre (STORY-070)
+    const gems: Site[] = [];
+    const gemColors: THREE.Color[] = [];
+    for (const t of new Set(terrain.sites.map(x => x.tile))) {
+      if (!(tileTypes.codes[t] & 16)) continue;
+      const at = tileCenter(t).multiplyScalar(RADIUS).sub(terrain.origin);
+      const site = terrain.sites.filter(x => x.tile === t).reduce((a, b) => (b.base.distanceToSquared(at) < a.base.distanceToSquared(at) ? b : a));
+      gems.push(site);
+      const r = RESOURCES[TERRAIN_RULES[terrainOf(t)].resource];
+      gemColors.push(new THREE.Color(r.food ? 0x7fc35a : r.shield ? 0xd98a3d : 0xe8c547));
+    }
+    if (gems.length) {
+      instanced(new THREE.OctahedronGeometry(0.06 * s, 0).translate(0, 0.32 * s, 0), new THREE.MeshLambertMaterial({ flatShading: true, emissive: 0x222222 }), gems.map(site => ({ base: site.base, rise: site.rise, yaw: 0, scale: 1 })));
+      const im = props[props.length - 1].object as THREE.InstancedMesh;
+      gemColors.forEach((c, i) => im.setColorAt(i, c));
+    }
     place();
   };
 
@@ -1529,6 +1598,11 @@ const BUILD_PURPOSE: Record<Build, string> = {
   warrior: 'Puolustaa kaupunkia rosvoilta', settler: 'Perustaa uuden kaupungin tai kehittää maata',
   coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
   phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
+  scout: 'Kartoittaa maata, ja ensimmäinen avaa seuraavan kartan',
+  fishery: 'Rannalle: +1 ruoka päivässä',
+  sawmill: 'Metsän reunaan: +1 tuotanto päivässä',
+  quarry: 'Kukkulalle tai vuorelle: +1 tuotanto päivässä',
+  field: 'Tasaiselle maalle: +1 ruoka päivässä',
   horseman: 'Hyökkäys 2: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
   swordsman: 'Hyökkäys 3: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
   chariot: 'Hyökkäys 4: Kenraali vie sen sotaretkelle kaupunkivaltiota vastaan',
@@ -1583,15 +1657,18 @@ function cityView(c: City, y: CityYield): CityView {
     growth: c.food / granary(c.size),
     growText: y.surplus < 0 ? 'nälkää' : c.size >= sizeLimit(c) ? 'vesijohto puuttuu' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
     yields: [y.surplus, y.shield, y.trade],
-    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind))).map(kind => {
+    // A terrain building only where its terrain is (STORY-070)
+    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind))).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       const need = NEEDS[kind];
-      const locked = need !== undefined && !play!.research.known.has(need);
+      // Units wait for the first building of a new game (STORY-070)
+      const waits = UNIT_BUILDS.has(kind) && !unitsOpen();
+      const locked = (need !== undefined && !play!.research.known.has(need)) || waits;
       return {
         kind, name: b.name, selected: kind === c.build, locked,
         cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) && UPKEEP[kind] ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        eta: waits ? 'ensimmäisen rakennuksen jälkeen' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -1633,7 +1710,13 @@ function updateCityCard() {
 
 /** Builds a city may start: known, not built, and no wonder another city has. */
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
-  !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!)));
+  !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
+  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()));
+/** Units the cities build: only after the first building of a new game (STORY-070, Sami). */
+const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
+const unitsOpen = () => !play || play.progress.openLevel < 4 || play.cities.some(c => c.buildings.length > 0);
+/** A terrain building needs its terrain within the city's two rings. */
+const terrainNear = (c: City, b: TerrainBuilding) => tilesInRings(c.tile, 2).some(t => (TERRAIN_BUILDINGS[b] as readonly Terrain[]).includes(terrainOf(t)));
 
 type AdvisorLevel = 'city' | 'province' | 'state' | 'planet';
 
@@ -1665,7 +1748,8 @@ function advisorDay() {
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
     const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, hasWonder('gardens'), luxury, p.gov);
-    const advice = cityAdvice(p.cityAdvisor, c, {
+    // At the city stage the governor builds the way to the next map (STORY-070)
+    const advice = p.progress.openLevel === 4 ? startAdvice(p.cityAdvisor, c, { available, built: c.buildings.length > 0, soldiers }) : cityAdvice(p.cityAdvisor, c, {
       available, soldiers, unrestNear: !!yields[i].disorder || bigger.disorder, disorder: !!yields[i].disorder,
       threat: p.raids.band?.city === c.tile, soldier: bestSoldier(), settlers: supportOf(c).settlers,
     });
@@ -1851,9 +1935,11 @@ function updateAdvisorCard() {
     if (advisorCard.visible) advisorCard.hide();
     return;
   }
+  // At the city stage the city advisor is the city's governor (STORY-070)
+  const stage = play.progress.openLevel === 4;
   const view = level === 'city' ? {
-    level: 'Kaupunkialue',
-    options: CITY_ADVISOR_LIST.map(id => ({ id, name: CITY_ADVISORS[id].name, does: CITY_ADVISORS[id].does, selected: id === play!.cityAdvisor })),
+    level: stage ? 'Kaupunki · kuvernööri' : 'Kaupunkialue',
+    options: CITY_ADVISOR_LIST.map(id => ({ id, name: CITY_ADVISORS[id].name, does: stage ? START_DOES[id] : CITY_ADVISORS[id].does, selected: id === play!.cityAdvisor })),
     log: play.advisorLog,
   } : level === 'province' ? {
     level: 'Lääni',
@@ -2433,6 +2519,11 @@ function chooseRaid(index: number) {
 // Mapping 60 % of the home province opens the province level, and 60 % of the home
 // state the state level. Each level has its own chips and actions.
 const unlockCard = createUnlockCard(hud_root, () => {
+  // From the city level out to its city area, round the city (STORY-070)
+  if (viewLevel === 3 && rig.dist < frames[3] * CITY_LEVEL_AT) {
+    fly({ point: rig.target.clone().normalize(), dist: frames[3], level: 3 });
+    return;
+  }
   const to = upTarget(rig.target);
   if (to) fly(to);
 });
@@ -2571,11 +2662,12 @@ function panelEdges(): { top: number; bottom: number } {
 function updateLevels() {
   if (!play || !game) return;
   const won = conquestNow();
-  const opened = discoveryCard.visible ? null : advance(play.progress, mapState.share(play.province), mapState.share(play.state), won.conquered.has(homeState()));
+  const firstUnit = play.units.units.some(u => u.kind === 'scout' || u.kind === 'settler');
+  const opened = discoveryCard.visible ? null : advance(play.progress, mapState.share(play.province), mapState.share(play.state), won.conquered.has(homeState()), firstUnit);
   if (opened !== null) {
     lockedLevel = opened;
-    rig.maxDist = opened > 0 ? lockDist(opened) : MAX_DIST;
-    unlockCard.show(opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : opened === 1 ? 'Valtio kartoitettu, zoomaa ulos' : 'Valtio vallattu, zoomaa ulos');
+    rig.maxDist = lockFor(opened);
+    unlockCard.show(opened === 3 ? 'Kaupunkialue avautui, zoomaa ulos' : opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : opened === 1 ? 'Valtio kartoitettu, zoomaa ulos' : 'Valtio vallattu, zoomaa ulos');
     if (opened === 0) discoveryCard.notice('Kotivaltio vallattu: naapurivaltiot avautuivat');
     moment('unlock', play.cities[0]?.tile ?? pointToTile(rig.target));
   }
@@ -2840,6 +2932,12 @@ function updateTileCard() {
 
 /** The top panel's meter: the mapping of the home province or state, then the provinces held (STORY-016). */
 function meterOf(meter: Progress['meter']): Pick<GameHudState, 'mapped' | 'meterName' | 'unlockAt' | 'meterText'> {
+  // The city stage (STORY-070): a building opens the units, and a scout or settler the next map
+  if (meter === 'city') {
+    const built = play!.cities.some(c => c.buildings.length > 0);
+    const text = built ? 'Rakenna tiedustelija tai uudisasukas' : 'Rakenna ensimmäinen rakennus';
+    return { mapped: built ? 0.5 : 0, meterName: 'Kaupunki', unlockAt: 1, meterText: { value: text, label: `Seuraava kartta: ${text.toLowerCase()}` } };
+  }
   if (meter === 'conquest') {
     const held = heldIn(conquestNow(), homeState());
     return { mapped: held / 7, meterName: 'Läänit', unlockAt: 1, meterText: { value: `${held} / 7 hallussa`, label: `Kotivaltion lääneistä hallussa ${held} seitsemästä` } };
@@ -2903,7 +3001,7 @@ function updatePlay(dt: number) {
     paused: clock.paused,
     ...meterOf(play.progress.meter),
     level: viewLevel,
-    unit: { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null },
+    unit: u ? { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null } : null,
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
     goal: GOALS[play.goal] ? { text: GOALS[play.goal].text, reward: GOALS[play.goal].reward } : null,
@@ -2922,7 +3020,8 @@ function updatePlay(dt: number) {
     natives: visibleNatives().map(n => n.tile),
     camps: visibleTribes().map(t => t.camp),
     rivals: visibleRivalCities().map(x => ({ tile: x.city.tile, rival: x.rival.id })),
-    selected: play.selected,
+    // No ring before the first unit (STORY-070)
+    selected: play.units.units[play.selected] ? play.selected : null,
     flag: play.units.flag,
     site: play.units.currentSite(),
     founding: play.units.founding,
@@ -2958,8 +3057,8 @@ function updateGameFlow(dt: number) {
   if (game) startPlay(game.startCity, continuing ?? undefined);
   screen = 'playing';
   introTarget = null;
-  lockedLevel = continuing?.progress.openLevel ?? 3;
-  rig.maxDist = lockedLevel > 0 ? lockDist(lockedLevel) : MAX_DIST;
+  lockedLevel = continuing?.progress.openLevel ?? (classic ? 3 : 4);
+  rig.maxDist = lockFor(lockedLevel);
   continuing = null;
   startScreen?.remove();
 }
@@ -3056,7 +3155,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   setNarrowPx();
   if (screen === 'start') frameStartPlanet();
-  if (lockedLevel > 0) rig.maxDist = lockDist(lockedLevel);
+  if (lockedLevel > 0) rig.maxDist = lockFor(lockedLevel);
 });
 frameStartPlanet();
 
@@ -3139,7 +3238,7 @@ frameStartPlanet();
   cityLevel: () => cityLevel.stats,
   cityShadows: (on: boolean) => cityLevel.shadows(on),
   /** The city level's distance for a city: the camera there sees it rise. */
-  cityLevelDist: () => frames[3] * CITY_LEVEL_AT * 0.7,
+  cityLevelDist: () => cityViewDist(),
   /** The rivals: start states, cities and units (STORY-068). */
   rivals: () => (play ? play.rivals.map((r, k) => ({ id: r.id, name: r.name, start: rivalStartStates[k], cities: r.cities.map(c => ({ name: c.name, tile: c.tile, size: c.size, build: c.build })), units: r.units.map(u => u.kind) })) : []),
   /** A unit of any kind in a city, supported by none (STORY-064). */

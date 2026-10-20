@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planetTarget, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
+import { planetTarget, startAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
 
@@ -108,5 +108,22 @@ describe('planet advisors (STORY-057)', () => {
     expect(planetTarget('fortify', states)).toBeNull();
     expect(planetTarget('none', states)).toBeNull();
     expect(planetTarget('conquer', [states[0]])).toBeNull();
+  });
+});
+
+describe('governors at the city stage (STORY-070)', () => {
+  const city = (size: number) => ({ ...foundCity([], 1), size });
+  const all: Build[] = ['field', 'fishery', 'sawmill', 'quarry', 'warrior', 'settler', 'scout'];
+  it('a terrain building first, then the unit that opens the next map', () => {
+    expect(startAdvice('none', city(1), { available: all, built: false, soldiers: 0 })).toBeNull();
+    expect(startAdvice('growth', city(1), { available: all, built: false, soldiers: 0 })).toEqual({ focus: 'food', build: 'field' });
+    expect(startAdvice('explore', city(1), { available: all, built: false, soldiers: 0 })).toEqual({ focus: 'production', build: 'sawmill' });
+    // Only what the start's terrain allows
+    expect(startAdvice('explore', city(1), { available: ['fishery', 'field'], built: false, soldiers: 0 })!.build).toBe('field');
+    expect(startAdvice('explore', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('scout');
+    expect(startAdvice('growth', city(1), { available: all, built: true, soldiers: 0 })!.build).toBeNull();
+    expect(startAdvice('growth', city(2), { available: all, built: true, soldiers: 0 })!.build).toBe('settler');
+    expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('warrior');
+    expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 1 })!.build).toBe('scout');
   });
 });
