@@ -17,7 +17,8 @@ import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
 import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './units';
 import type { Progress } from './progress';
-import { ADVANCE_LIST, LUX_RATES, TAX_RATES, type Advance } from './science';
+import { ADVANCE_LIST, LUX_RATES, RESOURCE_KINDS, TAX_RATES, type Advance, type Study } from './science';
+import type { ResourceKind } from './terrainTypes';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
 
@@ -76,7 +77,7 @@ export interface SaveData {
   /** The treasury (STORY-038); a save from before it has the start gold. */
   gold: number;
   /** Advances, research and the tax rate (STORY-040); saves from before have none and half. */
-  research: { known: Advance[]; target: Advance | null; bulbs: number };
+  research: { known: Advance[]; target: Study | null; bulbs: number; kinds?: ResourceKind[] };
   tax: number;
   /** The current goal (STORY-041); saves from before start at the first and catch up. */
   goal: number;
@@ -282,7 +283,9 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         const r = obj(s.research, 'research');
         return {
           known: [...new Set(list(r.known, 'known', a => oneOf(a, ADVANCE_LIST, 'advance'), ADVANCE_LIST.length))],
-          target: orNull(r.target, a => oneOf(a, ADVANCE_LIST, 'target')),
+          target: orNull(r.target, a => oneOf(a, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'target')),
+          // The kinds of resource known (STORY-072); a save from before knows them all
+          ...(r.kinds === undefined ? {} : { kinds: [...new Set(list(r.kinds, 'kinds', k => oneOf(k, RESOURCE_KINDS, 'kind'), RESOURCE_KINDS.length))] }),
           bulbs: int(r.bulbs, 'bulbs'),
         };
       })(),

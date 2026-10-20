@@ -28,7 +28,7 @@ import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
-import { ADVANCES, LUX_RATES, NEEDS, Research, type Advance } from '../game/science';
+import { ADVANCES, LUX_RATES, NEEDS, Research, isKind, opensFrom, studyName, type Advance, type Study } from '../game/science';
 import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
@@ -42,7 +42,7 @@ import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, startAdvice, START_
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { advanceGoals, GOALS } from '../game/goals';
-import { TERRAINS, TERRAIN_RULES, RESOURCES, type Terrain } from '../game/terrainTypes';
+import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
 import { directionName, unitStatus, Units, type Mode, type SettlerTask, type Unit, type UnitKind, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
 import { banditWins, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
@@ -386,6 +386,44 @@ tiles.fogOn.value = screen === 'free' ? 0 : 1;
 const BORDER_STRENGTH = tiles.borderStrength.value;
 if (screen === 'start') tiles.borderStrength.value = 0;
 
+// ─── Resources and their study (STORY-072) ───────
+// Sami 2026-10-20: the people study a special resource and then see the others on the map;
+// finds bring new studies, and resources open advances (science.ts). A kind not known shows as
+// an unknown marker and yields nothing.
+
+/** Kinds of special resource on the mapped tiles of this game. */
+const foundKinds = new Set<ResourceKind>();
+/** A tile's special resource from its code, known or not (the code is filled once it is mapped). */
+function kindAt(t: number): ResourceKind | null {
+  const code = tileTypes.codes[t];
+  return code & 16 ? TERRAIN_RULES[TERRAINS[(code & 15) - 1]].resource : null;
+}
+/** Whether the people know a kind: it shows and yields. Outside a game every kind shows. */
+function knownKind(k: ResourceKind): boolean {
+  return play?.research.kinds.has(k) ?? true;
+}
+/** The known kinds as a bit per terrain, for the shader. */
+function kindMask(): number {
+  return TERRAINS.reduce((m, t, i) => (knownKind(TERRAIN_RULES[t].resource) ? m | (1 << i) : m), 0);
+}
+/** Kinds on freshly mapped tiles: one not known yet becomes a study. */
+function noteKinds(ids: Iterable<number>) {
+  for (const id of ids) {
+    const k = kindAt(id);
+    if (!k || foundKinds.has(k)) continue;
+    foundKinds.add(k);
+    if (play && !play.research.kinds.has(k)) discoveryCard.notice(`Löytö: ${studyName(k).toLowerCase()} · uusi tutkimuskohde`);
+  }
+}
+/** The kinds on every mapped tile, when a game starts or goes on. */
+function rescanKinds() {
+  foundKinds.clear();
+  for (let t = 0; t < TILE_COUNT; t++) {
+    const k = mapState.isMapped(t) ? kindAt(t) : null;
+    if (k) foundKinds.add(k);
+  }
+}
+
 /** Map tiles: their terrain, the mapped bit and the coarse fog map, uploaded at once. */
 function reveal(ids: Iterable<number>): number[] {
   const fresh = mapState.reveal(ids);
@@ -395,6 +433,7 @@ function reveal(ids: Iterable<number>): number[] {
     tileTypes.fillTile(id);
     codes[id] |= 32;
   }
+  noteKinds(fresh);
   paintMapped(tiles.fogData, fresh);
   tiles.tileCodesChanged();
   tiles.fogChanged();
@@ -712,7 +751,8 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
     if (!classic && game?.capital !== undefined) {
@@ -740,6 +780,7 @@ function startPlay(startCity: number, saved?: SaveData) {
   clock.paused = saved.paused;
   lastSaveDay = saved.day;
   for (const c of play.cities) placeAll(c, ground);
+  rescanKinds();
   // Finds waiting in a save from before STORY-052 open as ruins
   for (const d of saved.discoveries) openRuin(d.tile, d.finder);
   // A save's city-states are found at once, before a settler can come near one not yet found
@@ -763,10 +804,17 @@ function terrainYield(id: number, centre: boolean) {
   return workedYield({ terrain, resource: tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null }, centre);
 }
 
-/** A worked tile's food, shields and trade: terrain, resource, an irrigated centre and improvements (Freeciv civ1), plus finds. */
+/** terrainYield as the people know it (STORY-072): a resource of a kind not studied gives nothing. */
+function knownYield(id: number, centre: boolean) {
+  const terrain = terrainOf(id);
+  const k = kindAt(id);
+  return workedYield({ terrain, resource: k && knownKind(k) ? k : null }, centre);
+}
+
+/** A worked tile's food, shields and trade: terrain, known resource, an irrigated centre and improvements (Freeciv civ1), plus finds. */
 function yieldOf(id: number, centre: boolean) {
   const terrain = terrainOf(id);
-  const y = terrainYield(id, centre);
+  const y = knownYield(id, centre);
   const b = play?.bonuses.get(id) ?? NO_YIELD;
   const imp = play?.improvements.yieldOf(id, terrain) ?? NO_YIELD;
   // The centre's irrigation and road are counted already
@@ -910,11 +958,23 @@ function cityDays() {
   // The governor puts new buildings on their best ground, and the bonuses follow (STORY-071)
   for (const c of play.cities) placeAll(c, ground);
   // The cities' science; an advance learned opens what needs it (STORY-040)
-  const learned = play.research.add(play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
-  if (learned) {
+  const learned = play.research.add(peopleStudy() + play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
+  if (learned && isKind(learned)) {
+    const opens = opensFrom(learned).map(a => ADVANCES[a].name);
+    discoveryCard.notice(`Tutkittu: ${studyName(learned).toLowerCase()} on ${RESOURCES[learned].name} · näkyy kartalla ja tuottaa${opens.length ? ` · ${opens.join(' ja ')} avautui tutkittavaksi` : ''}`);
+    if (play.cities[0]) moment('unlock', play.cities[0].tile);
+  } else if (learned) {
     const opens = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
     discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${learned === 'mapmaking' ? ' · yksiköt kulkevat rannikkovesillä' : ''}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
+  }
+  // With nothing chosen the people study a kind found and not known (STORY-072, own)
+  if (play.research.target === null) {
+    const kind = play.research.available(foundKinds).find(isKind);
+    if (kind) {
+      play.research.target = kind;
+      discoveryCard.notice(`Kansa tutkii: ${studyName(kind).toLowerCase()}`);
+    }
   }
   // A suggested site waiting for a settler gets the first free one
   const free = idleSettler();
@@ -1320,8 +1380,9 @@ const cityLevel = (() => {
       const at = tileCenter(t).multiplyScalar(RADIUS).sub(terrain.origin);
       const site = terrain.sites.filter(x => x.tile === t).reduce((a, b) => (b.base.distanceToSquared(at) < a.base.distanceToSquared(at) ? b : a));
       gems.push(site);
-      const r = RESOURCES[TERRAIN_RULES[terrainOf(t)].resource];
-      gemColors.push(new THREE.Color(r.food ? 0x7fc35a : r.shield ? 0xd98a3d : 0xe8c547));
+      const k = TERRAIN_RULES[terrainOf(t)].resource;
+      const r = RESOURCES[k];
+      gemColors.push(new THREE.Color(!knownKind(k) ? 0x9a9a9a : r.food ? 0x7fc35a : r.shield ? 0xd98a3d : 0xe8c547));
     }
     if (gems.length) {
       instanced(new THREE.OctahedronGeometry(0.06 * s, 0).translate(0, 0.32 * s, 0), new THREE.MeshLambertMaterial({ flatShading: true, emissive: 0x222222 }), gems.map(site => ({ base: site.base, rise: site.rise, yaw: 0, scale: 1 })));
@@ -1388,7 +1449,7 @@ const cityLevel = (() => {
       return ray.intersectObject(pickMesh)[0]?.point ?? null;
     },
     dressFor(c: City) {
-      const key = `${c.size}|${c.capital}|${c.buildings.join(',')}|${JSON.stringify(c.placed ?? {})}|${hasWonder('greatwall')}`;
+      const key = `${c.size}|${c.capital}|${c.buildings.join(',')}|${JSON.stringify(c.placed ?? {})}|${hasWonder('greatwall')}|${kindMask()}`;
       if (key === dressed) return;
       dressed = key;
       dress(c);
@@ -1918,10 +1979,11 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
   if (p.units.stateLine !== plan.line) p.units.setStateLine(plan.line, world);
   if (p.gov !== 'anarchy') p.tax = plan.tax;
   if (p.research.target === null) {
-    const next = nextAdvance(plan.order, p.research.available());
+    // A kind of resource first: it is cheap, and it shows and yields (STORY-072)
+    const next = p.research.available(foundKinds).find(isKind) ?? nextAdvance(plan.order, p.research.available() as Advance[]);
     if (next) {
       p.research.target = next;
-      advise(`tutkitaan: ${ADVANCES[next].name}`, 'state');
+      advise(`tutkitaan: ${studyName(next)}`, 'state');
     }
   }
   if (startRevolution()) advise('vallankumous Monarkiaan', 'state');
@@ -2070,7 +2132,7 @@ function economyRows(yields: CityYield[]): ListView['economy'] {
       gold: cityGold(c, y, rates().tax, rates().lux), coinage: c.build === 'coinage' && !y.disorder ? Math.max(0, y.shield) : 0,
       science: cityScience(c, y, rates().tax, rates().lux), luxury: cityLuxury(c, y, rates().tax, rates().lux),
       buildingUpkeep: c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
-      resources: worked[i].filter(t => tileTypes.codes[t] & 16).map(t => RESOURCES[TERRAIN_RULES[terrainOf(t)].resource].name),
+      resources: worked[i].filter(t => tileTypes.codes[t] & 16 && knownKind(TERRAIN_RULES[terrainOf(t)].resource)).map(t => RESOURCES[TERRAIN_RULES[terrainOf(t)].resource].name),
     };
   });
   const e = economy(days);
@@ -2141,12 +2203,12 @@ function scienceRates() {
 
 function researchLine(): string {
   const r = play!.research;
-  return r.target ? `Tutkimus: ${ADVANCES[r.target].name} ${Math.min(r.bulbs, r.cost)}/${r.cost}` : 'Tutkimus: valitse seuraava';
+  return r.target ? `Tutkimus: ${studyName(r.target)} ${Math.min(r.bulbs, r.cost)}/${r.cost}` : 'Tutkimus: valitse seuraava';
 }
 
 const researchCard = createResearchCard(hud_root, {
   close: () => { if (play) play.researchOpen = false; },
-  choose: (advance: Advance) => { if (play && play.research.available().includes(advance)) play.research.target = advance; },
+  choose: (advance: Study) => { if (play && play.research.available(foundKinds).includes(advance)) play.research.target = advance; },
   setTax: (tax: number) => { if (play) play.tax = tax; },
   setLux: (lux: number) => { if (play) play.lux = lux; },
   revolution: () => { startRevolution(); },
@@ -2172,7 +2234,9 @@ function governmentLine(): string {
 function researchView(): ResearchView {
   const r = play!.research;
   const rates = scienceRates();
-  const days = r.target && rates.science > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / rates.science)) : null;
+  // A kind of resource the people study themselves too, a bulb a day from each city (STORY-072)
+  const perDay = rates.science + peopleStudy();
+  const days = r.target && perDay > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / perDay)) : null;
   // What an advance opens: the buildings that need it, and the advances that need it
   const opens = (a: Advance) => [
     ...(Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
@@ -2183,11 +2247,15 @@ function researchView(): ResearchView {
   return {
     rates: `Tiedettä +${rates.science}/pv · kultaa ${rates.gold < 0 ? '−' : '+'}${Math.abs(rates.gold)}/pv${rates.luxury ? ` · ylellisyyttä +${rates.luxury}` : ''}`,
     current: r.target
-      ? `Tutkitaan: ${ADVANCES[r.target].name} · ${Math.min(r.bulbs, r.cost)}/${r.cost}${days ? ` · valmis ${days} pv` : ''}`
+      ? `Tutkitaan: ${studyName(r.target)} · ${Math.min(r.bulbs, r.cost)}/${r.cost}${days ? ` · valmis ${days} pv` : ''}`
       : 'Valitse, mitä tutkitaan. Tiede kertyy odottamaan.',
     progress: r.cost ? r.bulbs / r.cost : 0,
-    hint: rates.science > 0 ? null : 'Tiedettä ei tule: tiede syntyy kaupasta. Kauppaa tuovat tiet ruoho-, tasanko- ja aavikkomaalla (uudisasukas: Kehitä) ja meriruudut; pienempi kullan osuus siirtää kauppaa tieteeseen.',
-    options: r.available().map(a => ({ advance: a, name: ADVANCES[a].name, cost: `${r.cost} tiedettä`, opens: `Avaa: ${opens(a).join(', ')}`, selected: a === r.target })),
+    hint: perDay > 0 ? null : 'Tiedettä ei tule: tiede syntyy kaupasta. Kauppaa tuovat tiet ruoho-, tasanko- ja aavikkomaalla (uudisasukas: Kehitä) ja meriruudut; pienempi kullan osuus siirtää kauppaa tieteeseen.',
+    options: r.available(foundKinds).map(a => ({
+      advance: a, name: studyName(a), cost: `${r.costOf(a)} tiedettä`, selected: a === r.target,
+      // A kind: what its study shows, and the advances it opens (STORY-072)
+      opens: isKind(a) ? `Paljastaa lajin kartalla ja sen tuoton${opensFrom(a).length ? ` · avaa tutkimuksen ${opensFrom(a).map(n => ADVANCES[n].name).join(' ja ')}` : ''} · kansa tutkii mukana` : `Avaa: ${opens(a).join(', ')}`,
+    })),
     tax: play!.tax,
     lux: play!.lux,
     government: governmentLine(),
@@ -2241,7 +2309,7 @@ function openRuin(tile: number, finder: number) {
   let got: string;
   if (RUIN_GOLD[kind]) got = gold(RUIN_GOLD[kind]!);
   else if (kind === 'advance') {
-    const can = play.research.available();
+    const can = play.research.available() as Advance[];
     const a = can[Math.min(can.length - 1, Math.floor(pick * can.length))];
     if (a) {
       play.research.known.add(a);
@@ -2909,7 +2977,8 @@ function regionView(ref: RegionRef): TileView {
       const terrain = terrainOf(t);
       terrains.set(terrain, (terrains.get(terrain) ?? 0) + 1);
       if (tileTypes.codes[t] & 16) {
-        const name = RESOURCES[TERRAIN_RULES[terrain].resource].name;
+        const k = TERRAIN_RULES[terrain].resource;
+        const name = knownKind(k) ? RESOURCES[k].name : 'tuntematon';
         resources.set(name, (resources.get(name) ?? 0) + 1);
       }
     }
@@ -2949,7 +3018,9 @@ function tileView(id: number): TileView {
   const kicker = nameOf(2, regions.tileTable()[id]).name;
   if (!mapState.isMapped(id)) return { kicker, title: 'Kartoittamaton', rows: [{ label: 'Tiedossa', value: 'Ei vielä mitään: tiedustelija kartoittaa ruudun.' }] };
   const terrain = terrainOf(id);
-  const kind = tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null;
+  // A kind not studied is unknown (STORY-072)
+  const found = tileTypes.codes[id] & 16 ? TERRAIN_RULES[terrain].resource : null;
+  const kind = found && knownKind(found) ? found : null;
   const { city, owner, worked, y } = tileYieldNow(id);
   const done = (['irrigation', 'mine', 'road'] as const).filter(k => p.improvements.has(id, k)).map(k => IMPROVEMENT_NAMES[k]);
   const units = p.units.units.filter(u => u.tile === id).map(u => u.name);
@@ -2960,7 +3031,8 @@ function tileView(id: number): TileView {
   const rival = rivalCityAt(id);
   const rows: TileView['rows'] = [
     { label: 'Tuottaa', value: `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade} päivässä` },
-    ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }] : []),
+    ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }]
+      : found ? [{ label: 'Erikoisresurssi', value: `tuntematon: tutkimus ${studyName(found)} paljastaa sen ja sen tuoton` }] : []),
     { label: 'Parannukset', value: city ? 'kaupungin keskus: kastelu ja tie' : done.length ? done.join(', ') : 'ei' },
     ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
     ...(tribe ? [{ label: 'Paimentolaiset', value: tribeLine(tribe) }] : []),
@@ -2974,7 +3046,7 @@ function tileView(id: number): TileView {
     ...placementRows(id),
   ];
   const moves = movable(id).map(m => `Siirrä ${BUILDS[m.building].name.toLowerCase()}`);
-  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : TERRAIN_RULES[terrain].name, rows, ...(moves.length ? { actions: moves } : {}) };
+  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : found ? `${TERRAIN_RULES[terrain].name} · tuntematon resurssi` : TERRAIN_RULES[terrain].name, rows, ...(moves.length ? { actions: moves } : {}) };
 }
 
 // ─── Buildings on their tiles (STORY-071) ──────────
@@ -3093,7 +3165,11 @@ function meterOf(meter: Progress['meter']): Pick<GameHudState, 'mapped' | 'meter
 /** Distance between tile centres in world units near the camera target. */
 const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 
+/** Bulbs the people add a day to a study of a kind: one from each city (STORY-072, own). */
+const peopleStudy = () => (play?.research.target && isKind(play.research.target) ? play.cities.length : 0);
+
 function updatePlay(dt: number) {
+  tiles.knownResources.value = kindMask();
   if (!play) return;
   const won = conquestNow();
   // Scouts map first what opens the next level (STORY-060)
@@ -3144,8 +3220,8 @@ function updatePlay(dt: number) {
     goal: GOALS[play.goal] ? { text: GOALS[play.goal].text, reward: GOALS[play.goal].reward } : null,
     advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[play.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[play.stateAdvisor].name : PLANET_ADVISORS[play.planetAdvisor].name,
     research: !play.cities.length || play.researchOpen ? null
-      : play.research.target ? { text: `Tiede · ${ADVANCES[play.research.target].name} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
-      : play.research.available().length ? { text: 'Valitse tutkimus', choose: true } : null,
+      : play.research.target ? { text: `Tiede · ${studyName(play.research.target)} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
+      : play.research.available(foundKinds).length ? { text: 'Valitse tutkimus', choose: true } : null,
   };
   play.hud.update(state);
   void autosave();
@@ -3380,6 +3456,10 @@ frameStartPlanet();
     const c = play!.cities[city];
     return { placed: { ...c.placed }, best: [...(c.best ?? [])], spots: building ? spots(c, building, ground) : [], moving: play!.moving };
   },
+  /** Kinds of resource known and found, and the study (STORY-072). */
+  setKinds: (list: ResourceKind[]) => { if (play) { play.research.kinds.clear(); for (const k of list) play.research.kinds.add(k); } },
+  researchOptions: () => (play ? play.research.available(foundKinds) : []),
+  kinds: () => ({ known: play ? [...play.research.kinds] : [], found: [...foundKinds], target: play?.research.target ?? null }),
   /** A tile's centre on the screen, on the risen ground at the city level. */
   tileScreen: (tile: number) => toScreen(tileCenter(tile).multiplyScalar(1 + cityLevel.raise(tile) / RADIUS)),
   /** The city level (STORY-069): its city, relief, triangles and things on the ground. */

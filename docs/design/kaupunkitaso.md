@@ -73,6 +73,35 @@ siirtää sitä. Luvut ovat omia, sillä Civ I:ssä ei ole sijaintibonuksia.
   napautus siirtää rakennuksen. Bonus seuraa rakennuksen mukana.
 - Muurit ja Suuri muuri kiertävät kaupunkia eivätkä ole ruuduilla.
 
+## Resurssit ja tutkimus (STORY-072, Sami 2026-10-20)
+
+Samin valinnat: resurssit avaavat keksintöjä, ja tutkimaton resurssi näkyy
+tuntemattomana merkkinä. Säännöt ovat omia.
+
+- Jokainen erikoisresurssin laji (yksi kullakin maastolla) on tutkimuskohde siitä
+  lähtien, kun laji on löytynyt kartoitetulta ruudulta. Tutkimus maksaa 10 tiedettä
+  riippumatta siitä, mitä jo tunnetaan, eikä se nosta keksintöjen hintaa.
+- Ennen tutkimusta resurssiruudulla on harmaa ?-merkki, ja ruutu tuottaa vain
+  maastonsa verran. Tutkimus paljastaa lajin nimen ja värin kaikkialla, ja sen
+  jälkeen resurssi tuottaa.
+- Kansa tutkii itse: kun mitään ei ole valittu, tutkimuskohteeksi tulee löydetty
+  tuntematon laji. Lajia tutkittaessa jokainen kaupunki antaa lisäksi yhden tieteen
+  päivässä, joten tutkimus etenee kaupassakin ilman kauppaa. Valtion Oppinut ja
+  muut neuvonantajat tutkivat lajit ennen keksintöjä.
+- Lajit avaavat keksintöjä:
+
+| Laji | Avaa |
+|---|---|
+| Hevoset (tasanko) | Ratsastus ja Pyörä |
+| Hiili (kukkulat) | Rautatyö |
+| Kulta (vuoret) tai Jalokivet (viidakko) | Rahatalous |
+| Kala (valtameri) | Kartanteko |
+
+- Muut keksinnöt ovat auki kuten ennen. Vanha alku (?classic) ja ennen
+  STORY-072:ta tallennetut pelit tuntevat kaikki lajit.
+- Kilpailijat ja kaupunkipaikkojen arviot käyttävät edelleen resurssien todellista
+  tuottoa.
+
 ## Storyt
 
 | Story | Sisältö |
@@ -91,9 +120,10 @@ Kilpailijoiden sodat (aiemmin STORY-069) siirtyvät näiden jälkeen.
   Ratkaistu: maaston rakennukset (STORY-070).
 - ~~Miten korkeuserot vaikuttavat sijoitukseen?~~ Ratkaistu: oma paras paikka
   ylhäällä tai alhaalla, ja kuvernööri sijoittaa ja pelaaja siirtää (STORY-071).
-- Mitkä tutkimuskohteet kukin resurssilaji avaa, ja korvaako resurssipuu nykyiset
-  keksinnöt vai täydentääkö se niitä?
+- ~~Mitkä tutkimuskohteet kukin resurssilaji avaa, ja korvaako resurssipuu nykyiset
+  keksinnöt vai täydentääkö se niitä?~~ Ratkaistu: lajit avaavat keksintöjä (STORY-072).
 - Mikä rakennus kullakin resurssilla on, ja mitä se antaa valmistuttuaan?
 - Riittääkö asuttamiseen, että resurssi on kaupungin alueella, vai pitääkö kaupunki
   perustaa resurssiruudulle?
-- Näkyvätkö resurssit kartalla vasta tutkittuina (piilossa ennen tutkimusta)?
+- ~~Näkyvätkö resurssit kartalla vasta tutkittuina?~~ Ratkaistu: tuntematon merkki
+  ilman tuottoa (STORY-072).

@@ -3,7 +3,7 @@
  * choose from with their cost and what they open, how trade is split between gold and
  * science, and the advances known. A bottom sheet like the city card; the game goes on.
  */
-import { LUX_RATES, TAX_RATES, type Advance } from '../game/science';
+import { LUX_RATES, TAX_RATES, type Study } from '../game/science';
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
@@ -16,7 +16,7 @@ export interface ResearchView {
   progress: number;
   /** Where science comes from, when none does. */
   hint: string | null;
-  options: { advance: Advance; name: string; cost: string; opens: string; selected: boolean }[];
+  options: { advance: Study; name: string; cost: string; opens: string; selected: boolean }[];
   tax: number;
   lux: number;
   /** The government and its effect (STORY-047). */
@@ -33,7 +33,7 @@ export interface ResearchCard {
   readonly visible: boolean;
 }
 
-export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Advance): void; setTax(tax: number): void; setLux(lux: number): void; revolution(): void }): ResearchCard {
+export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Study): void; setTax(tax: number): void; setLux(lux: number): void; revolution(): void }): ResearchCard {
   const el = document.createElement('section');
   el.className = 'city-card research-card';
   el.setAttribute('role', 'dialog');
@@ -104,7 +104,7 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
         opt.className = 'city-build';
         opt.setAttribute('role', 'radio');
         opt.innerHTML = '<span class="city-build-top"><span class="city-build-name"></span><span class="city-build-eta"></span></span><span class="city-build-info"></span>';
-        opt.addEventListener('click', () => on.choose(opt!.dataset.advance as Advance));
+        opt.addEventListener('click', () => on.choose(opt!.dataset.advance as Study));
         options.appendChild(opt);
       }
       opt.dataset.advance = o.advance;

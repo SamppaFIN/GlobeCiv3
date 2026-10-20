@@ -5,7 +5,8 @@
  * the alpha as coverage and colours it.
  *
  * Layout: 8 columns × 3 rows of 64 px cells. Cells 0–10 are the terrain glyphs and
- * 11–21 the resource icons, both in the order of terrainTypes.ts TERRAINS.
+ * 11–21 the resource icons, both in the order of terrainTypes.ts TERRAINS; cell 22 is the
+ * unknown resource's question mark (STORY-072, own).
  */
 import * as THREE from 'three';
 import { TERRAINS, TERRAIN_RULES, type ResourceKind, type Terrain } from '../game/terrainTypes';
@@ -74,6 +75,14 @@ export function createGlyphAtlas(): THREE.CanvasTexture {
     ctx.stroke(new Path2D(RESOURCE_ICONS[TERRAIN_RULES[t].resource]));
     ctx.restore();
   });
+  // A kind the people do not know yet (STORY-072): a question mark on the same grid
+  const [qx, qy] = cellOrigin(2 * TERRAINS.length);
+  ctx.save();
+  ctx.translate(qx + 8, qy + 8);
+  ctx.scale(2, 2);
+  ctx.lineWidth = 2;
+  ctx.stroke(new Path2D('M8.5 9 Q8.5 5 12 5 Q15.5 5 15.5 8.5 Q15.5 11 12 12.5 V14.5 M12 18.5 V19'));
+  ctx.restore();
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.NoColorSpace;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
