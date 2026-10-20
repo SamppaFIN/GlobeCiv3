@@ -71,7 +71,15 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall'] as const;
+export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field'] as const;
+/**
+ * The terrain buildings (STORY-070; Sami 2026-10-20, own rules): a city builds them from the
+ * start where its two rings hold their terrain, each 30 shields, no upkeep, +1 food or shield
+ * a day. The first building of the game opens the units.
+ */
+export const TERRAIN_BUILDINGS = { fishery: ['ocean'], sawmill: ['forest', 'jungle'], quarry: ['hills', 'mountains'], field: ['grassland', 'plains'] } as const satisfies Record<string, readonly Terrain[]>;
+export type TerrainBuilding = keyof typeof TERRAIN_BUILDINGS;
+export const isTerrainBuilding = (b: Build): b is TerrainBuilding => b in TERRAIN_BUILDINGS;
 /**
  * Wonders (STORY-045), Freeciv civ1 buildings.ruleset and effects.ruleset: once in the game,
  * no upkeep. Kolossi (Colossus, 200, Bronze Working): +1 trade on each tile the city works
@@ -82,7 +90,7 @@ export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aq
 export const WONDERS = ['colossus', 'gardens', 'greatwall'] as const;
 export const isWonder = (b: Build): boolean => (WONDERS as readonly string[]).includes(b);
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0 };
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0, fishery: 0, sawmill: 0, quarry: 0, field: 0 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -90,7 +98,7 @@ export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly st
  * genus Convert, data/classic/buildings.ruleset commit 27a6a0c1; Civ I has none). After a
  * soldier or a building the city goes on to it (STORY-039).
  */
-export type Build = 'warrior' | 'phalanx' | 'settler' | Attacker | Building | 'coinage';
+export type Build = 'warrior' | 'phalanx' | 'settler' | 'scout' | Attacker | Building | 'coinage';
 /** Soldiers defend their city; a phalanx twice as well (STORY-043). */
 export const isSoldier = (b: Build): b is 'warrior' | 'phalanx' => b === 'warrior' || b === 'phalanx';
 export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> = {
@@ -103,6 +111,8 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   chariot: { name: 'Sotavaunut', cost: 40, pop: 0 },
   catapult: { name: 'Katapultti', cost: 40, pop: 0 },
   settler: { name: 'Uudisasukas', cost: 40, pop: 1 },
+  // Own (STORY-070): Freeciv civ1 has no explorer
+  scout: { name: 'Tiedustelija', cost: 20, pop: 0 },
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
   market: { name: 'Tori', cost: 80, pop: 0 },
@@ -117,6 +127,10 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   gardens: { name: 'Riippuvat puutarhat', cost: 300, pop: 0 },
   greatwall: { name: 'Suuri muuri', cost: 300, pop: 0 },
   coinage: { name: 'Kultaa', cost: 0, pop: 0 },
+  fishery: { name: 'Kalastamo', cost: 30, pop: 0 },
+  sawmill: { name: 'Saha', cost: 30, pop: 0 },
+  quarry: { name: 'Louhos', cost: 30, pop: 0 },
+  field: { name: 'Pelto', cost: 30, pop: 0 },
 };
 
 /**
@@ -275,6 +289,10 @@ export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<numb
     y.shield += t.shield;
     y.trade += t.trade;
   }
+  // The terrain buildings' +1 a day (STORY-070)
+  const has = (b: Building) => (city.buildings.includes(b) ? 1 : 0);
+  y.food += has('fishery') + has('field');
+  y.shield += has('sawmill') + has('quarry');
   return {
     food: y.food,
     shield: y.shield - Math.max(0, support.units - GOVERNMENTS[gov].freeUnits),
@@ -324,7 +342,7 @@ export function cityDay(city: City, y: CityYield): Build | null {
   // settlers next (STORY-033) took a citizen at each growth and ate the city's food.
   // A building is there once, and the city goes on to gold after it too.
   if (isBuilding(done) && !city.buildings.includes(done)) city.buildings.push(done);
-  if (isSoldier(done) || isAttacker(done) || isBuilding(done)) city.build = 'coinage';
+  if (isSoldier(done) || isAttacker(done) || done === 'scout' || isBuilding(done)) city.build = 'coinage';
   return done;
 }
 

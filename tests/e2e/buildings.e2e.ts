@@ -6,7 +6,7 @@ async function startGame(page: Page): Promise<string[]> {
   page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./?seed=42');
+  await page.goto('./?classic&seed=42');
   await ready;
   // Before the game starts: a slow runner passes days before the first check
   await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
@@ -39,8 +39,8 @@ test('trade is gold; gold buys a granary, which the card lists and the city pays
   const s = await state(page);
   await expect(card.locator('.city-gold')).toHaveText(new RegExp(`^Kassa ${s.gold} kultaa · [+−]\\d+/pv$`));
   const builds = card.getByRole('radiogroup', { name: 'Rakenna' });
-  // With the four attackers (STORY-064)
-  await expect(builds.getByRole('radio')).toHaveCount(18);
+  // With the four attackers (STORY-064), the scout and the Louhos of the hills (STORY-070)
+  await expect(builds.getByRole('radio')).toHaveCount(20);
   const granary = builds.getByRole('radio', { name: /^Viljavarasto/ });
   await expect(granary).toContainText('60 tuotantoa, 1 kulta/pv · Säilyttää puolet ruoasta, kun kaupunki kasvaa');
   await expect(builds.getByRole('radio', { name: /^Muuri/ })).toContainText('120 tuotantoa, 2 kultaa/pv · Soturit kolminkertaisesti vahvempia rosvoja vastaan');
@@ -75,7 +75,7 @@ test('trade is gold; gold buys a granary, which the card lists and the city pays
   await page.waitForFunction(() => (window as any).globeGame.state.cities[0].buildings.includes('granary'), null, { timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(card.locator('.city-buildings')).toHaveText('Rakennukset: Viljavarasto');
-  await expect(builds.getByRole('radio')).toHaveCount(17);
+  await expect(builds.getByRole('radio')).toHaveCount(19);
   await expect(builds.getByRole('radio', { name: /^Viljavarasto/ })).toHaveCount(0);
   const after = await state(page);
   expect(after.cities[0].build).toBe('coinage');

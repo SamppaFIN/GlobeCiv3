@@ -280,3 +280,19 @@ describe('entertainers (STORY-061, Freeciv civ1)', () => {
     expect(cityLuxury(c, { food: 0, shield: 0, trade: 0 }, 50, 0)).toBe(6);
   });
 });
+
+describe('terrain buildings (STORY-070)', () => {
+  it('cost 30, no upkeep, and give the city a food or a shield a day; a scout is 20 and leaves the city to gold', () => {
+    const c = city(1);
+    const before = cityYield(c, yieldOf);
+    c.buildings.push('field', 'sawmill');
+    const after = cityYield(c, yieldOf);
+    expect([after.food - before.food, after.shield - before.shield]).toEqual([1, 1]);
+    expect([BUILDS.fishery.cost, BUILDS.quarry.cost, BUILDS.scout.cost]).toEqual([30, 30, 20]);
+    expect(payUpkeep(c, 10).treasury).toBe(10);
+    c.build = 'scout';
+    c.shields = 19;
+    expect(cityDay(c, { ...after, shield: 1, surplus: 0 })).toBe('scout');
+    expect(c.build).toBe('coinage');
+  });
+});

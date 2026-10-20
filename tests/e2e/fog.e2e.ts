@@ -41,7 +41,7 @@ async function luminanceAt(page: Page, shot: Buffer, points: number[][]): Promis
 test('a new game maps the start city area and leaves the rest of its province in fog', async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const errors = await openGame(page, '?seed=42');
+  const errors = await openGame(page, '?classic&seed=42');
   expect((await page.evaluate(() => (window as any).globeGame.state)).mapped).toBe(0);
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });

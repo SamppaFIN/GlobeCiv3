@@ -6,7 +6,7 @@ async function startGame(page: Page): Promise<string[]> {
   page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./?seed=42');
+  await page.goto('./?classic&seed=42');
   await ready;
   // Discoveries (STORY-027) stop the game; this test is about the city
   // Before the game starts: a slow runner passes days before the first check
@@ -85,8 +85,9 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   await expect(card.locator('.city-grow')).toHaveText(/^(kasvaa \d+ pv|ei kasva|nälkää)$/);
   // The builds to choose from; a Soturi first (a slow runner may have finished it before
   // the pause, and the city gone on to gold)
-  // Seven units (Falangi: STORY-043, four attackers: STORY-064), seven buildings (STORY-038, 040, 044, 054), three wonders (STORY-045) and Kultaa (STORY-039)
-  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(18);
+  // Eight units (Falangi: STORY-043, four attackers: STORY-064, Tiedustelija: STORY-070), seven buildings (STORY-038, 040, 044, 054),
+  // the Louhos of the hills round the city (STORY-070), three wonders (STORY-045) and Kultaa (STORY-039)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(20);
   await expect(buildOption(card, 'aqueduct')).toContainText('vaatii: Rakentaminen');
   await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');
   await expect(buildOption(card, 'settler')).toContainText('40 tuotantoa ja 1 asukas · Perustaa uuden kaupungin tai kehittää maata');

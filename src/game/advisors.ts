@@ -69,6 +69,33 @@ export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { fo
   }
 }
 
+/**
+ * The city stage of a new game (STORY-070; Sami 2026-10-20: everything by choosing a governor).
+ * Before the next map opens each governor builds a terrain building first, as the units open
+ * only after the first building, then the unit that opens the next map: Kartoittaja a scout,
+ * Kasvattaja a settler once the city has grown, Vartija a soldier and then a scout.
+ */
+/** What each governor does at the city stage, for its card. */
+export const START_DOES: Record<CityAdvisor, string> = {
+  none: 'Valitset kaupungin rakennukset itse kaupunkikortista.',
+  growth: 'Pelto tai kalastamo ensin, sitten kasvu ja uudisasukas, joka avaa seuraavan kartan.',
+  explore: 'Saha tai louhos ensin, sitten tiedustelija, joka avaa seuraavan kartan.',
+  defend: 'Saha tai louhos ensin, sitten soturi ja tiedustelija, joka avaa seuraavan kartan.',
+};
+
+export function startAdvice(advisor: CityAdvisor, city: City, n: { available: Build[]; built: boolean; soldiers: number }): { focus: Focus; build: Build | null } | null {
+  if (advisor === 'none') return null;
+  const can = (b: Build) => n.available.includes(b);
+  const focus: Focus = advisor === 'growth' ? 'food' : 'production';
+  if (!n.built) {
+    const order: Build[] = advisor === 'growth' ? ['field', 'fishery', 'sawmill', 'quarry'] : ['sawmill', 'quarry', 'field', 'fishery'];
+    return { focus, build: order.find(can) ?? null };
+  }
+  if (advisor === 'growth') return { focus, build: city.size >= 2 && can('settler') ? 'settler' : null };
+  if (advisor === 'defend' && n.soldiers < 1 && can('warrior')) return { focus, build: 'warrior' };
+  return { focus, build: can('scout') ? 'scout' : null };
+}
+
 /** The area the Kartoittaja sends the scouts to: the least mapped one not yet all mapped. */
 export function exploreTarget(shares: readonly (readonly [area: number, share: number])[]): number | null {
   let best: number | null = null, low = 1;

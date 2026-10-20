@@ -7,7 +7,7 @@ async function startGame(page: Page): Promise<string[]> {
   page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./?seed=42');
+  await page.goto('./?classic&seed=42');
   await ready;
   // Discoveries (STORY-027) stop the game; these tests are about the clock and the units
   // Before the game starts: a slow runner passes days before the first check

@@ -20,7 +20,7 @@ test('wonders: once in the game, with their effect on the city or every city', a
   page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./?seed=42');
+  await page.goto('./?classic&seed=42');
   await ready;
   await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Uusi peli' }).click();

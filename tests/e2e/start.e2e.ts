@@ -69,7 +69,7 @@ test.describe('on a phone', () => {
 
   test('a finger turns the planet, the surface staying under it', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    const errors = await openGame(page, '?seed=42');
+    const errors = await openGame(page, '?classic&seed=42');
     const centre = await page.evaluate(() => (window as any).globeCamera.target.toArray());
     // A real touch through the DevTools protocol (the browser makes the pointer events)
     const cdp = await page.context().newCDPSession(page);
@@ -90,7 +90,7 @@ test.describe('on a phone', () => {
 
 test('Uusi peli flies to the start city in about 3 s and locks zooming out at the city area', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
-  const errors = await openGame(page, '?seed=42');
+  const errors = await openGame(page, '?classic&seed=42');
   await page.screenshot({ path: testInfo.outputPath('start-desktop.png') });
   await page.evaluate(() => {
     const w = window as any;
@@ -149,7 +149,7 @@ test('the same seed starts in the same city area', async ({ page }) => {
   const cities: number[] = [];
   for (let i = 0; i < 2; i++) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openGame(page, '?seed=7');
+    await openGame(page, '?classic&seed=7');
     await page.getByRole('button', { name: 'Uusi peli' }).click();
     // The first round's game may have saved itself as the page closed (STORY-036): then
     // the button asks before it replaces the save
@@ -164,7 +164,7 @@ test('the same seed starts in the same city area', async ({ page }) => {
 
 test('with reduced motion the new game cuts straight to the start city', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const errors = await openGame(page, '?seed=42');
+  const errors = await openGame(page, '?classic&seed=42');
   const t0 = await page.evaluate(() => (window as any).globeCamera.target.toArray());
   await page.waitForTimeout(300);
   // No rotation on the start screen
@@ -179,7 +179,7 @@ test('a drag turns the start planet under the pointer, so do the arrow keys, and
   test.setTimeout(120_000);
   // No slow spin while measuring
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const errors = await openGame(page, '?seed=42');
+  const errors = await openGame(page, '?classic&seed=42');
   const { width, height } = page.viewportSize()!;
   const [cx, cy] = [width / 2, height / 2];
   const centre = await page.evaluate(() => (window as any).globeCamera.target.toArray());

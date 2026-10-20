@@ -104,14 +104,14 @@ const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
-const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall'];
-const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...ATTACKERS, ...BUILDINGS, 'coinage'];
+const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field'];
+const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;
 const IMPROVEMENTS: readonly ImprovementKind[] = ['irrigation', 'mine', 'road'];
-const METERS: readonly Progress['meter'][] = ['province', 'state', 'conquest', 'done'];
+const METERS: readonly Progress['meter'][] = ['city', 'province', 'state', 'conquest', 'done'];
 /** Bounds on list lengths and numbers, far above anything a game reaches. */
 const MAX_LIST = 100_000;
 const MAX_INT = 1e9;
@@ -204,7 +204,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       units,
       selected: int(s.selected, 'selected', 0, 10_000),
       // Before STORY-016 the state level ended the meter: it goes on with the provinces held
-      progress: { openLevel: oneOf(p.openLevel, [0, 1, 2, 3] as const, 'open level'), meter: p.openLevel === 1 && p.meter === 'done' ? 'conquest' : oneOf(p.meter, METERS, 'meter') },
+      progress: { openLevel: oneOf(p.openLevel, [0, 1, 2, 3, 4] as const, 'open level'), meter: p.openLevel === 1 && p.meter === 'done' ? 'conquest' : oneOf(p.meter, METERS, 'meter') },
       targetProvince: int(s.targetProvince, 'target province', -1, limits.cityAreas),
       // Finds waiting in a save from before STORY-052 open as ruins on load; their old choices are not read
       discoveries: list(s.discoveries, 'discoveries', v => {

@@ -16,7 +16,7 @@ test('close to a city its area rises into relief with its buildings, and sinks b
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(e.message));
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
-  await page.goto('./?seed=7');
+  await page.goto('./?classic&seed=7');
   await ready;
   await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
   await page.getByRole('button', { name: 'Uusi peli' }).click();
