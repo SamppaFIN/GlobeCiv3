@@ -42,7 +42,12 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
     cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food', entertainers: 1, native: true }],
     offers: [], offered: [START_TILE], lastOfferDay: 9, pendingSite: null,
     improvements: imp.entries(), raids: raids.save(), raidAlert: true,
-    war: { target: START_TILE + 2, marching: true, losses: [[START_TILE + 2, { lost: 1, day: 10 }]], razed: [START_TILE + 3], routed: [5] }, gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4 }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
+    war: { target: START_TILE + 2, marching: true, losses: [[START_TILE + 2, { lost: 1, day: 10 }]], razed: [START_TILE + 3], routed: [5] },
+    rivals: [{
+      id: 1, nextId: 2,
+      cities: [{ id: 0, name: 'Mielikkälä', tile: START_TILE + 40, capital: true, size: 2, food: 5, shields: 9, build: 'settler', buildings: [], focus: 'balanced', entertainers: 0 }],
+      units: [{ id: 0, kind: 'warrior', tile: START_TILE + 40, path: [], wait: 0, home: 0, site: null }, { id: 1, kind: 'settler', tile: START_TILE + 41, path: [START_TILE + 42], wait: 1, home: 0, site: START_TILE + 43 }],
+    }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4 }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }

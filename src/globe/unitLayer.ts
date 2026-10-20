@@ -11,6 +11,7 @@
  * object matrix keeps positions exact at deep zoom (as the surface tiles do).
  */
 import * as THREE from 'three';
+import { RIVALS } from '../game/rivals';
 import { neighbors, tileCenter } from './hexTiles';
 import { tilesInRings } from '../game/pathfinding';
 import { oklchToSrgb } from './colors';
@@ -25,10 +26,12 @@ const ACCENT = '#9184d9';
 const ACCENT_LIGHT = '#b5abfc';
 const RUST = `rgb(${oklchToSrgb(0.6, 0.15, 35).map(v => Math.round(v * 255)).join(',')})`;
 const WATER_CSS = `rgb(${oklchToSrgb(0.72, 0.11, 230).map(v => Math.round(v * 255)).join(',')})`;
+/** A rival's colour for its houses (STORY-068). */
+const rivalCss = (k: number) => `rgb(${oklchToSrgb(...(RIVALS[k].color as unknown as [number, number, number])).map(v => Math.round(v * 255)).join(', ')})`;
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'rival0' | 'rival1' | 'rival2' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -105,7 +108,7 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.beginPath(); g.arc(98, 20, 11, 0, Math.PI * 2); g.fill();
     g.lineWidth = 6;
     for (const x of [36, 92]) { g.fillStyle = INK_CSS; g.beginPath(); g.arc(x, 102, 13, 0, Math.PI * 2); g.fill(); g.stroke(); }
-  } else if (kind === 'city' || kind === 'native') {
+  } else if (kind === 'city' || kind === 'native' || kind.startsWith('rival')) {
     // Three houses on a shadow, light from the top left: lit walls in ink, dark roofs; a
     // city-state's walls are rust (STORY-063)
     g.fillStyle = 'rgba(0,0,0,0.35)';
@@ -113,7 +116,7 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     g.strokeStyle = INK_DARK;
     g.lineWidth = 5;
     for (const [x, y, w, h] of [[14, 70, 34, 38], [46, 50, 38, 58], [82, 72, 32, 36]]) {
-      g.fillStyle = kind === 'native' ? RUST : INK_CSS;
+      g.fillStyle = kind === 'native' ? RUST : kind.startsWith('rival') ? rivalCss(Number(kind.slice(5))) : INK_CSS;
       g.fillRect(x, y, w, h);
       g.strokeRect(x, y, w, h);
       g.fillStyle = INK_DARK;
@@ -190,6 +193,8 @@ export interface UnitView {
   natives: readonly number[];
   /** Camps of the nomads in view (STORY-066). */
   camps: readonly number[];
+  /** Rival cities in view and whose they are (STORY-068). */
+  rivals: readonly { tile: number; rival: number }[];
   selected: number | null;
   flag: number | null;
   site: number | null;
@@ -213,6 +218,7 @@ export class UnitLayer {
   private readonly cities: THREE.Sprite[] = [];
   private readonly natives: THREE.Sprite[] = [];
   private readonly camps: THREE.Sprite[] = [];
+  private readonly rivals: THREE.Sprite[] = [];
   private readonly marks: THREE.Sprite[] = [];
   private readonly bandits: THREE.Sprite[] = [];
   private readonly rusty = new THREE.LineDashedMaterial({ color: new THREE.Color(RUST), depthTest: false });
@@ -233,7 +239,7 @@ export class UnitLayer {
     this.textures = {
       scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
       horseman: figureTexture('horseman'), swordsman: figureTexture('swordsman'), chariot: figureTexture('chariot'), catapult: figureTexture('catapult'),
-      city: figureTexture('city'), native: figureTexture('native'), camp: figureTexture('camp'), ring: figureTexture('ring'), flag: figureTexture('flag'),
+      city: figureTexture('city'), native: figureTexture('native'), camp: figureTexture('camp'), rival0: figureTexture('rival0'), rival1: figureTexture('rival1'), rival2: figureTexture('rival2'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };
     this.roads.renderOrder = 6;
@@ -290,6 +296,19 @@ export class UnitLayer {
       s.visible = i < view.natives.length;
       if (!s.visible) return;
       this.at(view.natives[i], s.position);
+      s.scale.set(size * 1.25, size * 1.25, 1);
+      s.visible = facing(s.position);
+    });
+    while (this.rivals.length < view.rivals.length) {
+      const s = sprite(this.textures.rival0, 7);
+      this.rivals.push(s);
+      this.group.add(s);
+    }
+    this.rivals.forEach((s, i) => {
+      s.visible = i < view.rivals.length;
+      if (!s.visible) return;
+      s.material.map = this.textures[`rival${view.rivals[i].rival}` as Figure];
+      this.at(view.rivals[i].tile, s.position);
       s.scale.set(size * 1.25, size * 1.25, 1);
       s.visible = facing(s.position);
     });

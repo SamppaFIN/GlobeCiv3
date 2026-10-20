@@ -10,6 +10,7 @@
  */
 import { SPEEDS, type Speed } from './clock';
 import { ATTACKERS, type Losses, type WarSave } from './war';
+import { RIVALS, type RivalSave, type RivalUnit } from './rivals';
 import type { City, Build, Building, Focus } from './cities';
 import type { Discovery, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
@@ -70,6 +71,8 @@ export interface SaveData {
   raidAlert: boolean;
   /** The campaign against the city-states (STORY-064); saves from before have none. */
   war: WarSave;
+  /** The rival civilizations (STORY-068); saves from before have none, and the rivals start anew. */
+  rivals?: RivalSave[];
   /** The treasury (STORY-038); a save from before it has the start gold. */
   gold: number;
   /** Advances, research and the tax rate (STORY-040); saves from before have none and half. */
@@ -104,6 +107,7 @@ const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall'];
 const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
+const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior'];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;
 const IMPROVEMENTS: readonly ImprovementKind[] = ['irrigation', 'mine', 'road'];
@@ -140,6 +144,21 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
     const yieldOf = (v: unknown): Yield => {
       const y = obj(v, 'yield');
       return { food: int(y.food, 'food', -100, 100), shield: int(y.shield, 'shield', -100, 100), trade: int(y.trade, 'trade', -100, 100) };
+    };
+    // The player's cities and the rivals' (STORY-068)
+    const city = (v: unknown): City => {
+      const c = obj(v, 'city');
+      return {
+        id: int(c.id, 'city id', 0, 10_000), name: str(c.name, 'city name'), tile: tile(c.tile), capital: bool(c.capital, 'capital'),
+        size: int(c.size, 'size', 1, 1000), food: int(c.food, 'food', 0, MAX_INT), shields: int(c.shields, 'shields', 0, MAX_INT),
+        build: oneOf(c.build, BUILDS, 'build'),
+        // Saves from before STORY-038 have no buildings; each building is there once
+        buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), BUILDINGS.length))],
+        // Saves from before STORY-039 have no focus
+        focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
+        entertainers: c.entertainers === undefined ? 0 : int(c.entertainers, 'entertainers', 0, 1000),
+        ...(c.native === undefined ? {} : { native: bool(c.native, 'native') }),
+      };
     };
 
     const u = obj(s.units, 'units');
@@ -197,20 +216,22 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         return [tile(b[0]), yieldOf(b[1])] as [number, Yield];
       }),
       found: int(s.found, 'found'),
-      cities: list(s.cities, 'cities', v => {
-        const c = obj(v, 'city');
+      cities: list(s.cities, 'cities', city, 10_000),
+      rivals: s.rivals === undefined ? undefined : list(s.rivals, 'rivals', v => {
+        const x = obj(v, 'rival');
         return {
-          id: int(c.id, 'city id', 0, 10_000), name: str(c.name, 'city name'), tile: tile(c.tile), capital: bool(c.capital, 'capital'),
-          size: int(c.size, 'size', 1, 1000), food: int(c.food, 'food', 0, MAX_INT), shields: int(c.shields, 'shields', 0, MAX_INT),
-          build: oneOf(c.build, BUILDS, 'build'),
-          // Saves from before STORY-038 have no buildings; each building is there once
-          buildings: c.buildings === undefined ? [] : [...new Set(list(c.buildings, 'buildings', b => oneOf(b, BUILDINGS, 'building'), BUILDINGS.length))],
-          // Saves from before STORY-039 have no focus
-          focus: c.focus === undefined ? 'balanced' : oneOf(c.focus, FOCUSES, 'focus'),
-          entertainers: c.entertainers === undefined ? 0 : int(c.entertainers, 'entertainers', 0, 1000),
-          ...(c.native === undefined ? {} : { native: bool(c.native, 'native') }),
+          id: int(x.id, 'rival id', 0, RIVALS.length - 1),
+          cities: list(x.cities, 'rival cities', city, 1000),
+          units: list(x.units, 'rival units', w => {
+            const o = obj(w, 'rival unit');
+            return {
+              id: int(o.id, 'rival unit id'), kind: oneOf(o.kind, RIVAL_UNITS, 'rival unit kind'), tile: tile(o.tile), path: tiles(o.path, 10_000),
+              wait: int(o.wait, 'rival unit wait', 0, 100), home: int(o.home, 'rival unit home', 0, 10_000), site: orNull(o.site, tile),
+            };
+          }, 10_000),
+          nextId: int(x.nextId, 'rival next id'),
         };
-      }, 10_000),
+      }, RIVALS.length),
       offers: list(s.offers, 'offers', v => {
         const o = obj(v, 'offer');
         return { tile: tile(o.tile), finder: int(o.finder, 'finder') };

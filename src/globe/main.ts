@@ -32,6 +32,8 @@ import { createTileCard, type TileView } from '../ui/tileCard';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
+import { RIVALS, Rival, rivalStarts, type RivalWorld } from '../game/rivals';
+import { oklchToSrgb } from './colors';
 import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS, TRIBE_REACH, type Tribe } from '../game/nomads';
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
 import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, type PlanetAdvisor } from '../game/advisors';
@@ -473,7 +475,7 @@ function snapshot(): SaveData | null {
     bonuses: [...play.bonuses].map(([t, y]) => [t, { ...y }] as [number, Yield]),
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
-    improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), raidAlert: play.raidAlert, gold: play.gold,
+    improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
     research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, goal: play.goal,
   };
 }
@@ -551,6 +553,7 @@ interface Play {
   /** Bandits on their way to a city, and whether their card waits to be answered (STORY-034). */
   raids: Raids;
   war: War;
+  rivals: Rival[];
   raidAlert: boolean;
   /** The treasury: trade comes in as gold, and buildings and buying cost it (STORY-038). */
   gold: number;
@@ -639,6 +642,9 @@ const world: World = {
 };
 
 function startPlay(startCity: number, saved?: SaveData) {
+  // A state with land: 10 of its 49 city areas or more centred on land (a sample, not a scan)
+  const hasLand = (state: number) => Array.from({ length: 49 }, (_, k) => pointToTile(regions.centers[2][state * 49 + k])).filter(t => Number.isFinite(world.cost(t))).length >= 10;
+  rivalStartStates = rivalStarts(game!.seed, Math.floor(startCity / 49), regions.neighbors, hasLand);
   const units = new Units(pointToTile(regions.centers[2][startCity]), world, saved?.units);
   const province = Math.floor(startCity / 7);
   const provinceTiles: number[] = [];
@@ -678,14 +684,16 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: new Research(), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   if (!saved) return;
   // A saved game goes on where it was
   Object.assign(play, {
     selected: Math.min(saved.selected, units.units.length - 1), progress: saved.progress, targetProvince: saved.targetProvince,
     bonuses: new Map(saved.bonuses), found: saved.found, cities: saved.cities,
     offers: saved.offers, offered: saved.offered, lastOfferDay: saved.lastOfferDay ?? -Infinity, pendingSite: saved.pendingSite,
-    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), war: new War(saved.war), raidAlert: saved.raidAlert, gold: saved.gold,
+    improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), war: new War(saved.war), raidAlert: saved.raidAlert,
+    // A save from before STORY-068 has no rivals: they start now
+    ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
     research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, goal: saved.goal,
   });
   clock.day = saved.day;
@@ -920,7 +928,7 @@ function noteSiteOffer(fresh: number[]) {
   const isLand = (id: number) => Number.isFinite(world.cost(id));
   // Good sites come from freshly mapped land; after a quiet while, or in the conquest, the best known one
   const quiet = play.cities.length > 0 && clock.day - play.lastOfferDay >= QUIET_DAYS;
-  const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken))
+  const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken) && !nearForeign(id))
     ?? (play.progress.meter === 'conquest' ? provinceSite(taken) : quiet ? nearbySite(taken) : undefined);
   if (tile === undefined) return;
   play.offers.push({ tile, finder: finderOf(tile) });
@@ -946,7 +954,7 @@ function provinceSite(taken: readonly number[]): number | undefined {
     for (let a = pr * 7; a < pr * 7 + 7; a++) {
       if (!tilesOfArea.has(a)) tilesOfArea.set(a, cityTiles(regions, a));
       for (const t of tilesOfArea.get(a)!) {
-        if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || nearNative(t)) continue;
+        if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || nearForeign(t)) continue;
         const s = world.siteScore(t);
         if (s > top) { top = s; best = t; }
       }
@@ -965,7 +973,7 @@ function nearbySite(taken: readonly number[]): number | undefined {
   const near = new Set(taken.flatMap(t => tilesInRings(t, SITE_SPACING - 1)));
   let best: number | undefined, top = FAIR_SITE - 1;
   for (const t of tilesInRings(p.cities[0].tile, 12)) {
-    if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || !p.units.isOpen(t, world) || nearNative(t)) continue;
+    if (!mapState.isMapped(t) || !Number.isFinite(world.cost(t)) || near.has(t) || !p.units.isOpen(t, world) || nearForeign(t)) continue;
     const s = world.siteScore(t);
     if (s > top) { top = s; best = t; }
   }
@@ -1002,7 +1010,7 @@ const cityLabels = createCityLabels(hud_root, id => {
   if (!play) return;
   // A city-state's or a tribe's label opens its hex card (STORY-063, STORY-066)
   if (id < 0) {
-    const tile = id <= -1001 ? visibleTribes()[-1001 - id]?.camp : visibleNatives()[-1 - id]?.tile;
+    const tile = id <= -2001 ? visibleRivalCities()[-2001 - id]?.city.tile : id <= -1001 ? visibleTribes()[-1001 - id]?.camp : visibleNatives()[-1 - id]?.tile;
     if (tile === undefined) return;
     if (viewLevel !== 3) fly({ point: tileCenter(tile), dist: frames[3], level: 3 });
     play.tileOpen = tile;
@@ -1031,6 +1039,11 @@ function updateCityLabels() {
       const at = toScreen(tileCenter(n.tile));
       return { id: -1 - k, name: n.name, size: nativeStrength(n, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, foe: 'native' as const };
     }),
+    // Rival cities from −2001 down (STORY-068)
+    ...visibleRivalCities().map((x, k) => {
+      const at = toScreen(tileCenter(x.city.tile));
+      return { id: -2001 - k, name: x.city.name, size: x.city.size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, foe: 'rival' as const, color: rivalCss(x.rival.id), owner: x.rival.name };
+    }),
     // Tribes from −1001 down (STORY-066), with their band's size
     ...visibleTribes().map((t, k) => {
       const at = toScreen(tileCenter(t.camp));
@@ -1047,6 +1060,64 @@ const nativesOf = new Map<number, NativeCity[]>();
 const natives: NativeCity[] = [];
 const nativeCenters: THREE.Vector3[] = [];
 const TILE_ANGLE = Math.acos(1 / Math.sqrt(5)) / 330;
+
+// ─── Rival civilizations (STORY-068) ──────────────
+// Two or three rivals start two states from home (rivals.ts): their capitals come from the
+// scan of their start states, and their cities grow and spread by the player's rules.
+let rivalStartStates: number[] = [];
+/** Start states scanned for a capital this session, found or not. */
+const rivalScanned = new Set<number>();
+
+/** Where a rival may found a city: land outside the player's states, clear of every city and city-state. */
+function siteContext() {
+  const p = play!;
+  return {
+    realm: new Set([homeState(), ...conquestNow().conquered]),
+    cities: [...p.cities, ...p.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile)),
+  };
+}
+function freeForRival(tile: number, ctx: ReturnType<typeof siteContext>): boolean {
+  if (!Number.isFinite(world.cost(tile)) || ctx.realm.has(Math.floor(world.cityOf(tile) / 49)) || nearNative(tile)) return false;
+  const at = tileCenter(tile);
+  return !ctx.cities.some(c => c.angleTo(at) < (SITE_SPACING - 0.5) * TILE_ANGLE);
+}
+
+const rivalWorld: RivalWorld = {
+  // The rivals' tiles give what their terrain gives; the player's improvements are the player's
+  yieldOf: (id, centre) => terrainYield(id, centre),
+  cost: id => world.cost(id),
+  free: tile => freeForRival(tile, siteContext()),
+  // The best fair site within ten rings
+  site: from => {
+    const ctx = siteContext();
+    let best: number | null = null;
+    let top = FAIR_SITE - 1;
+    for (const t of tilesInRings(from, 10)) {
+      if (!freeForRival(t, ctx)) continue;
+      const s = world.siteScore(t);
+      if (s > top) { top = s; best = t; }
+    }
+    return best;
+  },
+  path: (from, to) => findPath(from, to, id => world.cost(id)),
+};
+
+/** A day of the rivals: their cities work the tiles the player's leave. */
+function rivalsDay() {
+  const p = play!;
+  if (!p.rivals.some(r => r.cities.length)) return;
+  const taken = new Set(workedByCity().flat());
+  for (const r of p.rivals) {
+    for (const e of r.day(rivalWorld, taken)) {
+      if (e.kind === 'founded' && mapState.isMapped(e.city.tile)) discoveryCard.notice(`${r.name} perusti kaupungin ${e.city.name}`);
+    }
+  }
+}
+
+/** The rivals' cities on mapped tiles. */
+const visibleRivalCities = () => play!.rivals.flatMap(r => r.cities.filter(c => mapState.isMapped(c.tile)).map(city => ({ rival: r, city })));
+const rivalCityAt = (tile: number) => play!.rivals.flatMap(r => r.cities.map(city => ({ rival: r, city }))).find(x => x.city.tile === tile) ?? null;
+const rivalCss = (k: number) => `rgb(${oklchToSrgb(...(RIVALS[k].color as unknown as [number, number, number])).map(v => Math.round(v * 255)).join(', ')})`;
 
 // ─── Nomad tribes (STORY-066) ─────────────────────
 // A tribe in each state next to the player's (nomads.ts): its camp moves over the state's land,
@@ -1120,10 +1191,19 @@ function scanNatives(budgetMs: number) {
     const rough = scan.rough.sort((a, b) => b.score - a.score || a.tile - b.tile);
     // Not next to a city of the player's founded before the state's were found (an older save);
     // later cities keep away from them, so leaving those tiles out gives the same city-states
-    const ours = play.cities.filter(c => !c.native).map(c => tileCenter(c.tile));
+    const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
     const land = rough.slice(0, NATIVE_CANDIDATES)
       .filter(l => !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE))
       .map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
+    const rival = rivalStartStates.indexOf(scan.state);
+    if (rival >= 0) {
+      // A rival's capital on the best site of its start state (STORY-068)
+      rivalScanned.add(scan.state);
+      const best = land.filter(l => l.score > 0).sort((a, b) => b.score - a.score || a.tile - b.tile)[0];
+      if (best && !play.rivals[rival].cities.length) play.rivals[rival].found(best.tile);
+      if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
+      return;
+    }
     const near = (a: number, b: number) => tileCenter(a).angleTo(tileCenter(b)) < NATIVE_SPACING * TILE_ANGLE;
     const found = nativeCities(game.seed, scan.state, land, near);
     nativesOf.set(scan.state, found);
@@ -1134,12 +1214,16 @@ function scanNatives(budgetMs: number) {
   if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
 }
 
-/** The next state whose city-states are wanted: next to home or a conquered state, not home. */
+/**
+ * The next state to scan: next to home or a conquered state for its city-states and tribe (not
+ * home nor a rival's start), then a rival's start state for its capital (STORY-068).
+ */
 function nextNativeState(): number | null {
   for (const s of [homeState(), ...conquestNow().conquered]) {
-    for (const t of regions.neighbors[s]) if (t !== homeState() && !nativesOf.has(t)) return t;
+    for (const t of regions.neighbors[s]) if (t !== homeState() && !rivalStartStates.includes(t) && !nativesOf.has(t)) return t;
   }
-  return null;
+  const k = play!.rivals.findIndex((r, i) => !r.cities.length && !rivalScanned.has(rivalStartStates[i]));
+  return k >= 0 ? rivalStartStates[k] : null;
 }
 
 /** City-states found so far, not taken, on mapped tiles. */
@@ -1150,6 +1234,14 @@ function visibleNatives(): NativeCity[] {
 /** A city-state taken by the player or destroyed (STORY-064). */
 const nativeGone = (n: NativeCity) => play!.war.razed.has(n.tile) || play!.cities.some(c => c.tile === n.tile);
 const nativeAt = (tile: number) => natives.find(n => n.tile === tile && !nativeGone(n)) ?? null;
+/** Near a rival's city (STORY-068): within the rings kept between cities. */
+const nearRival = (tile: number) => {
+  if (!play?.rivals.some(r => r.cities.length)) return false;
+  const at = tileCenter(tile);
+  return play.rivals.some(r => r.cities.some(c => tileCenter(c.tile).angleTo(at) < (SITE_SPACING - 0.5) * TILE_ANGLE));
+};
+/** No city of the player's may be founded here: next to a city-state or a rival's city. */
+const nearForeign = (tile: number) => nearNative(tile) || nearRival(tile);
 /** Near a city-state: no city may be founded there. */
 const nearNative = (tile: number) => {
   if (!natives.length) return false;
@@ -2370,7 +2462,7 @@ const someOf = (names: string[]) => names.length > 4 ? `${names.slice(0, 4).join
 
 function regionView(ref: RegionRef): TileView {
   const p = play!;
-  const key = `${ref.level}:${ref.id}:${clock.day}:${mapState.count}:${p.cities.length}`;
+  const key = `${ref.level}:${ref.id}:${clock.day}:${mapState.count}:${p.cities.length}:${p.rivals.reduce((n, r) => n + r.cities.length, 0)}`;
   if (regionCache?.key === key) return regionCache.view;
   const tiles = regionTilesOf(ref);
   const inside = new Set(tiles);
@@ -2411,6 +2503,8 @@ function regionView(ref: RegionRef): TileView {
   rows.push({ label: 'Kaupungit', value: cities.length ? someOf(cities.map(c => `${c.name} (${c.size})`)) : 'ei kaupunkeja' });
   const natives = visibleNatives().filter(n => inside.has(n.tile));
   if (natives.length) rows.push({ label: 'Kaupunkivaltiot', value: someOf(natives.map(n => `${n.name} (${nativeStrength(n, clock.day).size})`)) });
+  const rivalCities = visibleRivalCities().filter(x => inside.has(x.city.tile));
+  if (rivalCities.length) rows.push({ label: 'Kilpailijat', value: someOf(rivalCities.map(x => `${x.city.name} (${x.rival.name})`)) });
   const tribes = visibleTribes().filter(t => inside.has(t.camp));
   if (tribes.length) rows.push({ label: 'Paimentolaiset', value: tribes.map(t => t.tribe.name).join(', ') });
   const kicker = ref.level === 0 ? 'Valtio' : ref.level === 1 ? `Lääni · ${stateNameOf(Math.floor(ref.id / 7)).name}` : `Kaupunkialue · ${nameOf(1, Math.floor(ref.id / 7)).name}`;
@@ -2441,6 +2535,7 @@ function tileView(id: number): TileView {
   const cost = world.cost(id);
   const native = nativeAt(id);
   const tribe = tribeAt(id);
+  const rival = rivalCityAt(id);
   const rows: TileView['rows'] = [
     { label: 'Tuottaa', value: `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade} päivässä` },
     ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }] : []),
@@ -2448,6 +2543,7 @@ function tileView(id: number): TileView {
     ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
     ...(tribe ? [{ label: 'Paimentolaiset', value: tribeLine(tribe) }] : []),
     ...((native || tribe) && p.war.target === id ? [{ label: 'Sotaretki', value: `Kenraalin kohde · ${army().length} / ${warNeed(id)} hyökkääjää${p.war.marching ? ' · hyökkäys käynnissä' : ''}` }] : []),
+    rival ? { label: 'Kilpailija', value: `${rival.rival.name}: ${rival.city.name}, koko ${rival.city.size}` } :
     native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
     ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
@@ -2517,7 +2613,7 @@ function updatePlay(dt: number) {
   play.units.focus = meter === 'province' ? id => Math.floor(world.cityOf(id) / 7) === play!.units.homeProvince
     : meter === 'state' ? id => Math.floor(world.cityOf(id) / 49) === homeState()
     : held ? id => Math.floor(world.cityOf(id) / 49) === homeState() && !held.has(Math.floor(world.cityOf(id) / 7)) : null;
-  play.units.noCity = nearNative;
+  play.units.noCity = nearForeign;
   scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
   const days = play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
@@ -2528,6 +2624,7 @@ function updatePlay(dt: number) {
     scouting = false;
     founded.forEach(foundAt);
     cityDays();
+    rivalsDay();
     raidDay();
     advisorDay();
     if (play.offers.length || play.raidAlert) {
@@ -2567,6 +2664,7 @@ function updatePlay(dt: number) {
     cities: play.cities.map(c => c.tile),
     natives: visibleNatives().map(n => n.tile),
     camps: visibleTribes().map(t => t.camp),
+    rivals: visibleRivalCities().map(x => ({ tile: x.city.tile, rival: x.rival.id })),
     selected: play.selected,
     flag: play.units.flag,
     site: play.units.currentSite(),
@@ -2776,6 +2874,8 @@ frameStartPlanet();
     if (a.state) play.stateAdvisor = a.state;
     if (a.planet) play.planetAdvisor = a.planet;
   },
+  /** The rivals: start states, cities and units (STORY-068). */
+  rivals: () => (play ? play.rivals.map((r, k) => ({ id: r.id, name: r.name, start: rivalStartStates[k], cities: r.cities.map(c => ({ name: c.name, tile: c.tile, size: c.size, build: c.build })), units: r.units.map(u => u.kind) })) : []),
   /** A unit of any kind in a city, supported by none (STORY-064). */
   spawnUnit: (kind: UnitKind, city: number) => (play ? play.units.spawn(kind, play.cities[city].tile, world, null).name : null),
   /** The tribes and their camps (STORY-066), and a tribe's band sent now at the nearest city. */
