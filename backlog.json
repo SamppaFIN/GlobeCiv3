@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-20T12:43:22Z",
+    "generated_at": "2026-10-20T13:45:11Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "d71f308",
+    "git_commit": "6c829e3",
     "git_branch": "main",
     "language": "fi"
   },
@@ -173,7 +173,8 @@
         "STORY-068",
         "STORY-069",
         "STORY-070",
-        "STORY-071"
+        "STORY-071",
+        "STORY-072"
       ],
       "progress": 98
     }
@@ -1929,6 +1930,32 @@
         "plan": "PLAN-062",
         "implementation": "TICKET-IMPL-062",
         "testing": "TICKET-TEST-062"
+      }
+    },
+    {
+      "id": "STORY-072",
+      "epic": "EPIC-006",
+      "title": "Resurssit ja tutkimus",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kansa tutkii löytämänsä erikoisresurssit ja että tutkitut resurssit avaavat keksintöjä, jotta tutkiminen ja kartoittaminen ohjaavat toisiaan.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-070",
+        "STORY-040"
+      ],
+      "acceptance_criteria": [
+        "Uusi peli ei tunne yhtään resurssilajia. Laji tulee tutkimuskohteeksi, kun se löytyy kartoitetulta ruudulta, ja HUD kertoo löydöstä. Tutkimus maksaa 10 tiedettä (oma) eikä nosta keksintöjen hintaa.",
+        "Tutkimaton resurssi näkyy kartalla harmaana ?-merkkinä ja kaupunkitasolla harmaana kivenä, eikä se tuota (Samin valinta). Ruudun ja alueen kortit kertovat tuntemattomasta resurssista. Tutkimus paljastaa lajin nimen, värin ja tuoton kaikkialla.",
+        "Kansa tutkii itse (Sami): kun mitään ei ole valittu, kohteeksi tulee löydetty tuntematon laji, ja lajia tutkittaessa jokainen kaupunki antaa yhden tieteen päivässä lisää (oma). Valtion neuvonantaja tutkii lajit ennen keksintöjä.",
+        "Resurssit avaavat keksintöjä (Samin valinta, omat parit): Hevoset avaavat Ratsastuksen ja Pyörän, Hiili Rautatyön, Kulta tai Jalokivet Rahatalouden ja Kala Kartanteon. Muut keksinnöt ovat auki kuten ennen.",
+        "Vanha alku (?classic) ja ennen tätä tallennetut pelit tuntevat kaikki lajit. Tallennus tarkistaa lajit ja tutkimuskohteen."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-063",
+        "implementation": "TICKET-IMPL-063",
+        "testing": "TICKET-TEST-063"
       }
     }
   ],
@@ -5042,6 +5069,75 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-063",
+      "story": "STORY-072",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-20",
+      "approach": "science.ts: Study = keksintö tai resurssilaji, Research.kinds, available(found), costOf ja ADVANCES.from. Tallennus kinds-kentällä. main.ts: löydetyt lajit kartoitetuista ruuduista (reveal ja uudelleenluku pelin alussa), tunnettu tuotto kaupungeille, kansan tutkimus, automaattinen kohde, kortit, tutkimuskortti ja HUD. Shader: tunnettujen lajien bittimaski ja atlakseen ?-merkki.",
+      "alternatives_considered": [
+        {
+          "name": "Erillinen resurssitutkimus",
+          "pros": "Keksinnöt ennallaan",
+          "cons": "Resurssit eivät ohjaisi tiedettä",
+          "rejected_because": "Sami valitsi: resurssit avaavat keksintöjä"
+        },
+        {
+          "name": "Resurssit korvaavat keksinnöt",
+          "pros": "Kokonaan oma puu",
+          "cons": "Iso uudistus, ja nykyiset testit uusiksi",
+          "rejected_because": "Sami valitsi täydentävän mallin"
+        },
+        {
+          "name": "Resurssit näkyvät ja tuottavat aina",
+          "pros": "Ei muutosta talouteen",
+          "cons": "Ei paljastumisen hetkeä",
+          "rejected_because": "Sami valitsi tuntemattoman merkin"
+        },
+        {
+          "name": "Tutkimus pelkällä kaupan tieteellä",
+          "pros": "Yksi tieteen lähde",
+          "cons": "Kaupaton alkukaupunki ei tutkisi koskaan (verokannalla 50 % yhden kaupan tiede on 0)",
+          "rejected_because": "Kansan oma tiede (+1 kaupunkia kohden lajia tutkittaessa) takaa etenemisen"
+        }
+      ],
+      "files_to_change": [
+        "src/game/science.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/globe/tiles.ts",
+        "src/globe/glyphAtlas.ts",
+        "src/ui/researchCard.ts"
+      ],
+      "open_questions": [
+        "Rahatalous vaatii kultaa tai jalokiviä. Jos kumpaakaan ei löydy, vesijohto ja areena jäävät saamatta; pitkä testipeli näyttää, löytyvätkö ne ajoissa.",
+        "Kilpailijat ja kaupunkipaikkojen arviot käyttävät edelleen resurssien todellista tuottoa.",
+        "Resurssien rakennukset (STORY-073)."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "science.ts ja tallennus yksikkötestein",
+          "verify": "Vitest"
+        },
+        {
+          "step": 2,
+          "action": "Tuotto, löydöt, kansan tutkimus, kortit ja tutkimuskortti",
+          "verify": "E2E resources"
+        },
+        {
+          "step": 3,
+          "action": "Shaderin ?-merkki ja kaupunkitason harmaa kivi",
+          "verify": "Kuvat"
+        },
+        {
+          "step": 4,
+          "action": "Koko sarja",
+          "verify": "Vitest ja E2E yhdellä workerilla"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -7480,6 +7576,52 @@
         "notes": "E2E placement toisti STORY-070:n vian ennen korjausta: ruudun napautus ei avannut korttia uudessa alussa, koska valittu yksikkö ja uudisasukas olivat molemmat undefined."
       },
       "commit": "d71f308",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-063",
+      "story": "STORY-072",
+      "plan": "PLAN-063",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/science.ts",
+        "src/game/science.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/globe/tiles.ts",
+        "src/globe/glyphAtlas.ts",
+        "src/ui/researchCard.ts",
+        "tests/e2e/resources.e2e.ts",
+        "docs/design/kaupunkitaso.md"
+      ],
+      "change_summary": "Study-tyyppi, Research.kinds, available(found), costOf, studyName, opensFrom ja ADVANCES.from. main.ts: foundKinds (reveal ja rescanKinds), knownYield kaupunkien tuotossa, peopleStudy, automaattinen kohde, neuvonantajan järjestys, ruudun ja alueen kortit, talouden resurssilista, tutkimuskortti, HUDin pilleri ja rauniot. Shader: knownResources-bittimaski ja harmaa merkki. Atlaksen solu 22 on ?-merkki.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Research.target: Study",
+          "Research.available(found)",
+          "Research.add palauttaa Study",
+          "yieldOf (knownYield)",
+          "ResearchView.options[].advance: Study"
+        ],
+        "call_sites_found": [
+          "päivän tiede",
+          "stateAdvisorDay",
+          "researchView, researchLine, HUD",
+          "openRuin",
+          "tileView, regionView, talous",
+          "cityLevel.dress"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/ui/researchCard.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "new Research() ilman tallennusta tuntee kaikki lajit, joten ?classic ja vanhat yksikkötestit pysyvät ennallaan. Uusi peli luo tutkimuksen tyhjällä lajilistalla."
+      },
+      "commit": "6c829e3",
       "progress": 100
     }
   ],
@@ -13015,6 +13157,97 @@
           },
           {
             "item": "Tallennus",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "id": "TICKET-TEST-063",
+      "story": "STORY-072",
+      "implementation_ticket": "TICKET-IMPL-063",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Erikoisresurssit näkyivät ja tuottivat alusta asti, eikä niillä ollut yhteyttä tutkimukseen.",
+        "files_changed": [
+          "src/game/science.ts",
+          "src/globe/main.ts",
+          "src/globe/tiles.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä; siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "science-testit: löydetyt lajit kohteina, hinta, keksintöjen lukot, tallennus; vanha alku tuntee kaikki",
+            "expected": "Säännöt",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "save-testi: lajit ja lajikohde, virheellinen laji hylätään",
+            "expected": "Validointi",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E resources: uusi alku, tuntematon resurssi kortissa, kansa tutkii itse, Tutkittu-ilmoitus, nimi ja tuotto, Ratsastus ja Pyörä hevosten mukaan",
+            "expected": "Alkuresurssi paljastuu tutkimuksella",
+            "result": "Läpi; siemenellä 42 ruohomaan resurssi (Hedelmällinen maa) paljastui päivään 22 mennessä, ja kaupungin kasvaessa löytyi kukkuloiden resurssi. Kuvat unknown.png ja known.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: kaupunkialuetason merkit vanhassa alussa, sitten lajit unohdettuina",
+            "expected": "Harmaa ?-merkki",
+            "result": "Läpi, kuvat known-markers.png ja unknown-markers.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 198/198; E2E 77/77 yhdellä workerilla. Vanhan alun testit pysyivät ennallaan, koska vanha alku tuntee kaikki lajit.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39422750700 (6c829e3, 62 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Resurssin tutkimus ja paljastuminen puhelimella",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Löydetyt lajit tutkimuskohteina",
+            "checked": true
+          },
+          {
+            "item": "Tuntematon merkki ilman tuottoa",
+            "checked": true
+          },
+          {
+            "item": "Kansa tutkii itse",
+            "checked": true
+          },
+          {
+            "item": "Resurssit avaavat keksintöjä",
+            "checked": true
+          },
+          {
+            "item": "Vanha alku ja tallennus",
             "checked": true
           }
         ],

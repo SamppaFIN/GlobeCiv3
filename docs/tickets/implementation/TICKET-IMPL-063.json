@@ -1,0 +1,46 @@
+{
+  "id": "TICKET-IMPL-063",
+  "story": "STORY-072",
+  "plan": "PLAN-063",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/globe/tiles.ts",
+    "src/globe/glyphAtlas.ts",
+    "src/ui/researchCard.ts",
+    "tests/e2e/resources.e2e.ts",
+    "docs/design/kaupunkitaso.md"
+  ],
+  "change_summary": "Study-tyyppi, Research.kinds, available(found), costOf, studyName, opensFrom ja ADVANCES.from. main.ts: foundKinds (reveal ja rescanKinds), knownYield kaupunkien tuotossa, peopleStudy, automaattinen kohde, neuvonantajan järjestys, ruudun ja alueen kortit, talouden resurssilista, tutkimuskortti, HUDin pilleri ja rauniot. Shader: knownResources-bittimaski ja harmaa merkki. Atlaksen solu 22 on ?-merkki.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Research.target: Study",
+      "Research.available(found)",
+      "Research.add palauttaa Study",
+      "yieldOf (knownYield)",
+      "ResearchView.options[].advance: Study"
+    ],
+    "call_sites_found": [
+      "päivän tiede",
+      "stateAdvisorDay",
+      "researchView, researchLine, HUD",
+      "openRuin",
+      "tileView, regionView, talous",
+      "cityLevel.dress"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts",
+      "src/ui/researchCard.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "new Research() ilman tallennusta tuntee kaikki lajit, joten ?classic ja vanhat yksikkötestit pysyvät ennallaan. Uusi peli luo tutkimuksen tyhjällä lajilistalla."
+  },
+  "commit": "6c829e3",
+  "progress": 100
+}

@@ -1,0 +1,91 @@
+{
+  "id": "TICKET-TEST-063",
+  "story": "STORY-072",
+  "implementation_ticket": "TICKET-IMPL-063",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Erikoisresurssit näkyivät ja tuottivat alusta asti, eikä niillä ollut yhteyttä tutkimukseen.",
+    "files_changed": [
+      "src/game/science.ts",
+      "src/globe/main.ts",
+      "src/globe/tiles.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "science-testit: löydetyt lajit kohteina, hinta, keksintöjen lukot, tallennus; vanha alku tuntee kaikki",
+        "expected": "Säännöt",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save-testi: lajit ja lajikohde, virheellinen laji hylätään",
+        "expected": "Validointi",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E resources: uusi alku, tuntematon resurssi kortissa, kansa tutkii itse, Tutkittu-ilmoitus, nimi ja tuotto, Ratsastus ja Pyörä hevosten mukaan",
+        "expected": "Alkuresurssi paljastuu tutkimuksella",
+        "result": "Läpi; siemenellä 42 ruohomaan resurssi (Hedelmällinen maa) paljastui päivään 22 mennessä, ja kaupungin kasvaessa löytyi kukkuloiden resurssi. Kuvat unknown.png ja known.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: kaupunkialuetason merkit vanhassa alussa, sitten lajit unohdettuina",
+        "expected": "Harmaa ?-merkki",
+        "result": "Läpi, kuvat known-markers.png ja unknown-markers.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 198/198; E2E 77/77 yhdellä workerilla. Vanhan alun testit pysyivät ennallaan, koska vanha alku tuntee kaikki lajit.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39422750700 (6c829e3, 62 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Resurssin tutkimus ja paljastuminen puhelimella",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Löydetyt lajit tutkimuskohteina",
+        "checked": true
+      },
+      {
+        "item": "Tuntematon merkki ilman tuottoa",
+        "checked": true
+      },
+      {
+        "item": "Kansa tutkii itse",
+        "checked": true
+      },
+      {
+        "item": "Resurssit avaavat keksintöjä",
+        "checked": true
+      },
+      {
+        "item": "Vanha alku ja tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-20"
+  }
+}

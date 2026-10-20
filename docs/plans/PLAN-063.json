@@ -1,0 +1,69 @@
+{
+  "id": "PLAN-063",
+  "story": "STORY-072",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-20",
+  "approach": "science.ts: Study = keksintö tai resurssilaji, Research.kinds, available(found), costOf ja ADVANCES.from. Tallennus kinds-kentällä. main.ts: löydetyt lajit kartoitetuista ruuduista (reveal ja uudelleenluku pelin alussa), tunnettu tuotto kaupungeille, kansan tutkimus, automaattinen kohde, kortit, tutkimuskortti ja HUD. Shader: tunnettujen lajien bittimaski ja atlakseen ?-merkki.",
+  "alternatives_considered": [
+    {
+      "name": "Erillinen resurssitutkimus",
+      "pros": "Keksinnöt ennallaan",
+      "cons": "Resurssit eivät ohjaisi tiedettä",
+      "rejected_because": "Sami valitsi: resurssit avaavat keksintöjä"
+    },
+    {
+      "name": "Resurssit korvaavat keksinnöt",
+      "pros": "Kokonaan oma puu",
+      "cons": "Iso uudistus, ja nykyiset testit uusiksi",
+      "rejected_because": "Sami valitsi täydentävän mallin"
+    },
+    {
+      "name": "Resurssit näkyvät ja tuottavat aina",
+      "pros": "Ei muutosta talouteen",
+      "cons": "Ei paljastumisen hetkeä",
+      "rejected_because": "Sami valitsi tuntemattoman merkin"
+    },
+    {
+      "name": "Tutkimus pelkällä kaupan tieteellä",
+      "pros": "Yksi tieteen lähde",
+      "cons": "Kaupaton alkukaupunki ei tutkisi koskaan (verokannalla 50 % yhden kaupan tiede on 0)",
+      "rejected_because": "Kansan oma tiede (+1 kaupunkia kohden lajia tutkittaessa) takaa etenemisen"
+    }
+  ],
+  "files_to_change": [
+    "src/game/science.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/globe/tiles.ts",
+    "src/globe/glyphAtlas.ts",
+    "src/ui/researchCard.ts"
+  ],
+  "open_questions": [
+    "Rahatalous vaatii kultaa tai jalokiviä. Jos kumpaakaan ei löydy, vesijohto ja areena jäävät saamatta; pitkä testipeli näyttää, löytyvätkö ne ajoissa.",
+    "Kilpailijat ja kaupunkipaikkojen arviot käyttävät edelleen resurssien todellista tuottoa.",
+    "Resurssien rakennukset (STORY-073)."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "science.ts ja tallennus yksikkötestein",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "Tuotto, löydöt, kansan tutkimus, kortit ja tutkimuskortti",
+      "verify": "E2E resources"
+    },
+    {
+      "step": 3,
+      "action": "Shaderin ?-merkki ja kaupunkitason harmaa kivi",
+      "verify": "Kuvat"
+    },
+    {
+      "step": 4,
+      "action": "Koko sarja",
+      "verify": "Vitest ja E2E yhdellä workerilla"
+    }
+  ],
+  "status": "approved"
+}
