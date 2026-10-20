@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-20T09:58:43Z",
+    "generated_at": "2026-10-20T11:59:11Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "9e2d657",
+    "git_commit": "e52b8b5",
     "git_branch": "main",
     "language": "fi"
   },
@@ -171,7 +171,8 @@
         "STORY-066",
         "STORY-067",
         "STORY-068",
-        "STORY-069"
+        "STORY-069",
+        "STORY-070"
       ],
       "progress": 98
     }
@@ -1873,6 +1874,34 @@
         "plan": "PLAN-060",
         "implementation": "TICKET-IMPL-060",
         "testing": "TICKET-TEST-060"
+      }
+    },
+    {
+      "id": "STORY-070",
+      "epic": "EPIC-006",
+      "title": "Uusi alku kaupunkitasolta",
+      "type": "story",
+      "narrative": "Pelaajana haluan aloittaa valmiista pääkaupungista kaupunkitasolla, rakentaa ensin rakennuksen ja sitten tiedustelijan tai uudisasukkaan, joka avaa seuraavan kartan.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-069",
+        "STORY-049",
+        "STORY-026"
+      ],
+      "acceptance_criteria": [
+        "Pääkaupunki arvotaan siemenestä paikkaan, joka ruokkii kaupungin ja jonka kahden renkaan sisällä on vähintään kolme maalajia ja tasan yksi erikoisresurssi.",
+        "Aloituslento laskeutuu planeetalta kaupunkitasolle valmiiseen pääkaupunkiin, ja maa nousee. Yksiköitä ei ole, zoom ulos on lukittu kaupunkitasolle, ja kuvernöörikortti aukeaa (Kasvattaja, Kartoittaja, Vartija kaupunkivaiheen kuvauksin).",
+        "Maaston rakennukset (Samin valinta): Kalastamo (meri kahden renkaan sisällä), Saha (metsä tai viidakko), Louhos (kukkula tai vuori) ja Pelto (ruohomaa tai tasanko), kukin 30 tuotantoa ilman ylläpitoa, +1 ruoka tai tuotanto päivässä. Kortti näyttää vain ne, joille kaupungilla on maastoa, ja ne seisovat kaupunkitasolla omalla maastollaan.",
+        "Yksiköt avautuvat vasta pelin ensimmäisen rakennuksen jälkeen (Sami). Tiedustelija on rakennettavissa (20 tuotantoa, oma: Freecivin civ1:ssä sitä ei ole). Ensimmäinen tiedustelija tai uudisasukas avaa kaupunkialuetason avautumiskortilla, ja Zoomaa ulos vie kaupunkialueelle kaupungin kohdalle.",
+        "Kuvernöörit rakentavat kaupunkivaiheessa ensin maaston rakennuksen ja sitten polun seuraavalle kartalle: Kartoittaja tiedustelijan, Kasvattaja uudisasukkaan kaupungin kasvettua ja Vartija soturin ja tiedustelijan.",
+        "Kaupunkitasolla erikoisresurssit näkyvät tuottonsa värisinä kivinä. Vanha alku on kehitystilassa ?classic mekaniikan testejä varten."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-061",
+        "implementation": "TICKET-IMPL-061",
+        "testing": "TICKET-TEST-061"
       }
     }
   ],
@@ -4863,6 +4892,64 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-061",
+      "story": "STORY-070",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-20",
+      "approach": "Puhtaat osat ensin testein: chooseStartSite (start.ts), kaupunkivaihe (progress.ts: openLevel 4 ja mittari city), maaston rakennukset (cities.ts) ja startAdvice (advisors.ts). main.ts: uuden pelin paikka ja lento kaupunkitasolle, valmis pääkaupunki ilman yksiköitä, zoom-lukko kaupunkitasolle (lockFor), avautuminen ensimmäisestä tiedustelijasta tai uudisasukkaasta, rakennusten ehdot kortissa ja kuvernöörit.",
+      "alternatives_considered": [
+        {
+          "name": "Aloitusyksiköt heti",
+          "pros": "Vanha alku",
+          "cons": "Sami: aloitusyksiköt vasta ensimmäisen rakennuksen jälkeen",
+          "rejected_because": "Samin linjaus"
+        },
+        {
+          "name": "Freecivin rakennukset ilman tutkimusta",
+          "pros": "Freecivin luvut",
+          "cons": "Eivät liity maastoon",
+          "rejected_because": "Sami valitsi maaston rakennukset"
+        },
+        {
+          "name": "Vanhat testit uuteen alkuun",
+          "pros": "Yksi aloitustapa",
+          "cons": "Noin 30 testiä nojaa tiedustelijoihin ja uudisasukkaaseen alussa",
+          "rejected_because": "Kehitystila ?classic pitää mekaniikan testit, ja uudella alulla on omat testinsä"
+        }
+      ],
+      "files_to_change": [
+        "src/game/start.ts",
+        "src/game/progress.ts",
+        "src/game/cities.ts",
+        "src/game/advisors.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts"
+      ],
+      "open_questions": [
+        "Rakennusten sijoitus pelaajan valitsemaan paikkaan (STORY-071).",
+        "Tavoiteketjun ensimmäinen tavoite (Perusta ensimmäinen kaupunki) täyttyy heti, koska pääkaupunki on valmis.",
+        "Resurssien tutkiminen ja rakennukset (STORY-072, STORY-073)."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Puhtaat osat ja yksikkötestit",
+          "verify": "Vitest"
+        },
+        {
+          "step": 2,
+          "action": "Uusi alku, lento, lukko, avautuminen ja kuvernöörit",
+          "verify": "E2E new-start ja kuvat"
+        },
+        {
+          "step": 3,
+          "action": "Vanhat testit ?classic-alulle ja määrät",
+          "verify": "Koko sarja"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -7209,6 +7296,52 @@
         "notes": "Ensimmäisessä kuvassa puolet kolmioista oli sisäänpäin (kärjet ruutunumeron järjestyksessä) ja jäivät näkymättä; nyt kärjet käännetään ulospäin, ja testi tarkistaa sen."
       },
       "commit": "9e2d657",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-061",
+      "story": "STORY-070",
+      "plan": "PLAN-061",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/start.ts",
+        "src/game/start.test.ts",
+        "src/game/progress.ts",
+        "src/game/progress.test.ts",
+        "src/game/cities.ts",
+        "src/game/cities.test.ts",
+        "src/game/advisors.ts",
+        "src/game/advisors.test.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "tests/e2e/new-start.e2e.ts",
+        "tests/e2e/*.e2e.ts (?classic)"
+      ],
+      "change_summary": "chooseStartSite, startProgress(atCity) ja advance(firstUnit), TERRAIN_BUILDINGS ja niiden +1, scout-rakennus, startAdvice ja START_DOES. main.ts: classic-tila, uuden pelin paikka ja lento cityViewDist-etäisyydelle, valmis pääkaupunki ilman yksiköitä ja ensimmäisenä rakennuksena maaston rakennus, lockFor, avautumiskortti ja kaupunkialueelle loitontaminen, kaupunkivaiheen mittari, startable- ja korttiehdot (maasto ja yksiköt), kuvernöörin kortti, resurssikivet ja maaston rakennusten mallit kaupunkitasolla. Valintarengas vain, kun yksikkö on olemassa.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "Progress.openLevel 4, meter city (tallennus hyväksyy)",
+          "Build: scout ja neljä maaston rakennusta",
+          "advance (firstUnit)",
+          "startable, cityView builds",
+          "flyIn (dist)",
+          "lockFor (kolme kohtaa)"
+        ],
+        "call_sites_found": [
+          "updateLevels, updateGameFlow, applyLock",
+          "advisorDay",
+          "unitLayer.update (selected)"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts",
+          "src/game/save.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Ensimmäinen ajo: sivuvirhe joka framessa, kun yksiköitä ei ollut (valintarengas), ja oletusrakennuksena ollut soturi valmistui ennen rakennusta. Korjattu."
+      },
+      "commit": "e52b8b5",
       "progress": 100
     }
   ],
@@ -12576,6 +12709,89 @@
           },
           {
             "item": "Suorituskyky mitattu",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "id": "TICKET-TEST-061",
+      "story": "STORY-070",
+      "implementation_ticket": "TICKET-IMPL-061",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Peli alkoi tiedustelijoilla ja uudisasukkaalla kaupunkialuetasolla.",
+        "files_changed": [
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä; siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "start, progress, cities ja advisors -testit",
+            "expected": "Alkupaikka, kaupunkivaihe, maaston rakennukset ja kuvernöörit",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kokeilu: uusi alku siemenellä 42",
+            "expected": "Lento kaupunkitasolle, rakennus, tiedustelija ja kaupunkialue",
+            "result": "Pääkaupunki metsämaastossa, Saha päivänä 10, tiedustelija päivänä 14 ja kaupunkialue avautui; ensimmäisessä ajossa sivuvirhe ja ennenaikainen soturi, korjattu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E new-start",
+            "expected": "Kaupunkitaso, ei yksiköitä, lukko, alkupaikan ehdot, kuvernöörikortti, lukitut yksiköt, Kartoittaja, avautuminen ja loitonnus kaupungin kohdalle",
+            "result": "Läpi, kuvat landing.png ja city-area.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 189/189; E2E 74/74 yhdellä workerilla. Rakennusvaihtoehtojen määrät (18 → 20 ja 17 → 19) päivitettiin tietoisesti: Tiedustelija ja kukkuloiden Louhos tulivat mukaan.",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39402547766 (e52b8b5, 31 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Uusi alku puhelimella",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Monipuolinen alkupaikka",
+            "checked": true
+          },
+          {
+            "item": "Lento kaupunkitasolle",
+            "checked": true
+          },
+          {
+            "item": "Maaston rakennukset",
+            "checked": true
+          },
+          {
+            "item": "Yksiköt rakennuksen jälkeen",
+            "checked": true
+          },
+          {
+            "item": "Kuvernöörit ja seuraava kartta",
             "checked": true
           }
         ],

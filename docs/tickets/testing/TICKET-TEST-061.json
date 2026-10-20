@@ -1,0 +1,83 @@
+{
+  "id": "TICKET-TEST-061",
+  "story": "STORY-070",
+  "implementation_ticket": "TICKET-IMPL-061",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Peli alkoi tiedustelijoilla ja uudisasukkaalla kaupunkialuetasolla.",
+    "files_changed": [
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "start, progress, cities ja advisors -testit",
+        "expected": "Alkupaikka, kaupunkivaihe, maaston rakennukset ja kuvernöörit",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kokeilu: uusi alku siemenellä 42",
+        "expected": "Lento kaupunkitasolle, rakennus, tiedustelija ja kaupunkialue",
+        "result": "Pääkaupunki metsämaastossa, Saha päivänä 10, tiedustelija päivänä 14 ja kaupunkialue avautui; ensimmäisessä ajossa sivuvirhe ja ennenaikainen soturi, korjattu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E new-start",
+        "expected": "Kaupunkitaso, ei yksiköitä, lukko, alkupaikan ehdot, kuvernöörikortti, lukitut yksiköt, Kartoittaja, avautuminen ja loitonnus kaupungin kohdalle",
+        "result": "Läpi, kuvat landing.png ja city-area.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 189/189; E2E 74/74 yhdellä workerilla. Rakennusvaihtoehtojen määrät (18 → 20 ja 17 → 19) päivitettiin tietoisesti: Tiedustelija ja kukkuloiden Louhos tulivat mukaan.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39402547766 (e52b8b5, 31 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Uusi alku puhelimella",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Monipuolinen alkupaikka",
+        "checked": true
+      },
+      {
+        "item": "Lento kaupunkitasolle",
+        "checked": true
+      },
+      {
+        "item": "Maaston rakennukset",
+        "checked": true
+      },
+      {
+        "item": "Yksiköt rakennuksen jälkeen",
+        "checked": true
+      },
+      {
+        "item": "Kuvernöörit ja seuraava kartta",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-20"
+  }
+}
