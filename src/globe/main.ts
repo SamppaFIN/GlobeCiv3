@@ -215,7 +215,11 @@ function onTap(clientX: number, clientY: number) {
   if (play && viewLevel === 3 && tapPlay(clientX - rect.left, clientY - rect.top, rect.width, rect.height, hit)) return;
   const ref = hit ? regionAt(regions, hit, viewLevel) : null;
   if (ref && sameRegion(ref, selection)) fly(diveTarget(regions, ref, frames));
-  else selection = ref;
+  else {
+    selection = ref;
+    // A tap on the map tells what the land holds (STORY-067); a chip only selects
+    regionCard = ref && `${ref.level}:${ref.id}`;
+  }
 }
 
 // A tap is one pointer that goes down and up within 8 px and 500 ms; drags and pinches are not taps
@@ -1389,13 +1393,16 @@ function landOf(state: number): number {
 /** Tiles of each state, for its mapped share. */
 const stateTilesOf = new Map<number, number[]>();
 function stateShare(state: number): number {
+  return mapState.share(tilesOfState(state));
+}
+function tilesOfState(state: number): number[] {
   if (!stateTilesOf.has(state)) {
     const table = regions.tileTable();
     const ids: number[] = [];
     for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state) ids.push(id);
     stateTilesOf.set(state, ids);
   }
-  return mapState.share(stateTilesOf.get(state)!);
+  return stateTilesOf.get(state)!;
 }
 
 /** Make a state the target: the expedition goes there (STORY-057). */
@@ -2318,7 +2325,16 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
   return true;
 }
 
-const tileCard = createTileCard(hud_root, { close: () => { if (play) play.tileOpen = null; } });
+const tileCard = createTileCard(hud_root, {
+  close: () => {
+    if (!play) return;
+    play.tileOpen = null;
+    // A region's card closed: the selection stays for the level's actions (STORY-067)
+    regionCard = null;
+  },
+  // Into the region, as a second tap does
+  action: () => { if (selection) fly(diveTarget(regions, selection, frames)); },
+});
 
 const plus = (y: { food: number; shield: number; trade: number }) =>
   [y.food ? `+${y.food} ruokaa` : '', y.shield ? `+${y.shield} tuotantoa` : '', y.trade ? `+${y.trade} kauppaa` : ''].filter(Boolean).join(', ');
@@ -2332,6 +2348,76 @@ function tileYieldNow(id: number) {
   const owner = by >= 0 ? p.cities[by] : p.cities.find(c => tilesInRings(c.tile, cityRings(c.size)).includes(id));
   const raw = yieldOf(id, !!city);
   return { city, owner, worked: by >= 0, y: owner ? tileOutput(owner, raw, p.gov) : governed(raw, p.gov) };
+}
+
+// ─── The region card (STORY-067) ──────────────────
+// Sami 2026-10-20: a tap on the map tells what the land holds, at every level. Counted over
+// the mapped tiles of the city area, province or state, again each day.
+/** The region whose card a tap on the map opened, as "level:id", or null. */
+let regionCard: string | null = null;
+let regionCache: { key: string; view: TileView } | null = null;
+
+const regionTilesOf = (ref: RegionRef): number[] => {
+  const area = (a: number) => {
+    if (!tilesOfArea.has(a)) tilesOfArea.set(a, cityTiles(regions, a));
+    return tilesOfArea.get(a)!;
+  };
+  return ref.level === 2 ? area(ref.id) : ref.level === 1 ? Array.from({ length: 7 }, (_, k) => area(ref.id * 7 + k)).flat() : tilesOfState(ref.id);
+};
+
+/** Up to four names, then how many more. */
+const someOf = (names: string[]) => names.length > 4 ? `${names.slice(0, 4).join(', ')} ja ${names.length - 4} muuta` : names.join(', ');
+
+function regionView(ref: RegionRef): TileView {
+  const p = play!;
+  const key = `${ref.level}:${ref.id}:${clock.day}:${mapState.count}:${p.cities.length}`;
+  if (regionCache?.key === key) return regionCache.view;
+  const tiles = regionTilesOf(ref);
+  const inside = new Set(tiles);
+  const mapped = tiles.filter(t => mapState.isMapped(t));
+  const won = conquestNow();
+  const rows: TileView['rows'] = [];
+  if (ref.level === 0) {
+    const home = ref.id === homeState();
+    const status = home ? 'kotivaltio' : won.conquered.has(ref.id) ? 'vallattu' : won.open.has(ref.id) ? 'avoin' : 'lukossa, kunnes kotivaltio on vallattu';
+    rows.push({ label: 'Tila', value: status + (p.targetState === ref.id ? ' · kohdevaltio' : '') });
+    rows.push({ label: 'Läänit', value: `${heldIn(won, ref.id)} / 7 hallussa` });
+  } else if (ref.level === 1) {
+    rows.push({ label: 'Tila', value: !provinceHasLand(ref.id) ? 'ei maata, lasketaan hallussa olevaksi' : won.held.has(ref.id) ? 'hallussa: kaupunki läänissä' : 'ei hallussa' });
+  } else {
+    rows.push({ label: 'Painotus', value: AREA_PLAN_NAMES[p.units.areaPlans.get(ref.id) ?? 'explore'] });
+  }
+  rows.push({ label: 'Kartoitettu', value: `${Math.round((100 * mapped.length) / tiles.length)} %` });
+  if (mapped.length) {
+    const terrains = new Map<Terrain, number>();
+    const resources = new Map<string, number>();
+    for (const t of mapped) {
+      const terrain = terrainOf(t);
+      terrains.set(terrain, (terrains.get(terrain) ?? 0) + 1);
+      if (tileTypes.codes[t] & 16) {
+        const name = RESOURCES[TERRAIN_RULES[terrain].resource].name;
+        resources.set(name, (resources.get(name) ?? 0) + 1);
+      }
+    }
+    // The three most common, of those that round to 1 % at least
+    const top = [...terrains].sort((a, b) => b[1] - a[1]).slice(0, 3).filter(([, n]) => Math.round((100 * n) / mapped.length) > 0);
+    rows.push({ label: 'Maasto', value: top.map(([t, n]) => `${TERRAIN_RULES[t].name.toLowerCase()} ${Math.round((100 * n) / mapped.length)} %`).join(' · ') });
+    const res = [...resources].sort((a, b) => b[1] - a[1]);
+    rows.push({ label: 'Erikoisresurssit', value: res.length ? someOf(res.map(([name, n]) => `${name} ${n}`)) : 'ei löydetty' });
+  } else {
+    rows.push({ label: 'Tiedossa', value: 'Ei vielä mitään: tiedustelijat kartoittavat alueen.' });
+  }
+  const cities = p.cities.filter(c => inside.has(c.tile));
+  rows.push({ label: 'Kaupungit', value: cities.length ? someOf(cities.map(c => `${c.name} (${c.size})`)) : 'ei kaupunkeja' });
+  const natives = visibleNatives().filter(n => inside.has(n.tile));
+  if (natives.length) rows.push({ label: 'Kaupunkivaltiot', value: someOf(natives.map(n => `${n.name} (${nativeStrength(n, clock.day).size})`)) });
+  const tribes = visibleTribes().filter(t => inside.has(t.camp));
+  if (tribes.length) rows.push({ label: 'Paimentolaiset', value: tribes.map(t => t.tribe.name).join(', ') });
+  const kicker = ref.level === 0 ? 'Valtio' : ref.level === 1 ? `Lääni · ${stateNameOf(Math.floor(ref.id / 7)).name}` : `Kaupunkialue · ${nameOf(1, Math.floor(ref.id / 7)).name}`;
+  const title = ref.level === 0 ? stateNameOf(ref.id).name : nameOf(ref.level, ref.id).name;
+  const view: TileView = { kicker, title, rows, action: 'Sukella sisään' };
+  regionCache = { key, view };
+  return view;
 }
 
 /** A city-state on the hex card: its size and defence. */
@@ -2374,7 +2460,19 @@ function tileView(id: number): TileView {
 function updateTileCard() {
   if (!play) return;
   // Another card closes this one
-  if (play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible) play.tileOpen = null;
+  const other = play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible;
+  if (other) play.tileOpen = null;
+  // Above the city areas the card of the region tapped on the map (STORY-067), until it is closed
+  if (viewLevel < 3) {
+    if (!selection || other || introTarget || `${selection.level}:${selection.id}` !== regionCard) {
+      if (tileCard.visible) tileCard.hide();
+      return;
+    }
+    const view = regionView(selection);
+    if (tileCard.visible) tileCard.update(view);
+    else tileCard.show(view);
+    return;
+  }
   const id = play.tileOpen;
   if (id === null || viewLevel !== 3) {
     if (tileCard.visible) tileCard.hide();
@@ -2690,6 +2788,8 @@ frameStartPlanet();
   /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */
   natives: () => natives.map(n => ({ ...n, mapped: mapState.isMapped(n.tile), size: nativeStrength(n, clock.day).size })),
   nativeMs: () => nativeMs,
+  /** The card of a region at any level (STORY-067). */
+  regionView: (level: 0 | 1 | 2, id: number) => (play ? regionView({ level, id } as RegionRef) : null),
   /** A tile's score as a city site (STORY-065). */
   siteScore: (id: number) => world.siteScore(id),
   /** The card a tapped hex would show (STORY-055). */

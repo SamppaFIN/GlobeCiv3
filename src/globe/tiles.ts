@@ -12,7 +12,7 @@ import { CORNERS, EDGE_BASE, FACE_ADJACENT, FACE_BASE, FACE_CENTROIDS, FACE_EDGE
 import { ATLAS_COLUMNS, ATLAS_ROWS } from './glyphAtlas';
 import { SURFACE_SIZE } from './surfacePatterns';
 import { createFogTexture, FOG_UV_GLSL } from './fogMap';
-import { TERRAINS } from '../game/terrainTypes';
+import { RESOURCES, TERRAIN_RULES, TERRAINS } from '../game/terrainTypes';
 import { hierarchyAt, MAX_TILE_REGIONS, Regions, type RegionEntry } from './regions';
 import { DEFAULT_SEED, heightRange, octaveSplit } from './terrain';
 
@@ -71,6 +71,16 @@ const TERRAIN_TOKENS: Record<string, [number, number, number]> = {
 };
 const terrainColors = TERRAINS.map(t => new THREE.Vector3(...oklchToSrgb(...TERRAIN_TOKENS[t])));
 /**
+ * Each terrain's resource marker in the colour of what it gives (tokens.css --yield-food,
+ * --yield-prod and --yield-trade; STORY-067: Sami found the markers colourless). The icon
+ * says which resource it is, so the colour is not the only sign (WCAG).
+ */
+const YIELD_TOKENS: Record<'food' | 'shield' | 'trade', [number, number, number]> = { food: [0.78, 0.12, 135], shield: [0.76, 0.1, 50], trade: [0.84, 0.11, 90] };
+const resourceColor = (t: (typeof TERRAINS)[number]) => {
+  const r = RESOURCES[TERRAIN_RULES[t].resource];
+  return glslOklch(...YIELD_TOKENS[r.food ? 'food' : r.shield ? 'shield' : 'trade']);
+};
+/**
  * Surface pattern of each terrain (surfacePatterns.ts): the channel (0 water, 1 fields,
  * 2 forest, 3 relief) and how strongly it shades the token colour.
  */
@@ -128,6 +138,7 @@ const hexShader = /* glsl */ `
   const vec3 INK = ${glslOklch(0.82, 0.04, 80)};
   const vec3 INK_DARK = ${glslOklch(0.26, 0.03, 60)};
   const vec3 MARKER_FILL = ${glslOklch(0.2, 0.02, 260)};
+  const vec3 RESOURCE_COLORS[${TERRAINS.length}] = vec3[](${TERRAINS.map(resourceColor).join(', ')});
   // Atlas cell span in tile circumradii: terrain glyph (g = 0.26 of 64 / 40) and resource icon
   const float GLYPH_CELL = 0.832;
   const float ICON_CELL = 0.64;
@@ -501,14 +512,14 @@ const fragmentShader = /* glsl */ `
             color = mix(color, INK_DARK, 0.5 * glyphFade * atlas(ttype - 1, gu, GLYPH_CELL * s / w));
           }
           if (hasResource) {
-            // Marker (design): a dark disc of radius 0.36 with an ink ring and the ink icon
+            // Marker (design): a dark disc of radius 0.36 with a ring and the icon in the yield's colour
             vec2 rc = g - vec2(0.0, -0.12);
             float r = length(rc);
             float onePx = w / s;
             color = mix(color, MARKER_FILL, glyphFade * (1.0 - smoothstep(0.36 - 0.5 * onePx, 0.36 + 0.5 * onePx, r)));
             float ink = 1.0 - smoothstep(0.5 * onePx, 1.0 * onePx, abs(r - 0.36));
             if (r < 0.36) ink = max(ink, atlas(${TERRAINS.length} + ttype - 1, rc / ICON_CELL + 0.5, ICON_CELL * s / w));
-            color = mix(color, INK, glyphFade * ink);
+            color = mix(color, RESOURCE_COLORS[ttype - 1], glyphFade * ink);
           }
         }
       }
