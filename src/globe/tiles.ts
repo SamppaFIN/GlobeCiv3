@@ -127,6 +127,8 @@ const hexShader = /* glsl */ `
   // Fog of war (STORY-024): on in the game, off in ?free. The coarse fog map is read
   // with the pixel's world direction (tile centre + vLocal).
   uniform float fogOn;
+  // Kinds of resource the people know, a bit per terrain (STORY-072)
+  uniform int knownResources;
   uniform sampler2D fogMap;
   uniform vec3 tileWorldCenter;
   ${FOG_UV_GLSL}
@@ -141,6 +143,7 @@ const hexShader = /* glsl */ `
   const vec3 INK_DARK = ${glslOklch(0.26, 0.03, 60)};
   const vec3 MARKER_FILL = ${glslOklch(0.2, 0.02, 260)};
   const vec3 RESOURCE_COLORS[${TERRAINS.length}] = vec3[](${TERRAINS.map(resourceColor).join(', ')});
+  const vec3 UNKNOWN_RESOURCE = ${glslOklch(0.74, 0, 0)};
   // Atlas cell span in tile circumradii: terrain glyph (g = 0.26 of 64 / 40) and resource icon
   const float GLYPH_CELL = 0.832;
   const float ICON_CELL = 0.64;
@@ -520,8 +523,10 @@ const fragmentShader = /* glsl */ `
             float onePx = w / s;
             color = mix(color, MARKER_FILL, glyphFade * (1.0 - smoothstep(0.36 - 0.5 * onePx, 0.36 + 0.5 * onePx, r)));
             float ink = 1.0 - smoothstep(0.5 * onePx, 1.0 * onePx, abs(r - 0.36));
-            if (r < 0.36) ink = max(ink, atlas(${TERRAINS.length} + ttype - 1, rc / ICON_CELL + 0.5, ICON_CELL * s / w));
-            color = mix(color, RESOURCE_COLORS[ttype - 1], glyphFade * ink);
+            // A kind not studied yet: grey, with a question mark (STORY-072)
+            bool knownRes = ((knownResources >> (ttype - 1)) & 1) != 0;
+            if (r < 0.36) ink = max(ink, atlas(knownRes ? ${TERRAINS.length} + ttype - 1 : ${2 * TERRAINS.length}, rc / ICON_CELL + 0.5, ICON_CELL * s / w));
+            color = mix(color, knownRes ? RESOURCE_COLORS[ttype - 1] : UNKNOWN_RESOURCE, glyphFade * ink);
           }
         }
       }
@@ -816,6 +821,8 @@ export class TileManager {
   readonly screenUp = { value: new THREE.Vector3(0, 1, 0) };
   /** 1 draws the fog of war (the game), 0 not (?free). */
   readonly fogOn = { value: 0 };
+  /** Kinds of resource the people know, a bit per terrain in TERRAINS order (STORY-072). */
+  readonly knownResources = { value: (1 << TERRAINS.length) - 1 };
   /** Coarse fog map (fogMap.ts): 255 where mapped. */
   private readonly fogMap = { value: createFogTexture() };
   private readonly contextCenter = new THREE.Vector3();
@@ -961,6 +968,7 @@ export class TileManager {
         surfaceOf: { value: surfaceOf },
         screenUp: this.screenUp,
         fogOn: this.fogOn,
+        knownResources: this.knownResources,
         fogMap: this.fogMap,
         tileWorldCenter: { value: node.center },
         focusId: this.focusId,
