@@ -1,0 +1,65 @@
+{
+  "id": "PLAN-062",
+  "story": "STORY-071",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-20",
+  "approach": "Puhdas placement.ts testein (fits, isBest, spots, bestTile, placeAll ja move) ja bonukset cities.ts:ään City.best-kentän kautta. Kaupunkitason korkeus samasta funktiosta (groundHeight) kuin näkymä. main.ts: placeAll päivittäin ja latauksessa, rakennukset ruuduilleen, merkit, napautus nostettuun maahan, siirtotila ja kortin rivit. Tallennus validoi placed-kentän.",
+  "alternatives_considered": [
+    {
+      "name": "Jyrkkä estää ilman bonusta",
+      "pros": "Selkein",
+      "cons": "Korkeudella ei olisi pelillistä merkitystä",
+      "rejected_because": "Sami valitsi bonuksen"
+    },
+    {
+      "name": "Korkealla +1 kaikille",
+      "pros": "Yksi sääntö",
+      "cons": "Mäet olisivat aina paras paikka",
+      "rejected_because": "Sami valitsi ylhäällä ja alhaalla"
+    },
+    {
+      "name": "Pelaaja sijoittaa aina",
+      "pros": "Täysi hallinta",
+      "cons": "Rakennukset jäisivät odottamaan poissa ollessa",
+      "rejected_because": "Sami valitsi: kuvernööri sijoittaa, pelaaja siirtää"
+    },
+    {
+      "name": "Paikka sivuston (kärkipisteen) tarkkuudella",
+      "pros": "Vapaampi asettelu",
+      "cons": "Tallennus ja bonus riippuisivat verkon jaosta",
+      "rejected_because": "Ruutu on pelin yksikkö; ruudun sisällä rakennus menee lähimmälle vapaalle kohdalle"
+    }
+  ],
+  "files_to_change": [
+    "src/game/placement.ts",
+    "src/game/cities.ts",
+    "src/game/save.ts",
+    "src/globe/cityView.ts",
+    "src/globe/main.ts",
+    "src/ui/tileCard.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Muuri kiertää kaupunkia edelleen renkaana, eikä sillä ole korkeusbonusta.",
+    "Kahden kaupungin alueet voivat kohdata toisessa renkaassa, jolloin kummankin rakennus voi seistä samalla ruudulla.",
+    "Resurssit ja tutkimus (STORY-072) sekä resurssien rakennukset (STORY-073)."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "placement.ts, bonukset ja tallennus yksikkötestein",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "Kaupunkitaso: rakennukset ruuduillaan, merkit, napautus nostettuun maahan, siirto ja kortti",
+      "verify": "E2E placement ja kuvat"
+    },
+    {
+      "step": 3,
+      "action": "Koko sarja",
+      "verify": "Vitest ja E2E yhdellä workerilla"
+    }
+  ],
+  "status": "approved"
+}

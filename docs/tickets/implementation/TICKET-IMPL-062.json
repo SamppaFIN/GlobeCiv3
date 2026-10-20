@@ -1,0 +1,46 @@
+{
+  "id": "TICKET-IMPL-062",
+  "story": "STORY-071",
+  "plan": "PLAN-062",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/placement.ts",
+    "src/game/placement.test.ts",
+    "src/game/cities.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/cityView.ts",
+    "src/globe/main.ts",
+    "src/ui/tileCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/placement.e2e.ts",
+    "docs/design/kaupunkitaso.md"
+  ],
+  "change_summary": "placement.ts: fits, isBest, spots, bestTile, placeAll ja move sekä BEST-taulukko. City.placed ja City.best; cityYield, cityMood ja cityScience lukevat bonukset. groundHeight jaettu näkymän ja sijoituksen kesken. main.ts: placeAll päivän kaupunkien jälkeen ja latauksessa, rakennukset omille ruuduilleen, kuusikulmaiset merkit, napautus nostettuun maahan (pickMesh), siirtotila, ruudun kortin korkeus- ja rakennusrivit sekä Siirrä- ja Peru-napit, parhaan paikan tekstit kaupunkikorttiin. Ruudun kortissa voi olla useita nappeja. Korjattu: ilman yksiköitä napautus meni uudisasukkaan paikanvalintaan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "City.placed, City.best",
+      "cityYield, cityMood, cityScience (bonukset)",
+      "TileView.action → actions",
+      "tapPlay (siirto, valittu uudisasukas)",
+      "onTap (cityLevel.pick)",
+      "cityLevel.dress, mark, pick, dressFor"
+    ],
+    "call_sites_found": [
+      "regionView (Sukella sisään)",
+      "tileCard action",
+      "advisorDay ja päivän kaupungit",
+      "startPlay (tallennus)",
+      "giveBuildings"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "E2E placement toisti STORY-070:n vian ennen korjausta: ruudun napautus ei avannut korttia uudessa alussa, koska valittu yksikkö ja uudisasukas olivat molemmat undefined."
+  },
+  "commit": "d71f308",
+  "progress": 100
+}

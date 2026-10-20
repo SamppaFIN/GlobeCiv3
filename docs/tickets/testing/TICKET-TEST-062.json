@@ -1,0 +1,85 @@
+{
+  "id": "TICKET-TEST-062",
+  "story": "STORY-071",
+  "implementation_ticket": "TICKET-IMPL-062",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Rakennukset seisoivat oletuspaikoilla eikä korkeudella ollut merkitystä. Uudessa alussa ruudun napautus ei avannut korttia: tapPlay vertasi valittua yksikköä uudisasukkaaseen, ja ilman yksiköitä molemmat olivat undefined.",
+    "files_changed": [
+      "src/game/placement.ts",
+      "src/game/cities.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 ja asennettu Chrome Samin työpöydällä; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "placement-testit: sallitut ruudut, paras paikka, kuvernöörin valinta ja tila, placeAll, siirto ja bonukset",
+        "expected": "Säännöt ja luvut",
+        "result": "Läpi (7 testiä)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save-testi",
+        "expected": "Paikat säilyvät, virheellinen rakennus tai ruutu hylätään",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E placement: uusi alku, neljä rakennusta, kortti, siirto, kielletty ruutu, Peru, tallennus ja lataus",
+        "expected": "Kuvernööri sijoittaa parhaaseen paikkaan, siirto muuttaa bonuksen ja paikat säilyvät",
+        "result": "Ensimmäinen ajo kaatui: kortti ei avautunut (STORY-070:n vika). Korjauksen jälkeen läpi; kuvat placed.png, moving.png ja moved.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 196/196; E2E 75/75 yhdellä workerilla. Rakennusten kuvaukset kaupunkikortissa saivat parhaan paikan perään, ja vanhat tekstitarkistukset pysyivät ennallaan.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39420138482 (d71f308, 32 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Siirto napautuksin puhelimella",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Sallitut ruudut ja jyrkkä maa",
+        "checked": true
+      },
+      {
+        "item": "Korkeusbonukset",
+        "checked": true
+      },
+      {
+        "item": "Kuvernöörin sijoitus",
+        "checked": true
+      },
+      {
+        "item": "Pelaajan siirto",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-20"
+  }
+}
