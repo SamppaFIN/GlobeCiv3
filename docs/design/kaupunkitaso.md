@@ -44,6 +44,35 @@
 - Kaupungin alueen ruudut jaetaan pienemmiksi kolmioiksi pallon pinnalla. Verkko
   rakennetaan kaupungin keskipisteen ympärille omalla origollaan (tarkkuus).
 
+## Rakennusten sijoitus (STORY-071, Sami 2026-10-20)
+
+Samin valinnat: korkeus antaa bonuksen, jokaisella rakennuksella on oma paras
+paikkansa ylhäällä tai alhaalla, ja kuvernööri sijoittaa rakennuksen ja pelaaja
+siirtää sitä. Luvut ovat omia, sillä Civ I:ssä ei ole sijaintibonuksia.
+
+- Rakennus seisoo kaupungin kahden renkaan maaruudulla, ei kuitenkaan keskustassa.
+  Ruutuun mahtuu kaksi rakennusta.
+- Jyrkkä maa estää rakentamisen: vuorelle rakennetaan vain louhos. Maaston
+  rakennukset rakennetaan omalle maastolleen, ja kalastamo rantaan.
+- Ylhäällä tarkoittaa vähintään 0,1 ruutuväliä keskustaa korkeammalla, ja alhaalla
+  tarkoittaa muuta maata. Korkeus on sama kuin kaupunkitason näkymässä.
+
+| Rakennus | Paras paikka | Bonus |
+|---|---|---|
+| Temppeli | ylhäällä | +1 tyytyväinen (rauhoittaa kaksi) |
+| Kirjasto | ylhäällä | +1 tiede päivässä |
+| Pelto | alhaalla | +1 ruoka päivässä (yhteensä +2) |
+| Viljavarasto | alhaalla | +1 ruoka päivässä |
+| Tori | alhaalla | +1 kauppa päivässä |
+| Louhos | vuorella | +1 tuotanto päivässä (yhteensä +2) |
+
+- Kuvernööri sijoittaa jokaisen valmistuneen rakennuksen parhaaseen vapaaseen
+  paikkaan, ja jos sellaista ei ole, lähimmäksi keskustaa.
+- Pelaaja siirtää rakennusta kaupunkitasolla. Ruudun kortissa on Siirrä-nappi,
+  jonka jälkeen sallitut ruudut merkitään (kultainen merkki on paras paikka), ja
+  napautus siirtää rakennuksen. Bonus seuraa rakennuksen mukana.
+- Muurit ja Suuri muuri kiertävät kaupunkia eivätkä ole ruuduilla.
+
 ## Storyt
 
 | Story | Sisältö |
@@ -58,8 +87,10 @@ Kilpailijoiden sodat (aiemmin STORY-069) siirtyvät näiden jälkeen.
 
 ## Avoimet kysymykset (kysytään yksi kerrallaan, kun story on vuorossa)
 
-- Mitkä muutamat rakennukset kaupunkitasolla on alussa, ja mitä ne tekevät?
-- Miten korkeuserot vaikuttavat sijoitukseen (esim. muuri mäelle, satama rantaan)?
+- ~~Mitkä muutamat rakennukset kaupunkitasolla on alussa, ja mitä ne tekevät?~~
+  Ratkaistu: maaston rakennukset (STORY-070).
+- ~~Miten korkeuserot vaikuttavat sijoitukseen?~~ Ratkaistu: oma paras paikka
+  ylhäällä tai alhaalla, ja kuvernööri sijoittaa ja pelaaja siirtää (STORY-071).
 - Mitkä tutkimuskohteet kukin resurssilaji avaa, ja korvaako resurssipuu nykyiset
   keksinnöt vai täydentääkö se niitä?
 - Mikä rakennus kullakin resurssilla on, ja mitä se antaa valmistuttuaan?

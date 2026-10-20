@@ -39,7 +39,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
     mapped: [...map.mapped.keys()].filter(i => map.mapped[i]), units: units.save(), selected: 1,
     progress: { openLevel: 3, meter: 'province' }, targetProvince: -1,
     discoveries: [{ tile: START_TILE, finder: 1 }], bonuses: [[START_TILE, { food: 2, shield: 0, trade: 0 }]], found: 1,
-    cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food', entertainers: 1, native: true }],
+    cities: [{ id: 0, name: 'Aamuranta', tile: START_TILE, capital: true, size: 2, food: 7, shields: 3, build: 'settler', buildings: ['granary'], focus: 'food', entertainers: 1, native: true, placed: { granary: START_TILE + 1 } }],
     offers: [], offered: [START_TILE], lastOfferDay: 9, pendingSite: null,
     improvements: imp.entries(), raids: raids.save(), raidAlert: true,
     war: { target: START_TILE + 2, marching: true, losses: [[START_TILE + 2, { lost: 1, day: 10 }]], razed: [START_TILE + 3], routed: [5] },
@@ -100,6 +100,8 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { delete s.units; })).toBeNull();
     expect(broken(s => { s.war.losses[0][1].lost = -1; })).toBeNull();
     expect(broken(s => { s.cities[0].native = 'yes'; })).toBeNull();
+    expect(broken(s => { s.cities[0].placed = { dragon: START_TILE }; })).toBeNull();
+    expect(broken(s => { s.cities[0].placed.granary = -1; })).toBeNull();
     expect(validateSave(null, LIMITS)).toBeNull();
     expect(validateSave('{"version":1}', LIMITS)).toBeNull();
     expect(validateSave([], LIMITS)).toBeNull();

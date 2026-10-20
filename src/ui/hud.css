@@ -319,3 +319,5 @@
 .tile-rows { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13px; }
 .tile-rows dt { color: var(--c-muted); }
 .tile-rows dd { margin: 0; }
+.tile-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tile-actions:empty { display: none; }
