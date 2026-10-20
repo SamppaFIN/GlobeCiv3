@@ -1138,8 +1138,7 @@ const tileYields = createTileYields(hud_root);
 
 function updateCityLabels() {
   if (!play) return;
-  // At the city level its label goes up over the walls (STORY-069)
-  const lift = viewLevel === 3 ? 48 + 100 * cityLevel.relief.value : 0;
+  const lift = labelLift();
   // City-states have negative ids: -1 - their place among those in view (STORY-063)
   const shown = visibleNatives();
   cityLabels.update(viewLevel === 0 ? [] : [
@@ -2333,15 +2332,24 @@ function updateResearchCard() {
 /** A city to bring above its card once the camera is still. */
 let framing: number | null = null;
 
+/** Room between the top panel and the middle of a city label: half its height and a margin. */
+const LABEL_CLEARANCE = 32;
+/** How far a city's label stands above it: at the city level it goes up over the walls (STORY-069). */
+function labelLift(): number {
+  return viewLevel === 3 ? 48 + 100 * cityLevel.relief.value : 0;
+}
+
 /**
  * Move the view so that a city stands midway between the top panel and the card: the
- * point now on the screen where the city should move from becomes the centre.
+ * point now on the screen where the city should move from becomes the centre. Its label
+ * stays below the top panel, so that it can be tapped again (STORY-075: at the city level
+ * the raised label went under the panel).
  */
 function keepAboveCard(tile: number) {
   const at = toScreen(tileCenter(tile));
   if (!at) return;
   const top = document.querySelector('.hud-top')?.getBoundingClientRect().bottom ?? 0;
-  const goal = [window.innerWidth / 2, (top + cityCard.top()) / 2];
+  const goal = [window.innerWidth / 2, Math.max((top + cityCard.top()) / 2, top + labelLift() + LABEL_CLEARANCE)];
   const centre = rig.raycast(ndcAt(window.innerWidth / 2 - (goal[0] - at[0]), window.innerHeight / 2 - (goal[1] - at[1])));
   if (centre) rig.flyTo(centre.normalize(), rig.dist, reduceMotion() ? 0 : 0.4);
 }
