@@ -1,0 +1,52 @@
+{
+  "id": "PLAN-059",
+  "story": "STORY-068",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-20",
+  "approach": "Puhdas moduuli src/game/rivals.ts: Rival-luokka (kaupungit, yksiköt, rakennuspolitiikka ja päivä RivalWorld-rajapinnan kautta) ja rivalStarts. main.ts: aloitusvaltiot startPlayssa, pääkaupunki kaupunkivaltioiden haun kautta (sama 3 ms:n palahaku), rivalsDay päiväsilmukassa kaupunkien jälkeen, ja yhteinen nearForeign-ehto paikanvalinnoissa.",
+  "alternatives_considered": [
+    {
+      "name": "Täysi tekoäly (tutkimus, mieliala, hallitusmuodot)",
+      "pros": "Freecivin kaltainen",
+      "cons": "Monta storya",
+      "rejected_because": "Sami valitsi kilpailijat kauempana; sodat ensin (STORY-069), diplomatia myöhemmin"
+    },
+    {
+      "name": "Aloitusvaltio pelkästä siemenestä ilman maata",
+      "pros": "Yksinkertaisin",
+      "cons": "Testissä Pohjolan valtio oli merta, eikä pääkaupunkia syntynyt",
+      "rejected_because": "Maaotanta 49 kaupunkialueen keskipisteestä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/rivals.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityLabels.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Kilpailija levittäytyy nopeasti: testissä 8 kaupunkia päivään 108 mennessä, jonka jälkeen se tekee kultaa. Kultaa ei vielä käytetä.",
+    "Pelaajan kaupungit eivät väistä kilpailijoiden työstämiä ruutuja (pelaaja valitsee ensin).",
+    "Kilpailijoiden yksiköitä ei vielä näytetä kartalla."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "rivals.ts ja yksikkötestit",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "Kytkentä, kartta, laput, kortit ja tallennus",
+      "verify": "E2E rivals"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}

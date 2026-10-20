@@ -1,0 +1,41 @@
+{
+  "id": "TICKET-IMPL-059",
+  "story": "STORY-068",
+  "plan": "PLAN-059",
+  "implemented_by_model": "Opus 5.5",
+  "status": "done",
+  "files_changed": [
+    "src/game/rivals.ts",
+    "src/game/rivals.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "src/globe/unitLayer.ts",
+    "src/ui/cityLabels.ts",
+    "src/ui/hud.css",
+    "tests/e2e/rivals.e2e.ts"
+  ],
+  "change_summary": "rivals.ts: RIVALS (nimet, värit ja kaupunkinimet), rivalStarts, Rival (found, nextBuild, day, save). save.ts: kaupungin tarkistus omaksi funktiokseen, ja kilpailijat valinnaisena kenttänä. main.ts: rivalStartStates (maaotanta), kilpailijan pääkaupunki skannauksesta, siteContext, freeForRival, rivalWorld, rivalsDay, nearRival ja nearForeign (myös tiedustelijan ehdotukseen, mikä korjaa STORY-063:n aukon), visibleRivalCities, laput, heksan kortti, aluekortti ja testihook rivals. Yksikkökerrokseen kilpailijoiden värilliset talot, ja lappuihin kilpailijan väri.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "SaveData.rivals, validateSave (city)",
+      "nextNativeState, scanNatives",
+      "Units.noCity (nearForeign), nearbySite, provinceSite, noteSiteOffer",
+      "CityLabel.foe, color, owner",
+      "UnitView.rivals"
+    ],
+    "call_sites_found": [
+      "startPlay, saveData",
+      "cityLabels.update, unitLayer.update",
+      "tileView, regionView"
+    ],
+    "call_sites_updated": [
+      "src/globe/main.ts"
+    ],
+    "compile_errors_before": 0,
+    "compile_errors_after": 0,
+    "notes": "Tiedustelijan kaupunkiehdotus ei ohittanut kaupunkivaltioiden läheisyyttä (STORY-063:n aukko); nearForeign kattaa nyt kaikki neljä paikanvalintaa."
+  },
+  "commit": "8ef2ac7",
+  "progress": 100
+}

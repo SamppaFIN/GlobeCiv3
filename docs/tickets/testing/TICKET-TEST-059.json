@@ -1,0 +1,90 @@
+{
+  "id": "TICKET-TEST-059",
+  "story": "STORY-068",
+  "implementation_ticket": "TICKET-IMPL-059",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Kilpailevia sivilisaatioita ei ollut.",
+    "files_changed": [
+      "src/game/rivals.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "rivals.test.ts",
+        "expected": "Rakennusjärjestys, kasvu ja leviäminen, ruutujen jako, tallennus, aloitusvaltiot ja meri",
+        "result": "4/4",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save.test.ts: kilpailijat",
+        "expected": "Tallentuu ja palautuu",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E rivals (ensimmäinen ajo)",
+        "expected": "Jokaisella pääkaupunki",
+        "result": "Pohjolan aloitusvaltio oli merta, eikä pääkaupunkia syntynyt; korjattu maaotannalla",
+        "outcome": "fail"
+      },
+      {
+        "steps": "E2E rivals",
+        "expected": "Pääkaupungit kahden valtion päässä, kasvu, näkyvyys, kortti ja tallennus",
+        "result": "Pohjola: Sariola, Pimentola · Tapiola: Mielikkälä (päivä 37), kuva rival.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 181/181; E2E 72/72",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39383275189 (8ef2ac7, 57 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Kilpailijat erottuvat väreistään",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kilpailijat kahden valtion päässä",
+        "checked": true
+      },
+      {
+        "item": "Kasvu pelaajan säännöin",
+        "checked": true
+      },
+      {
+        "item": "Paikat erossa toisistaan",
+        "checked": true
+      },
+      {
+        "item": "Näkyvyys ja kortit",
+        "checked": true
+      },
+      {
+        "item": "Tallennus",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-20"
+  }
+}

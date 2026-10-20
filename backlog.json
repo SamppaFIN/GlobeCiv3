@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-20T07:28:27Z",
+    "generated_at": "2026-10-20T08:26:32Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "f356197",
+    "git_commit": "8ef2ac7",
     "git_branch": "main",
     "language": "fi"
   },
@@ -169,7 +169,8 @@
         "STORY-064",
         "STORY-065",
         "STORY-066",
-        "STORY-067"
+        "STORY-067",
+        "STORY-068"
       ],
       "progress": 98
     }
@@ -1817,6 +1818,33 @@
         "plan": "PLAN-058",
         "implementation": "TICKET-IMPL-058",
         "testing": "TICKET-TEST-058"
+      }
+    },
+    {
+      "id": "STORY-068",
+      "epic": "EPIC-006",
+      "title": "Kilpailijat syntyvät ja kasvavat",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että kauempana kasvaa kilpailevia sivilisaatioita samoin säännöin kuin minun, jotta maailmassa on muitakin kuin minä.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-063",
+        "STORY-065",
+        "STORY-066"
+      ],
+      "acceptance_criteria": [
+        "Peliin tulee 2–3 kilpailijaa (Pohjola, Tapiola ja Ahtola, Kalevalan nimet), jotka aloittavat kahden askeleen päässä kotivaltiosta olevista maavaltioista. Aloitusvaltiot eivät ole toistensa naapureita, ja ne valitaan siemenestä.",
+        "Kilpailijan pääkaupunki syntyy aloitusvaltion parhaalle ruokkivalle paikalle. Sen kaupungit kasvavat ja rakentavat pelaajan Freecivin säännöin (cities.ts): ensin sotilas, sitten uudisasukkaita kokoon 2 asti enintään kahdeksaan kaupunkiin, toinen sotilas ja sitten kultaa. Pelaajan kaupungit valitsevat ruutunsa ensin.",
+        "Kilpailijan uudisasukas perustaa kaupungin parhaalle vähintään kohtalaiselle paikalle kymmenen renkaan säteellä, pelaajan valtakunnan ulkopuolelle ja kaupunkien ja kaupunkivaltioiden välin päähän. Pelaajan kaupunkipaikat pysyvät vastaavasti erossa kilpailijoiden kaupungeista ja kaupunkivaltioista, myös tiedustelijoiden ehdotuksissa.",
+        "Kilpailijan kaupunki näkyy kartoitettuna sen värisinä taloina ja omalla nimilapullaan. Heksan kortti kertoo kilpailijan ja kaupungin, ja aluekortti luettelee alueen kilpailijat.",
+        "Kilpailijat tallentuvat. Vanhaan tallennukseen ne syntyvät latauksessa."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-059",
+        "implementation": "TICKET-IMPL-059",
+        "testing": "TICKET-TEST-059"
       }
     }
   ],
@@ -4699,6 +4727,58 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-059",
+      "story": "STORY-068",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-20",
+      "approach": "Puhdas moduuli src/game/rivals.ts: Rival-luokka (kaupungit, yksiköt, rakennuspolitiikka ja päivä RivalWorld-rajapinnan kautta) ja rivalStarts. main.ts: aloitusvaltiot startPlayssa, pääkaupunki kaupunkivaltioiden haun kautta (sama 3 ms:n palahaku), rivalsDay päiväsilmukassa kaupunkien jälkeen, ja yhteinen nearForeign-ehto paikanvalinnoissa.",
+      "alternatives_considered": [
+        {
+          "name": "Täysi tekoäly (tutkimus, mieliala, hallitusmuodot)",
+          "pros": "Freecivin kaltainen",
+          "cons": "Monta storya",
+          "rejected_because": "Sami valitsi kilpailijat kauempana; sodat ensin (STORY-069), diplomatia myöhemmin"
+        },
+        {
+          "name": "Aloitusvaltio pelkästä siemenestä ilman maata",
+          "pros": "Yksinkertaisin",
+          "cons": "Testissä Pohjolan valtio oli merta, eikä pääkaupunkia syntynyt",
+          "rejected_because": "Maaotanta 49 kaupunkialueen keskipisteestä"
+        }
+      ],
+      "files_to_change": [
+        "src/game/rivals.ts",
+        "src/game/save.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityLabels.ts",
+        "src/ui/hud.css"
+      ],
+      "open_questions": [
+        "Kilpailija levittäytyy nopeasti: testissä 8 kaupunkia päivään 108 mennessä, jonka jälkeen se tekee kultaa. Kultaa ei vielä käytetä.",
+        "Pelaajan kaupungit eivät väistä kilpailijoiden työstämiä ruutuja (pelaaja valitsee ensin).",
+        "Kilpailijoiden yksiköitä ei vielä näytetä kartalla."
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "action": "rivals.ts ja yksikkötestit",
+          "verify": "Vitest"
+        },
+        {
+          "step": 2,
+          "action": "Kytkentä, kartta, laput, kortit ja tallennus",
+          "verify": "E2E rivals"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6967,6 +7047,47 @@
         "notes": "Ensimmäinen versio avasi kortin myös sirusta, ja kolme tasotestiä kaatui, koska paneeli piiloutui. Muutettu avautumaan vain kartan napautuksesta."
       },
       "commit": "f356197",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-059",
+      "story": "STORY-068",
+      "plan": "PLAN-059",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/game/rivals.ts",
+        "src/game/rivals.test.ts",
+        "src/game/save.ts",
+        "src/game/save.test.ts",
+        "src/globe/main.ts",
+        "src/globe/unitLayer.ts",
+        "src/ui/cityLabels.ts",
+        "src/ui/hud.css",
+        "tests/e2e/rivals.e2e.ts"
+      ],
+      "change_summary": "rivals.ts: RIVALS (nimet, värit ja kaupunkinimet), rivalStarts, Rival (found, nextBuild, day, save). save.ts: kaupungin tarkistus omaksi funktiokseen, ja kilpailijat valinnaisena kenttänä. main.ts: rivalStartStates (maaotanta), kilpailijan pääkaupunki skannauksesta, siteContext, freeForRival, rivalWorld, rivalsDay, nearRival ja nearForeign (myös tiedustelijan ehdotukseen, mikä korjaa STORY-063:n aukon), visibleRivalCities, laput, heksan kortti, aluekortti ja testihook rivals. Yksikkökerrokseen kilpailijoiden värilliset talot, ja lappuihin kilpailijan väri.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "SaveData.rivals, validateSave (city)",
+          "nextNativeState, scanNatives",
+          "Units.noCity (nearForeign), nearbySite, provinceSite, noteSiteOffer",
+          "CityLabel.foe, color, owner",
+          "UnitView.rivals"
+        ],
+        "call_sites_found": [
+          "startPlay, saveData",
+          "cityLabels.update, unitLayer.update",
+          "tileView, regionView"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Tiedustelijan kaupunkiehdotus ei ohittanut kaupunkivaltioiden läheisyyttä (STORY-063:n aukko); nearForeign kattaa nyt kaikki neljä paikanvalintaa."
+      },
+      "commit": "8ef2ac7",
       "progress": 100
     }
   ],
@@ -12158,6 +12279,96 @@
           },
           {
             "item": "Toinen napautus ja sirut ennallaan",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-20"
+      }
+    },
+    {
+      "id": "TICKET-TEST-059",
+      "story": "STORY-068",
+      "implementation_ticket": "TICKET-IMPL-059",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Kilpailevia sivilisaatioita ei ollut.",
+        "files_changed": [
+          "src/game/rivals.ts",
+          "src/globe/main.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "rivals.test.ts",
+            "expected": "Rakennusjärjestys, kasvu ja leviäminen, ruutujen jako, tallennus, aloitusvaltiot ja meri",
+            "result": "4/4",
+            "outcome": "pass"
+          },
+          {
+            "steps": "save.test.ts: kilpailijat",
+            "expected": "Tallentuu ja palautuu",
+            "result": "Läpi",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E rivals (ensimmäinen ajo)",
+            "expected": "Jokaisella pääkaupunki",
+            "result": "Pohjolan aloitusvaltio oli merta, eikä pääkaupunkia syntynyt; korjattu maaotannalla",
+            "outcome": "fail"
+          },
+          {
+            "steps": "E2E rivals",
+            "expected": "Pääkaupungit kahden valtion päässä, kasvu, näkyvyys, kortti ja tallennus",
+            "result": "Pohjola: Sariola, Pimentola · Tapiola: Mielikkälä (päivä 37), kuva rival.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 181/181; E2E 72/72",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39383275189 (8ef2ac7, 57 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Kilpailijat erottuvat väreistään",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Kilpailijat kahden valtion päässä",
+            "checked": true
+          },
+          {
+            "item": "Kasvu pelaajan säännöin",
+            "checked": true
+          },
+          {
+            "item": "Paikat erossa toisistaan",
+            "checked": true
+          },
+          {
+            "item": "Näkyvyys ja kortit",
+            "checked": true
+          },
+          {
+            "item": "Tallennus",
             "checked": true
           }
         ],
