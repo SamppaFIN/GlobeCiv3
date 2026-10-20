@@ -14,6 +14,9 @@
  * Own: units move a tile a day (move_rate 2 is not used, as for the other units); the army
  * sets off when it can expect to beat the defenders, with one attacker more to take the
  * city (armyNeeded); a city-state's fallen defenders come back one each DEFENDER_RECOVERY_DAYS.
+ *
+ * Rivals (STORY-077): the same campaign takes a rival's city for the player, or a city of the
+ * player's for a rival at war. Their defenders are units that fall one by one ("live").
  */
 import { hash } from '../globe/terrain';
 import { neighbors } from '../globe/hexTiles';
@@ -57,17 +60,26 @@ export function defendersLeft(full: number, losses: Losses | undefined, day: num
 
 export interface WarSave { target: number | null; marching: boolean; losses: [number, Losses][]; razed: number[]; routed: number[] }
 
+/** A unit that marches and attacks: the player's or a rival's (STORY-077). */
+export interface Soldier { kind: string; tile: number; path: number[]; wait: number }
+
 /** What a campaign needs to know about the world. */
-export interface WarWorld {
-  /** The target's defenders at full strength, their defense, walls and terrain. */
-  defence(tile: number): { full: number; defense: number; walls: boolean; terrain: Terrain };
+export interface WarWorld<T extends Soldier = Unit> {
+  /**
+   * The target's defenders at full strength, their defense, walls and terrain; `live` when
+   * they are units that fall one by one (a rival's city or the player's, STORY-077), not a
+   * city-state's that come back.
+   */
+  defence(tile: number): { full: number; defense: number; walls: boolean; terrain: Terrain; live?: boolean };
   /** A path from a tile to another, or null. */
   path(from: number, to: number): number[] | null;
   roll(k: number): number;
   /** An attacker fell. */
-  lose(u: Unit): void;
+  lose(u: T): void;
+  /** A live defender fell. */
+  defeat?(tile: number): void;
   /** A unit takes the city or destroys it, or scatters a tribe of nomads (STORY-066). */
-  take(tile: number, u: Unit): 'taken' | 'razed' | 'routed';
+  take(tile: number, u: T): 'taken' | 'razed' | 'routed';
 }
 
 export type WarEvent = 'won' | 'lost' | 'taken' | 'razed' | 'routed';
@@ -112,7 +124,7 @@ export class War {
    * attackers it marches, and an attacker next to the city, with no steps left, attacks a
    * defender, or takes the city when none is left. The events of the day, in order.
    */
-  day(army: readonly Unit[], world: WarWorld, day: number, need: number): WarEvent[] {
+  day<T extends Soldier>(army: readonly T[], world: WarWorld<T>, day: number, need: number): WarEvent[] {
     const target = this.target;
     if (target === null) return [];
     const d = world.defence(target);
@@ -129,7 +141,7 @@ export class War {
         continue;
       }
       if (u.path.length || u.wait > 0) continue;
-      const left = this.left(target, d.full, day);
+      const left = d.live ? world.defence(target).full : this.left(target, d.full, day);
       if (left === 0) {
         const result = world.take(target, u);
         events.push(result);
@@ -140,7 +152,8 @@ export class War {
         return events;
       }
       if (world.roll(events.length) < attackWins(ATTACK[u.kind as Attacker], d.terrain, d.walls, d.defense)) {
-        this.losses.set(target, { lost: d.full - left + 1, day });
+        if (d.live) world.defeat?.(target);
+        else this.losses.set(target, { lost: d.full - left + 1, day });
         events.push('won');
       } else {
         world.lose(u);

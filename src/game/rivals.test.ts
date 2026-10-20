@@ -5,7 +5,8 @@ import { workedYield } from './cities';
 import { findPath, tilesInRings } from './pathfinding';
 import { buildHexGrid } from '../globe/hexGrid';
 import { Regions } from '../globe/regions';
-import { MAX_RIVAL_CITIES, Rival, rivalStarts, type RivalWorld } from './rivals';
+import { MAX_RIVAL_CITIES, RIVAL_ORDER, Rival, rivalStarts, type RivalWorld } from './rivals';
+import { foundCity } from './cities';
 
 const START = pointToTile(new THREE.Vector3(0.4, 0.3, 0.866).normalize());
 // Plains all round (1/1/0, the centre irrigated), so that a city has food and shields
@@ -83,5 +84,53 @@ describe('rival civilizations (STORY-067)', () => {
       const sea = new Set(starts.slice(0, 1));
       expect(rivalStarts(seed, home, n, s => !sea.has(s))).not.toContain(starts[0]);
     }
+  });
+
+  it('war (STORY-077): it researches in its own order, and at war its cities nearest the target build the army', () => {
+    const r = new Rival(0);
+    const c = r.found(START);
+    // Trade for science: an ocean-free world of plains has none, so the research waits for a target
+    r.day(makeWorld(r), new Set());
+    expect(r.research.target).toBe(RIVAL_ORDER[0]);
+    r.units.push({ id: 0, kind: 'warrior', tile: START, path: [], wait: 0, home: c.id, site: null });
+    // No attacker known: it builds as in peace
+    r.enemy = { tile: START + 50, need: 3 };
+    expect(r.nextBuild(c)).not.toBe('horseman');
+    r.research.known.add('horseback');
+    expect(r.bestAttacker()).toBe('horseman');
+    expect(r.nextBuild(c)).toBe('horseman');
+    r.research.known.add('iron');
+    expect(r.nextBuild(c)).toBe('swordsman');
+    // Enough of an army, or in peace: as before
+    for (let k = 0; k < 3; k++) r.units.push({ id: 10 + k, kind: 'swordsman', tile: START, path: [], wait: 0, home: c.id, site: null });
+    expect(r.nextBuild(c)).not.toBe('swordsman');
+    expect(r.army()).toHaveLength(3);
+  });
+
+  it('its soldiers walk their paths a tile a day', () => {
+    const r = new Rival(0);
+    r.found(START);
+    const to = tilesInRings(START, 2).at(-1)!;
+    const full = findPath(START, to, () => 1)!;
+    const path = full[0] === START ? full.slice(1) : full;
+    r.units.push({ id: 0, kind: 'horseman', tile: START, path: [...path], wait: 0, home: 0, site: null });
+    r.day(makeWorld(r), new Set());
+    expect(r.units[0].tile).toBe(path[0]);
+    r.day(makeWorld(r), new Set());
+    expect(r.units[0].tile).toBe(path[1]);
+  });
+
+  it('a city lost goes with its units, the others keep their ids as indices; a city gained keeps its name with a citizen fewer', () => {
+    const r = new Rival(2);
+    const [a, b, c] = [r.found(START), r.found(START + 100), r.found(START + 200)];
+    r.units.push({ id: 0, kind: 'warrior', tile: a.tile, path: [], wait: 0, home: 0, site: null }, { id: 1, kind: 'warrior', tile: b.tile, path: [], wait: 0, home: 1, site: null }, { id: 2, kind: 'warrior', tile: c.tile, path: [], wait: 0, home: 2, site: null });
+    r.lose(a);
+    expect(r.cities.map(x => [x.id, x.name])).toEqual([[0, b.name], [1, c.name]]);
+    expect(r.cities[0].capital).toBe(true);
+    expect(r.units.map(u => u.home)).toEqual([0, 1]);
+    const theirs = foundCity([], START + 300);
+    Object.assign(theirs, { name: 'Aamuranta', size: 4, buildings: ['granary'] });
+    expect(r.gain(theirs)).toMatchObject({ id: 2, name: 'Aamuranta', size: 3, capital: false, buildings: ['granary'] });
+    expect(new Rival(2, r.save()).save()).toEqual(r.save());
   });
 });

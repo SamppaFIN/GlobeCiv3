@@ -111,7 +111,7 @@ const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', ...RESOURCE_BUILDING_LIST];
 const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
-const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior'];
+const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior', ...ATTACKERS];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
 const START_GOLD = 50;
 const IMPROVEMENTS: readonly ImprovementKind[] = ['irrigation', 'mine', 'road'];
@@ -148,6 +148,32 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
     const yieldOf = (v: unknown): Yield => {
       const y = obj(v, 'yield');
       return { food: int(y.food, 'food', -100, 100), shield: int(y.shield, 'shield', -100, 100), trade: int(y.trade, 'trade', -100, 100) };
+    };
+    // A campaign and research, the player's or a rival's (STORY-077)
+    const warOf = (v: unknown): WarSave => {
+      const w = obj(v, 'war');
+      return {
+        target: orNull(w.target, tile),
+        marching: bool(w.marching, 'marching'),
+        losses: list(w.losses, 'losses', x => {
+          const e = list(x, 'loss', y => y, 2);
+          const l = obj(e[1], 'loss');
+          return [tile(e[0]), { lost: int(l.lost, 'lost', 0, 1000), day: int(l.day, 'loss day') }] as [number, Losses];
+        }, 10_000),
+        razed: tiles(w.razed, 10_000),
+        // Saves from before STORY-066 have no tribes scattered
+        routed: w.routed === undefined ? [] : list(w.routed, 'routed', x => int(x, 'routed state', 0, Math.ceil(limits.cityAreas / 49)), 1000),
+      };
+    };
+    const researchOf = (v: unknown) => {
+      const r = obj(v, 'research');
+      return {
+        known: [...new Set(list(r.known, 'known', a => oneOf(a, ADVANCE_LIST, 'advance'), ADVANCE_LIST.length))],
+        target: orNull(r.target, a => oneOf(a, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'target')),
+        // The kinds of resource known (STORY-072); a save from before knows them all
+        ...(r.kinds === undefined ? {} : { kinds: [...new Set(list(r.kinds, 'kinds', k => oneOf(k, RESOURCE_KINDS, 'kind'), RESOURCE_KINDS.length))] }),
+        bulbs: int(r.bulbs, 'bulbs'),
+      };
     };
     // The player's cities and the rivals' (STORY-068)
     const city = (v: unknown): City => {
@@ -236,6 +262,9 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
             };
           }, 10_000),
           nextId: int(x.nextId, 'rival next id'),
+          // Research and a campaign (STORY-077); a save from before has none
+          ...(x.research === undefined ? {} : { research: researchOf(x.research) }),
+          ...(x.war === undefined ? {} : { war: warOf(x.war) }),
         };
       }, RIVALS.length),
       offers: list(s.offers, 'offers', v => {
@@ -266,21 +295,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         nextId: int(r.nextId, 'bandit next id'),
       },
       raidAlert: bool(s.raidAlert, 'raid alert'),
-      war: s.war === undefined ? { target: null, marching: false, losses: [], razed: [], routed: [] } : (() => {
-        const w = obj(s.war, 'war');
-        return {
-          target: orNull(w.target, tile),
-          marching: bool(w.marching, 'marching'),
-          losses: list(w.losses, 'losses', v => {
-            const e = list(v, 'loss', x => x, 2);
-            const l = obj(e[1], 'loss');
-            return [tile(e[0]), { lost: int(l.lost, 'lost', 0, 1000), day: int(l.day, 'loss day') }] as [number, Losses];
-          }, 10_000),
-          razed: tiles(w.razed, 10_000),
-          // Saves from before STORY-066 have no tribes scattered
-          routed: w.routed === undefined ? [] : list(w.routed, 'routed', v => int(v, 'routed state', 0, Math.ceil(limits.cityAreas / 49)), 1000),
-        };
-      })(),
+      war: s.war === undefined ? { target: null, marching: false, losses: [], razed: [], routed: [] } : warOf(s.war),
       ...(s.ties === undefined ? {} : {
         ties: list(s.ties, 'ties', v => {
           const t = obj(v, 'tie');
@@ -292,16 +307,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         }, 10),
       }),
       gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),
-      research: s.research === undefined ? { known: [], target: null, bulbs: 0 } : (() => {
-        const r = obj(s.research, 'research');
-        return {
-          known: [...new Set(list(r.known, 'known', a => oneOf(a, ADVANCE_LIST, 'advance'), ADVANCE_LIST.length))],
-          target: orNull(r.target, a => oneOf(a, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'target')),
-          // The kinds of resource known (STORY-072); a save from before knows them all
-          ...(r.kinds === undefined ? {} : { kinds: [...new Set(list(r.kinds, 'kinds', k => oneOf(k, RESOURCE_KINDS, 'kind'), RESOURCE_KINDS.length))] }),
-          bulbs: int(r.bulbs, 'bulbs'),
-        };
-      })(),
+      research: s.research === undefined ? { known: [], target: null, bulbs: 0 } : researchOf(s.research),
       tax: s.tax === undefined ? 50 : oneOf(s.tax, TAX_RATES, 'tax'),
       goal: s.goal === undefined ? 0 : int(s.goal, 'goal', 0, 1000),
       lux: s.lux === undefined ? 0 : oneOf(s.lux, LUX_RATES, 'lux'),

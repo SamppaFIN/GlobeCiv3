@@ -38,6 +38,22 @@ yli −50 epäluuloinen, muuten vihamielinen.
   - **liitto:** asenne on vähintään 50
   - **vaihto (STORY-078):** vaihto on reilu, ja asenne on vähintään −20
 
+## Sota (STORY-077, Sami 2026-10-20: kaupunki siirtyy)
+
+- Kilpailija tutkii puolella kaupastaan ja aloittaa hyökkääjien keksinnöistä
+  (Pronssityö, Ratsastus, Aakkoset, Muuraus, Pyörä, Rautatyö …).
+- Sodassa kilpailija valitsee kohteeksi pelaajan kaupungin, joka on lähimpänä sen
+  pääkaupunkia. Sen kaksi kaupunkia lähimpänä kohdetta rakentavat parasta tuntemaansa
+  hyökkääjää, kunnes joukko odotusarvoisesti riittää. Joukko kokoontuu, marssii ja
+  hyökkää kuten Kenraalin joukko: Freecivin civ1-taistelu A/(A+D).
+- Puolustajat kaatuvat yksi kerrallaan. Valloitettu kaupunki siirtyy voittajalle ja
+  menettää asukkaan, ja koon 1 kaupunki tuhoutuu (Freeciv). Menetetyn kaupungin tukemat
+  yksiköt lähtevät (oma). Jos pääkaupunki menetetään, suurin jäljellä oleva kaupunki
+  tulee pääkaupungiksi.
+- Kun pelaajan viimeinen kaupunki menetetään, peli päättyy, ja tallennus poistetaan.
+- Sodassa Kenraali voi valita kohteeksi kilpailijan kaupungin. Kilpailijan menettämät
+  kaupungit lasketaan rauhan ehtoon.
+
 ## Storyt
 
 | Story | Sisältö |
