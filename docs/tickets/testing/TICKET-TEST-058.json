@@ -1,0 +1,83 @@
+{
+  "id": "TICKET-TEST-058",
+  "story": "STORY-067",
+  "implementation_ticket": "TICKET-IMPL-058",
+  "status": "done",
+  "fix_summary": {
+    "problem_and_root_cause": "Sami: resurssit olivat värittömiä, eikä kartan napautus kertonut maasta mitään muualla kuin kaupunkialuetasolla.",
+    "files_changed": [
+      "src/globe/tiles.ts",
+      "src/globe/main.ts",
+      "src/ui/tileCard.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+    "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+    "cases": [
+      {
+        "steps": "Kuva resources.png kaupunkialuetasolla",
+        "expected": "Värilliset merkit",
+        "result": "Aloitusalueen hiilimerkit ovat oransseja (tuotanto)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E region-card: kaupunkialueen kortti läänitasolla, sulkeminen, siru, toinen napautus",
+        "expected": "Kortti, valinta säilyy, siru vain valitsee, toinen napautus sukeltaa",
+        "result": "Läpi, kuva area.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: läänin kortti valtiotasolla ja Sukella sisään",
+        "expected": "Tila ja sukellus",
+        "result": "Läpi, kuva province.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: valtion kortti planeetalla kotivaltion valtauksen jälkeen",
+        "expected": "Kotivaltio, 7/7 hallussa, kaupungit",
+        "result": "Läpi, kuva state.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kaikki testit",
+        "expected": "Vihreä",
+        "result": "Yksikkötestit 177/177; E2E 71/71",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI-ajo",
+        "expected": "Vihreä ja julkaisu",
+        "result": "Ajo 39380892401 (f356197, 56 min) vihreä ja julkaistu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Samin puhelintesti",
+        "expected": "Värit erottuvat, ja kortti aukeaa napautuksesta joka tasolla",
+        "result": "Ei ajettu — Samin kokeiltavaksi.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Resurssien värit",
+        "checked": true
+      },
+      {
+        "item": "Aluekortti joka tasolla",
+        "checked": true
+      },
+      {
+        "item": "Toinen napautus ja sirut ennallaan",
+        "checked": true
+      }
+    ],
+    "decision": "accepted",
+    "signed_by": "Linssi (Samin valtuutuksella)",
+    "date": "2026-10-20"
+  }
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-20T06:15:15Z",
+    "generated_at": "2026-10-20T07:28:27Z",
     "generated_by": "init-project v1.0",
-    "git_commit": "d69749b",
+    "git_commit": "f356197",
     "git_branch": "main",
     "language": "fi"
   },
@@ -168,7 +168,8 @@
         "STORY-063",
         "STORY-064",
         "STORY-065",
-        "STORY-066"
+        "STORY-066",
+        "STORY-067"
       ],
       "progress": 98
     }
@@ -1790,6 +1791,32 @@
         "plan": "PLAN-057",
         "implementation": "TICKET-IMPL-057",
         "testing": "TICKET-TEST-057"
+      }
+    },
+    {
+      "id": "STORY-067",
+      "epic": "EPIC-006",
+      "title": "Resurssien värit ja alueen tietokortti",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä resurssit väreinä ja saada kartan napautuksesta tietokortin siitä, mitä maassa on, millä tasolla tahansa.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-023",
+        "STORY-029",
+        "STORY-055"
+      ],
+      "acceptance_criteria": [
+        "Resurssimerkin rengas ja kuvake ovat sen tuoton värisiä (tokenit --yield-food, --yield-prod ja --yield-trade). Kuvake kertoo edelleen, mikä resurssi on, joten väri ei ole ainoa merkki.",
+        "Läänin, valtion ja planeetan tasolla kartan napautus avaa napautetun kaupunkialueen, läänin tai valtion kortin: tila (painotus, hallinta tai valtion asema), kartoitusprosentti, yleisimmät maastot ja erikoisresurssit kartoitetuista ruuduista, kaupungit, näkyvät kaupunkivaltiot ja heimot sekä Sukella sisään -painike.",
+        "Toinen napautus samaan alueeseen sukeltaa sisään kuten ennen. Siru vain valitsee, jotta tason toiminnot ovat käytettävissä, ja kortin sulkeminen jättää valinnan voimaan.",
+        "Kaupunkialuetasolla heksan kortti toimii kuten ennen (STORY-055)."
+      ],
+      "status": "done",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-058",
+        "implementation": "TICKET-IMPL-058",
+        "testing": "TICKET-TEST-058"
       }
     }
   ],
@@ -4621,6 +4648,57 @@
         }
       ],
       "status": "approved"
+    },
+    {
+      "id": "PLAN-058",
+      "story": "STORY-067",
+      "author_model": "Opus 5.5",
+      "date": "2026-10-20",
+      "approach": "Resurssin väri on shaderin vakiotaulukko, joka lasketaan tuottotokeneista maastojärjestyksessä. Aluekortti käyttää heksan korttikomponenttia, johon tuli valinnainen toimintopainike. Sisältö lasketaan alueen kartoitetuista ruuduista, ja se tallennetaan välimuistiin päivän, kartoituksen ja kaupunkimäärän mukaan.",
+      "alternatives_considered": [
+        {
+          "name": "Kortti myös sirun napautuksesta",
+          "pros": "Sirut ovat alueiden keskellä",
+          "cons": "Kortti peitti tason paneelin, ja Asuta, Ohita ja kohdevaltio jäivät pois käytöstä (kolme testiä kaatui)",
+          "rejected_because": "Pyyntö koski kartan napautusta, ja sirujen valinta palvelee paneelin toimintoja"
+        },
+        {
+          "name": "Kortti yläreunaan paneelien rinnalle",
+          "pros": "Paneelit näkyvät",
+          "cons": "Puhelimella kortti peittäisi sirut ja kartan",
+          "rejected_because": "Alapaneelina kuten heksan kortti"
+        },
+        {
+          "name": "Jokaiselle resurssille oma väri",
+          "pros": "Erottuvampi",
+          "cons": "11 väriä ilman merkitystä",
+          "rejected_because": "Tuoton väri kertoo, mitä resurssi antaa"
+        }
+      ],
+      "files_to_change": [
+        "src/globe/tiles.ts",
+        "src/globe/main.ts",
+        "src/ui/tileCard.ts"
+      ],
+      "open_questions": [],
+      "steps": [
+        {
+          "step": 1,
+          "action": "Resurssien värit shaderissa",
+          "verify": "Kuvakaappaus kaupunkialuetasolla"
+        },
+        {
+          "step": 2,
+          "action": "Aluekortti tasoille 0–2",
+          "verify": "E2E ja kuvat kolmella tasolla"
+        },
+        {
+          "step": 3,
+          "action": "Merge ja CI",
+          "verify": "Vihreä"
+        }
+      ],
+      "status": "approved"
     }
   ],
   "implementation_tickets": [
@@ -6855,6 +6933,40 @@
         "notes": "Sotaretkitestin alkuvaihe nopeudella 8 eikä 32: kuormitetussa ajossa kaupunkivaltioiden haku vie monta framea, ja nopeudella 32 kohde ehti kasvaa kokoon 5."
       },
       "commit": "d69749b",
+      "progress": 100
+    },
+    {
+      "id": "TICKET-IMPL-058",
+      "story": "STORY-067",
+      "plan": "PLAN-058",
+      "implemented_by_model": "Opus 5.5",
+      "status": "done",
+      "files_changed": [
+        "src/globe/tiles.ts",
+        "src/globe/main.ts",
+        "src/ui/tileCard.ts",
+        "tests/e2e/region-card.e2e.ts"
+      ],
+      "change_summary": "tiles.ts: RESOURCE_COLORS maastojärjestyksessä resurssin tuoton tokenista, ja merkin rengas ja kuvake sen värisiä. tileCard.ts: valinnainen action-painike. main.ts: regionView (kaupunkialue, lääni tai valtio), regionTilesOf, tilesOfState (stateSharen kanssa jaettu), someOf, regionCard (kartan napautus avaa ja sulkeminen nollaa), updateTileCard tasoille 0–2 ja testihook regionView.",
+      "impact_analysis": {
+        "changed_symbols": [
+          "TileView.action, createTileCard(on.action)",
+          "onTap",
+          "updateTileCard",
+          "stateShare (tilesOfState)"
+        ],
+        "call_sites_found": [
+          "createTileCard (main.ts)",
+          "stateShare (planetAdvisorDay)"
+        ],
+        "call_sites_updated": [
+          "src/globe/main.ts"
+        ],
+        "compile_errors_before": 0,
+        "compile_errors_after": 0,
+        "notes": "Ensimmäinen versio avasi kortin myös sirusta, ja kolme tasotestiä kaatui, koska paneeli piiloutui. Muutettu avautumaan vain kartan napautuksesta."
+      },
+      "commit": "f356197",
       "progress": 100
     }
   ],
@@ -11969,6 +12081,89 @@
         "decision": "accepted",
         "signed_by": "Linssi (Samin valtuutuksella)",
         "date": "2026-10-19"
+      }
+    },
+    {
+      "id": "TICKET-TEST-058",
+      "story": "STORY-067",
+      "implementation_ticket": "TICKET-IMPL-058",
+      "status": "done",
+      "fix_summary": {
+        "problem_and_root_cause": "Sami: resurssit olivat värittömiä, eikä kartan napautus kertonut maasta mitään muualla kuin kaupunkialuetasolla.",
+        "files_changed": [
+          "src/globe/tiles.ts",
+          "src/globe/main.ts",
+          "src/ui/tileCard.ts"
+        ]
+      },
+      "ai_testing": {
+        "environment": "Playwright 1.64 headless Chromium, Samin työpöytäkone; siemen 42.",
+        "tooling": "Vitest 5.0.3, Playwright 1.64.0",
+        "cases": [
+          {
+            "steps": "Kuva resources.png kaupunkialuetasolla",
+            "expected": "Värilliset merkit",
+            "result": "Aloitusalueen hiilimerkit ovat oransseja (tuotanto)",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E region-card: kaupunkialueen kortti läänitasolla, sulkeminen, siru, toinen napautus",
+            "expected": "Kortti, valinta säilyy, siru vain valitsee, toinen napautus sukeltaa",
+            "result": "Läpi, kuva area.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: läänin kortti valtiotasolla ja Sukella sisään",
+            "expected": "Tila ja sukellus",
+            "result": "Läpi, kuva province.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "E2E: valtion kortti planeetalla kotivaltion valtauksen jälkeen",
+            "expected": "Kotivaltio, 7/7 hallussa, kaupungit",
+            "result": "Läpi, kuva state.png",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Kaikki testit",
+            "expected": "Vihreä",
+            "result": "Yksikkötestit 177/177; E2E 71/71",
+            "outcome": "pass"
+          },
+          {
+            "steps": "CI-ajo",
+            "expected": "Vihreä ja julkaisu",
+            "result": "Ajo 39380892401 (f356197, 56 min) vihreä ja julkaistu",
+            "outcome": "pass"
+          },
+          {
+            "steps": "Samin puhelintesti",
+            "expected": "Värit erottuvat, ja kortti aukeaa napautuksesta joka tasolla",
+            "result": "Ei ajettu — Samin kokeiltavaksi.",
+            "outcome": "not_run"
+          }
+        ],
+        "console_findings": [],
+        "screenshots": []
+      },
+      "human_acceptance": {
+        "checked_items": [
+          {
+            "item": "Resurssien värit",
+            "checked": true
+          },
+          {
+            "item": "Aluekortti joka tasolla",
+            "checked": true
+          },
+          {
+            "item": "Toinen napautus ja sirut ennallaan",
+            "checked": true
+          }
+        ],
+        "decision": "accepted",
+        "signed_by": "Linssi (Samin valtuutuksella)",
+        "date": "2026-10-20"
       }
     }
   ]

@@ -1,0 +1,51 @@
+{
+  "id": "PLAN-058",
+  "story": "STORY-067",
+  "author_model": "Opus 5.5",
+  "date": "2026-10-20",
+  "approach": "Resurssin väri on shaderin vakiotaulukko, joka lasketaan tuottotokeneista maastojärjestyksessä. Aluekortti käyttää heksan korttikomponenttia, johon tuli valinnainen toimintopainike. Sisältö lasketaan alueen kartoitetuista ruuduista, ja se tallennetaan välimuistiin päivän, kartoituksen ja kaupunkimäärän mukaan.",
+  "alternatives_considered": [
+    {
+      "name": "Kortti myös sirun napautuksesta",
+      "pros": "Sirut ovat alueiden keskellä",
+      "cons": "Kortti peitti tason paneelin, ja Asuta, Ohita ja kohdevaltio jäivät pois käytöstä (kolme testiä kaatui)",
+      "rejected_because": "Pyyntö koski kartan napautusta, ja sirujen valinta palvelee paneelin toimintoja"
+    },
+    {
+      "name": "Kortti yläreunaan paneelien rinnalle",
+      "pros": "Paneelit näkyvät",
+      "cons": "Puhelimella kortti peittäisi sirut ja kartan",
+      "rejected_because": "Alapaneelina kuten heksan kortti"
+    },
+    {
+      "name": "Jokaiselle resurssille oma väri",
+      "pros": "Erottuvampi",
+      "cons": "11 väriä ilman merkitystä",
+      "rejected_because": "Tuoton väri kertoo, mitä resurssi antaa"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/tiles.ts",
+    "src/globe/main.ts",
+    "src/ui/tileCard.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Resurssien värit shaderissa",
+      "verify": "Kuvakaappaus kaupunkialuetasolla"
+    },
+    {
+      "step": 2,
+      "action": "Aluekortti tasoille 0–2",
+      "verify": "E2E ja kuvat kolmella tasolla"
+    },
+    {
+      "step": 3,
+      "action": "Merge ja CI",
+      "verify": "Vihreä"
+    }
+  ],
+  "status": "approved"
+}
