@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
 import { isUp, move, placeAll, spots, standsOnTile, BEST, PLACE_RINGS, type Ground } from '../game/placement';
+import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
 import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
@@ -537,7 +538,7 @@ function snapshot(): SaveData | null {
     units: play.units.save(), selected: play.selected, progress: { ...play.progress }, targetProvince: play.targetProvince,
     discoveries: [],
     bonuses: [...play.bonuses].map(([t, y]) => [t, { ...y }] as [number, Yield]),
-    found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
+    found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), ties: play.ties.map(t => ({ ...t })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
     research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, goal: play.goal,
@@ -634,6 +635,9 @@ interface Play {
   tileOpen: number | null;
   /** The building the player is moving, by its city's tile (STORY-071). */
   moving: { city: number; building: Building } | null;
+  /** The ties with each rival, in the rivals' order, and the rival whose diplomacy card is open (STORY-076). */
+  ties: Ties[];
+  diplomacyOpen: number | null;
   /** The city-level advisor, its card, and what it did lately (STORY-049). */
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
@@ -751,7 +755,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -773,6 +777,8 @@ function startPlay(startCity: number, saved?: SaveData) {
     improvements: Improvements.from(saved.improvements), raids: new Raids(saved.raids), war: new War(saved.war), raidAlert: saved.raidAlert,
     // A save from before STORY-068 has no rivals: they start now
     ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
+    // The ties with them (STORY-076); a save from before meets them anew
+    ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? play.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
     research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, goal: saved.goal,
   });
   clock.day = saved.day;
@@ -2150,6 +2156,7 @@ const listCard = createListCard(hud_root, {
     play.selected = index;
     rig.flyTo(tileCenter(play.units.units[index].tile), rig.dist, reduceMotion() ? 0 : 0.5);
   },
+  rival: (id: number) => openDiplomacy(id),
 });
 
 function listView(): ListView {
@@ -2170,6 +2177,10 @@ function listView(): ListView {
       line: unitStatus(play!.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name),
     })),
     economy: economyRows(yields),
+    diplomacy: play!.rivals.flatMap((r, k) => {
+      const t = play!.ties[k];
+      return t?.met ? [{ id: k, name: r.name, state: STATE_NAMES[t.state], line: `asenne ${attitudeWord(t.attitude)} · ${knownRivalCities(k).length} tunnettua kaupunkia` }] : [];
+    }),
   };
 }
 
@@ -2362,6 +2373,7 @@ const discoveryCard = createDiscoveryCard(hud_root, index => {
   if (!play) return;
   if (shownCard === 'site') chooseSite(index);
   else if (shownCard === 'raid') chooseRaid(index);
+  else if (shownCard === 'treaty') chooseTreaty(index);
 });
 
 /** Open ruins: what they hold comes to the player, with a notice and a glow on the tile. */
@@ -2411,7 +2423,7 @@ function noteDiscoveries(fresh: number[]) {
 }
 
 /** Which card is shown: a site offer's or a raid's. */
-let shownCard: 'site' | 'raid' | null = null;
+let shownCard: 'site' | 'raid' | 'treaty' | null = null;
 
 function updateSiteOffer() {
   if (!play) return;
@@ -2976,11 +2988,8 @@ const tileCard = createTileCard(hud_root, {
   // Cancel a move; move a building on the hex (STORY-071); or into the region, as a second tap does
   action: i => {
     if (play?.moving) return stopMoving();
-    const tile = play && play.tileOpen !== null && viewLevel === 3 ? play.tileOpen : null;
-    const moves = tile !== null ? movable(tile) : [];
-    if (moves[i]) return startMoving(moves[i]);
-    // A city on the hex (STORY-074)
-    if (tile !== null && i === moves.length && settleAction(tile)) return settleAt(tile);
+    // The hex's buttons (STORY-071, STORY-074, STORY-076)
+    if (play && play.tileOpen !== null && viewLevel === 3) return tileActions[i]?.();
     if (selection) fly(diveTarget(regions, selection, frames));
   },
 });
@@ -3114,8 +3123,167 @@ function tileView(id: number): TileView {
     ...placementRows(id),
   ];
   const settle = settleAction(id);
-  const actions = [...movable(id).map(m => `Siirrä ${BUILDS[m.building].name.toLowerCase()}`), ...(settle ? [settle] : [])];
-  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : found ? `${TERRAIN_RULES[terrain].name} · tuntematon resurssi` : TERRAIN_RULES[terrain].name, rows, ...(actions.length ? { actions } : {}) };
+  const met = rival ? p.rivals.indexOf(rival.rival) : -1;
+  const actions: { label: string; run: () => void }[] = [
+    ...movable(id).map(m => ({ label: `Siirrä ${BUILDS[m.building].name.toLowerCase()}`, run: () => startMoving(m) })),
+    ...(settle ? [{ label: settle, run: () => settleAt(id) }] : []),
+    // A rival met: its diplomacy (STORY-076)
+    ...(met >= 0 && p.ties[met]?.met ? [{ label: `Diplomatia: ${rival!.rival.name}`, run: () => openDiplomacy(met) }] : []),
+  ];
+  tileActions = actions.map(a => a.run);
+  return { kicker, title: kind ? `${TERRAIN_RULES[terrain].name} · ${RESOURCES[kind].name}` : found ? `${TERRAIN_RULES[terrain].name} · tuntematon resurssi` : TERRAIN_RULES[terrain].name, rows, ...(actions.length ? { actions: actions.map(a => a.label) } : {}) };
+}
+
+/** What the hex card's buttons do, in their order; set with its view. */
+let tileActions: (() => void)[] = [];
+
+// ─── Diplomacy (STORY-076) ─────────────────────────
+// Sami 2026-10-20: "diplomatia määrää", and the rival's attitude steers it (diplomacy.ts,
+// docs/design/diplomatia.md). A rival is met when one of its cities shows on the map; its card
+// tells what is known of it and what can be done with it.
+
+const STATE_NAMES: Record<Relation, string> = { peace: 'rauha', war: 'sota', alliance: 'liitto' };
+
+/** A rival's cities on the player's map. */
+const knownRivalCities = (k: number) => visibleRivalCities().filter(x => x.rival === play!.rivals[k]).map(x => x.city);
+
+/** The player's cities within BORDER_TILES of a rival's. */
+function nearCitiesOf(k: number): City[] {
+  const r = play!.rivals[k];
+  const theirs = r.cities.map(c => tileCenter(c.tile));
+  return play!.cities.filter(c => {
+    const at = tileCenter(c.tile);
+    return theirs.some(t => t.angleTo(at) < BORDER_TILES * TILE_ANGLE);
+  });
+}
+
+/** The day's ties: meeting, attitude, and what each rival does. */
+function diplomacyDay() {
+  const p = play!;
+  p.rivals.forEach((r, k) => {
+    const t = p.ties[k];
+    if (!t) return;
+    if (!t.met && knownRivalCities(k).length) {
+      t.met = true;
+      t.since = clock.day;
+      discoveryCard.notice(`Tapasitte kilpailijan: ${r.name} · diplomatia luettelossa`);
+    }
+    if (!t.met) return;
+    const near = nearCitiesOf(k);
+    tiesDay(t, clock.day, near.length > 0);
+    // Stronger: more soldiers than the player's in the cities near it
+    const stronger = r.units.filter(u => u.kind === 'warrior').length > near.reduce((n, c) => n + soldiersIn(c.tile).length, 0);
+    const move = rivalMove(t, clock.day, stronger);
+    if (move === 'war') {
+      setState(t, 'war', clock.day);
+      discoveryCard.notice(`${r.name} julisti sodan!`);
+      moment('raid', (near[0] ?? p.cities[0])?.tile ?? pointToTile(rig.target));
+    } else if (move && !treaty && !discoveryCard.visible) offerTreaty(k, move);
+  });
+}
+
+/** A rival's proposal waiting on the card: an alliance or peace. */
+let treaty: { rival: number; kind: 'alliance' | 'peace' } | null = null;
+
+function offerTreaty(k: number, kind: 'alliance' | 'peace') {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  t.offered = clock.day;
+  treaty = { rival: k, kind };
+  shownCard = 'treaty';
+  discoveryCard.show({
+    day: clock.day,
+    kicker: `Diplomatia · ${r.name}`,
+    title: kind === 'alliance' ? 'Liittoehdotus' : 'Rauhanehdotus',
+    body: kind === 'alliance' ? `${r.name} on ${attitudeWord(t.attitude)} ja ehdottaa liittoa.` : `${r.name} on sotinut ${clock.day - t.since} päivää ja ehdottaa rauhaa.`,
+    options: [
+      { kind: 'treaty', title: kind === 'alliance' ? 'Solmi liitto' : 'Tee rauha', effect: kind === 'alliance' ? 'Asenne paranee joka päivä' : 'Sota päättyy' },
+      { kind: 'later', title: 'Kieltäydy', effect: kind === 'alliance' ? 'Suhde pysyy rauhana' : 'Sota jatkuu' },
+    ],
+    note: kind === 'alliance' ? 'Liitossa asenne nousee päivä päivältä.' : 'Rauhassa asenne palaa vähitellen kohti varautunutta.',
+  });
+}
+
+function chooseTreaty(index: number) {
+  discoveryCard.hide();
+  const offer = treaty;
+  treaty = null;
+  if (!play || !offer) return;
+  const r = play.rivals[offer.rival];
+  if (index === 0) {
+    setState(play.ties[offer.rival], offer.kind, clock.day);
+    discoveryCard.notice(offer.kind === 'alliance' ? `Liitto: ${r.name}` : `Rauha: ${r.name}`);
+  } else discoveryCard.notice(`Kieltäydyitte: ${r.name}`);
+}
+
+function openDiplomacy(k: number) {
+  if (!play || !play.ties[k]?.met) return;
+  play.listOpen = false;
+  play.tileOpen = null;
+  play.openCity = null;
+  play.diplomacyOpen = k;
+}
+
+/** The diplomacy card: what is known of the rival and what can be done with it. */
+function diplomacyView(k: number): TileView {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  const near = nearCitiesOf(k);
+  const known = knownRivalCities(k);
+  return {
+    kicker: 'Diplomatia',
+    title: r.name,
+    rows: [
+      { label: 'Suhde', value: `${STATE_NAMES[t.state]} · ${clock.day - t.since} pv` },
+      { label: 'Asenne', value: `${attitudeWord(t.attitude)} (${t.attitude > 0 ? '+' : ''}${t.attitude})` },
+      { label: 'Syyt', value: reasons(t, near.length > 0).join(' · ') || 'ei muutoksia' },
+      { label: 'Kaupungit', value: known.length ? `${someOf(known.map(c => `${c.name} (${c.size})`))} · ${known.length} tunnettua` : 'ei tunnettuja' },
+      { label: 'Sotavoima', value: `${r.units.filter(u => u.kind === 'warrior').length} soturia` },
+      { label: 'Rajat', value: near.length ? `lähellä: ${near.map(c => c.name).join(', ')}` : 'kaukana' },
+      ...(t.state === 'war' ? [{ label: 'Rauha', value: clock.day - t.since < 10 ? `ei ennen kuin sota on kestänyt 10 päivää (${10 - (clock.day - t.since)} pv)` : t.attitude >= -60 || t.lost > 0 ? 'se voi hyväksyä rauhan' : 'liian vihamielinen rauhaan' }] : []),
+    ],
+    actions: t.state === 'peace' ? ['Julista sota', 'Ehdota liittoa'] : t.state === 'war' ? ['Ehdota rauhaa'] : ['Pura liitto'],
+  };
+}
+
+const diplomacyCard = createTileCard(hud_root, {
+  close: () => { if (play) play.diplomacyOpen = null; },
+  action: i => {
+    if (!play || play.diplomacyOpen === null) return;
+    const k = play.diplomacyOpen;
+    const r = play.rivals[k];
+    const t = play.ties[k];
+    const act = diplomacyView(k).actions![i];
+    if (act === 'Julista sota') {
+      setState(t, 'war', clock.day, true);
+      discoveryCard.notice(`Julistitte sodan: ${r.name}`);
+    } else if (act === 'Pura liitto') {
+      setState(t, 'peace', clock.day, true);
+      discoveryCard.notice(`Liitto purettu: ${r.name}`);
+    } else if (act === 'Ehdota liittoa' || act === 'Ehdota rauhaa') {
+      const kind = act === 'Ehdota liittoa' ? 'alliance' : 'peace';
+      if (accepts(t, clock.day, kind)) {
+        setState(t, kind, clock.day);
+        discoveryCard.notice(`${r.name} hyväksyi ${kind === 'alliance' ? 'liiton' : 'rauhan'}`);
+      } else discoveryCard.notice(`${r.name} kieltäytyi · asenne ${attitudeWord(t.attitude)}`);
+    }
+  },
+}, 'diplomacy');
+
+function updateDiplomacyCard() {
+  if (!play) return;
+  const other = play.openCity !== null || researchCard.visible || listCard.visible || advisorCard.visible || discoveryCard.visible || tileCard.visible;
+  if (other && play.diplomacyOpen !== null && diplomacyCard.visible) play.diplomacyOpen = null;
+  const k = play.diplomacyOpen;
+  if (k === null || other || !play.ties[k]?.met) {
+    if (diplomacyCard.visible) diplomacyCard.hide();
+    return;
+  }
+  const view = diplomacyView(k);
+  if (diplomacyCard.visible) diplomacyCard.update(view);
+  else diplomacyCard.show(view);
 }
 
 // ─── A city here (STORY-074) ───────────────────────
@@ -3310,7 +3478,7 @@ function updatePlay(dt: number) {
   play.units.noCity = nearForeign;
   scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
-  const days = play.offers.length || play.raidAlert ? 0 : clock.advance(dt);
+  const days = play.offers.length || play.raidAlert || treaty ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
     scouting = true;
@@ -3319,9 +3487,10 @@ function updatePlay(dt: number) {
     founded.forEach(foundAt);
     cityDays();
     rivalsDay();
+    diplomacyDay();
     raidDay();
     advisorDay();
-    if (play.offers.length || play.raidAlert) {
+    if (play.offers.length || play.raidAlert || treaty) {
       clock.day -= days - d - 1;
       break;
     }
@@ -3334,6 +3503,7 @@ function updatePlay(dt: number) {
   updateResearchCard();
   updateAdvisorCard();
   updateTileCard();
+  updateDiplomacyCard();
   checkGoals();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
@@ -3586,6 +3756,9 @@ frameStartPlanet();
   },
   /** A city on a hex (STORY-074): why not, the card's button, the settler on its way, the waiting site, the yields and builds. */
   site: (tile: number) => ({ block: settleBlock(tile), action: settleAction(tile), going: play!.units.founding ? play!.units.currentSite() : null, pending: play!.pendingSite, yields: cityYields(), builds: play!.cities.map(c => c.build) }),
+  /** The ties with the rivals, and their attitude set by hand (STORY-076). */
+  ties: () => (play ? play.ties.map((t, k) => ({ ...t, name: play!.rivals[k].name })) : []),
+  setAttitude: (k: number, a: number) => { if (play?.ties[k]) play.ties[k].attitude = a; },
   /** Kinds of resource known and found, and the study (STORY-072). */
   setKinds: (list: ResourceKind[]) => { if (play) { play.research.kinds.clear(); for (const k of list) play.research.kinds.add(k); } },
   researchOptions: () => (play ? play.research.available(foundKinds) : []),

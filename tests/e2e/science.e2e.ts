@@ -80,7 +80,7 @@ test('science: choose an advance, split trade, learn it, and the building it ope
   const s = await state(page);
   expect([s.research.target, s.research.cost]).toEqual([null, 20]);
   await expect(page.getByRole('button', { name: 'Valitse tutkimus', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt ja talous' }).click();
+  await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' }).click();
   await page.getByRole('dialog', { name: 'Luettelo' }).getByRole('button', { name: /^Aamuranta/ }).click();
   const city = page.getByRole('dialog', { name: 'Aamuranta' });
   await expect(city.getByRole('radio', { name: /^Viljavarasto/ })).toBeEnabled();

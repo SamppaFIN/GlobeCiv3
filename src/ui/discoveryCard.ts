@@ -9,13 +9,15 @@
 import { PAUSE } from './gameHud';
 
 /** What a choice on the card is: building a city at a suggested site, a soldier against bandits, or later. */
-export type ChoiceKind = 'site' | 'defend' | 'later';
+export type ChoiceKind = 'site' | 'defend' | 'later' | 'treaty';
 
 // Icons on a 24 px grid in ink (own)
 const ICONS: Record<ChoiceKind, string> = {
   site: '<path d="M3 20 H21 M5 20 V12 L9 9 L13 12 V20 M13 20 V8 L17 5 L21 8 V20 M8 15 H10 M16 12 H18" stroke-linejoin="round" stroke-linecap="round"/>',
   defend: '<path d="M12 3 L19 6 V11 C19 16 16 19 12 21 C8 19 5 16 5 11 V6 Z" stroke-linejoin="round"/>',
   later: '<circle cx="12" cy="12" r="8"/><path d="M12 7 V12 L15.5 14" stroke-linecap="round"/>',
+  // Two hands meeting (STORY-076, own)
+  treaty: '<path d="M3 11 L7 7 L11 9 L14 7 L21 12 M7 7 V13 L11 17 L15 13 M11 13 L13 15 M9 11 L11 13" stroke-linejoin="round" stroke-linecap="round"/>',
 };
 
 export interface DiscoveryView {

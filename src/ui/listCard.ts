@@ -2,12 +2,13 @@
  * listCard.ts — the cities and the units as lists (STORY-042, Sami: "hankala hallinnoida
  * rakennuksia ja ukkeleita, tarvitaan listanäkymä"). Two tabs; a city row opens its card and
  * a unit row selects the unit, both bringing it into view. A bottom sheet like the city card.
- * The third tab, Talous, tells what the realm gets a day (STORY-048).
+ * The third tab, Talous, tells what the realm gets a day (STORY-048), and the fourth,
+ * Diplomatia, the rivals met (STORY-076).
  */
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
-export type ListTab = 'cities' | 'units' | 'economy';
+export type ListTab = 'cities' | 'units' | 'economy' | 'diplomacy';
 
 export interface ListView {
   tab: ListTab;
@@ -15,6 +16,8 @@ export interface ListView {
   units: { index: number; name: string; kind: string; line: string }[];
   /** Rows of the economy tab: what comes in and where it goes. */
   economy: { title: string; right: string; line: string }[];
+  /** The rivals met: a row opens the rival's diplomacy card. */
+  diplomacy: { id: number; name: string; state: string; line: string }[];
 }
 
 export interface ListCard {
@@ -24,7 +27,7 @@ export interface ListCard {
   readonly visible: boolean;
 }
 
-export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: ListTab): void; city(id: number): void; unit(index: number): void }): ListCard {
+export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: ListTab): void; city(id: number): void; unit(index: number): void; rival(id: number): void }): ListCard {
   const el = document.createElement('section');
   el.className = 'city-card list-card';
   el.setAttribute('role', 'dialog');
@@ -39,6 +42,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
       <label class="seg-opt"><input type="radio" name="list-tab" value="cities"><span class="list-tab-cities"></span></label>
       <label class="seg-opt"><input type="radio" name="list-tab" value="units"><span class="list-tab-units"></span></label>
       <label class="seg-opt"><input type="radio" name="list-tab" value="economy">Talous</label>
+      <label class="seg-opt"><input type="radio" name="list-tab" value="diplomacy">Diplomatia</label>
     </div>
     <div class="list-rows"></div>`;
   root.appendChild(el);
@@ -57,6 +61,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
     const items: { title: string; right: string; line: string; go?: () => void }[] = v.tab === 'cities'
       ? v.cities.map(c => ({ title: c.name, right: c.size, line: c.line, go: () => on.city(c.id) }))
       : v.tab === 'units' ? v.units.map(u => ({ title: u.name, right: u.kind, line: u.line, go: () => on.unit(u.index) }))
+      : v.tab === 'diplomacy' ? v.diplomacy.map(r => ({ title: r.name, right: r.state, line: r.line, go: () => on.rival(r.id) }))
       : v.economy;
     rows.replaceChildren(...items.map(it => {
       // Economy rows only tell; the others are buttons
@@ -73,7 +78,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
     if (!items.length) {
       const empty = document.createElement('span');
       empty.className = 'city-area';
-      empty.textContent = v.tab === 'cities' ? 'Ei vielä kaupunkeja. Uudisasukas perustaa kaupungin.' : 'Ei yksiköitä.';
+      empty.textContent = v.tab === 'cities' ? 'Ei vielä kaupunkeja. Uudisasukas perustaa kaupungin.' : v.tab === 'diplomacy' ? 'Ei vielä tavattuja kilpailijoita. Kilpailija tavataan, kun sen kaupunki näkyy kartalla.' : 'Ei yksiköitä.';
       rows.appendChild(empty);
     }
   };
