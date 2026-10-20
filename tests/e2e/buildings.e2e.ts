@@ -39,8 +39,10 @@ test('trade is gold; gold buys a granary, which the card lists and the city pays
   const s = await state(page);
   await expect(card.locator('.city-gold')).toHaveText(new RegExp(`^Kassa ${s.gold} kultaa · [+−]\\d+/pv$`));
   const builds = card.getByRole('radiogroup', { name: 'Rakenna' });
-  // With the four attackers (STORY-064), the scout and the Louhos of the hills (STORY-070)
-  await expect(builds.getByRole('radio')).toHaveCount(20);
+  // With the four attackers (STORY-064), the scout and the Louhos of the hills (STORY-070), and
+  // the Paja of the coal in the city's area (STORY-073: the old start knows every kind)
+  await expect(builds.getByRole('radio')).toHaveCount(21);
+  await expect(builds.getByRole('radio', { name: /^Paja/ })).toBeVisible();
   const granary = builds.getByRole('radio', { name: /^Viljavarasto/ });
   await expect(granary).toContainText('60 tuotantoa, 1 kulta/pv · Säilyttää puolet ruoasta, kun kaupunki kasvaa');
   await expect(builds.getByRole('radio', { name: /^Muuri/ })).toContainText('120 tuotantoa, 2 kultaa/pv · Soturit kolminkertaisesti vahvempia rosvoja vastaan');
@@ -75,7 +77,7 @@ test('trade is gold; gold buys a granary, which the card lists and the city pays
   await page.waitForFunction(() => (window as any).globeGame.state.cities[0].buildings.includes('granary'), null, { timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(card.locator('.city-buildings')).toHaveText('Rakennukset: Viljavarasto');
-  await expect(builds.getByRole('radio')).toHaveCount(19);
+  await expect(builds.getByRole('radio')).toHaveCount(20);
   await expect(builds.getByRole('radio', { name: /^Viljavarasto/ })).toHaveCount(0);
   const after = await state(page);
   expect(after.cities[0].build).toBe('coinage');

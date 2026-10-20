@@ -13,7 +13,7 @@
  *   Vartija      production focus; a soldier in every city, two and walls while bandits are
  *                on their way; it answers the bandit card by building the soldier
  */
-import { SIZE_LIMIT, type Build, type City, type Focus } from './cities';
+import { isResourceBuilding, RESOURCE_BUILDINGS, SIZE_LIMIT, type Build, type City, type Focus } from './cities';
 import type { Advance } from './science';
 import type { StateLine } from './units';
 
@@ -47,6 +47,10 @@ export interface CityNeeds {
 /** A city advisor's focus and build for a city (build null: as it is); null with no advisor. */
 export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { focus: Focus; build: Build | null } | null {
   const can = (b: Build) => n.available.includes(b);
+  // With nothing else to build, a resource building (STORY-073): Kasvattaja one for food,
+  // Vartija one for shields, Kartoittaja any
+  const resource = n.available.filter(isResourceBuilding)
+    .find(b => (advisor === 'growth' ? RESOURCE_BUILDINGS[b].food : advisor === 'defend' ? RESOURCE_BUILDINGS[b].shield : true)) ?? null;
   switch (advisor) {
     case 'none':
       return null;
@@ -57,14 +61,14 @@ export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { fo
           : city.size >= SIZE_LIMIT - 1 && can('aqueduct') ? 'aqueduct'
           // A settler of its own to improve the land, from size 3 (STORY-060: without one, no roads and no trade)
           : city.size >= 3 && n.settlers === 0 && can('settler') ? 'settler'
-          : city.size >= 2 && can('granary') ? 'granary' : null,
+          : city.size >= 2 && can('granary') ? 'granary' : resource,
       };
     case 'explore':
-      return { focus: 'balanced', build: null };
+      return { focus: 'balanced', build: resource };
     case 'defend':
       return {
         focus: 'production',
-        build: n.soldiers < (n.threat ? 2 : 1) ? n.soldier : n.threat && can('walls') ? 'walls' : null,
+        build: n.soldiers < (n.threat ? 2 : 1) ? n.soldier : n.threat && can('walls') ? 'walls' : resource,
       };
   }
 }

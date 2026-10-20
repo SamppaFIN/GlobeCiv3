@@ -102,6 +102,35 @@ tuntemattomana merkkinä. Säännöt ovat omia.
 - Kilpailijat ja kaupunkipaikkojen arviot käyttävät edelleen resurssien todellista
   tuottoa.
 
+## Resurssien rakennukset (STORY-073, Sami 2026-10-20)
+
+Samin valinnat: resurssi on asutettu, kun se on kaupungin alueella, ja jokaisella lajilla
+on oma rakennus. Nimet ja luvut ovat omia.
+
+- Kaupunki voi rakentaa lajin rakennuksen, kun tutkitun lajin resurssiruutu on sen
+  alueella. Rakennus maksaa 40 tuotantoa, eikä sillä ole ylläpitoa.
+- Rakennus seisoo kaupunkitasolla resurssiruudullaan, ja kalasatama rannalla kalan vieressä.
+- Rakennus antaa bonuksensa joka päivä ja palkintonsa kerran valmistuessaan. Jos
+  palkintona saatava keksintö on jo tiedossa, rakennus antaa sen sijaan 30 kultaa.
+  Palkintona saatu yksikkö ei kuulu millekään kaupungille, joten sillä ei ole ylläpitoa.
+
+| Laji | Rakennus | Joka päivä | Valmistuessa |
+|---|---|---|---|
+| Kala | Kalasatama | +2 ruokaa | Kartanteko |
+| Hylkeet | Pyyntiasema | +2 ruokaa | tiedustelija |
+| Keidas | Kastelukanava | +2 ruokaa | Keramiikka |
+| Riista | Metsästysmaja | +1 ruoka, +1 tuotanto | tiedustelija |
+| Poro | Poroaitaus | +2 ruokaa | tiedustelija |
+| Hedelmällinen maa | Viljelmä | +1 ruoka, +1 tuotanto | uudisasukas |
+| Hiili | Paja | +2 tuotantoa | Rautatyö |
+| Hevoset | Talli | +1 tuotanto | ratsumies |
+| Öljy | Öljylähde | +3 tuotantoa | — |
+| Jalokivet | Koruverstas | +1 tyytyväinen | Hautajaisriitit |
+| Kulta | Rahapaja | +3 kultaa | Rahatalous |
+
+- Kuvernöörit rakentavat resurssirakennuksen, kun muuta tarvetta ei ole: Kasvattaja
+  ruokaa antavan, Vartija tuotantoa antavan ja Kartoittaja minkä tahansa.
+
 ## Storyt
 
 | Story | Sisältö |
@@ -122,8 +151,9 @@ Kilpailijoiden sodat (aiemmin STORY-069) siirtyvät näiden jälkeen.
   ylhäällä tai alhaalla, ja kuvernööri sijoittaa ja pelaaja siirtää (STORY-071).
 - ~~Mitkä tutkimuskohteet kukin resurssilaji avaa, ja korvaako resurssipuu nykyiset
   keksinnöt vai täydentääkö se niitä?~~ Ratkaistu: lajit avaavat keksintöjä (STORY-072).
-- Mikä rakennus kullakin resurssilla on, ja mitä se antaa valmistuttuaan?
-- Riittääkö asuttamiseen, että resurssi on kaupungin alueella, vai pitääkö kaupunki
-  perustaa resurssiruudulle?
+- ~~Mikä rakennus kullakin resurssilla on, ja mitä se antaa valmistuttuaan?~~
+  Ratkaistu: oma rakennus jokaiselle lajille (STORY-073).
+- ~~Riittääkö asuttamiseen, että resurssi on kaupungin alueella?~~ Ratkaistu: riittää
+  (STORY-073).
 - ~~Näkyvätkö resurssit kartalla vasta tutkittuina?~~ Ratkaistu: tuntematon merkki
   ilman tuottoa (STORY-072).

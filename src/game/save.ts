@@ -11,7 +11,7 @@
 import { SPEEDS, type Speed } from './clock';
 import { ATTACKERS, type Losses, type WarSave } from './war';
 import { RIVALS, type RivalSave, type RivalUnit } from './rivals';
-import type { City, Build, Building, Focus } from './cities';
+import { RESOURCE_BUILDING_LIST, type City, type Build, type Building, type Focus } from './cities';
 import type { Discovery, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
@@ -105,7 +105,7 @@ const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
-const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field'];
+const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', ...RESOURCE_BUILDING_LIST];
 const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior'];
