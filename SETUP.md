@@ -1,54 +1,49 @@
-# SETUP — GlobeCiv3
+# SETUP — GlobeCiv3 (uusintahaastattelu 2026-11-19)
 
-Tee nämä järjestyksessä. Kohdat 1–4 kuittaavat alustuksen, eikä projekti
+Tee nämä järjestyksessä. Kohdat 1–3 kuittaavat alustuksen, eikä projekti
 toimi oikein ennen niitä.
 
-## A. Alustuksen kuittaus (nyt)
+## A. Alustuksen kuittaus claude.aissa (nyt)
 
-1. **Vastaa jäljellä oleviin kysymyksiin.** Yhdeksän alkuperäistä kysymystä
-   ratkesi 2026-10-09 (osio 13). Jäljellä on viisi avointa kysymystä, joista
-   kiireellisin on kysymys 4: onko "Infinite" organisaatio, jonka nimissä
-   GPL-tekijänoikeus ilmoitetaan.
-2. **Projektiohjeet (claude.ai).** Jos käytät tätä myös claude.ai-projektina,
-   avaa **Set project instructions** ja **KORVAA** koko nykyinen sisältö
-   (ALUSTUSTILA-ohje) tiedoston `INSTRUCTIONS-FINAL.md` sisällöllä.
-3. **Project knowledge.** Raahaa sinne `CLAUDE.md`, `backlog.json` ja
-   `docs/infinite-zoom-tutkimus.md`. Skeemat `schemas/*.schema.json` voivat
-   olla mukana. Kun myöhemmin lataat uuden version jostain tiedostosta, poista
-   vanha samalla, jotta knowledgeen ei jää kahta backlogia.
-4. **Pohjat pois knowledgesta.** Poista `CLAUDE.*.md.template`,
-   `design-brief.template.md` ja `backlog.example.json`. Claude vastaa myös
-   knowledgeen jätetyistä tiedostoista, ja esimerkkiprojekti sekoittuisi
-   oikeaan projektiin.
+1. **Projektiohjeet.** Avaa projektissa "Globe Civ 3.0" kohta **Set project
+   instructions** ja **KORVAA** koko nykyinen sisältö (ALUSTUSTILA-ohje)
+   tiedoston `INSTRUCTIONS-FINAL.md` sisällöllä.
+2. **Project knowledge.** Raahaa sinne `CLAUDE.md` ja `backlog.json`.
+   Suositus: lisää myös `docs/infinite-zoom-tutkimus.md` reposta, koska ohjeet
+   viittaavat siihen arkkitehtuurikysymyksissä. Skeemat `schemas/*.schema.json`
+   voivat olla mukana. Kun myöhemmin lataat uuden version jostain tiedostosta,
+   poista vanha samalla, jotta knowledgeen ei jää kahta backlogia.
+3. **Pohjat pois knowledgesta.** Poista `CLAUDE.*.md.template`,
+   `design-brief.template.md` ja `backlog.example.json`, jos niitä on. Tämän
+   projektin knowledge oli alustuksen aikaan tyhjä, joten todennäköisesti
+   poistettavaa ei ole, mutta tarkista. Claude vastaa myös knowledgeen
+   jätetyistä tiedostoista, ja esimerkkiprojekti sekoittuisi oikeaan
+   projektiin.
 
-Claude Codessa `CLAUDE.md` luetaan automaattisesti projektin juuresta.
-Myös `C:\Projects\CLAUDE.md` ladataan. Sen vastausprotokolla on sama kuin
-tässä projektissa, mutta sen identiteetti (Aavistus) jää tämän projektin
-identiteetin (Linssi) alle.
+## B. Repo
 
-## B. Repo (STORY-002) — tehty 2026-10-09
-
-Kohdat 5–8 on tehty: repo on julkinen, ensimmäinen commit on 477c19a, ja
-julkaisu toimii osoitteessa https://samppafin.github.io/GlobeCiv3/.
-
-5. Luo GitHubiin **julkinen** ja tyhjä repo `SamppaFIN/GlobeCiv3` ilman
-   README-, .gitignore- ja LICENSE-pohjia.
-6. Kansiossa `C:\Projects\GlobeCiv3`:
-   - `git init`
-   - `LICENSE` (GPL v3, tekijänä Sami tai Infinite, katso avoin kysymys 4)
-   - ensimmäinen commit ja push `main`-haaraan
-7. Päivitä `backlog.json`:n `_meta.git_commit` ja `_meta.git_branch`, ja
-   lataa uusi versio knowledgeen vanhan tilalle.
-8. GitHubissa: **Settings → Pages → Source: GitHub Actions**.
+4. ~~**Vie uudet tiedostot repoon.**~~ Tehty 2026-11-19: Enki commitoi
+   tiedostot mainiin (STORY-079).
+5. **Hyväksy tai palauta kirjatut storyt.** Storyt 073–078 (resurssien
+   rakennukset, heksakortti, nimilappu, diplomatia, sota ja vaihdot) ovat
+   tilassa `review`. Pelaa ne Pagesista ja kerro, mitkä hyväksyt. Sama koskee
+   STORY-079:ää eli tätä backlogin jälkikirjausta. Nisaba merkitsee
+   hyväksytyt tilaan `done`.
+6. **Vahvista backlogin muoto.** `backlog.json` sisältää nyt vain epicit ja
+   storyt (114 kt aiemman noin 600 kt:n sijaan). Suunnitelmat ja tiketit ovat
+   ennallaan kansioissa `docs/plans` ja `docs/tickets`. Jos haluat ne takaisin
+   samaan tiedostoon, sano se, niin päätös kumotaan.
 
 ## C. Design
 
-9. Avaa **Claude Design** ja liitä sinne `design-brief.md` kokonaan.
-   Suunnittele näkymät listan järjestyksessä, yksi kerrallaan.
+7. Avaa **Claude Design** ja liitä sinne `design-brief.md` kokonaan. Aloita
+   näkymistä 1–2 (tason tavoite ja nousuhetki).
 
 ## D. Seuraava askel
 
-10. Aloita uusi keskustelu ja kirjoita:
-    **"Tee STORY-001:n toteutussuunnitelma (PLAN-001)."**
-    STORY-001 korjaa globin käynnistyksen. Sen jälkeen vuorossa on
-    STORY-004, infinite zoom -prototyyppi, joka ratkaisee arkkitehtuurin.
+8. Aloita uusi keskustelu **Opuksella** (Enki) ja kirjoita:
+   **"Tee STORY-083:n toteutussuunnitelma: Inanna-pelitestaaja."**
+   Inanna ja lähtötason pelitesti (STORY-084) tehdään ennen yhtään
+   pelattavuusmuutosta, jotta sekavuus on mitattu ennen korjaamista.
+   STORY-080–082 (repohygienia, aineistot ja TypeScript 7) eivät muuta
+   pelattavuutta, joten ne voi tehdä rinnalla.
