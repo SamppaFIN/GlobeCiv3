@@ -28,6 +28,11 @@ test('nomad tribes: one in each state next to home, a band that raids a city, an
     const states = new Set(w.globeDebug.tribes().map((t: TribeState) => t.state));
     return w.globeRegions.neighbors[home].every((s: number) => states.has(s));
   }, null, { timeout: 60_000 });
+  // Seven cities rise the levels one by one up to the planet (STORY-087): each card is put off
+  await page.waitForFunction(() => {
+    (document.querySelector('.unlock-card:not([hidden]) .unlock-later') as HTMLButtonElement | null)?.click();
+    return (window as any).globeGame.state.openLevel === 0 && document.querySelector<HTMLElement>('.unlock-card')!.hidden;
+  }, null, { timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   const all = await tribes(page);
   for (const t of all) {
