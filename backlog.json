@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T11:24:39Z",
+    "generated_at": "2026-11-19T11:39:02Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "37767a6",
+    "git_commit": "f2ad0a5",
     "git_branch": "main",
     "language": "fi"
   },
@@ -191,7 +191,7 @@
         "STORY-081",
         "STORY-082"
       ],
-      "progress": 25
+      "progress": 50
     },
     {
       "id": "EPIC-008",
@@ -2145,12 +2145,12 @@
         "Svelte ja svelte.config.js on poistettu, ja build ja testit ovat vihreitä. Viisi pientä Dependabot-päivitystä on mergetty, ja haara spike/infinite-zoom on poistettu.",
         ".gitignore sisältää .env:n ja .env.*:n (paitsi .env.example), ja CI ajaa komennon npm audit --omit=dev --audit-level=high."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-064",
+        "implementation": "TICKET-IMPL-064",
+        "testing": "TICKET-TEST-064"
       }
     },
     {

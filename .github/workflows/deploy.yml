@@ -21,11 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
       - run: npm ci
+      # Known vulnerabilities in what ships to the browser fail the run (dev tools are left out)
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm test
       - run: npx playwright install --with-deps chromium
       # Builds dist/ and runs the browser smoke tests against it

@@ -1,0 +1,54 @@
+{
+  "id": "PLAN-064",
+  "story": "STORY-080",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Svelte ja sen Vite-liitännäinen pois (npm uninstall, svelte.config.js, vite.config.ts:n plugins-rivi ja vite-env.d.ts:n *.svelte-moduulimäärittely). Dependabotin pienet päivitykset: @playwright/test 1.64.1, vite 8.3.5, vitest 5.0.5 ja actions/setup-node v7; Svelten PR sulkeutuu poiston myötä, ja TypeScript 7 on oma storynsa (STORY-082). .gitignore saa .env:n ja .env.*:n (paitsi .env.example), ja CI ajaa npm audit --omit=dev --audit-level=high heti npm ci:n jälkeen. Haara spike/infinite-zoom poistetaan, jos sen kärki on mainissa.",
+  "alternatives_considered": [
+    {
+      "name": "Svelte jää odottamaan HUDin uudistusta",
+      "pros": "Ei poistotyötä, jos Svelte otetaan myöhemmin käyttöön",
+      "cons": "Käyttämätön riippuvuus tuottaa Dependabot-PR:iä ja build-asetuksia",
+      "rejected_because": "Sami päätti poistaa sen (2026-11-19). Sen saa takaisin yhdellä asennuksella."
+    },
+    {
+      "name": "npm audit myös kehitystyökaluille",
+      "pros": "Kattavampi",
+      "cons": "Kehitystyökalujen ilmoitukset pysäyttäisivät julkaisun, vaikka ne eivät päädy selaimeen",
+      "rejected_because": "Vain selaimeen menevä koodi ratkaisee julkaisun; Dependabot hoitaa kehitystyökalut"
+    }
+  ],
+  "files_to_change": [
+    "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "svelte.config.js",
+    "src/vite-env.d.ts",
+    ".gitignore",
+    ".github/workflows/deploy.yml"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Lähtötaso: yksikkötestit ja buildin kesto",
+      "verify": "Vitest 215/215 ja build 5,0 s"
+    },
+    {
+      "step": 2,
+      "action": "Svelte pois ja Dependabotin päivitykset",
+      "verify": "npm ls ei löydä Svelteä, build ja Vitest vihreinä"
+    },
+    {
+      "step": 3,
+      "action": ".gitignore ja npm audit CI:hin",
+      "verify": "npm audit --omit=dev --audit-level=high: 0 haavoittuvuutta"
+    },
+    {
+      "step": 4,
+      "action": "Selaintestit SwiftShaderilla (osajoukko paikallisesti, koko sarja CI:ssä)",
+      "verify": "Playwright"
+    }
+  ],
+  "status": "approved"
+}

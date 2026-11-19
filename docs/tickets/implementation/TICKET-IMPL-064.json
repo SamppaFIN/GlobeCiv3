@@ -1,0 +1,31 @@
+{
+  "id": "TICKET-IMPL-064",
+  "story": "STORY-080",
+  "plan": "PLAN-064",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "svelte.config.js (poistettu)",
+    "src/vite-env.d.ts",
+    ".gitignore",
+    ".github/workflows/deploy.yml"
+  ],
+  "change_summary": "Svelte 5 ja @sveltejs/vite-plugin-svelte poistettu riippuvuuksista ja build-asetuksista. @playwright/test 1.64.0 → 1.64.1, vite 8.3.3 → 8.3.5, vitest 5.0.3 → 5.1.1 ja actions/setup-node v6 → v7. .gitignore: .env, .env.* ja !.env.example. CI: npm audit --omit=dev --audit-level=high npm ci:n jälkeen.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "vite.config.ts plugins: [svelte()]",
+      "declare module '*.svelte'"
+    ],
+    "call_sites_found": [
+      "Ei yhtään .svelte-tiedostoa eikä Svelte-importtia src- tai tests-kansiossa"
+    ],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Vitest lukittui versioon 5.1.1 eikä Dependabotin 5.0.5:een: npm 10.9.9:n asennus kaatui tarkalla versiolla virheeseen \"Cannot read properties of null (reading 'edgesOut')\", ja puhdas asennus ratkaisi alueen ^5.0.5 uusimpaan 5.x-versioon. Sama major, testit vihreinä. Haaraa spike/infinite-zoom ei poistettu: sen kärki 6b00321 ei ole mainin historiassa, joten poisto hävittäisi committeja."
+}
