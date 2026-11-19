@@ -1,0 +1,25 @@
+{
+  "id": "TICKET-IMPL-069",
+  "story": "STORY-082",
+  "plan": "PLAN-069",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "package.json",
+    "package-lock.json",
+    "CLAUDE.md"
+  ],
+  "change_summary": "typescript ~6.0.2 → ~7.0.2. Lukitustiedostoon tuli 20 alustakohtaista valinnaista pakettia @typescript/typescript-<alusta> (Apache-2.0), joista asennetaan vain koneen oma, myös Samin Windows x64. Koodiin ja tsconfigiin ei tarvittu muutoksia. CLAUDE.md:n pino: TypeScript 7.",
+  "impact_analysis": {
+    "changed_symbols": [],
+    "call_sites_found": [
+      "package.json: build = tsc && vite build",
+      "Mikään muu paketti ei riipu typescriptistä (npm ls typescript)"
+    ],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": "b9b523a",
+  "progress": 100,
+  "notes": "Turvallisuuteen vaikuttava muutos (tietoturvasääntö 4): kehitysriippuvuuden major-päivitys, joka tuo natiivin binäärin npm:n @typescript-nimiavaruudesta. Se ajetaan vain buildissa eikä päädy julkaistuun peliin; npm audit 0 haavoittuvuutta."
+}
