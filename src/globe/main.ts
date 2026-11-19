@@ -1421,9 +1421,10 @@ function updateCityLabels() {
   cityLabels.update(viewLevel === 0 ? [] : [
     ...play.cities.map(c => {
       const at = toScreen(tileCenter(c.tile));
-      // Above the city's houses at the city-area level, on the city further out; close up
-      // a small line tells what it builds and how it grows (STORY-098)
-      const info = viewLevel === 3 ? labelInfo(c, yieldsNow()[c.id]) : undefined;
+      // Above the city's houses at the city-area level, on the city further out. At the city
+      // area a small line tells what it builds and how it grows (STORY-098); not at the city
+      // level, where the wider label would cover the city's own tiles and the top panel tells it
+      const info = viewLevel === 3 && rig.dist > frames[3] * CITY_LEVEL_AT ? labelInfo(c, yieldsNow()[c.id]) : undefined;
       return { id: c.id, name: c.name, size: c.size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, info, open: quickCity === c.id };
     }),
     ...shown.map((n, k) => {
