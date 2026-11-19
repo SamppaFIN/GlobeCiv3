@@ -1,0 +1,74 @@
+{
+  "id": "TICKET-TEST-071",
+  "story": "STORY-096",
+  "implementation_ticket": "TICKET-IMPL-071",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Kaikki valikot näkyivät heti, eikä peli kertonut, mitä tehdään (Sami 2026-11-19; PLAYTEST-001).",
+    "files_changed": [
+      "src/ui/onboarding.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö (Linux x64, 2 ydintä, ei GPU:ta), Node 22.23.5, TypeScript 7.0.2, Vitest 5.1.1, Playwright 1.64.1 Chrome Headless Shellillä (SwiftShader), CI=1",
+    "tooling": "npx tsc, npx vitest run, CI=1 npx playwright test",
+    "cases": [
+      {
+        "steps": "commands.test.ts ja save.test.ts: advise-komento",
+        "expected": "Vain tason oma neuvonantaja tai none kelpaa; tallennus hylkää vieraan neuvonantajan ja tason",
+        "result": "Läpi; Vitest 40 tiedostoa ja 224 testiä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "onboarding.e2e: tervetulo, kolme korttia, kierros ja olennaiset",
+        "expected": "Peli seisoo 30 framea tervetulon ja kierroksen aikana; Kasvattaja valittuna komentona; luettelo ja tutkimus piilossa; kaupunkikortti ilman rakennuslistaa ja painotusta; Ohjaan itse tuo ne takaisin",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "onboarding.e2e: jatkettu peli ja nousun jälkeinen valinta",
+        "expected": "Jatka ei tervehdi uudelleen, ja neuvonantaja säilyy; kaupunkialue ei kysy uudelleen, lääni kysyy kolmesta nousukortin jälkeen ilman kierrosta",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "onboarding.e2e puhelimella (390 × 844)",
+        "expected": "Kortit ruudulla ja kohteet vähintään 44 px",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "new-start, city-label, placement, resource-buildings, resources, advisors, province-advisors, state-advisors, conquest, growth ja smoke",
+        "expected": "Ennallaan",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko Playwright-ajo",
+        "expected": "Vihreä",
+        "result": "Ei ajettu paikallisesti kokonaan; CI ajaa sen pushissa.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "onboarding.e2e: welcome.png, pick.png, tour.png ja city-advisor.png (1280 × 800, pikselisuhde 0,5) tarkistettu silmämääräisesti"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tervetulo ja kolme valintaa auttavat pääsemään jyvälle",
+        "checked": false
+      },
+      {
+        "item": "Olennaiset riittävät neuvonantajan ohjatessa",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T17:43:11Z",
+    "generated_at": "2026-11-19T19:32:24Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "872c010",
+    "git_commit": "01de43e",
     "git_branch": "main",
     "language": "fi"
   },
@@ -217,9 +217,12 @@
         "STORY-095",
         "STORY-087",
         "STORY-017",
-        "STORY-014"
+        "STORY-014",
+        "STORY-096",
+        "STORY-098",
+        "STORY-099"
       ],
-      "progress": 20
+      "progress": 25
     },
     {
       "id": "EPIC-010",
@@ -245,6 +248,17 @@
         "STORY-092",
         "STORY-093",
         "STORY-094"
+      ],
+      "progress": 0
+    },
+    {
+      "id": "EPIC-012",
+      "title": "Planeettataso: ydinsota",
+      "icon": "☢️",
+      "description": "Planeettatason oma peli Nuclear Warin mekaniikoin: johtajat, diplomatia ennen ydinaseita, propaganda väestön kääntäjänä, aseet ja torjunta. MVP:n jälkeen; ensin kokeilu, jota Sami pelaa testilinkistä.",
+      "status": "todo",
+      "stories": [
+        "STORY-097"
       ],
       "progress": 0
     }
@@ -2477,6 +2491,91 @@
         "Päivän laskenta (yksiköt, kaupungit, kilpailijat, diplomatia, rosvot ja neuvonantajat) on moduulissa, joka ei tuo Three.js:ää eikä DOMia, ja selainpeli kutsuu sitä. Pelin käytös ei muutu, ja selaintestit pysyvät vihreinä.",
         "Haut, jotka nyt jaetaan framejen kesken (kaupunkivaltioiden haku), valmistuvat ennen päivää, jota ne koskevat, joten ruudunpäivitys ei vaikuta peliin.",
         "Vitest ajaa siemenen 42 pelin Nodessa ja toistaa sen tallennuksen komentolokista identtiseen tilaan (STORY-086:n uusintakriteeri)."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-096",
+      "epic": "EPIC-009",
+      "title": "Tervetulo ja neuvonantajien peli",
+      "type": "story",
+      "narrative": "Uutena pelaajana haluan, että peli tervehtii ja kertoo, mitä tehdään, ja että ohjaan vain neuvonantajia, jotta pääsen jyvälle ilman, että kaikki valikot hyppäävät silmille.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-087"
+      ],
+      "acceptance_criteria": [
+        "Uusi peli alkaa tervetulokortilla, jonka jälkeen tason kolme neuvonantajaa tulevat isoina kortteina ja lyhyt HUD-kierros (tavoite, nopeus ja neuvonantaja), jonka voi ohittaa. Peli seisoo, kunnes valinta on tehty. Läänin, valtion ja planeetan kolme neuvonantajaa tulevat nousukortin jälkeen.",
+        "Neuvonantajan ohjaamalla tasolla näkyvät vain tavoite, aika ja neuvonantaja. Ohjaan itse on neuvonantajakortin alalaidassa, ja se tuo kaikki valikot esiin. Vanha alku (?classic) ja aiemmat tallennukset toimivat kuten ennen.",
+        "Neuvonantajan valinta on komento (sääntö 7)."
+      ],
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-071",
+        "implementation": "TICKET-IMPL-071",
+        "testing": "TICKET-TEST-071"
+      }
+    },
+    {
+      "id": "STORY-097",
+      "epic": "EPIC-012",
+      "title": "Ydinsotakokeilu",
+      "type": "spike",
+      "narrative": "Samina haluan kokeilla planeettatason ydinsotapeliä testilinkistä, jotta näen, toimiiko diplomatiasta ydinsotaan kasvava jännite ennen kuin taso tehdään kunnolla.",
+      "effort": "M",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "Testilinkki ?planet avaa planeettatason, jossa pelaaja ja 2–4 tekoälyjohtajaa vuorottelevat: diplomatia ja propaganda ennen ydinaseita, ja aseet ja torjunta vasta kehittyneinä. Viimeinen pystyssä oleva tai suurin väestö voittaa.",
+        "Kaikki nimet, tekstit ja luvut ovat omia (sääntö 4), ja ne on merkitty omiksi koodikommenttiin. Kokeilu ei muuta varsinaista peliä."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-098",
+      "epic": "EPIC-009",
+      "title": "Tasopaneeli ja kaupunkien pikatoiminnot",
+      "type": "story",
+      "narrative": "Pelaajana haluan joka tasolla näkyvän, missä olen (valtio, lääni tai kaupunki), sen pikatoiminnot ja laajennettavan infografiikan, ja kaupunkilappuihin pienet tiedot ja pikatoiminnot, jotta näen tilanteen avaamatta valikoita.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-096"
+      ],
+      "acceptance_criteria": [
+        "Joka tasolla on paneeli, joka kertoo alueen nimen ja tason, tarjoaa sen pikatoiminnot ja laajenee infografiikaksi (esimerkiksi väestö, tuotanto, kauppa ja tiede).",
+        "Kaupunkilapussa näkyvät pieninä koko, rakennus ja tärkeimmät tiedot, ja napautus tarjoaa pikatoiminnot. Puhelimella kohteet ovat vähintään 44 px."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-099",
+      "epic": "EPIC-009",
+      "title": "Tasojen ja aikakausien sisältö",
+      "type": "spike",
+      "narrative": "Samina haluan suunnitelman siitä, mitä rakennuksia, yksiköitä, politiikkaa ja uskontoa kullakin tasolla on kullakin aikakaudella, jotta tasojen pelit eroavat toisistaan ja aikakausi avaa uusia toimintoja.",
+      "effort": "M",
+      "depends_on": [],
+      "acceptance_criteria": [
+        "docs/design/tasot-ja-aikakaudet.md kertoo jokaiselle tasolle ja aikakaudelle rakennukset, yksiköt, politiikan ja uskonnon sekä sen, mihin tason toimintoihin ne vaikuttavat, ja mistä mekaniikka on lainattu (sääntö 4).",
+        "Suunnitelma jakaa sisällön EPIC-010:n ja EPIC-011:n storyihin, ja Sami hyväksyy sen."
       ],
       "status": "todo",
       "progress": 0,

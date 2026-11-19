@@ -1,0 +1,54 @@
+{
+  "id": "TICKET-IMPL-071",
+  "story": "STORY-096",
+  "plan": "PLAN-071",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/ui/onboarding.ts",
+    "src/ui/hud.css",
+    "src/ui/advisorCard.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/gameHud.ts",
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/game/advisors.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/onboarding.e2e.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "tests/e2e/placement.e2e.ts",
+    "tests/e2e/resources.e2e.ts",
+    "tests/e2e/resource-buildings.e2e.ts",
+    "tests/e2e/city-label.e2e.ts",
+    "tests/e2e/advisors.e2e.ts",
+    "tests/e2e/conquest.e2e.ts",
+    "tests/e2e/province-advisors.e2e.ts",
+    "tests/e2e/state-advisors.e2e.ts"
+  ],
+  "change_summary": "Tervetulokortti ('Sinä johdat, kansa rakentaa'), tason kolme neuvonantajaa isoina kortteina, Ohjaan itse niiden alla ja kolmen askeleen HUD-kierros. Peli seisoo, kun mikä tahansa näistä näkyy. Neuvonantajan ohjatessa piiloon jäävät luettelo, tutkimuspilleri, yksikkörivi sekä kaupunkikortin painotus, rakennuslista, osto, tutkimus ja kasvuvinkit. Neuvonantajakortti: kolme valintaa ja Ohjaan itse alla. Komento advise ja sen validointi. Kuvernöörin kortti ei enää aukea itsestään alussa.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "AdvisorLevel (siirtyi advisors.ts:ään)",
+      "Command (uusi laji advise)",
+      "CommandWorld.advise",
+      "AdvisorCard (Ohjaan itse -nappi)",
+      "CityView.own",
+      "GameHudState.own"
+    ],
+    "call_sites_found": [
+      "advisorCard.choose",
+      "uuden alun play.advisorOpen",
+      "uutta alkua käyttävät selaintestit (new-start, placement, resources, resource-buildings, city-label)",
+      "neuvonantajakortin valintoja laskevat testit (advisors, conquest, province-advisors, state-advisors)"
+    ],
+    "call_sites_updated": [
+      "Kaikki yllä olevat: testit kulkevat tervetulon läpi valitsemalla Ohjaan itse, jolloin peli käyttäytyy kuten ennen"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "01de43e",
+  "progress": 100,
+  "notes": "Tallennukseen tulee uusi komentolaji, joka validoidaan (tietoturvasääntö 5): taso ja neuvonantaja tunnetuista listoista. Tallennusmuoto ei muuttunut muuten, joten SAVE_VERSION pysyy 1:nä."
+}
