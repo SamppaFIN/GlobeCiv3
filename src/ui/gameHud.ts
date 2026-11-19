@@ -49,6 +49,8 @@ export interface GameHudState {
   goal: { text: string; reward: number } | null;
   /** The advisor of the level in view, or null where the level has none (STORY-049). */
   advisor: string | null;
+  /** The player's own hand (STORY-096): the list shows only then (main.ts leaves out the unit and the research). */
+  own: boolean;
 }
 
 export interface GameHudHandlers {
@@ -167,6 +169,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         research.classList.toggle('btn-primary', s.research.choose);
         research.classList.toggle('btn-secondary', !s.research.choose);
       }
+      q<HTMLButtonElement>('.hud-city').hidden = !s.own;
       const advisor = q<HTMLButtonElement>('.hud-advisor');
       advisor.hidden = s.advisor === null;
       advisor.setAttribute('aria-label', `Neuvonantaja: ${s.advisor ?? ''}`);

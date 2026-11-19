@@ -457,15 +457,16 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-031", "STORY-032", "STORY-033", "STORY-034", "STORY-035", "STORY-036", "STORY-037", "STORY-038", "STORY-039", "STORY-040", "STORY-041", "STORY-042", "STORY-043", "STORY-044", "STORY-045", "STORY-046", "STORY-047", "STORY-048", "STORY-049", "STORY-050", "STORY-051", "STORY-052", "STORY-053", "STORY-054", "STORY-055", "STORY-056", "STORY-057", "STORY-058", "STORY-059", "STORY-060", "STORY-061", "STORY-062", "STORY-063", "STORY-064", "STORY-065", "STORY-066", "STORY-067", "STORY-068", "STORY-069", "STORY-070", "STORY-071", "STORY-072", "STORY-073", "STORY-074", "STORY-075", "STORY-076", "STORY-077", "STORY-078"]},
     {"id": "EPIC-007", "icon": "🧹", "title": "Pohja uudelle suunnalle", "status": "in_progress", "stories": ["STORY-079", "STORY-080", "STORY-081", "STORY-082"]},
     {"id": "EPIC-008", "icon": "🦁", "title": "Hauskuuden mittaus", "status": "in_progress", "stories": ["STORY-083", "STORY-084", "STORY-085"]},
-    {"id": "EPIC-009", "icon": "🪜", "title": "Tasotikkaat", "status": "in_progress", "stories": ["STORY-086", "STORY-095", "STORY-087", "STORY-017", "STORY-014"]},
+    {"id": "EPIC-009", "icon": "🪜", "title": "Tasotikkaat", "status": "in_progress", "stories": ["STORY-086", "STORY-095", "STORY-087", "STORY-017", "STORY-014", "STORY-096", "STORY-098", "STORY-099"]},
     {"id": "EPIC-010", "icon": "🏘️", "title": "Kaupunkitaso: Settlers", "status": "todo", "stories": ["STORY-088", "STORY-089", "STORY-090"]},
-    {"id": "EPIC-011", "icon": "🏛️", "title": "Ylemmät tasot: Civ I, Civ III ja Civ V", "status": "todo", "stories": ["STORY-091", "STORY-092", "STORY-093", "STORY-094"]}
+    {"id": "EPIC-011", "icon": "🏛️", "title": "Ylemmät tasot: Civ I, Civ III ja Civ V", "status": "todo", "stories": ["STORY-091", "STORY-092", "STORY-093", "STORY-094"]},
+    {"id": "EPIC-012", "icon": "☢️", "title": "Planeettataso: ydinsota (MVP:n jälkeen)", "status": "todo", "stories": ["STORY-097"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-070 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-070 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-070 (docs/tickets/testing)",
-  "next": "Sami lukee PLAYTEST-001:n ja hyväksyy storyt 073–084 ja 087 sekä avoimet kysymykset 17 ja 18. Seuraavaksi STORY-017 (järjestelmät vain omalla tasollaan) ja Inannan PLAYTEST-002 tasotikkaista, ja STORY-095:n L-suunnitelma Anun katselmointiin."
+  "plans": "PLAN-001 … PLAN-071 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-071 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-071 (docs/tickets/testing)",
+  "next": "Sami hyväksyy storyt 073–084, 087 ja 096 sekä avoimet kysymykset 17–19. Enki: STORY-099 (tasojen ja aikakausien suunnitelma), STORY-098 (tasopaneeli) ja STORY-097 (ydinsotakokeilu); sitten Inannan PLAYTEST-002."
 }
 ```
 
@@ -655,6 +656,8 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 | 2026-11-19 | STORY-079 tehtiin alustuksen yhteydessä: storyt 073–078 kirjattiin backlogiin tilaan `review` commit-viestien ja suunnitelmien (`docs/design/kaupunkitaso.md` ja `diplomatia.md`) perusteella. Niiltä puuttuvat suunnitelmat, toteutus- ja testitiketit sekä Samin hyväksyntä. | Ilman tätä `_meta.git_commit` olisi väittänyt backlogin vastaavan HEADia, vaikka kuusi mergettyä storya puuttui | Enki |
 | 2026-11-19 | Linssin kehitysvaiheen valtuutus (2026-10-09) siirtyy Enkille: Enki hyväksyy S- ja M-kokoisten chore-storyjen suunnitelmat itse ja mergeää omat haaransa mainiin. Storyn merkitsee `done`-tilaan kuitenkin vain Sami (osio 10, sääntö 5), joten Enkin valmiit storyt jäävät tilaan `review`. | Sami: "voitko suoraan aloittaa koodaamisen githubiin". Uusintahaastattelun testaussääntö kumoaa vanhan valtuutuksen kohdan "merkitsee storyt valmiiksi". | Enki (Sami vahvistaa) |
 | 2026-11-19 | **Tasotikkaiden nousuehdot (STORY-087):** taso nousee alemman tason valmiilla tuotoksilla. Kaupunki avaa kaupunkialueen rakennuksella ja ensimmäisellä tiedustelijalla tai uudisasukkaalla, kaupunkialue läänin kolmella kaupungilla, lääni valtion neljällä kotivaltion läänillä ja valtio planeetan kaikilla seitsemällä. Kartoitus ei enää avaa tasoja. Tasotavoite korvaa 16 tavoitteen ketjun: yläpaneelissa on yksi tavoite ja sen laskuri, ja nousu antaa kultaa (30, 60, 80 ja 150) ja pysäyttää pelin kortilla, joka kertoo, mitä aukesi. Luvut ovat omia, ja ne kalibroidaan autopilotilla ja pelitestillä. | Enkin ehdotus, Sami valitsi molemmat suositellut vaihtoehdot. PLAYTEST-001:n korjaus 2: yksi tavoite kerrallaan. | Sami |
+| 2026-11-19 | **Peli on neuvonantajien simulaatio (STORY-096):** pelaaja ohjaa neuvonantajia, ja kansa toteuttaa ja rakentaa. Uusi peli tervehtii tervetulokortilla, ja sen jälkeen tason kolme neuvonantajaa tulevat isoina kortteina ja lyhyt HUD-kierros. Oletuksena näkyvät vain tavoite, aika ja neuvonantaja. Ohjaan itse on neuvonantajakortin piilotettu neljäs valinta, ja se tuo kaikki valikot esiin. | Sami: kaikki valikot hyppäävät silmille, tarvitaan onboarding, 3 perusvalintaa joka kerrokselle. Vaihtoehdoista Sami valitsi tervetulon ja kierroksen molemmat, vain olennaisen ja piilotetun Ohjaan itse -valinnan. | Sami |
+| 2026-11-19 | **Tasojen sisältö ja aikakaudet:** jokaisella tasolla on omat rakennukset, yksiköt, politiikka ja uskonto, jotka vaikuttavat juuri sen tason toimintoihin, ja jokainen aikakausi avaa tasoille eri toimintoja. Ydinaseet tulevat vasta pitkälle kehittyneessä pelissä, ja diplomatia tulee ennen niitä. Joka tasolle tulee paneeli, jossa ovat alueen nimi, pikatoiminnot ja laajennettava infografiikka, ja kaupunkilappuihin pienet tiedot ja pikatoiminnot. Ydinsotataso kokeillaan välissä testilinkistä. Järjestys on Enkin: STORY-096, STORY-099 (suunnitelma), STORY-098 ja STORY-097. | Samin visio 2026-11-19: "iso kokonaisuus, tee siinä järjestyksessä kuin parhaaksi näät" | Sami |
 
 ### Avoimet kysymykset
 
@@ -676,6 +679,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella. PLAYTEST-001 ajettiin Sonnetilla pilvessä 2026-11-19 (130 työkalukutsua, 12,6 min); arvio odottaa Samia.
 17. **STORY-086:n uusinta.** Komentokerros on valmis (kaikki pelaajan ja neuvonantajien teot ovat komentoja, ja loki tallentuu), mutta uusintaa tallennuksen komentolokista ei voi ajaa, koska päivän laskenta on selaimessa (main.ts). Enkin ehdotus: uusintakriteeri todennetaan uudessa STORY-095:ssä (Simulaation ydin irti selaimesta, L), jonka suunnitelman Anu katselmoi, ja STORY-085 (autopilotti) odottaa sitä. STORY-086 on siihen asti tilassa `in_progress`. Sami päättää.
 18. **STORY-017:n uusi kriteeri.** Enki lisäsi PLAYTEST-001:n korjauksen 1: peli pysähtyy vain, kun jokin on oikeasti uutta, ja toistuvat ehdotukset ovat ilmoituksia ilman pysäytystä. Sami vahvistaa tai muuttaa.
+19. **MVP:n koko.** Uudet storyt 096, 098 ja 099 nostivat MVP:n 22 storyyn, kun raja ylisuunnittelulle on 20. Enkin ehdotus: tasojen sisältö (STORY-099) sulautetaan EPIC-010:n ja EPIC-011:n storyihin 088–094 eikä se tuo uusia, ja STORY-014 (alempi taso tiivistettynä) siirtyy MVP:n jälkeen, jos tahti vaatii. Sami päättää.
 
 ### Ratkenneet kysymykset
 

@@ -1,0 +1,60 @@
+{
+  "id": "PLAN-071",
+  "story": "STORY-096",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Samin valinnat 2026-11-19: tervetulokortti ja kolme neuvonantajaa sekä HUD-kierros (molemmat), oletuksena vain olennainen ja Ohjaan itse piilotettuna neljäntenä valintana. Uusi moduuli src/ui/onboarding.ts: tervetulokortti, kolmen neuvonantajan valinta isoina kortteina ja kolmen askeleen kierros (tavoite, nopeus, neuvonantaja), jonka voi ohittaa. main.ts näyttää tervetulon uudessa pelissä (ei jatketussa eikä ?classic-alussa), pysäyttää päivät kortin ajaksi ja tarjoaa läänin, valtion ja planeetan kolme neuvonantajaa, kun tason nousukortti suljetaan. ownHand(): pelaajan oma ohjaus on päällä, kun syvimmän avoimen tason neuvonantaja on 'none' tai alku on ?classic; muuten luettelo, tutkimuspilleri ja yksikkörivi piiloutuvat, ja kaupunkikortti kertoo tiedot ilman painotusta, rakennuslistaa, ostoa, tutkimusta ja kasvuvinkkejä. Neuvonantajakortissa on kolme valintaa ja niiden alla Ohjaan itse. Neuvonantajan valinta on komento advise (sääntö 7), joka validoidaan tallennuksessa.",
+  "alternatives_considered": [
+    {
+      "name": "Pelkkä opastuskierros",
+      "pros": "Ei uutta valintaa",
+      "cons": "Ei kerro pelin ideaa",
+      "rejected_because": "Sami valitsi molemmat"
+    },
+    {
+      "name": "Valikot avautuvat tasojen mukana",
+      "pros": "Vähemmän kerralla",
+      "cons": "Pelaaja hallitsee silti kaikkea itse",
+      "rejected_because": "Sami valitsi, että oletuksena näkyy vain olennainen"
+    },
+    {
+      "name": "Oma ohjaus poistetaan",
+      "pros": "Yksinkertaisin",
+      "cons": "Kokenut pelaaja ei pääse käsiksi",
+      "rejected_because": "Sami valitsi piilotetun neljännen valinnan"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/onboarding.ts",
+    "src/ui/hud.css",
+    "src/ui/advisorCard.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/gameHud.ts",
+    "src/game/commands.ts",
+    "src/game/advisors.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "tests/e2e/onboarding.e2e.ts"
+  ],
+  "open_questions": [
+    "Kaupunkipaikan ehdotus pysäyttää pelin heti päivänä 2 myös neuvonantajan ohjatessa. Se kuuluu STORY-017:ään (peli pysähtyy vain uudesta)."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "advise-komento ja tallennuksen validointi",
+      "verify": "Vitest"
+    },
+    {
+      "step": 2,
+      "action": "onboarding.ts ja tyylit, main.ts:n kulku ja ownHand",
+      "verify": "Kuvakaappaukset työpöydällä ja puhelimella"
+    },
+    {
+      "step": 3,
+      "action": "Selaintestit: onboarding ja uutta alkua käyttävät testit",
+      "verify": "Playwright"
+    }
+  ],
+  "status": "approved"
+}

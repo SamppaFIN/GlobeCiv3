@@ -48,7 +48,9 @@ test('state advisors: science, taxes, the line, the revolution and the target pr
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
   await expect(card.locator('.advisor-level')).toHaveText('Valtio');
   const options = card.getByRole('radio');
-  await expect(options).toHaveCount(4);
+  // Three to choose from, and Ohjaan itse below them, pressed (STORY-096)
+  await expect(options).toHaveCount(3);
+  await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
   await page.screenshot({ path: testInfo.outputPath('state-advisors.png') });
 
   // Oppinut: the line Tutkimus, tax 30 %, writing first; and the revolution once Monarchy is known

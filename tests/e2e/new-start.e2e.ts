@@ -36,12 +36,17 @@ test('a new game flies down to the city level of a built capital; a building ope
   expect(site.kinds).toBeGreaterThanOrEqual(3);
   expect(site.resources).toBe(1);
 
-  // The governor's card opens at once
-  const governor = page.getByRole('dialog', { name: 'Neuvonantaja' });
-  await expect(governor).toBeVisible();
-  await expect(governor).toContainText('Kaupunki · kuvernööri');
+  // The game greets, and the governor's three cards come next (STORY-096); the player's own
+  // hand here, so that the city card shows its builds
+  const welcome = page.getByRole('dialog', { name: 'Sinä johdat, kansa rakentaa' });
+  await expect(welcome).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('landing.png') });
-  await governor.getByRole('button', { name: 'Sulje' }).click();
+  await welcome.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
+  const pick = page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkiasi?' });
+  await expect(pick.locator('.onboard-option')).toHaveCount(3);
+  await pick.getByRole('button', { name: /^Ohjaan itse/ }).click();
+  await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
+  const governor = page.getByRole('dialog', { name: 'Neuvonantaja' });
 
   // Before the first building the city builds no units: a building is under way
   await page.locator('.city-label', { hasText: s.cities[0].name }).click();

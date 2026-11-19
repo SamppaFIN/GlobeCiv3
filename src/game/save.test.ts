@@ -54,6 +54,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       { day: 9, by: 'city', cmd: { kind: 'build', city: START_TILE, build: 'granary' } },
       { day: 10, by: 'player', cmd: { kind: 'move', city: START_TILE, building: 'granary', tile: START_TILE + 1 } },
       { day: 11, by: 'state', cmd: { kind: 'study', target: 'masonry' } },
+      { day: 12, by: 'player', cmd: { kind: 'advise', level: 'province', advisor: 'settle' } },
     ],
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
@@ -122,6 +123,8 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.commands[3].cmd.building = 'warrior'; })).toBeNull();
     expect(broken(s => { s.commands[4].cmd.target = 'unicorns'; })).toBeNull();
     expect(broken(s => { s.commands[4].day = -1; })).toBeNull();
+    expect(broken(s => { s.commands[5].cmd.advisor = 'war'; })).toBeNull();
+    expect(broken(s => { s.commands[5].cmd.level = 'galaxy'; })).toBeNull();
     expect(broken(s => { s.commands = {}; })).toBeNull();
     // A kind of resource is a study too (STORY-072)
     expect(broken(s => { s.research.target = 'gold'; })?.research.target).toBe('gold');

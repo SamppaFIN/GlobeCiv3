@@ -27,15 +27,15 @@ test('advisors: the city area level has three to choose from, and the chosen one
   await page.getByRole('button', { name: 'Tauko' }).click();
   await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
 
-  // None at first; the card offers three and Oma ohjaus
+  // None at first; the card offers three, and Ohjaan itse below them, pressed (STORY-096)
   const open = page.getByRole('button', { name: 'Neuvonantaja: Oma ohjaus' });
   await open.click();
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
   await expect(card).toBeVisible();
   await expect(card.locator('.advisor-level')).toHaveText('Kaupunkialue');
   const options = card.getByRole('radio');
-  await expect(options).toHaveCount(4);
-  await expect(options.nth(0)).toHaveAttribute('aria-checked', 'true');
+  await expect(options).toHaveCount(3);
+  await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
   await page.screenshot({ path: testInfo.outputPath('advisors.png') });
 
   // Kartoittaja: the scouts explore toward the home province's least mapped area
