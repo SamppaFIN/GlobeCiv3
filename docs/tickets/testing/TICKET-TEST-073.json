@@ -48,13 +48,19 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Ajo 44607930308 (e86493a) oli punainen: 90 läpi, 2 kaatui ja 1 vaihteli. placement.e2e: kaupunkilapun uusi rivi levensi lappua kaupunkitasolla, ja lappu peitti ruudun, jota pelaaja napauttaa (aito regressio). sites.e2e: lappu avaa nyt ensin pikapaneelin (käytöksen muutos, testi päivitettiin). site-card.e2e meni läpi uusinnalla. Korjaus: rivi näkyy vain kaupunkialuetasolla, ei kaupunkitasolla. Paikallisesti placement, sites, site-card, area-panel ja city-label läpi.",
+        "outcome": "fail"
       },
       {
         "steps": "Sami puhelimella Pagesista",
         "expected": "Hyväksyntä",
         "result": "Odottaa Samia",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä korjauksen jälkeen",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
         "outcome": "not_run"
       }
     ],

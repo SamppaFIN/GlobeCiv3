@@ -76,6 +76,8 @@ test('a scout suggests a good city site; the settler founds the city there, and 
   await page.getByRole('button', { name: 'Sulje' }).click();
   await expect(label).toBeVisible();
   await label.click();
+  // The label opens the city's quick panel first (STORY-098)
+  await page.getByRole('group', { name: 'Kaupunki Aamuranta: pikatoiminnot' }).getByRole('button', { name: 'Kaupunkikortti' }).click();
   await expect(page.getByRole('dialog', { name: 'Aamuranta' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('city-label.png') });
 
