@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T11:39:02Z",
+    "generated_at": "2026-11-19T11:41:00Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "f2ad0a5",
+    "git_commit": "1a5e413",
     "git_branch": "main",
     "language": "fi"
   },
@@ -191,7 +191,7 @@
         "STORY-081",
         "STORY-082"
       ],
-      "progress": 50
+      "progress": 75
     },
     {
       "id": "EPIC-008",
@@ -2165,12 +2165,12 @@
         "THIRD-PARTY-NOTICES.md listaa Phosphorin (MIT-teksti), Interin (OFL 1.1) ja Freecivin, ja tiedosto on mukana julkaistussa dist-kansiossa.",
         "README:n tekijärivi on \"Copyright (C) 2026 Sami Räisänen / Infinite\", ja CLAUDE.md:n osio 3 viittaa tiedostoon."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-065",
+        "implementation": "TICKET-IMPL-065",
+        "testing": "TICKET-TEST-065"
       }
     },
     {

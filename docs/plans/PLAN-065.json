@@ -1,0 +1,46 @@
+{
+  "id": "PLAN-065",
+  "story": "STORY-081",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Uusi public/THIRD-PARTY-NOTICES.md, jonka Vite kopioi sellaisenaan dist-kansioon, joten se julkaistaan pelin mukana osoitteessa /GlobeCiv3/THIRD-PARTY-NOTICES.md. Lisenssitekstit luetaan lähteistä eikä kirjoiteta käsin: three.js ja Zustand node_modulesin LICENSE-tiedostoista, Inter @fontsource/interin LICENSE-tiedostosta ja Phosphor phosphor-icons/core-repon LICENSE-tiedostosta. Freeciv mainitaan sääntöjen lähteenä. README:n tekijärivi päivitetään, ja README ja CLAUDE.md:n osio 3 viittaavat tiedostoon. E2E-testi varmistaa, että julkaistu peli tarjoaa tiedoston.",
+  "alternatives_considered": [
+    {
+      "name": "Tiedosto repon juureen ja oma Vite-liitännäinen kopioimaan sen",
+      "pros": "Tavanomainen paikka",
+      "cons": "Lisää build-koodia yhden tiedoston takia",
+      "rejected_because": "public-kansio kopioidaan jo valmiiksi (yksinkertaisuus ensin)"
+    },
+    {
+      "name": "Vain Phosphor, Inter ja Freeciv kuten kriteeri sanoo",
+      "pros": "Pienempi tiedosto",
+      "cons": "three.js ja Zustand paketoidaan pelin JavaScriptiin, ja niidenkin MIT vaatii tekstin mukaan",
+      "rejected_because": "Julkaisun pitää täyttää kaikkien paketoitujen MIT-kirjastojen ehdot"
+    }
+  ],
+  "files_to_change": [
+    "public/THIRD-PARTY-NOTICES.md",
+    "README.md",
+    "CLAUDE.md",
+    "tests/e2e/notices.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Lisenssitekstit lähteistä tiedostoon",
+      "verify": "Tiedosto sisältää neljä lisenssiä sellaisinaan"
+    },
+    {
+      "step": 2,
+      "action": "README ja CLAUDE.md",
+      "verify": "Tekijärivi ja viittaukset"
+    },
+    {
+      "step": 3,
+      "action": "E2E-testi julkaistulle tiedostolle",
+      "verify": "Playwright notices ja smoke"
+    }
+  ],
+  "status": "approved"
+}
