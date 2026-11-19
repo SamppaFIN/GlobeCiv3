@@ -1,0 +1,23 @@
+{
+  "id": "TICKET-IMPL-065",
+  "story": "STORY-081",
+  "plan": "PLAN-065",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "public/THIRD-PARTY-NOTICES.md",
+    "README.md",
+    "CLAUDE.md",
+    "tests/e2e/notices.e2e.ts"
+  ],
+  "change_summary": "public/THIRD-PARTY-NOTICES.md: taulukko teoksista ja niiden käytöstä, Freecivin sääntölähde sekä three.js:n (Copyright © 2010-2026 three.js authors), Zustandin (Copyright (c) 2019 Paul Henschel) ja Phosphorin (Copyright (c) 2023 Phosphor Icons) MIT-tekstit ja Interin OFL 1.1 -teksti. README: tekijärivi \"Sami Räisänen / Infinite\" ja linkki tiedostoon. CLAUDE.md osio 3: aineistojen vaatimukset viittaavat tiedostoon. Uusi E2E-testi notices.",
+  "impact_analysis": {
+    "changed_symbols": [],
+    "call_sites_found": [],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Kriteerin lisäksi mukana ovat three.js ja Zustand, koska ne paketoidaan pelin JavaScriptiin ja niiden MIT vaatii saman kuin Phosphorin. Phosphorin LICENSE haettiin repon phosphor-icons/core päähaarasta 2026-11-19."
+}

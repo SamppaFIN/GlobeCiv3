@@ -77,6 +77,8 @@ Kansiot:
   suunnittelemia.
 - Fontti: Inter (SIL Open Font License 1.1, paketti `@fontsource/inter`).
 - Kuvakkeita: [Phosphor](https://phosphoricons.com/) (MIT).
+- Kolmansien osapuolten lisenssitekstit: [public/THIRD-PARTY-NOTICES.md](public/THIRD-PARTY-NOTICES.md),
+  joka julkaistaan pelin mukana.
 - Ruutujen pintakuviot: oma vesi sekä pelto, metsä ja korkokuva, jotka on
   siirretty Clauden Samin pyynnöstä tekemistä shadereista.
 
@@ -89,7 +91,7 @@ GlobeCiv3 yhdistää kaksi aiempaa projektia:
 
 ## Lisenssi
 
-Copyright (C) 2026 Sami Räisänen
+Copyright (C) 2026 Sami Räisänen / Infinite
 
 Tämä ohjelma on vapaa ohjelmisto: voit jakaa ja muokata sitä GNU General
 Public Licensen ehdoilla, sellaisina kuin Free Software Foundation ne on

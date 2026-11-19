@@ -118,19 +118,19 @@ Samilla.
       "name": "Kirjastot Three.js ja Zustand",
       "source": "npm",
       "license": "MIT",
-      "requirement": "Ei erillisiä vaatimuksia. MIT on GPL v3 -yhteensopiva."
+      "requirement": "MIT on GPL v3 -yhteensopiva. Koska kirjastot paketoidaan pelin JavaScriptiin, niiden MIT-tekstit ovat tiedostossa public/THIRD-PARTY-NOTICES.md (STORY-081)."
     },
     {
       "name": "Inter-fontti (@fontsource/inter)",
       "source": "npm",
       "license": "SIL OFL 1.1",
-      "requirement": "Lisenssi listataan tiedostoon THIRD-PARTY-NOTICES.md (STORY-081)."
+      "requirement": "Lisenssiteksti on tiedostossa public/THIRD-PARTY-NOTICES.md, joka julkaistaan pelin mukana (STORY-081)."
     },
     {
       "name": "Phosphor-kuvakkeet (src/ui/gameHud.ts, levelBar.ts, startScreen.ts)",
       "source": "phosphoricons.com",
       "license": "MIT",
-      "requirement": "MIT-teksti kulkee kuvakkeiden mukana: THIRD-PARTY-NOTICES.md julkaistuun dist-kansioon (STORY-081)."
+      "requirement": "MIT-teksti kulkee kuvakkeiden mukana tiedostossa public/THIRD-PARTY-NOTICES.md (STORY-081)."
     },
     {
       "name": "Freecivin civ1-säännöt ja luvut",
@@ -174,7 +174,7 @@ oltava saatavilla (julkinen repo täyttää tämän). Riippuvuus, jonka lisenssi
 sovi GPL v3:n kanssa (esimerkiksi suljettu tai GPL v2 -only), jätetään pois.
 Kuvia, tekstuureja, fontteja tai ääniä ei oteta mukaan ilman tunnettua
 lähdettä ja lisenssiä, ja kolmannen osapuolen aineistot listataan tiedostoon
-`THIRD-PARTY-NOTICES.md`.
+`public/THIRD-PARTY-NOTICES.md`, joka julkaistaan pelin mukana.
 
 Pohjan oletus organisaatiolle olisi Proprietary, mutta GPL v3 pysyy: kaikki
 versiot committiin 37767a6 asti on jo julkaistu GPL v3:lla, eikä
