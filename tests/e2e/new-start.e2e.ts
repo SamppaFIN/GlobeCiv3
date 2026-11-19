@@ -21,7 +21,9 @@ test('a new game flies down to the city level of a built capital; a building ope
   expect(s.units).toHaveLength(0);
   expect(s.openLevel).toBe(4);
   expect(await page.evaluate(() => (window as any).globeCamera.maxDist)).toBeLessThan(await page.evaluate(() => (window as any).globeLevels.state.frames[3] * 0.6));
-  await expect(page.locator('.hud-meter-value')).toHaveText('Rakenna ensimmäinen rakennus');
+  // The city level's goal (STORY-087): a building, then a unit
+  await expect(page.locator('.hud-goal')).toHaveText('TavoiteRakenna rakennus ja ensimmäinen yksikkö+30 kultaa');
+  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 2');
 
   // A varied site: three kinds of land or more, and exactly one special resource, within two rings
   const site = await page.evaluate(t => {
@@ -58,8 +60,14 @@ test('a new game flies down to the city level of a built capital; a building ope
   await governor.getByRole('radio').filter({ hasText: 'Kartoittaja' }).click();
   await governor.getByRole('button', { name: 'Sulje' }).click();
   await page.evaluate(() => (window as any).globeDebug.fastForward(4));
-  await page.waitForFunction(() => (window as any).globeGame.state.cities[0].buildings.length > 0, null, { timeout: 60_000 });
-  await expect(page.locator('.hud-meter-value')).toHaveText('Rakenna tiedustelija tai uudisasukas');
+  // Pause in the frame the building is done: at 4x the scout can follow before a later check
+  await page.waitForFunction(() => {
+    if (!((window as any).globeGame.state.cities[0].buildings.length > 0)) return false;
+    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    return true;
+  }, null, { timeout: 60_000 });
+  await expect(page.locator('.hud-meter-value')).toHaveText('1 / 2');
+  await page.getByRole('button', { name: 'Jatka', exact: true }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.openLevel === 3, null, { timeout: 60_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   expect((await state(page)).units.map((u: { kind: string }) => u.kind)).toContain('scout');

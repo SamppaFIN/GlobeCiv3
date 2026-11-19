@@ -1,37 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { advanceGoals, GOALS, type GoalState } from './goals';
+import { goalCount, LEVEL_GOALS, levelGoal, type LevelState } from './goals';
 
-const start: GoalState = { cities: 0, biggest: 0, researching: false, advances: 0, improvements: 0, buildings: 0, openLevel: 3, advisor: false, monarchy: false, provinces: 0 };
+const start: LevelState = { built: false, firstUnit: false, cities: 1, provinces: 1 };
 
-describe('goals (STORY-041)', () => {
-  it('one at a time, in order; nothing is done at the start', () => {
-    expect(advanceGoals(0, start)).toEqual({ index: 0, done: [] });
-    const city = advanceGoals(0, { ...start, cities: 1, biggest: 1 });
-    expect([city.index, city.done.map(g => g.text)]).toEqual([1, ['Perusta ensimmäinen kaupunki']]);
-    // Size 2 before choosing research: the chain waits at research
-    expect(advanceGoals(1, { ...start, cities: 1, biggest: 2 }).index).toBe(1);
+describe('level goals (STORY-087)', () => {
+  it('each level from the city to the state has one goal, and the planet none yet', () => {
+    expect([4, 3, 2, 1].map(l => levelGoal(l)!.text)).toEqual([
+      'Rakenna rakennus ja ensimmäinen yksikkö', 'Perusta kolme kaupunkia', 'Pidä neljä kotivaltion lääniä', 'Valtaa kotivaltio',
+    ]);
+    expect(levelGoal(0)).toBeNull();
   });
 
-  it('a game ahead of the chain catches up at once, with every reward', () => {
-    const ahead: GoalState = { cities: 7, biggest: 11, researching: true, advances: 9, improvements: 4, buildings: 3, openLevel: 0, advisor: true, monarchy: true, provinces: 7 };
-    const r = advanceGoals(0, ahead);
-    expect(r.index).toBe(GOALS.length);
-    expect(r.done.reduce((sum, g) => sum + g.reward, 0)).toBe(GOALS.reduce((sum, g) => sum + g.reward, 0));
-    expect(advanceGoals(GOALS.length, ahead)).toEqual({ index: GOALS.length, done: [] });
+  it('a level rises on the output of the level below: a unit, cities, provinces, all seven (Sami 2026-11-19)', () => {
+    const [city, area, province, state] = [4, 3, 2, 1].map(l => levelGoal(l)!);
+    expect(goalCount(city, start)).toBe(0);
+    expect(goalCount(city, { ...start, built: true })).toBe(1);
+    expect(goalCount(city, { ...start, built: true, firstUnit: true })).toBe(city.need);
+    expect([goalCount(area, { ...start, cities: 2 }), area.need]).toEqual([2, 3]);
+    expect([goalCount(province, { ...start, provinces: 4 }), province.need]).toEqual([4, 4]);
+    expect([goalCount(state, { ...start, provinces: 6 }), state.need]).toEqual([6, 7]);
   });
 
-  it('after three cities the chain leads to the conquest of the home state (STORY-056)', () => {
-    const three: GoalState = { cities: 3, biggest: 5, researching: true, advances: 2, improvements: 4, buildings: 1, openLevel: 2, advisor: false, monarchy: false, provinces: 1 };
-    const at = advanceGoals(0, three).index;
-    expect(GOALS[at].text).toBe('Valitse neuvonantaja');
-    const steps: Partial<GoalState>[] = [{ advisor: true }, { openLevel: 1 }, { monarchy: true }, { provinces: 4 }, { biggest: 11 }, { openLevel: 0 }];
-    let s = three, i = at;
-    for (const step of steps) {
-      s = { ...s, ...step };
-      const r = advanceGoals(i, s);
-      expect(r.done).toHaveLength(1);
-      i = r.index;
-    }
-    expect(i).toBe(GOALS.length);
+  it('the count stops at the need, and mapping counts for nothing', () => {
+    expect(goalCount(levelGoal(3)!, { ...start, cities: 9 })).toBe(3);
+    expect(LEVEL_GOALS.every(g => g.reward > 0 && g.hint.length > 0 && g.opens.title.endsWith('zoomaa ulos'))).toBe(true);
   });
 });

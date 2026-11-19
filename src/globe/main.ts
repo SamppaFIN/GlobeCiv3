@@ -45,7 +45,7 @@ import { armyNeeded, attackWins, ATTACK, ATTACKERS, MAX_ARMY, isAttacker, warRol
 import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, startAdvice, START_DOES, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
-import { advanceGoals, GOALS } from '../game/goals';
+import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
 import { directionName, unitStatus, Units, type Mode, type SettlerTask, type Unit, type UnitKind, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
@@ -544,7 +544,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), ties: play.ties.map(t => ({ ...t })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, goal: play.goal,
+    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState,
     commands: play.commands.save(),
   };
 }
@@ -660,8 +660,6 @@ interface Play {
   planetLog: string[];
   targetState: number;
   researchOpen: boolean;
-  /** The current goal (STORY-041). */
-  goal: number;
   /** The list of cities and units is open, and which tab (STORY-042). */
   listOpen: boolean;
   listTab: ListTab;
@@ -748,7 +746,7 @@ function startPlay(startCity: number, saved?: SaveData) {
       rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
     },
     openResearch: () => { if (play) play.researchOpen = true; },
-    goalHint: () => { if (play && GOALS[play.goal]) discoveryCard.notice(GOALS[play.goal].hint); },
+    goalHint: () => { const g = play && levelGoal(play.progress.openLevel); if (g) discoveryCard.notice(g.hint); },
     openList: () => {
       if (!play) return;
       play.listOpen = !play.listOpen;
@@ -765,7 +763,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud, commands: new CommandLog() };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog() };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -789,7 +787,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
     // The ties with them (STORY-076); a save from before meets them anew
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? play.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, goal: saved.goal,
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState,
     commands: new CommandLog(saved.commands ?? []),
   });
   clock.day = saved.day;
@@ -2249,28 +2247,18 @@ function updateListCard() {
   else listCard.show(view);
 }
 
-// ─── Goals (STORY-041) ────────────────────────────
-// One goal at a time leads through the game; a goal reached pays its gold.
-function checkGoals() {
-  if (!play) return;
-  const r = advanceGoals(play.goal, {
-    cities: play.cities.length,
-    biggest: Math.max(0, ...play.cities.map(c => c.size)),
-    researching: play.research.target !== null || play.research.known.size > 0,
-    advances: play.research.known.size,
-    improvements: play.improvements.entries().length,
-    buildings: play.cities.reduce((sum, c) => sum + c.buildings.length, 0),
-    openLevel: play.progress.openLevel,
-    advisor: play.cityAdvisor !== 'none' || play.provinceAdvisor !== 'none' || play.stateAdvisor !== 'none',
-    monarchy: play.gov === 'monarchy',
+// ─── Level goals (STORY-087) ──────────────────────
+// Each level's goal counts the output of the level below it; reaching it opens the next level.
+
+/** What the level goals count. */
+function levelState(): LevelState {
+  const p = play!;
+  return {
+    built: p.cities.some(c => c.buildings.length > 0),
+    firstUnit: p.units.units.some(u => u.kind === 'scout' || u.kind === 'settler'),
+    cities: p.cities.length,
     provinces: heldIn(conquestNow(), homeState()),
-  });
-  if (!r.done.length) return;
-  play.goal = r.index;
-  const gold = r.done.reduce((sum, g) => sum + g.reward, 0);
-  play.gold += gold;
-  discoveryCard.notice(`Tavoite saavutettu: ${r.done.map(g => g.text).join(', ')} · +${gold} kultaa`);
-  if (play.cities[0]) moment('victory', play.cities[0].tile);
+  };
 }
 
 // ─── Science (STORY-040) ──────────────────────────
@@ -2762,8 +2750,7 @@ function chooseRaid(index: number, by: Actor = 'player') {
 }
 
 // ─── Province and state levels (STORY-026) ────────
-// Mapping 60 % of the home province opens the province level, and 60 % of the home
-// state the state level. Each level has its own chips and actions.
+// Each level opens the next when its goal is reached (STORY-087), and has its own chips and actions.
 const unlockCard = createUnlockCard(hud_root, () => {
   // From the city level out to its city area, round the city (STORY-070)
   if (viewLevel === 3 && rig.dist < frames[3] * CITY_LEVEL_AT) {
@@ -2904,19 +2891,29 @@ function panelEdges(): { top: number; bottom: number } {
   return chipBand;
 }
 
+/**
+ * A level's goal was reached and the next level opened (STORY-087): its gold, and a card that
+ * stops the game and tells what opened and the new goal.
+ */
+function rise(opened: number, reached: NonNullable<ReturnType<typeof levelGoal>>) {
+  const p = play!;
+  lockedLevel = opened;
+  rig.maxDist = lockFor(opened);
+  p.gold += reached.reward;
+  discoveryCard.notice(`Tavoite saavutettu: ${reached.text} · +${reached.reward} kultaa`);
+  const next = levelGoal(opened);
+  const s = levelState();
+  unlockCard.show(reached.opens.title, `${reached.opens.text}${next ? ` Uusi tavoite: ${next.text} (${goalCount(next, s)} / ${next.need}).` : ''}`);
+  moment('unlock', p.cities[0]?.tile ?? pointToTile(rig.target));
+}
+
 /** Chips and panels of the province and state levels, and the unlocks. */
 function updateLevels() {
   if (!play || !game) return;
   const won = conquestNow();
-  const firstUnit = play.units.units.some(u => u.kind === 'scout' || u.kind === 'settler');
-  const opened = discoveryCard.visible ? null : advance(play.progress, mapState.share(play.province), mapState.share(play.state), won.conquered.has(homeState()), firstUnit);
-  if (opened !== null) {
-    lockedLevel = opened;
-    rig.maxDist = lockFor(opened);
-    unlockCard.show(opened === 3 ? 'Kaupunkialue avautui, zoomaa ulos' : opened === 2 ? 'Lääni kartoitettu, zoomaa ulos' : opened === 1 ? 'Valtio kartoitettu, zoomaa ulos' : 'Valtio vallattu, zoomaa ulos');
-    if (opened === 0) discoveryCard.notice('Kotivaltio vallattu: naapurivaltiot avautuivat');
-    moment('unlock', play.cities[0]?.tile ?? pointToTile(rig.target));
-  }
+  const reached = levelGoal(play.progress.openLevel);
+  const opened = discoveryCard.visible || unlockCard.visible ? null : advance(play.progress, levelState());
+  if (opened !== null && reached) rise(opened, reached);
   const list: Chip[] = [];
   if (viewLevel === 2 || viewLevel === 1) {
     const level = viewLevel === 2 ? 2 : 1;
@@ -3716,27 +3713,16 @@ function updateTileCard() {
   tileYields.update(y ? [{ x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: false }] : []);
 }
 
-/** The top panel's meter: the mapping of the home province or state, then the provinces held (STORY-016). */
-function meterOf(meter: Progress['meter']): Pick<GameHudState, 'mapped' | 'meterName' | 'unlockAt' | 'meterText'> {
-  // The city stage (STORY-070): a building opens the units, and a scout or settler the next map
-  if (meter === 'city') {
-    const built = play!.cities.some(c => c.buildings.length > 0);
-    const text = built ? 'Rakenna tiedustelija tai uudisasukas' : 'Rakenna ensimmäinen rakennus';
-    return { mapped: built ? 0.5 : 0, meterName: 'Kaupunki', unlockAt: 1, meterText: { value: text, label: `Seuraava kartta: ${text.toLowerCase()}` } };
-  }
-  if (meter === 'conquest') {
-    const held = heldIn(conquestNow(), homeState());
-    return { mapped: held / 7, meterName: 'Läänit', unlockAt: 1, meterText: { value: `${held} / 7 hallussa`, label: `Kotivaltion lääneistä hallussa ${held} seitsemästä` } };
-  }
-  if (meter === 'done') {
+/** The top panel's meter: how far the deepest open level's goal is (STORY-087), then the states conquered. */
+function meterOf(): Pick<GameHudState, 'mapped' | 'meterName' | 'unlockAt' | 'meterText'> {
+  const goal = levelGoal(play!.progress.openLevel);
+  if (!goal) {
     const won = conquestNow().conquered.size;
     return { mapped: 1, meterName: 'Valtiot', unlockAt: null, meterText: { value: `${won} vallattu`, label: `Valtioita vallattu ${won}` } };
   }
-  return {
-    mapped: mapState.share(meter === 'province' ? play!.province : play!.state),
-    meterName: meter === 'province' ? 'Lääni' : 'Valtio',
-    unlockAt: UNLOCK_SHARE,
-  };
+  const n = goalCount(goal, levelState());
+  const value = `${n} / ${goal.need}${goal.unit ? ` ${goal.unit}` : ''}`;
+  return { mapped: n / goal.need, meterName: goal.name, unlockAt: 1, meterText: { value, label: `${goal.text}: ${n} / ${goal.need}` } };
 }
 
 /** Distance between tile centres in world units near the camera target. */
@@ -3759,7 +3745,7 @@ function updatePlay(dt: number) {
   play.units.noCity = nearForeign;
   scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
-  const days = play.offers.length || play.raidAlert || treaty || over ? 0 : clock.advance(dt);
+  const days = play.offers.length || play.raidAlert || treaty || over || unlockCard.visible ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
     tickDay = clock.day - (days - 1 - d);
@@ -3789,18 +3775,17 @@ function updatePlay(dt: number) {
   updateTileCard();
   updateDiplomacyCard();
   updateTradeCard();
-  checkGoals();
   const u = play.units.units[play.selected];
   const state: GameHudState = {
     day: clock.day,
     speed: clock.speed,
     paused: clock.paused,
-    ...meterOf(play.progress.meter),
+    ...meterOf(),
     level: viewLevel,
     unit: u ? { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null } : null,
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
-    goal: GOALS[play.goal] ? { text: GOALS[play.goal].text, reward: GOALS[play.goal].reward } : null,
+    goal: (g => g && { text: g.text, reward: g.reward })(levelGoal(play.progress.openLevel)),
     advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[play.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[play.stateAdvisor].name : PLANET_ADVISORS[play.planetAdvisor].name,
     research: !play.cities.length || play.researchOpen ? null
       : play.research.target ? { text: `Tiede · ${studyName(play.research.target)} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
@@ -4086,6 +4071,14 @@ frameStartPlanet();
   /** The card a tapped hex would show (STORY-055). */
   tileView: (id: number) => (play ? tileView(id) : null),
   /** Found a city on the first land tile of a province that has none (STORY-016). */
+  /** Open the next level as if its goal were reached: its gold and its card (STORY-087). */
+  rise: () => {
+    const g = play && levelGoal(play.progress.openLevel);
+    if (!g) return null;
+    const opened = advance(play!.progress, { built: true, firstUnit: true, cities: g.need, provinces: g.need });
+    if (opened !== null) rise(opened, g);
+    return opened;
+  },
   foundIn: (province: number) => {
     if (!play) return null;
     const table = regions.tileTable();
@@ -4131,7 +4124,7 @@ frameStartPlanet();
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
       commands: play?.commands.entries.map(e => ({ day: e.day, by: e.by, kind: e.cmd.kind })) ?? [],
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: play?.goal ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: (play && levelGoal(play.progress.openLevel)?.text) ?? null,
     };
   },
 };

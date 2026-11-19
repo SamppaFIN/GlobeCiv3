@@ -24,6 +24,8 @@ test('the Kenraali builds an army against the nearest city-state, marches and ta
   await page.evaluate(() => (window as any).globeDebug.fastForward(8));
   await page.waitForFunction(() => {
     const w = window as any;
+    // Seven cities rise the levels one by one (STORY-087): each card is put off, so days go on
+    (document.querySelector('.unlock-card:not([hidden]) .unlock-later') as HTMLButtonElement | null)?.click();
     const home = Math.floor(w.globeGame.state.startCity / 49);
     const states = new Set(w.globeDebug.natives().map((n: { state: number }) => n.state));
     return w.globeGame.state.day >= 60 && w.globeRegions.neighbors[home].every((s: number) => states.has(s));
@@ -45,22 +47,25 @@ test('the Kenraali builds an army against the nearest city-state, marches and ta
   });
 
   // The target is chosen, and the city nearest to it builds the strongest attacker it can
-  await page.waitForFunction(t => {
+  // Paused in the frame it is seen: a slow runner finished the swordsman before a later pause,
+  // and the city went on to build something else (locally, 2026-11-19)
+  const builder = (await (await page.waitForFunction(t => {
     const w = window as any;
-    return w.globeDebug.war().target === t && w.globeGame.state.cities.some((c: { build: string }) => c.build === 'swordsman');
-  }, native.tile, { timeout: 30_000 });
-  await page.getByRole('button', { name: 'Tauko' }).click();
+    const i = w.globeGame.state.cities.findIndex((c: { build: string }) => c.build === 'swordsman');
+    if (w.globeDebug.war().target !== t || i < 0) return false;
+    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    return { i };
+  }, native.tile, { timeout: 30_000 })).jsonValue()).i as number;
   const card = await page.evaluate(t => (window as any).globeDebug.tileView(t).rows.find((r: { label: string }) => r.label === 'Sotaretki')?.value, native.tile);
   // A slow runner may have finished an attacker before the pause
   expect(card).toMatch(/^Kenraalin kohde · \d+ \/ \d+ hyökkääjää( · hyökkäys käynnissä)?$/);
 
   // An army in that city, strong enough that the dice of a slow runner's days cannot stop it:
   // it sets off, beats the defenders and takes the city
-  await page.evaluate(() => {
+  await page.evaluate(at => {
     const w = window as any;
-    const at = w.globeGame.state.cities.findIndex((c: { build: string }) => c.build === 'swordsman');
     for (let k = 0; k < 12; k++) w.globeDebug.spawnUnit('swordsman', at);
-  });
+  }, builder);
   await page.getByRole('button', { name: 'Jatka' }).click();
   await page.waitForFunction(() => (window as any).globeDebug.war().marching, null, { timeout: 30_000 });
   const marching = await page.evaluate(() => (window as any).globeGame.state.units.filter((u: { kind: string; path: number }) => u.kind === 'swordsman' && u.path > 0));

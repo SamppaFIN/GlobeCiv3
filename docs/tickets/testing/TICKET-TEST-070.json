@@ -1,0 +1,87 @@
+{
+  "id": "TICKET-TEST-070",
+  "story": "STORY-087",
+  "implementation_ticket": "TICKET-IMPL-070",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Tasot avautuivat kartoituksella, ja tavoiteketju kulki tasojen poikki, joten pelaaja ei nähnyt omaa nousuaan (PLAYTEST-001, korjaus 2).",
+    "files_changed": [
+      "src/game/goals.ts",
+      "src/game/progress.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö (Linux x64, 2 ydintä, ei GPU:ta), Node 22.23.5, TypeScript 7.0.2, Vitest 5.1.1, Playwright 1.64.1 Chrome Headless Shellillä (SwiftShader), CI=1",
+    "tooling": "npx tsc, npx vitest run, npm run build, CI=1 npx playwright test",
+    "cases": [
+      {
+        "steps": "goals.test.ts ja progress.test.ts",
+        "expected": "Joka tasolla yksi tavoite, laskurit tuotoksista, kartoitus ei laske, tasot avautuvat yksi kerrallaan",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save.test.ts: vanha tallennus ketjun indeksillä",
+        "expected": "Latautuu, avoin taso säilyy ja indeksi jää pois",
+        "result": "Läpi; koko Vitest 40 tiedostoa ja 223 testiä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "unlock.e2e: kotiläänin kartoitus kokonaan ja kaksi kaupunkia, sitten kolmas",
+        "expected": "Kartoitus ei avaa; mittari 2 / 3 kaupunkia; kolmas avaa läänin, kortti kertoo uuden tavoitteen (1 / 4), +60 kultaa, ilmoitus, ja päivä ei vaihdu 30 framessa pelin käydessä kortin ollessa auki",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "unlock.e2e: kaupungit neljään kotivaltion lääniin",
+        "expected": "Valtio avautuu, tavoite Valtaa kotivaltio +150, mittari n / 7 hallussa",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "goals.e2e: tavoitenappi, vihje, mittari ja nousun kulta",
+        "expected": "Perusta kolme kaupunkia +60 → Pidä neljä kotivaltion lääniä +80",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "new-start.e2e: kaupunkitason tavoite 0 / 2 → 1 / 2 → kaupunkialue avautuu",
+        "expected": "Rakennus ja ensimmäinen yksikkö avaavat kaupunkialueen",
+        "result": "Ensimmäisellä ajolla punainen: 4×-nopeudella tiedustelija valmistui ennen 1 / 2 -tarkistusta. Testi pysäyttää nyt pelin samassa framessa, jossa rakennus valmistuu.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "conquest, state-advisors, province-advisors, region-card, play, smoke",
+        "expected": "Ennallaan rise-koukulla avattuina",
+        "result": "Läpi (16/17 ensimmäisellä ajolla, punainen oli new-start)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko Playwright-ajo",
+        "expected": "Vihreä",
+        "result": "82/85 ensimmäisellä ajolla ilman uusintoja (1,2 h). Punaiset: nomads ja war perustivat seitsemän kaupunkia, jolloin nousukortti pysäytti pelin päivään 4 (testit lykkäävät nyt kortit, ja war pysähtyy samassa framessa, jossa miekkamiehen rakentaminen näkyy), sekä camera.e2e:65, joka ylitti 30 s:n aikarajan (33–35 s) ?free-tilassa, jossa peliä ei ole. Uusinnassa nomads ja war läpi; camera:65 yksin 27,0 ja 27,4 s haarassa ja 25,7 ja 25,9 s mainissa, eli aikaraja on ympäristön, ei muutoksen.",
+        "outcome": "pass"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "unlock.e2e: unlock-card.png (työpöytä 1280 × 800, pikselisuhde 0,5): kortti, uusi tavoite ja mittari 1 / 4 hallussa tarkistettu silmämääräisesti"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Nousuehdot tuntuvat oikeilta pelatessa (3 kaupunkia, 4 lääniä)",
+        "checked": false
+      },
+      {
+        "item": "Nousukortti puhelimella",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

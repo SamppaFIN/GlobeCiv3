@@ -83,8 +83,6 @@ export interface SaveData {
   /** The ties with each rival (STORY-076); saves from before have none. */
   ties?: Ties[];
   tax: number;
-  /** The current goal (STORY-041); saves from before start at the first and catch up. */
-  goal: number;
   /** The luxury rate (STORY-046); saves from before have none. */
   lux: number;
   /** The government, and the day anarchy ends, or −1 (STORY-047); saves from before are under Despotism. */
@@ -326,7 +324,6 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       gold: s.gold === undefined ? START_GOLD : int(s.gold, 'gold'),
       research: s.research === undefined ? { known: [], target: null, bulbs: 0 } : researchOf(s.research),
       tax: s.tax === undefined ? 50 : oneOf(s.tax, TAX_RATES, 'tax'),
-      goal: s.goal === undefined ? 0 : int(s.goal, 'goal', 0, 1000),
       lux: s.lux === undefined ? 0 : oneOf(s.lux, LUX_RATES, 'lux'),
       gov: s.gov === undefined ? 'despotism' : oneOf(s.gov, GOVERNMENT_LIST, 'gov'),
       anarchyUntil: s.anarchyUntil === undefined ? -1 : int(s.anarchyUntil, 'anarchyUntil', -1),

@@ -34,10 +34,13 @@ test('state advisors: science, taxes, the line, the revolution and the target pr
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await mapShare(page, 'province', 0.61);
+  // Mapping no longer opens a level (STORY-087): the next one opens as if its goal were reached
+  await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
   await page.keyboard.press('-');
   await arrive(page, 2);
   await mapShare(page, 'state', 0.61);
+  await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
   await arrive(page, 1);
 

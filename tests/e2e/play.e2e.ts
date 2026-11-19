@@ -101,15 +101,14 @@ test('while paused, tapping the chosen speed goes on', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('scouts map the fog on their own and the meter follows the province', async ({ page }) => {
+test('scouts map the fog on their own; the meter counts the cities toward the province (STORY-087)', async ({ page }) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
   const before = (await state(page)).mapped;
-  const meter0 = await page.locator('.hud-meter-value').textContent();
   await speed(page, '4×');
   await page.waitForFunction(m => (window as any).globeGame.state.mapped > m + 30, before, { timeout: 60_000 });
-  await expect(page.locator('.hud-meter-value')).not.toHaveText(meter0!);
-  await expect(page.locator('.hud-meter-value')).toHaveText(/^\d+ \/ 60 %$/);
+  // Mapping no longer opens the province: the meter is the city area's goal
+  await expect(page.locator('.hud-meter-value')).toHaveText(/^[0-2] \/ 3 kaupunkia$/);
   expect(errors).toEqual([]);
 });
 

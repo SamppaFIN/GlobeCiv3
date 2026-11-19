@@ -16,20 +16,22 @@ async function startGame(page: Page): Promise<string[]> {
 
 const state = (page: Page) => page.evaluate(() => ({ ...(window as any).globeGame.state, level: (window as any).globeLevels.state.level }));
 
-/** Map a share of the home province (level 1) or state (level 0) through the test hook. */
-const mapShare = (page: Page, region: 'province' | 'state', share: number) => page.evaluate(([r, s]) => {
+/** Found a city in a province of the home state through the test hook: k 0 is the home province. */
+const foundIn = (page: Page, k = 0) => page.evaluate(n => {
   const w = window as any;
-  const city = w.globeGame.state.startCity;
-  const div = r === 'province' ? 7 : 49;
-  const home = Math.floor(city / div);
-  const table = w.globeRegions.tileTable();
-  const ids: number[] = [];
-  for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / div) === home) ids.push(id);
-  // Count what is mapped already, then add the rest of the share in id order
-  const target = Math.ceil(ids.length * (s as number));
-  const missing = ids.filter(id => !w.globeMap.isMapped(id));
-  w.globeDebug.reveal(missing.slice(0, Math.max(0, target - (ids.length - missing.length))));
-}, [region, share] as const);
+  const home = Math.floor(w.globeGame.state.startCity / 7);
+  const state = Math.floor(home / 7);
+  // The home province first, then the others of the state in order
+  const provinces = [home, ...Array.from({ length: 7 }, (_, i) => state * 7 + i).filter(p => p !== home)];
+  return w.globeDebug.foundIn(provinces[n]);
+}, k);
+
+/** Frames pass with the game running; the day it shows after them. */
+const dayAfterFrames = (page: Page, frames: number) => page.evaluate(n => new Promise<number>(resolve => {
+  let left = n;
+  const step = () => (--left > 0 ? requestAnimationFrame(step) : resolve((window as any).globeGame.state.day));
+  requestAnimationFrame(step);
+}), frames);
 
 const arrive = (page: Page, level: number) => page.waitForFunction(l => {
   const s = (window as any).globeLevels.state;
@@ -55,18 +57,38 @@ const arriveWithChips = (page: Page, level: number) => page.evaluate(l => new Pr
   requestAnimationFrame(step);
 }), level);
 
-test('the province level opens at 60 % with the unlock card, its chips and area actions', async ({ page }, testInfo) => {
+test('three cities open the province level: the goal on the meter, its gold, and a card that stops the game (STORY-087)', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
-  await mapShare(page, 'province', 0.59);
-  await page.waitForTimeout(300);
+  // The city area's goal on the meter; mapping all of the home province opens nothing
+  await expect(page.locator('.hud-goal')).toHaveText('TavoitePerusta kolme kaupunkia+60 kultaa');
+  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3 kaupunkia');
+  await page.evaluate(() => {
+    const w = window as any;
+    const home = Math.floor(w.globeGame.state.startCity / 7);
+    const table = w.globeRegions.tileTable();
+    const ids: number[] = [];
+    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 7) === home && !w.globeMap.isMapped(id)) ids.push(id);
+    w.globeDebug.reveal(ids);
+  });
+  expect(await foundIn(page)).not.toBeNull();
+  expect(await foundIn(page)).not.toBeNull();
+  await expect(page.locator('.hud-meter-value')).toHaveText('2 / 3 kaupunkia');
   await expect(page.getByRole('dialog')).toBeHidden();
   expect((await state(page)).openLevel).toBe(3);
 
-  await mapShare(page, 'province', 0.61);
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Lääni kartoitettu, zoomaa ulos' })).toBeVisible();
-  expect((await state(page)).openLevel).toBe(2);
+  const gold = (await state(page)).gold;
+  expect(await foundIn(page)).not.toBeNull();
+  const card = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Lääni avautui, zoomaa ulos' }) });
+  await expect(card).toBeVisible();
+  await expect(card).toContainText('Uusi tavoite: Pidä neljä kotivaltion lääniä (1 / 4).');
+  const s = await state(page);
+  expect([s.openLevel, s.gold, s.goal]).toEqual([2, gold + 60, 'Pidä neljä kotivaltion lääniä']);
+  await expect(page.getByRole('status')).toHaveText('Tavoite saavutettu: Perusta kolme kaupunkia · +60 kultaa');
+  // The card stops the game: even running, no day passes while it is open
+  await page.getByRole('button', { name: 'Jatka', exact: true }).click();
+  expect(await dayAfterFrames(page, 30)).toBe(s.day);
+  await page.getByRole('button', { name: 'Tauko' }).click();
   await page.screenshot({ path: testInfo.outputPath('unlock-card.png') });
   const arrived = arriveWithChips(page, 2);
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
@@ -100,25 +122,30 @@ test('the province level opens at 60 % with the unlock card, its chips and area 
   for (let i = 0; i < 5; i++) await page.mouse.wheel(0, 3000);
   await page.evaluate(() => new Promise(requestAnimationFrame));
   expect((await state(page)).level).toBe(2);
+  // With the card closed the game goes on
+  await page.getByRole('button', { name: 'Jatka', exact: true }).click();
+  await page.waitForFunction(d => (window as any).globeGame.state.day > d, s.day, { timeout: 30_000 });
   expect(errors).toEqual([]);
 });
 
-test('the state level opens next, with the state line and a target province', async ({ page }, testInfo) => {
+test('four provinces held open the state level, with the state line and a target province', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
-  await mapShare(page, 'province', 0.61);
+  for (let i = 0; i < 3; i++) await foundIn(page);
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
   // The minus key zooms out a level once it is open
   await page.keyboard.press('-');
   await arrive(page, 2);
-  await mapShare(page, 'state', 0.61);
-  await expect(page.getByRole('heading', { name: 'Valtio kartoitettu, zoomaa ulos' })).toBeVisible();
+  // The province's goal counts the home state's provinces held: three more cities in three more
+  for (let k = 1; k <= 3; k++) expect(await foundIn(page, k)).not.toBeNull();
+  await expect(page.getByRole('heading', { name: 'Valtio avautui, zoomaa ulos' })).toBeVisible();
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
   await arrive(page, 1);
   await expect(page.locator('.chip:not([hidden])')).toHaveCount(7);
   await expect(page.locator('.chip-name', { hasText: 'Kotilääni' })).toBeVisible();
-  // Nothing more opens by mapping: the meter counts the provinces held, and all seven open the planet (STORY-016)
-  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 7 hallussa');
+  // The state's goal: all seven provinces held open the planet (STORY-016)
+  await expect(page.locator('.hud-goal')).toHaveText('TavoiteValtaa kotivaltio+150 kultaa');
+  await expect(page.locator('.hud-meter-value')).toHaveText(/^[4-6] \/ 7 hallussa$/);
   await expect(page.locator('.hud-meter-tick')).toBeVisible();
   await page.locator('.state-panel label', { hasText: 'Puolustus' }).click();
   expect((await state(page)).stateLine).toBe('defend');
@@ -146,11 +173,11 @@ test.describe('on a phone', () => {
       }
       return pairs;
     };
-    await mapShare(page, 'province', 0.61);
+    await page.evaluate(() => (window as any).globeDebug.rise());
     await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
     await arrive(page, 2);
     expect(await overlaps()).toEqual([]);
-    await mapShare(page, 'state', 0.61);
+    await page.evaluate(() => (window as any).globeDebug.rise());
     await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
     await arrive(page, 1);
     expect(await overlaps()).toEqual([]);

@@ -8,7 +8,8 @@
 import { AREA_PLAN_NAMES, STATE_LINE_NAMES, type AreaPlan, type StateLine } from '../game/units';
 
 export interface UnlockCard {
-  show(title: string): void;
+  /** Show the card: the level that opened and what the player does there (STORY-087). */
+  show(title: string, text?: string): void;
   hide(): void;
   readonly visible: boolean;
 }
@@ -21,8 +22,9 @@ export function createUnlockCard(root: HTMLElement, onZoomOut: () => void): Unlo
   el.setAttribute('aria-labelledby', 'unlock-title');
   el.hidden = true;
   el.innerHTML = `
-    <span class="unlock-kicker">Uusi taso avautui</span>
+    <span class="unlock-kicker">Uusi taso avautui · peli pysähtyi</span>
     <h2 id="unlock-title" class="unlock-title"></h2>
+    <p class="unlock-text"></p>
     <div class="unlock-pinch" aria-hidden="true"><span></span><span></span></div>
     <span class="unlock-hint">Nipistä kahdella sormella</span>
     <span class="unlock-desktop">Työpöydällä: hiiren rulla taaksepäin tai −</span>
@@ -35,8 +37,11 @@ export function createUnlockCard(root: HTMLElement, onZoomOut: () => void): Unlo
   el.querySelector('.unlock-go')!.addEventListener('click', () => { hide(); onZoomOut(); });
   el.querySelector('.unlock-later')!.addEventListener('click', hide);
   return {
-    show(title) {
+    show(title, text = '') {
       el.querySelector('.unlock-title')!.textContent = title;
+      const p = el.querySelector<HTMLElement>('.unlock-text')!;
+      p.textContent = text;
+      p.hidden = !text;
       el.hidden = false;
       el.querySelector<HTMLButtonElement>('.unlock-go')!.focus();
     },

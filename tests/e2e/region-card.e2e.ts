@@ -58,6 +58,8 @@ test('a tap on the map opens a card of the city area, province or state; a secon
 
   // The province level: a city area's card
   await mapShare(page, 'province', 0.61);
+  // Mapping no longer opens a level (STORY-087): the next one opens as if its goal were reached
+  await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
   await page.keyboard.press('-');
   await arrive(page, 2);
@@ -88,6 +90,7 @@ test('a tap on the map opens a card of the city area, province or state; a secon
 
   // The state level: a province's card; its button goes in
   await mapShare(page, 'state', 0.61);
+  await page.evaluate(() => (window as any).globeDebug.rise());
   await page.keyboard.press('-');
   await arrive(page, 2);
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();

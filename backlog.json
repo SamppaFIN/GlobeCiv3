@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T15:15:28Z",
+    "generated_at": "2026-11-19T17:43:11Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "b9b523a",
+    "git_commit": "872c010",
     "git_branch": "main",
     "language": "fi"
   },
@@ -219,7 +219,7 @@
         "STORY-017",
         "STORY-014"
       ],
-      "progress": 0
+      "progress": 20
     },
     {
       "id": "EPIC-010",
@@ -2297,12 +2297,12 @@
         "HUD näyttää nykyisen tason tavoitteen ja edistymisen. Kun tavoite täyttyy, nousuhetki pysäyttää pelin ja näyttää, mitä aukesi.",
         "60 %:n kartoitussääntö korvataan tasokohtaisilla ehdoilla, ja omat luvut merkitään omiksi."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-070",
+        "implementation": "TICKET-IMPL-070",
+        "testing": "TICKET-TEST-070"
       }
     },
     {
