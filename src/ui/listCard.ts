@@ -16,6 +16,8 @@ export interface ListView {
   units: { index: number; name: string; kind: string; line: string }[];
   /** Rows of the economy tab: what comes in and where it goes. */
   economy: { title: string; right: string; line: string }[];
+  /** Whether the diplomacy tab shows: from the state level on (STORY-017). */
+  diplomacyTab: boolean;
   /** The rivals met: a row opens the rival's diplomacy card. */
   diplomacy: { id: number; name: string; state: string; line: string }[];
 }
@@ -42,7 +44,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
       <label class="seg-opt"><input type="radio" name="list-tab" value="cities"><span class="list-tab-cities"></span></label>
       <label class="seg-opt"><input type="radio" name="list-tab" value="units"><span class="list-tab-units"></span></label>
       <label class="seg-opt"><input type="radio" name="list-tab" value="economy">Talous</label>
-      <label class="seg-opt"><input type="radio" name="list-tab" value="diplomacy">Diplomatia</label>
+      <label class="seg-opt list-tab-diplomacy"><input type="radio" name="list-tab" value="diplomacy">Diplomatia</label>
     </div>
     <div class="list-rows"></div>`;
   root.appendChild(el);
@@ -57,6 +59,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
     last = key;
     q('.list-tab-cities').textContent = `Kaupungit (${v.cities.length})`;
     q('.list-tab-units').textContent = `Yksiköt (${v.units.length})`;
+    q<HTMLElement>('.list-tab-diplomacy').hidden = !v.diplomacyTab;
     el.querySelectorAll<HTMLInputElement>('input[name="list-tab"]').forEach(i => { i.checked = i.value === v.tab; });
     const items: { title: string; right: string; line: string; go?: () => void }[] = v.tab === 'cities'
       ? v.cities.map(c => ({ title: c.name, right: c.size, line: c.line, go: () => on.city(c.id) }))

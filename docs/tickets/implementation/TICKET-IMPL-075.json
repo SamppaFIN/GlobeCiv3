@@ -3,7 +3,7 @@
   "story": "STORY-017",
   "plan": "PLAN-075",
   "implemented_by_model": "Opus 5.5 (Enki)",
-  "status": "in_progress",
+  "status": "review",
   "files_changed": [
     "src/globe/main.ts",
     "src/game/goals.ts",
@@ -11,16 +11,27 @@
     "src/game/progress.test.ts",
     "src/game/advisors.ts",
     "src/game/advisors.test.ts",
-    "tests/e2e/new-start.e2e.ts"
+    "tests/e2e/new-start.e2e.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/ui/listCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/firsts.e2e.ts"
   ],
-  "change_summary": "Osa 1: uusi peli alkaa kaupunkitasolta yksin (kolme rengasta kartoitettu), tiedustelija avaa ja kartoittaa kaupunkialueen, ja kaupunkialueen järjestelmät (kaupunkipaikat, rosvot, paimentolaiset ja uudisasukas) odottavat sitä. Vanhan alun yksiköt eivät enää kartoita aluetta näkökentällään ennen kuin ne poistetaan.",
+  "change_summary": "Osa 1: uusi peli alkaa kaupunkitasolta yksin (kolme rengasta kartoitettu), tiedustelija avaa ja kartoittaa kaupunkialueen, ja kaupunkialueen järjestelmät (kaupunkipaikat, rosvot, paimentolaiset ja uudisasukas) odottavat sitä. Vanhan alun yksiköt eivät enää kartoita aluetta näkökentällään ennen kuin ne poistetaan. Osa 2: uudessa pelissä ensimmäinen kaupunkipaikka, ensimmäiset rosvot ja ensimmäinen paimentolaishyökkäys pysäyttävät pelin kortilla, ja myöhemmät ovat ilmoituksia (Asuttaja ja Vartija vastaavat yhä itse). Tieto tallentuu valinnaiseen kenttään firsts. Kilpailijoiden tapaaminen, uutiset ja diplomatian välilehti odottavat valtiotasoa.",
   "impact_analysis": {
     "changed_symbols": [
       "LevelState.firstUnit → scout",
       "startAdvice (Kasvattaja: tiedustelija)",
       "startable",
       "noteSiteOffer",
-      "raidDay"
+      "raidDay",
+      "SaveData.firsts (valinnainen)",
+      "noteSiteOffer",
+      "startRaid",
+      "sendTribe",
+      "diplomacyDay",
+      "ListView.diplomacyTab"
     ],
     "call_sites_found": [
       "goals.test, progress.test, advisors.test, globeDebug.rise"
@@ -30,7 +41,7 @@
     ],
     "compile_errors_before": 0
   },
-  "commit": "90b9518",
-  "progress": 40,
+  "commit": "2750f36",
+  "progress": 100,
   "notes": "advisors.test: Kasvattaja rakensi kaupunkitasolla uudisasukkaan; nyt tiedustelijan, koska Sami päätti, että tiedustelija avaa kaupunkialueen (testi muuttui säännön mukana)."
 }

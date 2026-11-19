@@ -463,3 +463,4 @@
 @media (min-width: 900px) {
   .nuclear { left: auto; right: 12px; top: 12px; bottom: auto; width: 380px; max-height: calc(100vh - 24px); }
 }
+.seg-opt[hidden] { display: none; }

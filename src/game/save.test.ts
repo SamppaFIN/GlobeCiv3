@@ -47,7 +47,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       id: 1, nextId: 2,
       cities: [{ id: 0, name: 'Mielikkälä', tile: START_TILE + 40, capital: true, size: 2, food: 5, shields: 9, build: 'settler', buildings: [], focus: 'balanced', entertainers: 0 }],
       units: [{ id: 0, kind: 'warrior', tile: START_TILE + 40, path: [], wait: 0, home: 0, site: null }, { id: 1, kind: 'settler', tile: START_TILE + 41, path: [START_TILE + 42], wait: 1, home: 0, site: START_TILE + 43 }],
-    }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000, maps: 3 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
+    }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000, maps: 3 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3, firsts: ['site', 'raid'],
     commands: [
       { day: 3, by: 'player', cmd: { kind: 'settle', tile: START_TILE + 5 } },
       { day: 4, by: 'player', cmd: { kind: 'found', tile: START_TILE + 6 } },
@@ -162,6 +162,17 @@ describe('saved game (STORY-036)', () => {
     extra.commands[0].cmd.build = 'granary';
     extra.commands[0].note = 'x';
     expect(validateSave(extra, LIMITS)!.commands![0]).toEqual({ day: 3, by: 'player', cmd: { kind: 'settle', tile: START_TILE + 5 } });
+  });
+
+  it('what stopped the game once is saved; a save from before (STORY-017) has nothing, and an unknown kind is refused', () => {
+    const { data } = playedSave();
+    expect(validateSave(JSON.parse(JSON.stringify(data)), LIMITS)!.firsts).toEqual(['site', 'raid']);
+    const old: any = JSON.parse(JSON.stringify(data));
+    delete old.firsts;
+    expect(validateSave(old, LIMITS)!.firsts).toEqual([]);
+    const bad: any = JSON.parse(JSON.stringify(data));
+    bad.firsts = ['site', 'treaty'];
+    expect(validateSave(bad, LIMITS)).toBeNull();
   });
 
   it('a save from before the level goals (STORY-087) loads, and its place in the old goal chain is dropped', () => {

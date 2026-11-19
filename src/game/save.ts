@@ -44,6 +44,10 @@ export interface RaidsSave {
   nextId: number;
 }
 
+/** What stops the game the first time only (STORY-017): a city site, bandits and a nomads' attack. */
+export const FIRST_KINDS = ['site', 'raid', 'tribe'] as const;
+export type FirstKind = (typeof FIRST_KINDS)[number];
+
 export interface SaveData {
   version: number;
   /** Wall time of the save (ms since 1970), for the start screen. */
@@ -96,6 +100,8 @@ export interface SaveData {
   stateAdvisor: StateAdvisor;
   /** The planet-level advisor and the target state, or −1 (STORY-057); saves from before have none. */
   planetAdvisor: PlanetAdvisor;
+  /** What has already stopped the game once (STORY-017): later ones are notices. Missing in older saves. */
+  firsts?: FirstKind[];
   targetState: number;
   /** The commands that took effect (STORY-086); saves from before have none. */
   commands?: Logged[];
@@ -337,6 +343,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       provinceAdvisor: s.provinceAdvisor === undefined ? 'none' : oneOf(s.provinceAdvisor, PROVINCE_ADVISOR_LIST, 'provinceAdvisor'),
       stateAdvisor: s.stateAdvisor === undefined ? 'none' : oneOf(s.stateAdvisor, STATE_ADVISOR_LIST, 'stateAdvisor'),
       planetAdvisor: s.planetAdvisor === undefined ? 'none' : oneOf(s.planetAdvisor, PLANET_ADVISOR_LIST, 'planetAdvisor'),
+      firsts: s.firsts === undefined ? [] : list(s.firsts, 'firsts', v => oneOf(v, FIRST_KINDS, 'first'), FIRST_KINDS.length),
       targetState: s.targetState === undefined ? -1 : int(s.targetState, 'target state', -1, Math.ceil(limits.cityAreas / 49)),
       ...(s.commands === undefined ? {} : {
         commands: list(s.commands, 'commands', v => {
