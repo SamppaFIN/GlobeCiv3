@@ -58,7 +58,7 @@ import { banditWins, raidRoll, raidStart, Raids, uprising, type RaidEvent, type 
 import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
 import { PulseLayer, type PulseKind } from './pulses';
-import { SAVE_VERSION, validateSave, type SaveData } from '../game/save';
+import { SAVE_VERSION, validateSave, type FirstKind, type SaveData } from '../game/save';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
@@ -552,7 +552,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), ties: play.ties.map(t => ({ ...t })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState,
+    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, firsts: [...play.firsts],
     commands: play.commands.save(),
   };
 }
@@ -665,6 +665,8 @@ interface Play {
   calmDays: number;
   /** The planet-level advisor, what it did lately, and the target state, or −1 (STORY-057). */
   planetAdvisor: PlanetAdvisor;
+  /** What has stopped the game once already (STORY-017). */
+  firsts: Set<FirstKind>;
   planetLog: string[];
   targetState: number;
   researchOpen: boolean;
@@ -775,7 +777,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -798,7 +800,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
     // The ties with them (STORY-076); a save from before meets them anew
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? play.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState,
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []),
     commands: new CommandLog(saved.commands ?? []),
   });
   clock.day = saved.day;
@@ -1059,9 +1061,24 @@ function noteSiteOffer(fresh: number[]) {
   const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken) && !nearForeign(id))
     ?? (play.progress.meter === 'conquest' ? provinceSite(taken) : quiet ? nearbySite(taken) : undefined);
   if (tile === undefined) return;
-  play.offers.push({ tile, finder: finderOf(tile) });
   play.offered.push(tile);
   play.lastOfferDay = clock.day;
+  // The first site stops the game with its card; later ones are notices, and the hex card sends
+  // a settler (STORY-017). The Asuttaja still takes each itself
+  if (play.provinceAdvisor !== 'settle' && !firstTime('site')) {
+    moment('find', tile);
+    discoveryCard.notice(`Kaupunkipaikka: ${nameOf(2, regions.tileTable()[tile]).name} · napauta ruutua, niin uudisasukas lähtee`);
+    return;
+  }
+  play.offers.push({ tile, finder: finderOf(tile) });
+}
+
+/** Whether this kind of event stops the game now: the first time only in a new game, always in the old start (STORY-017). */
+function firstTime(kind: FirstKind): boolean {
+  if (classic) return true;
+  if (play!.firsts.has(kind)) return false;
+  play!.firsts.add(kind);
+  return true;
 }
 
 /**
@@ -1860,7 +1877,7 @@ function rivalsDay() {
   const taken = new Set(workedByCity().flat());
   for (const r of p.rivals) {
     for (const e of r.day(rivalWorld, taken)) {
-      if (e.kind === 'founded' && mapState.isMapped(e.city.tile)) discoveryCard.notice(`${r.name} perusti kaupungin ${e.city.name}`);
+      if (e.kind === 'founded' && mapState.isMapped(e.city.tile) && stateStage()) discoveryCard.notice(`${r.name} perusti kaupungin ${e.city.name}`);
     }
   }
 }
@@ -1899,7 +1916,12 @@ function sendTribe(t: TribeNow, anywhere = false): boolean {
   if (!city || (!anywhere && tileCenter(city.tile).angleTo(at) > TRIBE_REACH * TILE_ANGLE)) return false;
   const band = tribeBand(game!.seed, t.tribe, clock.day);
   if (!p.raids.start(city.tile, t.camp, band.size, id => world.cost(id), { attack: band.attack, tribe: t.tribe.name })) return false;
-  p.raidAlert = true;
+  // The first attack stops the game with its card, later ones are notices (STORY-017); the Vartija answers each
+  p.raidAlert = p.cityAdvisor === 'defend' || firstTime('tribe');
+  if (!p.raidAlert) {
+    moment('raid', t.camp);
+    discoveryCard.notice(`${t.tribe.name} hyökkää: ${band.size} ratsastajaa kohti kaupunkia ${city.name}`);
+  }
   return true;
 }
 
@@ -2168,6 +2190,8 @@ const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ..
 const unitsOpen = () => !play || play.progress.openLevel < 4 || play.cities.some(c => c.buildings.length > 0);
 /** A new game's first level, the city alone: the city area's systems wait for the scout (STORY-017, Sami 2026-11-20). */
 const cityStage = () => !!play && !classic && play.progress.openLevel === 4;
+/** The state level is open, where diplomacy, war and trade belong (STORY-017); always in the old start. */
+const stateStage = () => classic || (!!play && play.progress.openLevel <= 1);
 /** A resource building needs a known tile of its kind in the city's area (STORY-073). */
 const resourceNear = (c: City, b: ResourceBuilding) => tilesInRings(c.tile, cityRings(c.size)).some(t => ground.resourceOf!(t) === RESOURCE_BUILDINGS[b].kind);
 /** A terrain building needs its terrain within the city's two rings. */
@@ -2436,7 +2460,8 @@ const listCard = createListCard(hud_root, {
 function listView(): ListView {
   const yields = cityYields();
   return {
-    tab: play!.listTab,
+    tab: play!.listTab === 'diplomacy' && !stateStage() ? 'cities' : play!.listTab,
+    diplomacyTab: stateStage(),
     cities: play!.cities.map((c, i) => {
       const y = yields[i];
       const ready = daysToBuild(c, y);
@@ -2949,7 +2974,12 @@ function startRaid(c: City): boolean {
   const from = raidStart(c.tile, raidRoll(game.seed, clock.day, 101), id => mapState.isMapped(id), isLand);
   const size = 1 + Math.floor(raidRoll(game.seed, clock.day, 102) * 2);
   if (from === null || !play.raids.start(c.tile, from, size, id => world.cost(id))) return false;
-  play.raidAlert = true;
+  // The first bandits stop the game with their card, later ones are notices (STORY-017); the Vartija answers each
+  play.raidAlert = play.cityAdvisor === 'defend' || firstTime('raid');
+  if (!play.raidAlert) {
+    moment('raid', from);
+    discoveryCard.notice(`${size === 1 ? 'Rosvo' : `${size} rosvoa`} liikkeellä kohti kaupunkia ${c.name}`);
+  }
   return true;
 }
 
@@ -3511,6 +3541,8 @@ function nearCitiesOf(k: number): City[] {
 /** The day's ties: meeting, attitude, and what each rival does. */
 function diplomacyDay() {
   const p = play!;
+  // Diplomacy belongs to the state level (STORY-017); the old start has it from the outset
+  if (!stateStage()) return;
   p.rivals.forEach((r, k) => {
     const t = p.ties[k];
     if (!t) return;
