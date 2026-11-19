@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T20:09:00Z",
+    "generated_at": "2026-11-19T20:21:41Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "bd3ba67",
+    "git_commit": "ae801e4",
     "git_branch": "main",
     "language": "fi"
   },
@@ -261,7 +261,7 @@
       "stories": [
         "STORY-097"
       ],
-      "progress": 0
+      "progress": 100
     }
   ],
   "stories": [
@@ -2536,12 +2536,12 @@
         "Testilinkki ?planet avaa planeettatason, jossa pelaaja ja 2–4 tekoälyjohtajaa vuorottelevat: diplomatia ja propaganda ennen ydinaseita, ja aseet ja torjunta vasta kehittyneinä. Viimeinen pystyssä oleva tai suurin väestö voittaa.",
         "Kaikki nimet, tekstit ja luvut ovat omia (sääntö 4), ja ne on merkitty omiksi koodikommenttiin. Kokeilu ei muuta varsinaista peliä."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-074",
+        "implementation": "TICKET-IMPL-074",
+        "testing": "TICKET-TEST-074"
       }
     },
     {

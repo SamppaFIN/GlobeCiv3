@@ -1,0 +1,69 @@
+{
+  "id": "TICKET-TEST-074",
+  "story": "STORY-097",
+  "implementation_ticket": "TICKET-IMPL-074",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Planeettatason ydinsotaa ei voinut kokeilla.",
+    "files_changed": [
+      "src/game/nuclear.ts",
+      "src/ui/nuclearPanel.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "nuclear.test: sama siemen sama sota, 3–6 milj. valtiota kohden, ohjukset ja torjunta vasta jännitteellä 60, teko neljän päivän välein, liitto ja propaganda, ohjus ja laskeuma, torjunta pysäyttää osan, sota päättyy viimeistään päivänä 365",
+        "expected": "Kriteeri 1",
+        "result": "Vitest 7/7",
+        "outcome": "pass"
+      },
+      {
+        "steps": "planet-trial.e2e: ?planet&seed=42, viisi johtajaa ja pääkaupungin lappu, lähettiläs ennen aseita ja seuraava teko odottaa, päivät kuluvat 4×, jännite 70 avaa ohjusiskun ja torjunnan, isku vie yli 14 % väestä, napit vähintään 44 px",
+        "expected": "Kriteeri 1",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "planet-trial.e2e: ilman ?planet ei sotaa eikä paneelia",
+        "expected": "Kriteeri 2: kokeilu ei muuta peliä",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Autopilotti Nodessa siemenillä 42, 7 ja 99 ilman pelaajan tekoja",
+        "expected": "Jännite kasvaa diplomatiasta aseisiin",
+        "result": "Ohjukset aukeavat päivänä 66, ja sota päättyy päivinä 165, 218 ja 365",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sami pelaa testilinkistä",
+        "expected": "Toimiiko diplomatiasta ydinsotaan kasvava jännite",
+        "result": "Odottaa Samia",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "planet-trial: planet-trial.png, planet-trial-missile.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Jännite kasvaa diplomatiasta ydinsotaan",
+        "checked": false
+      },
+      {
+        "item": "Luvut ja tekoälyn luonteet tuntuvat oikeilta",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

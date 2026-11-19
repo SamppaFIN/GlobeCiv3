@@ -1,0 +1,28 @@
+{
+  "id": "TICKET-IMPL-074",
+  "story": "STORY-097",
+  "plan": "PLAN-074",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/nuclear.ts",
+    "src/game/nuclear.test.ts",
+    "src/ui/nuclearPanel.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/planet-trial.e2e.ts"
+  ],
+  "change_summary": "Johtajien sota testilinkkiin ?planet: säännöt (src/game/nuclear.ts, kaikki omia), paneeli ja merkit pallolla. Peli ilman ?planet-parametria ei muutu.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "main.ts: screen-alustus (?planet kuten ?free)",
+      "animate: updateWar"
+    ],
+    "call_sites_found": [],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Kaikki nimet, tekstit ja luvut ovat omia (sääntö 4), ja ne on merkitty omiksi src/game/nuclear.ts:n alkuun. Johtajat ovat keksittyjä hahmoja, ei oikeita ihmisiä."
+}
