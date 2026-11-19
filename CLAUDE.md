@@ -453,7 +453,7 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-002", "icon": "🔭", "title": "Saumaton kamera", "status": "done", "stories": ["STORY-005", "STORY-006", "STORY-007"]},
     {"id": "EPIC-003", "icon": "🌍", "title": "Hierarkkinen maailma", "status": "in_progress", "stories": ["STORY-008", "STORY-009", "STORY-010", "STORY-011", "STORY-012", "STORY-019"]},
     {"id": "EPIC-004", "icon": "⚙️", "title": "Simulaatio-LOD", "status": "todo", "stories": ["STORY-013", "STORY-015", "STORY-016"]},
-    {"id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-018"]},
+    {"id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-018", "STORY-100"]},
     {"id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-031", "STORY-032", "STORY-033", "STORY-034", "STORY-035", "STORY-036", "STORY-037", "STORY-038", "STORY-039", "STORY-040", "STORY-041", "STORY-042", "STORY-043", "STORY-044", "STORY-045", "STORY-046", "STORY-047", "STORY-048", "STORY-049", "STORY-050", "STORY-051", "STORY-052", "STORY-053", "STORY-054", "STORY-055", "STORY-056", "STORY-057", "STORY-058", "STORY-059", "STORY-060", "STORY-061", "STORY-062", "STORY-063", "STORY-064", "STORY-065", "STORY-066", "STORY-067", "STORY-068", "STORY-069", "STORY-070", "STORY-071", "STORY-072", "STORY-073", "STORY-074", "STORY-075", "STORY-076", "STORY-077", "STORY-078"]},
     {"id": "EPIC-007", "icon": "🧹", "title": "Pohja uudelle suunnalle", "status": "in_progress", "stories": ["STORY-079", "STORY-080", "STORY-081", "STORY-082"]},
     {"id": "EPIC-008", "icon": "🦁", "title": "Hauskuuden mittaus", "status": "in_progress", "stories": ["STORY-083", "STORY-084", "STORY-085"]},
@@ -463,10 +463,10 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-012", "icon": "☢️", "title": "Planeettataso: ydinsota (MVP:n jälkeen)", "status": "todo", "stories": ["STORY-097"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-072 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-072 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-072 (docs/tickets/testing)",
-  "next": "Sami hyväksyy storyt 073–084, 087 ja 096 sekä avoimet kysymykset 17–19. Enki: STORY-099 (tasojen ja aikakausien suunnitelma), STORY-098 (tasopaneeli) ja STORY-097 (ydinsotakokeilu); sitten Inannan PLAYTEST-002."
+  "plans": "PLAN-001 … PLAN-073 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-073 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-073 (docs/tickets/testing)",
+  "next": "Sami hyväksyy storyt 073–084, 087, 096, 098 ja 099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä. Enki: STORY-097 (ydinsotakokeilu); sitten Inannan PLAYTEST-002. STORY-100 (peli englanniksi) MVP:n jälkeen."
 }
 ```
 
@@ -658,6 +658,8 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 | 2026-11-19 | **Tasotikkaiden nousuehdot (STORY-087):** taso nousee alemman tason valmiilla tuotoksilla. Kaupunki avaa kaupunkialueen rakennuksella ja ensimmäisellä tiedustelijalla tai uudisasukkaalla, kaupunkialue läänin kolmella kaupungilla, lääni valtion neljällä kotivaltion läänillä ja valtio planeetan kaikilla seitsemällä. Kartoitus ei enää avaa tasoja. Tasotavoite korvaa 16 tavoitteen ketjun: yläpaneelissa on yksi tavoite ja sen laskuri, ja nousu antaa kultaa (30, 60, 80 ja 150) ja pysäyttää pelin kortilla, joka kertoo, mitä aukesi. Luvut ovat omia, ja ne kalibroidaan autopilotilla ja pelitestillä. | Enkin ehdotus, Sami valitsi molemmat suositellut vaihtoehdot. PLAYTEST-001:n korjaus 2: yksi tavoite kerrallaan. | Sami |
 | 2026-11-19 | **Peli on neuvonantajien simulaatio (STORY-096):** pelaaja ohjaa neuvonantajia, ja kansa toteuttaa ja rakentaa. Uusi peli tervehtii tervetulokortilla, ja sen jälkeen tason kolme neuvonantajaa tulevat isoina kortteina ja lyhyt HUD-kierros. Oletuksena näkyvät vain tavoite, aika ja neuvonantaja. Ohjaan itse on neuvonantajakortin piilotettu neljäs valinta, ja se tuo kaikki valikot esiin. | Sami: kaikki valikot hyppäävät silmille, tarvitaan onboarding, 3 perusvalintaa joka kerrokselle. Vaihtoehdoista Sami valitsi tervetulon ja kierroksen molemmat, vain olennaisen ja piilotetun Ohjaan itse -valinnan. | Sami |
 | 2026-11-19 | **Tasojen sisältö ja aikakaudet:** jokaisella tasolla on omat rakennukset, yksiköt, politiikka ja uskonto, jotka vaikuttavat juuri sen tason toimintoihin, ja jokainen aikakausi avaa tasoille eri toimintoja. Ydinaseet tulevat vasta pitkälle kehittyneessä pelissä, ja diplomatia tulee ennen niitä. Joka tasolle tulee paneeli, jossa ovat alueen nimi, pikatoiminnot ja laajennettava infografiikka, ja kaupunkilappuihin pienet tiedot ja pikatoiminnot. Ydinsotataso kokeillaan välissä testilinkistä. Järjestys on Enkin: STORY-096, STORY-099 (suunnitelma), STORY-098 ja STORY-097. | Samin visio 2026-11-19: "iso kokonaisuus, tee siinä järjestyksessä kuin parhaaksi näät" | Sami |
+| 2026-11-19 | STORY-098 tehtiin (tila `review`): yläpaneelin mittaririvi kertoo tason ja alueen nimen, ja napautus tai näppäin i avaa infografiikan (asukkaat, tuotanto, kauppa ja tiede, aikakausi, tiedot ja pikatoiminnot). Kaupunkilapussa on lähellä pieni rivi, ensimmäinen napautus avaa pikapaneelin ja toinen kaupunkikortin. Ostaminen on komento. Aikakausi on oma sääntö: Rautatyö avaa rauta-ajan, kunnes Sami päättää aikakauden ehdon. | Oma rivi vei puhelimella 31 % näytöstä, kun STORY-025:n raja on 28 %. Kaksi napautusta on pelin tapa kartan alueissa. | Enki (Sami vahvistaa) |
+| 2026-11-19 | Peli tarvitsee englanninkielisen version: kielivalinta suomi/englanti (STORY-100, EPIC-005) MVP:n jälkeen. | Sami: "tarvitaan myös englanninkielinen versio". Tekstit muuttuvat vielä tasotikkaiden mukana, joten kääntäminen nyt tekisi työn kahdesti. | Sami |
 
 ### Avoimet kysymykset
 

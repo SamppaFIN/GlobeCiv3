@@ -1,0 +1,51 @@
+{
+  "id": "PLAN-073",
+  "story": "STORY-098",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Yläpaneelin mittaririvi kertoo tason ja alueen nimen (valtio, lääni, kaupunkialue tai kaupunki), ja napautus tai näppäin i avaa tavoitteen alle infografiikan: neljä lukua alueen omista kaupungeista (asukkaat, tuotanto, kauppa ja tiede), aikakausi, alueen tiedot ja pikatoiminnot (neuvonantaja, kaupunkikortti, kaupunkialueelle, luettelo ja taso ylös näppäimellä -). Kaupunkilapussa on lähellä pieni rivi siitä, mitä kaupunki rakentaa ja miten ruoka riittää. Ensimmäinen napautus avaa lapun alle pikapaneelin (koko ja kasvu, rakennus, tuotot, mieliala ja puolustajat sekä Kaupunkikortti, Lennä kaupunkiin ja omassa ohjauksessa Osta), ja toinen napautus kaupunkikortin, kuten kartan alueissa. Ostaminen on komento (sääntö 7), myös neuvonantajien ostot. Aikakausi on oma sääntö: Rautatyö avaa rauta-ajan (suunnitelman kysymys 3).",
+  "alternatives_considered": [
+    {
+      "name": "Oma rivi yläpaneelin alkuun",
+      "pros": "Isompi kohde (44 px) ja kaksi riviä tekstiä",
+      "cons": "Paneeli kasvoi 50 px, ja puhelimella HUD vei 31 % näytöstä, kun raja on 28 % (STORY-025:n testi punainen)",
+      "rejected_because": "Mittaus: 265 px, kun raja on 236 px"
+    },
+    {
+      "name": "Lapun napautus avaa suoraan kortin ja pikatoiminnot lapun nappeina",
+      "pros": "Ei lisäaskelta korttiin",
+      "cons": "Monta 44 px:n nappia jokaisessa lapussa sotkee kartan",
+      "rejected_because": "Kaksi napautusta on jo pelin tapa kartan alueissa (STORY-029, STORY-067)"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/areaPanel.ts",
+    "src/ui/cityQuick.ts",
+    "src/ui/cityLabels.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "src/game/commands.ts",
+    "src/game/save.ts"
+  ],
+  "open_questions": [
+    "Mikä avaa aikakauden (tasot-ja-aikakaudet.md, kysymys 3)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Tasopaneeli mittaririville ja infografiikka",
+      "verify": "E2E: taso, nimi, neljä lukua, tiedot ja pikatoiminnot; puhelimella HUD alle 28 %"
+    },
+    {
+      "step": 2,
+      "action": "Lapun pieni rivi ja pikapaneeli",
+      "verify": "E2E: rivi, paneeli, 44 px kohteet ja toinen napautus avaa kortin"
+    },
+    {
+      "step": 3,
+      "action": "Osto komennoksi",
+      "verify": "Yksikkötesti ja tallennuksen kierros"
+    }
+  ],
+  "status": "approved"
+}
