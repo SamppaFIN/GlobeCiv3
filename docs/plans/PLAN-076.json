@@ -1,0 +1,59 @@
+{
+  "id": "PLAN-076",
+  "story": "STORY-088",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-20",
+  "approach": "Uuden pelin pääkaupungilla on varasto ja tuotantoketjut (City.chain on kytkin): metsuri → tukki, saha tukki → lankku, louhos → kivi, pelto → vilja, mylly vilja → jauhot, leipomo jauhot → leipä ja kalastamo → kala. Kaupunkitason rakennukset rakennetaan työmaalla lankuista ja kivestä Freeserfin luvuin (const_info), ja aloitusvarasto on Freeserfin 7 lankkua ja 2 kiveä. Leipä ja kala ovat aterioita, jotka lasketaan päivän ruokaan. Metsuri, saha ja louhos ensin, joten alku ei voi jumittua. Kaupungin tuotanto jatkuu rinnalla yksiköille. Vanha alku, muut kaupungit ja vanhat tallennukset jatkavat entisin säännöin. Suunnitelma: docs/design/tuotantoketjut.md.",
+  "alternatives_considered": [
+    {
+      "name": "Ketjut kaikille pelaajan kaupungeille",
+      "pros": "Yksi sääntö kaikkialla",
+      "cons": "Vanha tallennus ja uudisasukkaan kaupungit saisivat tyhjän varaston ja jumittuisivat; vanhan alun valikko kasvaisi",
+      "rejected_because": "Utun katselmointi, kohta 1"
+    },
+    {
+      "name": "Kantajat samassa storyssa",
+      "pros": "Samin valinta näkyisi heti",
+      "cons": "Sääntökerros ja visualisointi epäonnistuvat eri tavoin, ja story kasvaa liian suureksi",
+      "rejected_because": "Utun katselmointi, kohta 8: kantajat STORY-101:een"
+    },
+    {
+      "name": "Ketjurakennus vain omalle maastolleen (metsuri metsään, louhos kukkulalle)",
+      "pros": "Freeserfin mukainen",
+      "cons": "Aloituspaikka ei takaa metsää eikä kukkulaa, jolloin ketju ei käynnisty",
+      "rejected_because": "Utun katselmointi, kohta 3: oma maasto on paras paikka, ei ehto"
+    }
+  ],
+  "files_to_change": [
+    "src/game/chains.ts",
+    "src/game/cities.ts",
+    "src/game/placement.ts",
+    "src/game/commands.ts",
+    "src/game/save.ts",
+    "src/game/advisors.ts",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Tahti (tavara kahdessa päivässä, ateria 2 ruokaa) kalibroidaan autopilotilla ja pelitestillä"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Puhdas moduuli chains.ts: varasto, työmaa, päivän työ ja ateriat",
+      "verify": "Yksikkötestit: perusta ensin, jumia ei synny, tavarat säilyvät, determinismi, Freeserfin luvut"
+    },
+    {
+      "step": 2,
+      "action": "Kytkin City.chain, yield, sijoitus, komento ja tallennus",
+      "verify": "Yksikkötestit: ei +1:tä ketjukaupungissa, ateriat yieldissä, sijoitus, komento, tallennus ketjun keskeltä ja vanha tallennus"
+    },
+    {
+      "step": 3,
+      "action": "Kaupunkikortti, uusi alku, päivän laskenta ja neuvonantajat",
+      "verify": "E2E chains.e2e ja new-start.e2e; vanhan alun testit ennallaan"
+    }
+  ],
+  "status": "approved"
+}

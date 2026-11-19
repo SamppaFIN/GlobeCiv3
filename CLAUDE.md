@@ -458,14 +458,14 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-007", "icon": "🧹", "title": "Pohja uudelle suunnalle", "status": "in_progress", "stories": ["STORY-079", "STORY-080", "STORY-081", "STORY-082"]},
     {"id": "EPIC-008", "icon": "🦁", "title": "Hauskuuden mittaus", "status": "in_progress", "stories": ["STORY-083", "STORY-084", "STORY-085"]},
     {"id": "EPIC-009", "icon": "🪜", "title": "Tasotikkaat", "status": "in_progress", "stories": ["STORY-086", "STORY-095", "STORY-087", "STORY-017", "STORY-014", "STORY-096", "STORY-098", "STORY-099"]},
-    {"id": "EPIC-010", "icon": "🏘️", "title": "Kaupunkitaso: Settlers", "status": "todo", "stories": ["STORY-088", "STORY-089", "STORY-090"]},
+    {"id": "EPIC-010", "icon": "🏘️", "title": "Kaupunkitaso: Settlers", "status": "in_progress", "stories": ["STORY-088", "STORY-089", "STORY-090", "STORY-101"]},
     {"id": "EPIC-011", "icon": "🏛️", "title": "Ylemmät tasot: Civ I, Civ III ja Civ V", "status": "todo", "stories": ["STORY-091", "STORY-092", "STORY-093", "STORY-094"]},
     {"id": "EPIC-012", "icon": "☢️", "title": "Planeettataso: ydinsota (MVP:n jälkeen)", "status": "todo", "stories": ["STORY-097"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-075 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-075 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-075 (docs/tickets/testing)",
+  "plans": "PLAN-001 … PLAN-076 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-076 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-076 (docs/tickets/testing)",
   "next": "Sami hyväksyy storyt 073–084, 087, 096–099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä, ja pelaa ydinsotakokeilua (?planet). Inannan PLAYTEST-002, kun CI on vihreä (STORY-017 mukana). STORY-100 (peli englanniksi) MVP:n jälkeen."
 }
 ```
@@ -662,6 +662,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 | 2026-11-19 | Peli tarvitsee englanninkielisen version: kielivalinta suomi/englanti (STORY-100, EPIC-005) MVP:n jälkeen. | Sami: "tarvitaan myös englanninkielinen versio". Tekstit muuttuvat vielä tasotikkaiden mukana, joten kääntäminen nyt tekisi työn kahdesti. | Sami |
 | 2026-11-19 | **Ydinsotakokeilu (STORY-097, tila `review`):** testilinkki `?planet` avaa johtajien sodan pallolla. Päivä kuluu pelin kellolla, jokainen johtaja tekee yhden teon neljän päivän välein, ja maailman jännite avaa ohjukset ja torjunnan rajalla 60. Viisi keksittyä johtajaa kuuden valtion valtakuntineen; kaikki säännöt ja luvut ovat omia. | Sami valitsi päiväkellon, yhden teon kerrallaan, jännitemittarin ja näkymän pallolla. Autopilotilla ohjukset aukeavat päivänä 66 (siemen 42). | Sami |
 | 2026-11-20 | **Peli alkaa vain alimmalta tasolta (STORY-017, osa 1):** uusi peli näyttää vain kaupunkitason (kaupungin kolme rengasta), ja kun tiedustelija on rakennettu, kaupunkialue avautuu ja kartoitetaan. Kaupunkitason tavoite on rakennus ja tiedustelija. Kaupunkialueen järjestelmät (kaupunkipaikat, rosvot, paimentolaiset ja uudisasukas) odottavat sitä. Tämä muuttaa STORY-070:n ja STORY-087:n sääntöä, jonka mukaan ensimmäinen tiedustelija tai uudisasukas avasi kaupunkialueen. | Sami: alussa näkyy kaksi alinta tasoa, ja niiden viestit menevät sekaisin. | Sami |
+| 2026-11-20 | **Tuotantoketjut (STORY-088, tila `review`):** uuden pelin pääkaupunki rakentaa kaupunkitason rakennukset lankuista ja kivestä työmaalla. Metsuri, saha ja louhos tehdään ensin aloitusvarastosta (Freeserf: 7 lankkua ja 2 kiveä), ja sitten pelto, mylly ja leipomo sekä kalastamo. Leipä ja kala ruokkivat asukkaita. Ketjut ovat vain uuden pelin pääkaupungilla, ja muut kaupungit, vanha alku ja vanhat tallennukset jatkavat entisin säännöin. Kantajat siirtyivät omaan storyynsä STORY-101. | Samin valinnat: puu ja vilja, kantajat näkyvät, materiaalit korvaavat. Anu ei ollut käytettävissä, joten Utu katselmoi suunnitelman (kyllä muutoksin: kytkin, työmaan tallennus, jumiutumissuoja ja jako kahteen). | Sami |
 
 ### Avoimet kysymykset
 
@@ -683,7 +684,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella. PLAYTEST-001 ajettiin Sonnetilla pilvessä 2026-11-19 (130 työkalukutsua, 12,6 min); arvio odottaa Samia.
 17. **STORY-086:n uusinta.** Komentokerros on valmis (kaikki pelaajan ja neuvonantajien teot ovat komentoja, ja loki tallentuu), mutta uusintaa tallennuksen komentolokista ei voi ajaa, koska päivän laskenta on selaimessa (main.ts). Enkin ehdotus: uusintakriteeri todennetaan uudessa STORY-095:ssä (Simulaation ydin irti selaimesta, L), jonka suunnitelman Anu katselmoi, ja STORY-085 (autopilotti) odottaa sitä. STORY-086 on siihen asti tilassa `in_progress`. Sami päättää.
 18. **STORY-017:n uusi kriteeri.** Enki lisäsi PLAYTEST-001:n korjauksen 1: peli pysähtyy vain, kun jokin on oikeasti uutta, ja toistuvat ehdotukset ovat ilmoituksia ilman pysäytystä. Toteutettu 2026-11-20 (ensimmäinen kaupunkipaikka, ensimmäiset rosvot ja ensimmäinen paimentolaishyökkäys), kun Sami sanoi "jatka"; Sami vahvistaa tai muuttaa.
-19. **MVP:n koko.** Uudet storyt 096, 098 ja 099 nostivat MVP:n 22 storyyn, kun raja ylisuunnittelulle on 20. Enkin ehdotus: tasojen sisältö (STORY-099) sulautetaan EPIC-010:n ja EPIC-011:n storyihin 088–094 eikä se tuo uusia, ja STORY-014 (alempi taso tiivistettynä) siirtyy MVP:n jälkeen, jos tahti vaatii. Sami päättää.
+19. **MVP:n koko.** Uudet storyt 096, 098, 099 ja 101 (kantajat erotettiin STORY-088:sta Utun katselmoinnissa) nostivat MVP:n 23 storyyn, kun raja ylisuunnittelulle on 20. Enkin ehdotus: tasojen sisältö (STORY-099) sulautetaan EPIC-010:n ja EPIC-011:n storyihin 088–094 eikä se tuo uusia, ja STORY-014 (alempi taso tiivistettynä) siirtyy MVP:n jälkeen, jos tahti vaatii. Sami päättää.
 
 ### Ratkenneet kysymykset
 

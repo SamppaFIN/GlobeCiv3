@@ -1,0 +1,75 @@
+{
+  "id": "TICKET-TEST-076",
+  "story": "STORY-088",
+  "implementation_ticket": "TICKET-IMPL-076",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Kaupunkitasolla ei ollut omaa peliä: rakennukset maksoivat tuotantoa kuten Civ I:ssä, eikä tavaroita ollut.",
+    "files_changed": [
+      "src/game/chains.ts",
+      "src/globe/main.ts",
+      "src/ui/cityCard.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "chains.test: aloitusvarasto riittää täsmälleen perustaan, perusta ensin kolmessa järjestyksessä, työmaa odottaa tarvikkeita, ketju tuottaa leipää ilman jumia, tavarat säilyvät, determinismi ja Freeserfin luvut",
+        "expected": "Kriteeri 2 ja jumiutumissuoja",
+        "result": "11/11",
+        "outcome": "pass"
+      },
+      {
+        "steps": "cities.test, placement.test, commands.test, save.test ja advisors.test: ateriat yieldissä ilman +1:tä, sijoitus ja paras paikka, työmaa komentona, tallennus ketjun keskeltä, vanha tallennus ilman kenttää ja neuvonantajan järjestys",
+        "expected": "Säännöt 7 ja 8",
+        "result": "Vitest 249/249",
+        "outcome": "pass"
+      },
+      {
+        "steps": "chains.e2e: uusi peli Oma ohjaus, varasto 7 lankkua ja 2 kiveä, metsurin työmaa, varastorivi kortissa, lukitut työmaat, saha ja louhos pelaajan komennoilla, pelto, tallennus ja Jatka ketjun keskeltä",
+        "expected": "Kriteeri 1",
+        "result": "Läpi (1,4 min). Pelto valmistui päivänä 19 siemenellä 42.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "new-start, placement, resource-buildings, onboarding ja city-level",
+        "expected": "Ei regressiota",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Sami pelaa kaupunkitason Pagesista",
+        "expected": "Hyväksyntä",
+        "result": "Odottaa Samia",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "chains: stock.png, field.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Rakennukset syntyvät lankuista ja kivestä, ja varasto näkyy kortissa",
+        "checked": false
+      },
+      {
+        "item": "Leipä ja kala kasvattavat kaupunkia",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
