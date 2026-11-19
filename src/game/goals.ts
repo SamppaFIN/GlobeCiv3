@@ -1,62 +1,69 @@
 /**
- * goals.ts — a chain of goals that leads through the game (STORY-041): one at a time, each
- * with a hint and a reward in gold. Own design (the goals and the rewards); a goal is a
- * test on a summary of the game, so it is checked the same way in a new and a saved game.
- * STORY-056 goes on from three cities to the conquest of the home state.
+ * goals.ts — each level's own goal, which is also how the player rises to the next level
+ * (STORY-087; Sami 2026-11-19). A level rises on the finished output of the level below:
+ * the city on its first unit, the city area on its cities, the province on the home
+ * state's provinces held and the state on all seven. One goal shows at a time, with its
+ * progress on the meter. Own design: the goals, the counts and the gold (the counts and the
+ * gold are those of the goal chain of STORY-041 and STORY-056 that this replaces).
  */
 
-/** What the goals look at. */
-export interface GoalState {
+/** What the level goals count, a summary of the game. */
+export interface LevelState {
+  /** A city has a building (the city level's first step, STORY-070). */
+  built: boolean;
+  /** A scout or a settler is on the map. */
+  firstUnit: boolean;
   cities: number;
-  /** The biggest city's size. */
-  biggest: number;
-  /** An advance is being researched, or one is known. */
-  researching: boolean;
-  advances: number;
-  improvements: number;
-  buildings: number;
-  /** The deepest zoom-out level open: 3 city area, 2 province, 1 state, 0 planet. */
-  openLevel: number;
-  /** An advisor runs some level (STORY-049–051). */
-  advisor: boolean;
-  /** The government is Monarchy (STORY-047). */
-  monarchy: boolean;
-  /** The home state's provinces with a city (STORY-016). */
+  /** The home state's provinces held, of seven; one without land counts (STORY-016, STORY-058). */
   provinces: number;
 }
 
-export interface Goal {
+export interface LevelGoal {
+  /** The level whose goal this is: 4 the city, 3 city area, 2 province, 1 state. */
+  level: number;
+  /** The meter's name in the HUD. */
+  name: string;
   text: string;
   hint: string;
+  /** Gold when the goal is reached and the next level opens. */
   reward: number;
-  done(s: GoalState): boolean;
+  need: number;
+  /** The word after the count on the meter ("2 / 3 kaupunkia"), if any. */
+  unit: string;
+  count(s: LevelState): number;
+  /** The card of the level this opens: its title and what the player does there. */
+  opens: { title: string; text: string };
 }
 
-export const GOALS: readonly Goal[] = [
-  { text: 'Perusta ensimmäinen kaupunki', hint: 'Valitse uudisasukas ja paina Perusta kaupunki tähän, tai napauta karttaa valitaksesi paikan.', reward: 20, done: s => s.cities >= 1 },
-  { text: 'Valitse tutkimus', hint: 'Napauta Valitse tutkimus ja valitse keksintö. Tiede tulee kaupungin kaupasta.', reward: 10, done: s => s.researching },
-  { text: 'Kasvata kaupunki kokoon 2', hint: 'Avaa kaupunki ja valitse Kansalaiset työstävät: Ruoka. Kun ruokavarasto täyttyy, kaupunki kasvaa ja sen alue laajenee.', reward: 20, done: s => s.biggest >= 2 },
-  { text: 'Kehitä maata', hint: 'Kaupunki voi rakentaa uudisasukkaan. Valitse sille Kehitä, niin se kastelee, kaivaa ja rakentaa teitä.', reward: 20, done: s => s.improvements >= 1 },
-  { text: 'Tee ensimmäinen keksintö', hint: 'Tiede kertyy kaupasta. Teitä ja meriruutuja työstävä kaupunki tuo kauppaa.', reward: 20, done: s => s.advances >= 1 },
-  { text: 'Rakenna ensimmäinen rakennus', hint: 'Kaupunkikortissa näkyvät rakennukset ja niiden vaatimat keksinnöt. Kullalla voi ostaa rakentamisen valmiiksi.', reward: 30, done: s => s.buildings >= 1 },
-  { text: 'Perusta toinen kaupunki', hint: 'Tiedustelija ehdottaa hyviä paikkoja, tai rakenna uudisasukas ja valitse Asuta.', reward: 40, done: s => s.cities >= 2 },
-  { text: 'Kartoita läänisi', hint: 'Tiedustelijat kartoittavat itse. Kun 60 % läänistä on kartoitettu, voit loitontaa lääniin.', reward: 40, done: s => s.openLevel <= 2 },
-  { text: 'Kasvata kaupunki kokoon 5', hint: 'Koossa 5 kaupungin alue laajenee kolmeen renkaaseen. Kastelu ja viljavarasto nopeuttavat kasvua.', reward: 50, done: s => s.biggest >= 5 },
-  { text: 'Perusta kolme kaupunkia', hint: 'Lisää kaupunkeja tuo lisää kauppaa, tiedettä ja tuotantoa.', reward: 60, done: s => s.cities >= 3 },
-  { text: 'Valitse neuvonantaja', hint: 'Yläpaneelin rintakuva avaa tason neuvonantajan. Se hoitaa kaupungit, läänin tai valtion puolestasi.', reward: 30, done: s => s.advisor },
-  { text: 'Kartoita valtiosi', hint: 'Kun 60 % valtiosta on kartoitettu, voit loitontaa valtioon. Retkikunnat ja Tutkimusmatkailija nopeuttavat.', reward: 60, done: s => s.openLevel <= 1 },
-  { text: 'Siirry monarkiaan', hint: 'Tutki Lakikokoelma ja Monarkia, ja aloita vallankumous Tutkimus-kortista. Monarkiassa ruudut tuottavat täysin.', reward: 60, done: s => s.monarchy },
-  { text: 'Kaupunki neljään lääniin', hint: 'Lääni on hallussa, kun siinä on kaupunkisi. Asuttaja ja Laajentaja ohjaavat uudisasukkaat uusiin lääneihin.', reward: 80, done: s => s.provinces >= 4 },
-  { text: 'Kasvata kaupunki yli koon 10', hint: 'Koosta 10 ylöspäin kaupunki tarvitsee vesijohdon (Rakentaminen).', reward: 100, done: s => s.biggest >= 11 },
-  { text: 'Valtaa kotivaltio', hint: 'Kaupunki kotivaltion jokaiseen seitsemään lääniin avaa planeetan ja naapurivaltiot.', reward: 150, done: s => s.openLevel === 0 },
+export const LEVEL_GOALS: readonly LevelGoal[] = [
+  {
+    level: 4, name: 'Kaupunki', text: 'Rakenna rakennus ja ensimmäinen yksikkö', reward: 30, need: 2, unit: '',
+    hint: 'Valitse kaupunkikortista maaston rakennus. Kun se valmistuu, kaupunki voi rakentaa tiedustelijan tai uudisasukkaan, ja ensimmäinen niistä avaa kaupunkialueen.',
+    count: s => (s.built ? 1 : 0) + (s.firstUnit ? 1 : 0),
+    opens: { title: 'Kaupunkialue avautui, zoomaa ulos', text: 'Kaupunkialueella tiedustelijat kartoittavat maata ja uudisasukkaat perustavat kaupunkeja.' },
+  },
+  {
+    level: 3, name: 'Kaupungit', text: 'Perusta kolme kaupunkia', reward: 60, need: 3, unit: 'kaupunkia',
+    hint: 'Tiedustelija ehdottaa hyviä paikkoja, tai rakenna uudisasukas ja valitse Asuta. Kolme kaupunkia avaa läänin.',
+    count: s => s.cities,
+    opens: { title: 'Lääni avautui, zoomaa ulos', text: 'Läänissä ohjaat kaupunkialueita: tutki, asuta tai ohita, ja lähetä retkikunta kauemmas.' },
+  },
+  {
+    level: 2, name: 'Läänit', text: 'Pidä neljä kotivaltion lääniä', reward: 80, need: 4, unit: 'hallussa',
+    hint: 'Lääni on hallussa, kun siinä on kaupunkisi. Asuttaja ja retkikunnat vievät uudisasukkaat uusiin lääneihin.',
+    count: s => s.provinces,
+    opens: { title: 'Valtio avautui, zoomaa ulos', text: 'Valtiossa valitset linjan ja tavoiteläänin, ja valtion neuvonantaja hoitaa tieteen ja verot.' },
+  },
+  {
+    level: 1, name: 'Läänit', text: 'Valtaa kotivaltio', reward: 150, need: 7, unit: 'hallussa',
+    hint: 'Kaupunki kotivaltion jokaiseen seitsemään lääniin avaa planeetan ja naapurivaltiot.',
+    count: s => s.provinces,
+    opens: { title: 'Valtio vallattu, zoomaa ulos', text: 'Planeetalla valitset kohdevaltion, ja naapurivaltiot avautuivat.' },
+  },
 ];
 
-/**
- * Goals done in a row from `index` on; the index after them and the gold they bring. A saved
- * game from before goals catches up at once.
- */
-export function advanceGoals(index: number, s: GoalState): { index: number; done: Goal[] } {
-  const done: Goal[] = [];
-  while (index < GOALS.length && GOALS[index].done(s)) done.push(GOALS[index++]);
-  return { index, done };
-}
+/** The goal of the deepest open level, or null at the planet (nothing more opens yet). */
+export const levelGoal = (openLevel: number): LevelGoal | null => LEVEL_GOALS.find(g => g.level === openLevel) ?? null;
+
+/** How far a level's goal is: the count, capped at the need. */
+export const goalCount = (g: LevelGoal, s: LevelState) => Math.min(g.need, g.count(s));

@@ -1,16 +1,34 @@
 import { describe, expect, it } from 'vitest';
+import type { LevelState } from './goals';
 import { advance, startProgress } from './progress';
 
-describe('the levels open (STORY-026, STORY-070)', () => {
-  it('a new game starts at the city; its first scout or settler opens the city area, then mapping goes on as before', () => {
+const none: LevelState = { built: false, firstUnit: false, cities: 1, provinces: 1 };
+
+describe('the levels open on their goals (STORY-070, STORY-087)', () => {
+  it('a new game starts at the city; a building and the first scout or settler open the city area', () => {
     const p = startProgress(true);
     expect(p).toEqual({ openLevel: 4, meter: 'city' });
-    // Mapping does not open anything before the first unit
-    expect(advance(p, 1, 1, false, false)).toBeNull();
-    expect(advance(p, 0, 0, false, true)).toBe(3);
+    // Cities and provinces do not count before the city level's own goal
+    expect(advance(p, { ...none, cities: 3, provinces: 7 })).toBeNull();
+    expect(advance(p, { ...none, built: true })).toBeNull();
+    expect(advance(p, { ...none, built: true, firstUnit: true })).toBe(3);
     expect(p).toEqual({ openLevel: 3, meter: 'province' });
-    expect(advance(p, 0.6, 0, false, true)).toBe(2);
-    // The old start (?classic) is at the city area
-    expect(startProgress()).toEqual({ openLevel: 3, meter: 'province' });
+  });
+
+  it('three cities open the province, four provinces held the state, all seven the planet, one at a time', () => {
+    const p = startProgress();
+    expect(p).toEqual({ openLevel: 3, meter: 'province' });
+    expect(advance(p, { ...none, cities: 2 })).toBeNull();
+    // A game ahead of its levels (an older save) opens one level a call
+    const ahead = { ...none, cities: 5, provinces: 7 };
+    expect(advance(p, ahead)).toBe(2);
+    expect(p).toEqual({ openLevel: 2, meter: 'state' });
+    expect(advance(p, { ...ahead, provinces: 3 })).toBeNull();
+    expect(advance(p, ahead)).toBe(1);
+    expect(p).toEqual({ openLevel: 1, meter: 'conquest' });
+    expect(advance(p, { ...ahead, provinces: 6 })).toBeNull();
+    expect(advance(p, ahead)).toBe(0);
+    expect(p).toEqual({ openLevel: 0, meter: 'done' });
+    expect(advance(p, ahead)).toBeNull();
   });
 });

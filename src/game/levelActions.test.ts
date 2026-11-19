@@ -4,7 +4,6 @@ import { pointToTile, tileCenter } from '../globe/hexTiles';
 import { MapState } from './mapping';
 import { areaName, compassIndex, distinctNames, landscapeOf, provinceName } from './names';
 import { tilesInRings } from './pathfinding';
-import { advance, startProgress, UNLOCK_SHARE } from './progress';
 import { Units, type World } from './units';
 
 const START = new THREE.Vector3(0.4, 0.3, 0.866).normalize();
@@ -25,24 +24,6 @@ function makeWorld(map = new MapState()): World & { map: MapState } {
     cityOf,
   };
 }
-
-describe('progress', () => {
-  it('opens the province level at 60 % of the home province, then the state level', () => {
-    const p = startProgress();
-    expect(p.openLevel).toBe(3);
-    expect(advance(p, UNLOCK_SHARE - 0.01, 0.9)).toBeNull();
-    expect(advance(p, UNLOCK_SHARE, 0.1)).toBe(2);
-    expect(p).toEqual({ openLevel: 2, meter: 'state' });
-    expect(advance(p, 1, UNLOCK_SHARE - 0.01)).toBeNull();
-    expect(advance(p, 1, UNLOCK_SHARE)).toBe(1);
-    expect(advance(p, 1, 1)).toBeNull();
-    expect(p).toEqual({ openLevel: 1, meter: 'conquest' });
-    // The planet opens with the home state conquered (STORY-016)
-    expect(advance(p, 1, 1, true)).toBe(0);
-    expect(p).toEqual({ openLevel: 0, meter: 'done' });
-    expect(advance(p, 1, 1, true)).toBeNull();
-  });
-});
 
 describe('names', () => {
   it('name areas by direction and landscape, with the illative', () => {

@@ -25,6 +25,8 @@ test('province advisors: three to choose from at the province level, each runnin
     const ids: number[] = [];
     for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 7) === home && !w.globeMap.isMapped(id)) ids.push(id);
     w.globeDebug.reveal(ids);
+    // Mapping no longer opens the province (STORY-087): it opens as if its goal were reached
+    w.globeDebug.rise();
   });
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
   await page.waitForFunction(() => { const s = (window as any).globeLevels.state; return s.level === 2 && !s.flying; }, null, { timeout: 20_000 });

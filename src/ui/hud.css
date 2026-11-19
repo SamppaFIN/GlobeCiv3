@@ -137,6 +137,8 @@
 .unlock-card[hidden] { display: none; }
 .unlock-kicker { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-accent-text); }
 .unlock-title { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.25; }
+.unlock-text { margin: 0; font-size: 14px; line-height: 1.45; text-align: center; max-width: 34ch; }
+.unlock-text[hidden] { display: none; }
 .unlock-pinch { position: relative; width: 84px; height: 84px; margin: 4px 0; }
 .unlock-pinch span {
   position: absolute; top: 30px; width: 24px; height: 24px; border-radius: 50%;
