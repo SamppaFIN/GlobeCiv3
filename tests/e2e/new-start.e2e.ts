@@ -1,6 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const state = (page: Page) => page.evaluate(() => (window as any).globeGame.state);
+/** How many of the tiles exactly four rings from a tile are mapped: the city level shows three rings. */
+const ring4Mapped = (page: Page, tile: number) => page.evaluate(t => {
+  const w = window as any;
+  const rings: Set<number>[] = [new Set([t])];
+  for (let r = 0; r < 4; r++) rings.push(new Set([...rings[r]].flatMap((id: number) => [id, ...w.globeHexTiles.neighbors(id)])));
+  return [...rings[4]].filter(id => !rings[3].has(id) && w.globeMap.isMapped(id)).length;
+}, tile);
 
 test('a new game flies down to the city level of a built capital; a building opens the units, and a scout the city area', async ({ page }, testInfo) => {
   test.setTimeout(150_000);
@@ -21,8 +28,10 @@ test('a new game flies down to the city level of a built capital; a building ope
   expect(s.units).toHaveLength(0);
   expect(s.openLevel).toBe(4);
   expect(await page.evaluate(() => (window as any).globeCamera.maxDist)).toBeLessThan(await page.evaluate(() => (window as any).globeLevels.state.frames[3] * 0.6));
-  // The city level's goal (STORY-087): a building, then a unit
-  await expect(page.locator('.hud-goal')).toHaveText('TavoiteRakenna rakennus ja ensimmäinen yksikkö+30 kultaa');
+  // The city level's goal (STORY-087): a building, then a scout (Sami 2026-11-20)
+  await expect(page.locator('.hud-goal')).toHaveText('TavoiteRakenna rakennus ja tiedustelija+30 kultaa');
+  // Only the city level shows: its three rings are mapped, the city area beyond them is not (STORY-017)
+  expect(await ring4Mapped(page, s.cities[0].tile)).toBe(0);
   await expect(page.locator('.hud-meter-value')).toHaveText('0 / 2');
 
   // A varied site: three kinds of land or more, and exactly one special resource, within two rings
@@ -59,6 +68,8 @@ test('a new game flies down to the city level of a built capital; a building ope
   await expect(units.first()).toBeDisabled();
   for (const radio of await units.all()) await expect(radio).toBeDisabled();
   await expect(card).toContainText('ensimmäisen rakennuksen jälkeen');
+  // The settler belongs to the city area: it waits for it even after the building
+  await expect(card).toContainText('kun kaupunkialue avautuu');
   expect(['fishery', 'sawmill', 'quarry', 'field']).toContain((await state(page)).cities[0].build);
   await card.getByRole('button', { name: 'Sulje' }).click();
 
@@ -79,6 +90,10 @@ test('a new game flies down to the city level of a built capital; a building ope
   await page.getByRole('button', { name: 'Tauko' }).click();
   expect((await state(page)).units.map((u: { kind: string }) => u.kind)).toContain('scout');
   await expect(page.getByRole('heading', { name: 'Kaupunkialue avautui, zoomaa ulos' })).toBeVisible();
+  // The scout shows the next level: the city area is mapped now
+  expect(await ring4Mapped(page, s.cities[0].tile)).toBeGreaterThan(0);
+  // No city sites were offered at the city level
+  expect((await state(page)).offered).toHaveLength(0);
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
   await page.waitForFunction(() => !(window as any).globeLevels.state.flying, null, { timeout: 15_000 });
   // Out at the city area round the capital: the land has sunk

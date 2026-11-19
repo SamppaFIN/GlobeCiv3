@@ -121,8 +121,9 @@ describe('governors at the city stage (STORY-070)', () => {
     // Only what the start's terrain allows
     expect(startAdvice('explore', city(1), { available: ['fishery', 'field'], built: false, soldiers: 0 })!.build).toBe('field');
     expect(startAdvice('explore', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('scout');
-    expect(startAdvice('growth', city(1), { available: all, built: true, soldiers: 0 })!.build).toBeNull();
-    expect(startAdvice('growth', city(2), { available: all, built: true, soldiers: 0 })!.build).toBe('settler');
+    // The scout opens the city area for every advisor (Sami 2026-11-20); no settler at the city level
+    expect(startAdvice('growth', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('scout');
+    expect(startAdvice('growth', city(2), { available: all.filter(b => b !== 'settler'), built: true, soldiers: 0 })!.build).toBe('scout');
     expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('warrior');
     expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 1 })!.build).toBe('scout');
   });

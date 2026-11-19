@@ -11,8 +11,8 @@
 export interface LevelState {
   /** A city has a building (the city level's first step, STORY-070). */
   built: boolean;
-  /** A scout or a settler is on the map. */
-  firstUnit: boolean;
+  /** A scout is on the map (Sami 2026-11-20: the scout opens the city area). */
+  scout: boolean;
   cities: number;
   /** The home state's provinces held, of seven; one without land counts (STORY-016, STORY-058). */
   provinces: number;
@@ -37,9 +37,9 @@ export interface LevelGoal {
 
 export const LEVEL_GOALS: readonly LevelGoal[] = [
   {
-    level: 4, name: 'Kaupunki', text: 'Rakenna rakennus ja ensimmäinen yksikkö', reward: 30, need: 2, unit: '',
-    hint: 'Valitse kaupunkikortista maaston rakennus. Kun se valmistuu, kaupunki voi rakentaa tiedustelijan tai uudisasukkaan, ja ensimmäinen niistä avaa kaupunkialueen.',
-    count: s => (s.built ? 1 : 0) + (s.firstUnit ? 1 : 0),
+    level: 4, name: 'Kaupunki', text: 'Rakenna rakennus ja tiedustelija', reward: 30, need: 2, unit: '',
+    hint: 'Valitse kaupunkikortista maaston rakennus. Kun se valmistuu, kaupunki voi rakentaa tiedustelijan, joka avaa kaupunkialueen.',
+    count: s => (s.built ? 1 : 0) + (s.scout ? 1 : 0),
     opens: { title: 'Kaupunkialue avautui, zoomaa ulos', text: 'Kaupunkialueella tiedustelijat kartoittavat maata ja uudisasukkaat perustavat kaupunkeja.' },
   },
   {
