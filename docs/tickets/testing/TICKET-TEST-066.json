@@ -1,0 +1,60 @@
+{
+  "id": "TICKET-TEST-066",
+  "story": "STORY-083",
+  "implementation_ticket": "TICKET-IMPL-066",
+  "status": "review",
+  "fix_summary": {
+    "problem_and_root_cause": "Pelattavuutta ei mitattu kenenkään muun kuin Samin silmin, eikä sokeaa pelitestaajaa ollut.",
+    "files_changed": [
+      ".claude/agents/inanna.md",
+      ".mcp.json"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö (Linux, ei GPU:ta), Node 22.23.5, Google Chrome headless SwiftShaderilla, juurikäyttäjä (--no-sandbox)",
+    "tooling": "@playwright/mcp 0.0.86 stdio-JSON-RPC:llä (raaputusskripti repon ulkopuolella)",
+    "cases": [
+      {
+        "steps": "tools/list repon .mcp.json-argumenteilla (+ --headless --no-sandbox)",
+        "expected": "Jokainen inanna.md:n MCP-työkalu löytyy",
+        "result": "19/19 löytyy. Inannalta puuttuvat tarkoituksella browser_evaluate, browser_run_code_unsafe, browser_console_messages, browser_network_request(s), browser_file_upload, browser_drop, browser_fill_form, browser_find, browser_emulate_media, browser_navigate_back ja browser_tabs.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Agentin frontmatter: tools ja model",
+        "expected": "Ei Read-, Grep-, Glob- eikä Bash-työkalua; model sonnet",
+        "result": "20 työkalua: Write ja 19 MCP-työkalua; model sonnet",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Savutesti MCP:n kautta: browser_navigate https://samppafin.github.io/GlobeCiv3/?seed=42 → browser_snapshot → browser_click 'Uusi peli' (ref) → odota 12 s → browser_take_screenshot → browser_mouse_click_xy (640, 420)",
+        "expected": "Peli aukeaa, uusi peli alkaa ja kuvakaappaus tallentuu annetulla nimellä",
+        "result": "Läpi. Kuvassa kaupunkialuetaso heksoineen ja kortti 'Kotialue: tiedustelija löysi hyvän paikan kaupungille' (Peli pysähtyi · Päivä 2).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Inanna pelaa kolmella persoonalla ja kirjoittaa raportin",
+        "expected": "PLAYTEST-001",
+        "result": "Tehdään STORY-084:ssä. Agenttia ei voi kutsua tästä pilvi-istunnosta, koska projektin MCP-palvelin ja agentti latautuvat Claude Codessa.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": "Ei tarkistettu (ei Inannan tehtävä).",
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Claude Code käynnistää Playwright-palvelimen ja Inanna avaa pelin Samin koneella",
+        "checked": false
+      },
+      {
+        "item": "Persoonat ja arviot kelpaavat",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

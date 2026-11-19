@@ -1,0 +1,25 @@
+{
+  "id": "TICKET-IMPL-066",
+  "story": "STORY-083",
+  "plan": "PLAN-066",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    ".claude/agents/inanna.md",
+    ".mcp.json",
+    "docs/playtests/README.md",
+    "docs/playtests/shots/.gitkeep",
+    ".github/workflows/deploy.yml",
+    "CLAUDE.md"
+  ],
+  "change_summary": "Inanna-agentti (Sonnet, 20 työkalua: Write ja 19 Playwright-MCP:n selaintyökalua), persoonat Uusi pelaaja puhelimella (384 × 824), Rakentaja ja Valloittaja (1280 × 800), arvioiden asteikko 1–5 viidelle arviolle, raportin rakenne ja kuvakaappausten nimeäminen. .mcp.json: @playwright/mcp 0.0.86. README ajo-ohjeineen ja rajoituksineen. CLAUDE.md:n osio 5 kertoo, miten Inanna kutsutaan. CI ohittaa .claude/**- ja .mcp.json-muutokset.",
+  "impact_analysis": {
+    "changed_symbols": [],
+    "call_sites_found": [],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Turvallisuuteen vaikuttava muutos (tietoturvasääntö 4): uusi kehitystyökalu @playwright/mcp ladataan npx:llä ensimmäisellä käyttökerralla, ja se avaa selaimen verkkoon. Versio on lukittu (0.0.86), lisenssi Apache-2.0, eikä se päädy julkaistuun peliin. Claude Code kysyy luvan ennen kuin se käynnistää projektin MCP-palvelimen."
+}
