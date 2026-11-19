@@ -1,0 +1,47 @@
+{
+  "id": "TICKET-TEST-072",
+  "story": "STORY-099",
+  "implementation_ticket": "TICKET-IMPL-072",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Tasojen omasta sisällöstä ja aikakausista ei ollut suunnitelmaa.",
+    "files_changed": [
+      "docs/design/tasot-ja-aikakaudet.md"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Katselmointi",
+    "tooling": "Lukeminen",
+    "cases": [
+      {
+        "steps": "Jokaisella tasolla rakennukset, yksiköt, politiikka, uskonto ja vaikutus aikakausittain, lähde jokaisella rivillä",
+        "expected": "Kriteeri 1",
+        "result": "Kaikki viisi tasoa ja neljä aikakautta; nykyinen sisältö merkitty nyt-merkinnällä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Jako storyihin ja Samin hyväksyntä",
+        "expected": "Kriteeri 2",
+        "result": "Jako tehty; hyväksyntä odottaa Samia",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tasot ja aikakaudet vastaavat visiota",
+        "checked": false
+      },
+      {
+        "item": "Vastaukset suunnitelman kolmeen kysymykseen",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

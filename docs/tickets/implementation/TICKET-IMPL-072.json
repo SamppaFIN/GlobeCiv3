@@ -1,0 +1,20 @@
+{
+  "id": "TICKET-IMPL-072",
+  "story": "STORY-099",
+  "plan": "PLAN-072",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "docs/design/tasot-ja-aikakaudet.md"
+  ],
+  "change_summary": "Suunnitelma tasojen ja aikakausien sisällöstä: viisi tasotaulukkoa (kaupunki, kaupunkialue, lääni, valtio ja planeetta) neljällä aikakaudella, lähteet, jako storyihin ja kolme kysymystä Samille.",
+  "impact_analysis": {
+    "changed_symbols": [],
+    "call_sites_found": [],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Pelkkä suunnitelma, ei koodia."
+}

@@ -1,0 +1,31 @@
+{
+  "id": "PLAN-072",
+  "story": "STORY-099",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Suunnitelma docs/design/tasot-ja-aikakaudet.md: neljä aikakautta (varhaisaika, rauta-aika, teollinen aika ja atomiaika), jotka avautuvat avainkeksinnöistä, ja jokaiselle tasolle taulukko rakennuksista, yksiköistä, politiikasta ja uskonnosta aikakausittain sekä siitä, mihin ne vaikuttavat. Jokaiselle riville merkitään, onko se pelissä jo, tehdäänkö se MVP:ssä vai sen jälkeen, ja mistä esikuvasta mekaniikka tulee. Sisältö jaetaan nykyisiin storyihin 088–094, 097 ja 098, ja MVP:n jälkeiset kokonaisuudet nimetään.",
+  "alternatives_considered": [
+    {
+      "name": "Uudet storyt jokaiselle tasolle ja aikakaudelle",
+      "pros": "Tarkka seuranta",
+      "cons": "MVP paisuisi selvästi yli 20 storyn",
+      "rejected_because": "Sisältö mahtuu nykyisiin storyihin, ja uudet aikakaudet ja uskonto tulevat MVP:n jälkeen"
+    }
+  ],
+  "files_to_change": [
+    "docs/design/tasot-ja-aikakaudet.md"
+  ],
+  "open_questions": [
+    "Hallitusmuodon taso",
+    "Uskonnon syvyys",
+    "Aikakauden vaihdon ehto"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Suunnitelma ja jako storyihin",
+      "verify": "Sami lukee ja hyväksyy"
+    }
+  ],
+  "status": "approved"
+}
