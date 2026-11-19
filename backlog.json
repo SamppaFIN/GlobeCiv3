@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T12:28:58Z",
+    "generated_at": "2026-11-19T13:02:39Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "17e5b1f",
+    "git_commit": "e1ed01c",
     "git_branch": "main",
     "language": "fi"
   },
@@ -198,7 +198,7 @@
       "title": "Hauskuuden mittaus",
       "icon": "🦁",
       "description": "Sokea tekoälypelitestaaja Inanna ja Nodessa ajettava autopilotti mittaavat, missä peli on sekava tai tylsä: ensin lähtötaso nykyisestä pelistä, sitten jokainen pelattavuusmuutos.",
-      "status": "todo",
+      "status": "in_progress",
       "stories": [
         "STORY-083",
         "STORY-084",
@@ -211,9 +211,10 @@
       "title": "Tasotikkaat",
       "icon": "🪜",
       "description": "Runko, jossa jokainen taso on oma pelinsä: komentokerros, tason tavoite ja nousu, järjestelmät vain omalla tasollaan ja alempi taso neuvonantajien varassa.",
-      "status": "todo",
+      "status": "in_progress",
       "stories": [
         "STORY-086",
+        "STORY-095",
         "STORY-087",
         "STORY-017",
         "STORY-014"
@@ -644,6 +645,7 @@
       ],
       "acceptance_criteria": [
         "Uudessa pelissä kaupunkitasolla ei näy ylempien tasojen toimintoja, ja diplomatia, sota ja kauppa näkyvät vasta valtiotasolla. Vanha alku (?classic) toimii kuten ennen.",
+        "Peli pysähtyy vain, kun jokin on oikeasti uutta (esimerkiksi ensimmäinen kaupunkipaikka ja ensimmäiset rosvot). Toistuvat ehdotukset ja tapahtumat ovat ilmoituksia, jotka eivät pysäytä peliä (PLAYTEST-001, korjaus 1).",
         "Sekavuusindeksi laskee lähtötasosta (PLAYTEST-001 ja autopilotti)."
       ],
       "status": "todo",
@@ -2246,7 +2248,8 @@
       "effort": "M",
       "depends_on": [
         "STORY-086",
-        "STORY-087"
+        "STORY-087",
+        "STORY-095"
       ],
       "acceptance_criteria": [
         "Vitest ajaa uuden pelin neuvonantajien varassa siemenellä 42 ja raportoi viisi mittaria: aika ensimmäiseen päätökseen, päätöksiä pelipäivää kohden, pisin tyhjä jakso, sekavuusindeksi (uusia järjestelmiä minuutissa) ja aika jokaiseen nousuun.",
@@ -2272,12 +2275,12 @@
         "Kaupungin perustaminen, rakennuksen sijoitus ja siirto, yksikön tilaus ja tutkimusvalinta kulkevat komentoina sekä pelaajalta että neuvonantajilta.",
         "Sama siemen ja sama komentolista tuottavat identtisen tilan (Vitest), ja uusinta tallennuksen komentolokista toistaa pelin."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "in_progress",
+      "progress": 60,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-068",
+        "implementation": "TICKET-IMPL-068",
+        "testing": "TICKET-TEST-068"
       }
     },
     {
@@ -2451,6 +2454,29 @@
       "acceptance_criteria": [
         "Kaupunkivaltiot, paimentolaiset, kilpailijat, diplomatia, sota ja kauppa aktivoituvat vasta valtiotasolla.",
         "Valtiotason tavoite näkyy, ja planeettataso näkyy lukittuna merkinnällä \"MVP:n jälkeen\"."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-095",
+      "epic": "EPIC-009",
+      "title": "Simulaation ydin irti selaimesta",
+      "type": "chore",
+      "narrative": "Samina haluan pelin päivän laskennan ilman selainta, jotta autopilotti, uusinta ja myöhemmin palvelin ajavat samaa simulaatiota.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-086"
+      ],
+      "acceptance_criteria": [
+        "Päivän laskenta (yksiköt, kaupungit, kilpailijat, diplomatia, rosvot ja neuvonantajat) on moduulissa, joka ei tuo Three.js:ää eikä DOMia, ja selainpeli kutsuu sitä. Pelin käytös ei muutu, ja selaintestit pysyvät vihreinä.",
+        "Haut, jotka nyt jaetaan framejen kesken (kaupunkivaltioiden haku), valmistuvat ennen päivää, jota ne koskevat, joten ruudunpäivitys ei vaikuta peliin.",
+        "Vitest ajaa siemenen 42 pelin Nodessa ja toistaa sen tallennuksen komentolokista identtiseen tilaan (STORY-086:n uusintakriteeri)."
       ],
       "status": "todo",
       "progress": 0,

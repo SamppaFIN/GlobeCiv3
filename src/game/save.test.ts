@@ -48,6 +48,13 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       cities: [{ id: 0, name: 'Mielikkälä', tile: START_TILE + 40, capital: true, size: 2, food: 5, shields: 9, build: 'settler', buildings: [], focus: 'balanced', entertainers: 0 }],
       units: [{ id: 0, kind: 'warrior', tile: START_TILE + 40, path: [], wait: 0, home: 0, site: null }, { id: 1, kind: 'settler', tile: START_TILE + 41, path: [START_TILE + 42], wait: 1, home: 0, site: START_TILE + 43 }],
     }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000, maps: 3 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, goal: 3, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3,
+    commands: [
+      { day: 3, by: 'player', cmd: { kind: 'settle', tile: START_TILE + 5 } },
+      { day: 4, by: 'player', cmd: { kind: 'found', tile: START_TILE + 6 } },
+      { day: 9, by: 'city', cmd: { kind: 'build', city: START_TILE, build: 'granary' } },
+      { day: 10, by: 'player', cmd: { kind: 'move', city: START_TILE, building: 'granary', tile: START_TILE + 1 } },
+      { day: 11, by: 'state', cmd: { kind: 'study', target: 'masonry' } },
+    ],
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }
@@ -106,6 +113,16 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.ties[0].state = 'truce'; })).toBeNull();
     expect(broken(s => { s.ties[0].attitude = 101; })).toBeNull();
     expect(broken(s => { s.research.target = 'unicorns'; })).toBeNull();
+    // The command log (STORY-086)
+    expect(broken(s => { s.commands[0].cmd.kind = 'nuke'; })).toBeNull();
+    expect(broken(s => { s.commands[0].by = 'rival'; })).toBeNull();
+    expect(broken(s => { s.commands[0].cmd.tile = TILE_COUNT; })).toBeNull();
+    expect(broken(s => { s.commands[1].cmd.tile = -1; })).toBeNull();
+    expect(broken(s => { s.commands[2].cmd.build = 'dragon'; })).toBeNull();
+    expect(broken(s => { s.commands[3].cmd.building = 'warrior'; })).toBeNull();
+    expect(broken(s => { s.commands[4].cmd.target = 'unicorns'; })).toBeNull();
+    expect(broken(s => { s.commands[4].day = -1; })).toBeNull();
+    expect(broken(s => { s.commands = {}; })).toBeNull();
     // A kind of resource is a study too (STORY-072)
     expect(broken(s => { s.research.target = 'gold'; })?.research.target).toBe('gold');
     expect(validateSave(null, LIMITS)).toBeNull();
@@ -130,6 +147,17 @@ describe('saved game (STORY-036)', () => {
     const s = validateSave(old, LIMITS)!;
     expect(s.war).toEqual({ target: null, marching: false, losses: [], razed: [], routed: [] });
     expect('native' in s.cities[0]).toBe(false);
+  });
+
+  it('a save from before the command log (STORY-086) has none, and a command keeps only its own fields', () => {
+    const { data } = playedSave();
+    const old: any = JSON.parse(JSON.stringify(data));
+    delete old.commands;
+    expect('commands' in validateSave(old, LIMITS)!).toBe(false);
+    const extra: any = JSON.parse(JSON.stringify(data));
+    extra.commands[0].cmd.build = 'granary';
+    extra.commands[0].note = 'x';
+    expect(validateSave(extra, LIMITS)!.commands![0]).toEqual({ day: 3, by: 'player', cmd: { kind: 'settle', tile: START_TILE + 5 } });
   });
 
   it('keeps no property it did not check, and touches no prototype', () => {

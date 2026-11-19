@@ -4,7 +4,8 @@
  */
 import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
-import { isUp, move, placeAll, spots, standsOnTile, BEST, PLACE_RINGS, type Ground } from '../game/placement';
+import { isUp, placeAll, spots, standsOnTile, BEST, PLACE_RINGS, type Ground } from '../game/placement';
+import { CommandLog, execute, type Actor, type Command } from '../game/commands';
 import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
 import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
 import { createTradeCard, type TradeView } from '../ui/tradeCard';
@@ -544,6 +545,7 @@ function snapshot(): SaveData | null {
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
     research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, goal: play.goal,
+    commands: play.commands.save(),
   };
 }
 
@@ -664,6 +666,8 @@ interface Play {
   listOpen: boolean;
   listTab: ListTab;
   hud: ReturnType<typeof createGameHud>;
+  /** The commands that took effect (STORY-086, rule 7). */
+  commands: CommandLog;
 }
 let play: Play | null = null;
 
@@ -673,6 +677,8 @@ const terrainOf = (id: number): Terrain => {
 };
 /** True while the units take their day: tiles mapped then may hold discoveries. */
 let scouting = false;
+/** The day being simulated inside a frame that runs several days, for the command log. */
+let tickDay: number | null = null;
 /** Tests of the clock and the units turn ruins off (they change gold, units and advances). */
 let discoveriesOn = true;
 /** Site offers stop the game too; tests of other things turn them off with discoveries. */
@@ -733,7 +739,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     setMode: (mode: Mode) => { if (play) play.units.setMode(play.units.units[play.selected], mode); },
     setTask: (task: SettlerTask) => { if (play) play.units.setTask(play.units.units[play.selected], task, world); },
     toggleFlagTool: () => { if (play) play.flagTool = !play.flagTool; },
-    found: () => { if (play) play.units.found(world); },
+    found: () => { const site = play?.units.currentSite(); if (site !== null && site !== undefined) dispatch({ kind: 'found', tile: site }, 'player'); },
     nextSite: () => { if (play) play.units.nextSite(); },
     nextUnit: () => {
       if (!play) return;
@@ -759,7 +765,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, goal: 0, listOpen: false, listTab: 'cities', hud, commands: new CommandLog() };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -784,6 +790,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     // The ties with them (STORY-076); a save from before meets them anew
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? play.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
     research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, goal: saved.goal,
+    commands: new CommandLog(saved.commands ?? []),
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -982,8 +989,7 @@ function cityDays() {
   // With nothing chosen the people study a kind found and not known (STORY-072, own)
   if (play.research.target === null) {
     const kind = play.research.available(foundKinds).find(isKind);
-    if (kind) {
-      play.research.target = kind;
+    if (kind && dispatch({ kind: 'study', target: kind }, 'people')) {
       discoveryCard.notice(`Kansa tutkii: ${studyName(kind).toLowerCase()}`);
     }
   }
@@ -1107,25 +1113,40 @@ function chooseSite(index: number) {
   const o = play.offers.shift();
   discoveryCard.hide();
   if (!o || index !== 0) return;
-  settleAt(o.tile, true);
+  // The offer's card selects the settler; from the hex card it stays unselected, so that taps open hexes
+  const settler = idleSettler();
+  if (dispatch({ kind: 'settle', tile: o.tile }, 'player') && settler) play.selected = play.units.units.indexOf(settler);
 }
 
-/**
- * A city on a site: a free settler goes there, or the capital builds one for it. The offer's
- * card selects the settler; from the hex card it stays unselected, so that taps open hexes.
- */
-function settleAt(tile: number, select = false) {
-  if (!play) return;
+/** A city on a site: a free settler goes there, or the capital builds one for it (the settle command). */
+function settleAt(tile: number): boolean {
+  if (!play) return false;
   const settler = idleSettler();
   if (settler) {
     sendSettler(settler, tile);
-    if (select) play.selected = play.units.units.indexOf(settler);
     discoveryCard.notice(`${settler.name} lähti perustamaan kaupunkia`);
-  } else if (play.cities.length) {
-    play.cities[0].build = 'settler';
-    play.pendingSite = tile;
-    discoveryCard.notice(`${play.cities[0].name} rakentaa uudisasukkaan kaupunkipaikalle`);
+    return true;
   }
+  if (!play.cities.length) return false;
+  play.cities[0].build = 'settler';
+  play.pendingSite = tile;
+  discoveryCard.notice(`${play.cities[0].name} rakentaa uudisasukkaan kaupunkipaikalle`);
+  return true;
+}
+
+/** The selected settler sets out for its marked site (the found command). */
+function foundSite(tile: number): boolean {
+  if (!play || !play.units.settler || play.units.currentSite() !== tile) return false;
+  play.units.found(world);
+  return true;
+}
+
+/** Every act of the player and the advisors goes through here and into the log (STORY-086, rule 7). */
+function dispatch(cmd: Command, by: Actor): boolean {
+  if (!play) return false;
+  const done = execute(cmd, { cities: play.cities, research: play.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite });
+  if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
+  return done;
 }
 
 const cityLabels = createCityLabels(hud_root, id => {
@@ -1732,9 +1753,8 @@ const cityCard = createCityCard(hud_root, {
   // Shields in store are kept: both builds are units, so Freeciv has no change penalty
   setFocus: (focus: Focus) => { if (play && play.openCity !== null) play.cities[play.openCity].focus = focus; },
   setBuild: (build: Build) => {
-    const need = NEEDS[build];
-    if (!play || play.openCity === null || (need && !play.research.known.has(need))) return;
-    play.cities[play.openCity].build = build;
+    if (!play || play.openCity === null) return;
+    dispatch({ kind: 'build', city: play.cities[play.openCity].tile, build }, 'player');
   },
   openResearch: () => { if (play) play.researchOpen = true; },
   buy: () => {
@@ -1944,8 +1964,8 @@ function advisorDay() {
     const build = war ?? ordered ?? advice?.build ?? null;
     // A settler for a waiting city site is not changed
     if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null)) {
-      c.build = build;
-      advise(`${c.name} rakentaa: ${BUILDS[build].name}`, war ? 'state' : ordered ? 'province' : 'city');
+      const by = war ? 'state' : ordered ? 'province' : 'city';
+      if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise(`${c.name} rakentaa: ${BUILDS[build].name}`, by);
     }
     // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
     if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
@@ -2046,10 +2066,7 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
   if (p.research.target === null) {
     // A kind of resource first: it is cheap, and it shows and yields (STORY-072)
     const next = p.research.available(foundKinds).find(isKind) ?? nextAdvance(plan.order, p.research.available() as Advance[]);
-    if (next) {
-      p.research.target = next;
-      advise(`tutkitaan: ${studyName(next)}`, 'state');
-    }
+    if (next && dispatch({ kind: 'study', target: next }, 'state')) advise(`tutkitaan: ${studyName(next)}`, 'state');
   }
   if (startRevolution()) advise('vallankumous Monarkiaan', 'state');
   // Luxury a step up while a city is in disorder, a step down after calm days
@@ -2278,7 +2295,7 @@ function researchLine(): string {
 
 const researchCard = createResearchCard(hud_root, {
   close: () => { if (play) play.researchOpen = false; },
-  choose: (advance: Study) => { if (play && play.research.available(foundKinds).includes(advance)) play.research.target = advance; },
+  choose: (advance: Study) => { dispatch({ kind: 'study', target: advance }, 'player'); },
   setTax: (tax: number) => { if (play) play.tax = tax; },
   setLux: (lux: number) => { if (play) play.lux = lux; },
   revolution: () => { startRevolution(); },
@@ -2702,7 +2719,7 @@ function updateRaidAlert() {
   // The Vartija answers the card itself: the city builds a soldier (STORY-049)
   if (play.cityAdvisor === 'defend') {
     const c = play.cities.find(x => x.tile === band.city);
-    chooseRaid(0);
+    chooseRaid(0, 'city');
     if (c) advise(`${c.name} rakentaa sotilaan rosvoja vastaan`);
     return;
   }
@@ -2734,14 +2751,13 @@ function updateRaidAlert() {
   discoveryCard.setRing(at?.[0] ?? null, at?.[1] ?? null);
 }
 
-function chooseRaid(index: number) {
+function chooseRaid(index: number, by: Actor = 'player') {
   if (!play) return;
   play.raidAlert = false;
   discoveryCard.hide();
   const band = play.raids.band;
   const c = band && play.cities.find(x => x.tile === band.city);
-  if (index !== 0 || !c) return;
-  c.build = bestSoldier();
+  if (index !== 0 || !c || !dispatch({ kind: 'build', city: c.tile, build: bestSoldier() }, by)) return;
   discoveryCard.notice(`${c.name} rakentaa ${c.build === 'phalanx' ? 'falangin' : 'soturin'}`);
 }
 
@@ -2972,7 +2988,7 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
   if (play.moving) {
     const { city, building } = play.moving;
     const c = play.cities.find(x => x.tile === city);
-    if (hit && c && move(c, building, pointToTile(hit), ground)) {
+    if (hit && c && dispatch({ kind: 'move', city: c.tile, building, tile: pointToTile(hit) }, 'player')) {
       play.tileOpen = c.placed![building]!;
       stopMoving();
     }
@@ -3155,7 +3171,7 @@ function tileView(id: number): TileView {
   const met = rival ? p.rivals.indexOf(rival.rival) : -1;
   const actions: { label: string; run: () => void }[] = [
     ...movable(id).map(m => ({ label: `Siirrä ${BUILDS[m.building].name.toLowerCase()}`, run: () => startMoving(m) })),
-    ...(settle ? [{ label: settle, run: () => settleAt(id) }] : []),
+    ...(settle ? [{ label: settle, run: () => { dispatch({ kind: 'settle', tile: id }, 'player'); } }] : []),
     // A rival met: its diplomacy (STORY-076)
     ...(met >= 0 && p.ties[met]?.met ? [{ label: `Diplomatia: ${rival!.rival.name}`, run: () => openDiplomacy(met) }] : []),
   ];
@@ -3746,6 +3762,7 @@ function updatePlay(dt: number) {
   const days = play.offers.length || play.raidAlert || treaty || over ? 0 : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
+    tickDay = clock.day - (days - 1 - d);
     scouting = true;
     const founded = play.units.day(world);
     scouting = false;
@@ -3761,6 +3778,7 @@ function updatePlay(dt: number) {
       break;
     }
   }
+  tickDay = null;
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   updateSiteOffer();
   updateCityLabels();
@@ -4112,6 +4130,7 @@ frameStartPlanet();
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
+      commands: play?.commands.entries.map(e => ({ day: e.day, by: e.by, kind: e.cmd.kind })) ?? [],
       research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: play?.goal ?? null,
     };
   },

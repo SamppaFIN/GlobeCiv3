@@ -92,11 +92,11 @@ Toiminto #19–#20 (päivä 95–101). Pelaaja olisi lopettanut ensimmäisen kah
 | 11 | 31 | Zoomaa ulos | Alue näkyviin | Selkeä aluekartta | shots/PLAYTEST-001-p2-11.webp |
 | 12 | 46 | Hyväksyin ehdotuksen, napautin ruutua | Ruudun tiedot | Ruutukortti hyvin informatiivinen (tuotto, kaupungin tuotto, korkeus) | shots/PLAYTEST-001-p2-12.webp |
 | 13 | 48 | Napautin kaupunkia | Kaupunkikortti | Peli pysähtyi uuteen ehdotukseen, klikkaus meni ohi | shots/PLAYTEST-001-p2-13.webp |
-| 14–15 | 62–68 | Hyväksyin, hylkäsin | Rauha | Ehdotus, sitten rosvokortti | shots/PLAYTEST-001-p2-14.webp, p2-15.png |
+| 14–15 | 62–68 | Hyväksyin, hylkäsin | Rauha | Ehdotus, sitten rosvokortti | shots/PLAYTEST-001-p2-14.webp, p2-15.webp |
 | 16 | 80 | Rakenna soturi | Turva | "Soturi torjui rosvon · Aamuranta" — hyvä palaute; heti uusi ehdotus | shots/PLAYTEST-001-p2-16.webp |
-| 17–18 | 84–101 | Luota puolustukseen | Rosvo hyökkää | Lopputulos jäi näkemättä, peli eteni; "Hopealahti rakensi: Soturi" | shots/PLAYTEST-001-p2-17.webp, p2-18.png |
+| 17–18 | 84–101 | Luota puolustukseen | Rosvo hyökkää | Lopputulos jäi näkemättä, peli eteni; "Hopealahti rakensi: Soturi" | shots/PLAYTEST-001-p2-17.webp, p2-18.webp |
 | 19 | 106 | Tauko, luettelo | Yleiskuva | Aamuranta "Koko 1" (oli 2): uudisasukas vei asukkaan, ei selitetty; Kivisalmi koko 3 | shots/PLAYTEST-001-p2-19.webp |
-| 20–22 | 106 | Avasin Kivisalmen, valitsin Ruoka | Ruoka nousee | Luvut samat (+1 ruoka, +8 tuotanto) ennen ja jälkeen, vihjeteksti vaihtui | shots/PLAYTEST-001-p2-20.webp, p2-21.png, p2-22.png |
+| 20–22 | 106 | Avasin Kivisalmen, valitsin Ruoka | Ruoka nousee | Luvut samat (+1 ruoka, +8 tuotanto) ennen ja jälkeen, vihjeteksti vaihtui | shots/PLAYTEST-001-p2-20.webp, p2-21.webp, p2-22.webp |
 | 23 | 112 | Jatkoin 1×, odotin | Kasvu | Kasvuaika 30 → 24 pv, ruoka sama; Kassa 724 → 840 kultaa, eikä käyttöä | shots/PLAYTEST-001-p2-23.webp |
 | 24 | 117 | Tauko | Rauha | Rosvokortti, "Soturi voittaa 53 %" vaikka kaupungissa oli kaksi sotilasta | shots/PLAYTEST-001-p2-24.webp |
 
@@ -127,8 +127,8 @@ Toiminto #24 (päivä 117): kassa kasvaa ilman käyttöä, painotuksen valinta e
 | 6–7 | 32 | Zoomaa ulos | Kartta | Heti paikkaehdotus | shots/PLAYTEST-001-p3-07.webp |
 | 8–9 | 54 | Hyväksyin, luettelo | Valtiot | Näin Tuulikallion kortin, 4× jatkui | shots/PLAYTEST-001-p3-09.webp |
 | 10–12 | 62–66 | Luettelo → Diplomatia | Vastustajat | "Ei vielä tavattuja kilpailijoita. Kilpailija tavataan, kun sen kaupunki näkyy kartalla." | shots/PLAYTEST-001-p3-13.webp |
-| 13–16 | 67–90 | 4×, rosvokortit | Hyökkäys | Kolme rosvokorttia 25 päivässä, ei vihollisia | shots/PLAYTEST-001-p3-14.webp, p3-15.png, p3-16.png |
-| 17–19 | 93–104 | Soturi, hyväksy, 4× 20 s | Sota | 20 s oikeaa aikaa = 3 pelipäivää (pysäytyksiä); neljäs rosvokortti | shots/PLAYTEST-001-p3-17.webp, p3-18.png |
+| 13–16 | 67–90 | 4×, rosvokortit | Hyökkäys | Kolme rosvokorttia 25 päivässä, ei vihollisia | shots/PLAYTEST-001-p3-14.webp, p3-15.webp, p3-16.webp |
+| 17–19 | 93–104 | Soturi, hyväksy, 4× 20 s | Sota | 20 s oikeaa aikaa = 3 pelipäivää (pysäytyksiä); neljäs rosvokortti | shots/PLAYTEST-001-p3-17.webp, p3-18.webp |
 
 ### Hämmennyksen hetket
 - Toiminto #5 (päivä 26): neljä asiaa yhtä aikaa.
@@ -147,9 +147,9 @@ Toiminto #19 (päivä 104): viidennen rosvokortin jälkeen Valloittaja olisi sul
 
 ## Kolme tärkeintä korjausta
 
-1. **Pelin pysäyttävät kortit tulevat liian usein ja ovat liian samanlaisia.** Kaupunkipaikkaehdotus ja rosvokortti pysäyttivät pelin noin 12 kertaa ~120 päivässä kaikilla persoonilla, ja usein kortti oli sama kuin edellinen. Pelaajan pitäisi kokea, että peli etenee rauhassa ja pysähtyy vain kerran silloin, kun jokin on oikeasti uutta (esimerkiksi ensimmäinen kaupunkipaikka ja ensimmäinen rosvo). Myöhemmät ehdotukset voisivat olla pieni ilmoitus ilman pysäytystä (kuvat shots/PLAYTEST-001-p1-14.webp, p1-15.png, p1-17.png, p3-14.png, p3-16.png, p3-18.png).
-2. **Tasot, tavoitteet ja kortit ehtivät päällekkäin, eikä tavoitepalkki pysy mukana.** Tason avautumiskortti ilmestyy kaupunkikortin, uudisasukaskortin ja ilmoituksen päälle (shots/PLAYTEST-001-p1-19.webp, p3-06.png, p2-10.png), ja tavoite "Kasvata kaupunki kokoon 2" jää näkyviin vaikka pelaaja on jo edennyt. Pelaajan pitäisi nähdä aina yksi tavoite, jonka edistymisen hän näkee, ja kun jokin uusi taso aukeaa, muut kortit odottavat vuoroaan.
-3. **Valinnoilla ja kassalla ei näytä olevan seurausta, eikä Valloittajalla ole mitään tekemistä.** Ruoka/Tuotanto-painotus ei muuttanut lukuja (shots/PLAYTEST-001-p2-22.webp, p2-23.png), kassa kasvoi yli 800 kultaan ilman käyttöä, rosvokortin 53 % ei muuttunut soturimäärän mukaan ja vastustajia ei näkynyt 100 päivään (shots/PLAYTEST-001-p3-13.webp). Pelaajan pitäisi nähdä heti valintansa jälkeen luvun muuttuvan (esimerkiksi ruoka +1 → +2), saada kullalle selkeä käyttö ja nähdä vastustaja kartalla ennen ensimmäistä sataa päivää.
+1. **Pelin pysäyttävät kortit tulevat liian usein ja ovat liian samanlaisia.** Kaupunkipaikkaehdotus ja rosvokortti pysäyttivät pelin noin 12 kertaa ~120 päivässä kaikilla persoonilla, ja usein kortti oli sama kuin edellinen. Pelaajan pitäisi kokea, että peli etenee rauhassa ja pysähtyy vain kerran silloin, kun jokin on oikeasti uutta (esimerkiksi ensimmäinen kaupunkipaikka ja ensimmäinen rosvo). Myöhemmät ehdotukset voisivat olla pieni ilmoitus ilman pysäytystä (kuvat shots/PLAYTEST-001-p1-14.webp, p1-15.webp, p1-17.webp, p3-14.webp, p3-16.webp, p3-18.webp).
+2. **Tasot, tavoitteet ja kortit ehtivät päällekkäin, eikä tavoitepalkki pysy mukana.** Tason avautumiskortti ilmestyy kaupunkikortin, uudisasukaskortin ja ilmoituksen päälle (shots/PLAYTEST-001-p1-19.webp, p3-06.webp, p2-10.webp), ja tavoite "Kasvata kaupunki kokoon 2" jää näkyviin vaikka pelaaja on jo edennyt. Pelaajan pitäisi nähdä aina yksi tavoite, jonka edistymisen hän näkee, ja kun jokin uusi taso aukeaa, muut kortit odottavat vuoroaan.
+3. **Valinnoilla ja kassalla ei näytä olevan seurausta, eikä Valloittajalla ole mitään tekemistä.** Ruoka/Tuotanto-painotus ei muuttanut lukuja (shots/PLAYTEST-001-p2-22.webp, p2-23.webp), kassa kasvoi yli 800 kultaan ilman käyttöä, rosvokortin 53 % ei muuttunut soturimäärän mukaan ja vastustajia ei näkynyt 100 päivään (shots/PLAYTEST-001-p3-13.webp). Pelaajan pitäisi nähdä heti valintansa jälkeen luvun muuttuvan (esimerkiksi ruoka +1 → +2), saada kullalle selkeä käyttö ja nähdä vastustaja kartalla ennen ensimmäistä sataa päivää.
 
 ## Rajoitukset
 

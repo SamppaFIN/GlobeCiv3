@@ -2,7 +2,7 @@
   "id": "TICKET-TEST-067",
   "story": "STORY-084",
   "implementation_ticket": "TICKET-IMPL-067",
-  "status": "review",
+  "status": "in_progress",
   "tester": "Inanna 🦁 (Claude Sonnet 5.5, pilviajo)",
   "build": "Pages 37767a6 (viimeisin onnistunut julkaisu 2026-10-20; tämän päivän mergeissä ei ole pelattavuusmuutoksia)",
   "seed": 42,
@@ -41,7 +41,9 @@
         "outcome": "not_run"
       }
     ],
-    "console_findings": "Ei tarkistettu (ei Inannan tehtävä).",
+    "console_findings": [
+      "Ei tarkistettu (ei Inannan tehtävä)."
+    ],
     "screenshots": [
       "docs/playtests/shots/PLAYTEST-001-*.webp"
     ]

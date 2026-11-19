@@ -2,7 +2,7 @@
   "id": "TICKET-TEST-064",
   "story": "STORY-080",
   "implementation_ticket": "TICKET-IMPL-064",
-  "status": "review",
+  "status": "in_progress",
   "fix_summary": {
     "problem_and_root_cause": "Käyttämätön Svelte toi Dependabot-PR:iä ja build-asetuksia, .env ei ollut .gitignoressa, eikä CI tarkistanut haavoittuvuuksia.",
     "files_changed": [
@@ -59,7 +59,7 @@
         "outcome": "not_run"
       }
     ],
-    "console_findings": "Smoke-testi ei löytänyt konsolivirheitä.",
+    "console_findings": [],
     "screenshots": []
   },
   "human_acceptance": {
