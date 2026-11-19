@@ -11,10 +11,23 @@ const watchNotices = (page: Page) => page.evaluate(() => {
 });
 const notices = (page: Page) => page.evaluate(() => (window as any).notices as string[]);
 const resume = async (page: Page) => page.getByRole('button', { name: 'Jatka', exact: true }).click();
-const pause = async (page: Page) => {
-  await page.getByRole('button', { name: 'Tauko' }).click();
+const later = async (page: Page) => {
   if (await page.getByRole('button', { name: 'Myöhemmin' }).isVisible()) await page.getByRole('button', { name: 'Myöhemmin' }).click();
 };
+const pause = async (page: Page) => {
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  await later(page);
+};
+/**
+ * Wait until the city on the tile is lost and pause in the same frame. Pausing after the wait
+ * let a slow runner play on, and the army took the last city too before the pause (CI, 2026-11-19).
+ */
+const pauseWhenLost = (page: Page, tile: number) => page.waitForFunction(t => {
+  const w = window as any;
+  if (w.globeGame.state.cities.some((c: { tile: number }) => c.tile === t)) return false;
+  if (!w.globeGame.state.paused) (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement).click();
+  return true;
+}, tile, { timeout: 60_000 });
 
 /** The old start with the capital founded where the settler stands and a second city where a scout does; the first rival met. */
 async function setUp(page: Page, two: boolean) {
@@ -71,15 +84,23 @@ test('a rival at war gathers an army against the player\'s city, takes it, and t
   const lost = mine.find(c => c.tile === target)!;
   expect(lost).toBeTruthy();
 
-  // Horsemen next to it, and the city of size 3 with no defender: it is taken, a citizen fewer
-  await page.evaluate(([t, id]) => {
+  // Horsemen next to it, and the city of size 3: it is taken, a citizen fewer. With fewer than the
+  // war needs against the city's defenders the army gathers in its camp first, and the need is an
+  // expectation, not a sure win, so three times the need: the test is about the taking, not the
+  // odds (war.test.ts). Against two defenders with a 30 % chance to win, 8 attackers fail a
+  // quarter of the time and 24 one time in 500.
+  const need = (await page.evaluate(() => (window as any).globeDebug.rivalWar(0).enemy?.need ?? 2)) as number;
+  const army = Math.max(4, 3 * need);
+  await page.evaluate(([t, id, n]) => {
     const w = window as any;
     w.globeDebug.setCitySize(id, 3);
-    w.globeDebug.rivalUnits(0, 'horseman', w.globeHexTiles.neighbors(t)[0], 2);
-  }, [target, lost.id]);
-  await resume(page);
-  await page.waitForFunction(t => !(window as any).globeGame.state.cities.some((c: { tile: number }) => c.tile === t), target, { timeout: 30_000 });
-  await pause(page);
+    w.globeDebug.rivalUnits(0, 'horseman', w.globeHexTiles.neighbors(t)[0], n);
+  }, [target, lost.id, army]);
+  // At 1× a frame spans less than a day, so the pause comes before the army reaches the other city;
+  // at 4× a slow frame spanned days, and both cities fell in it (locally, 2026-11-19)
+  await page.evaluate(() => (window as any).globeDebug.fastForward(1));
+  await pauseWhenLost(page, target);
+  await later(page);
   const theirs = (await rivals(page))[0].cities.find(c => c.tile === target);
   // A citizen fewer when taken (rivals.test.ts); days pass before the pause, and it may starve or build a settler
   expect(theirs?.name).toBe(lost.name);
@@ -90,13 +111,14 @@ test('a rival at war gathers an army against the player\'s city, takes it, and t
   // A soldier the city built meanwhile may have fallen first
   expect((await notices(page)).some(n => n.startsWith(`${name}: `) && n.endsWith(`kaupunki menetettiin · ${lost.name}`))).toBe(true);
 
-  // The last city falls: the game is over, the save is gone, and a new game begins
+  // The last city falls: the game is over, the save is gone, and a new game begins. It was
+  // founded with the first and builds the same, so the same army stands for its defenders
   const last = left[0];
-  await page.evaluate(([t]) => {
+  await page.evaluate(([t, n]) => {
     const w = window as any;
     w.globeDebug.setCitySize(0, 2);
-    w.globeDebug.rivalUnits(0, 'horseman', w.globeHexTiles.neighbors(t)[0], 2);
-  }, [last.tile]);
+    w.globeDebug.rivalUnits(0, 'horseman', w.globeHexTiles.neighbors(t)[0], n);
+  }, [last.tile, army]);
   await resume(page);
   const end = page.getByRole('dialog').filter({ hasText: 'Peli päättyi' });
   await expect(end).toBeVisible({ timeout: 60_000 });
@@ -124,7 +146,9 @@ test('at war the Kenraali takes a rival\'s city, which comes over with a citizen
     w.globeDebug.learn('horseback');
     w.globeDebug.setAdvisors({ state: 'war' });
     w.globeDebug.aimAt(Math.floor(w.globeRegions.tileTable()[t] / 49));
-    for (let k = 0; k < 6; k++) w.globeDebug.spawnUnitAt('horseman', w.globeHexTiles.neighbors(t)[k % 6]);
+    // More than the war ever needs (MAX_ARMY 10), so the Kenraali marches at once and wins nearly
+    // surely: with 6 the army at times went to gather in its camp, or lost (locally, 2026-11-19)
+    for (let k = 0; k < 18; k++) w.globeDebug.spawnUnitAt('horseman', w.globeHexTiles.neighbors(t)[k % 6]);
   }, city.tile);
   await resume(page);
   await page.waitForFunction(t => (window as any).globeGame.state.cities.some((c: { tile: number }) => c.tile === t), city.tile, { timeout: 60_000 });
