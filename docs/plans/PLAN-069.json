@@ -1,0 +1,45 @@
+{
+  "id": "PLAN-069",
+  "story": "STORY-082",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Mitataan tyyppitarkistuksen (npx tsc) ja buildin (npm run build) kesto kolmesti TypeScript 6.0.3:lla, päivitetään typescript ~7.0.2:een npm installilla ja mitataan samoin. Tarkistetaan, että tsc yhä löytää tyyppivirheen (tahallinen virhe väliaikaisessa tiedostossa), että Vitest ja selaimen savutestit ovat vihreitä ja että pelin bundle ei muutu (vite ei käytä tsc:tä, joten tiedoston tiiviste vertaa Pagesin TypeScript 6 -buildiin). tsconfig ja koodi muutetaan vain, jos TypeScript 7 sitä vaatii.",
+  "alternatives_considered": [
+    {
+      "name": "Jäädä TypeScript 6:een",
+      "pros": "Ei riskiä",
+      "cons": "Dependabot ehdottaa päivitystä yhä uudelleen, ja tyyppitarkistus on nelinkertaisesti hitaampi",
+      "rejected_because": "Päivitys ei vaatinut muutoksia, ja bundle pysyi samana"
+    },
+    {
+      "name": "Erillinen @typescript/native-preview tsc:n rinnalle",
+      "pros": "Molemmat versiot vertailtavissa",
+      "cons": "Kaksi kääntäjää ja kaksi totuutta",
+      "rejected_because": "TypeScript 7.0.2 on julkaistu vakaana latest-versiona"
+    }
+  ],
+  "files_to_change": [
+    "package.json",
+    "package-lock.json",
+    "CLAUDE.md"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Mittaus TypeScript 6:lla",
+      "verify": "Kolme ajoa tsc:lle ja buildille"
+    },
+    {
+      "step": 2,
+      "action": "Päivitys ja mittaus TypeScript 7:llä",
+      "verify": "tsc puhdas ja virheentunnistus toimii, Vitest, savutestit ja bundlen tiiviste"
+    },
+    {
+      "step": 3,
+      "action": "CLAUDE.md:n pino",
+      "verify": "Katselmointi"
+    }
+  ],
+  "status": "approved"
+}

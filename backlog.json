@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T13:02:39Z",
+    "generated_at": "2026-11-19T15:15:28Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "e1ed01c",
+    "git_commit": "b9b523a",
     "git_branch": "main",
     "language": "fi"
   },
@@ -191,7 +191,7 @@
         "STORY-081",
         "STORY-082"
       ],
-      "progress": 75
+      "progress": 100
     },
     {
       "id": "EPIC-008",
@@ -2189,12 +2189,12 @@
         "Build ja testit ovat vihreitä TypeScript 7:llä. Jos se ei onnistu, raportissa kerrotaan miksi, ja päätös jäädä versioon 6 kirjataan CLAUDE.md:n osioon 13.",
         "Buildin kesto on mitattu ennen päivitystä ja sen jälkeen."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-069",
+        "implementation": "TICKET-IMPL-069",
+        "testing": "TICKET-TEST-069"
       }
     },
     {

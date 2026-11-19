@@ -1,0 +1,68 @@
+{
+  "id": "TICKET-TEST-069",
+  "story": "STORY-082",
+  "implementation_ticket": "TICKET-IMPL-069",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "TypeScript 7 oli major-päivitys, jonka vaikutusta buildiin ei tiedetty.",
+    "files_changed": [
+      "package.json",
+      "package-lock.json"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö (Linux x64, 2 ydintä, ei GPU:ta), Node 22.23.5, Vitest 5.1.1, Playwright 1.64.1 Chrome Headless Shellillä",
+    "tooling": "npx tsc ja npm run build ajastettuina (date +%s.%N), npx vitest run, CI=1 npx playwright test smoke start, sha256sum",
+    "cases": [
+      {
+        "steps": "npx tsc kolmesti TypeScript 6.0.3:lla ja 7.0.2:lla",
+        "expected": "Kesto mitattu ennen ja jälkeen",
+        "result": "6.0.3: 6,5 s (kylmä), 4,2 s ja 4,3 s. 7.0.2: 1,0 s, 1,0 s ja 1,0 s.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm run build kolmesti kummallakin",
+        "expected": "Kesto mitattu ennen ja jälkeen",
+        "result": "6.0.3: 7,4 s (kylmä), 5,0 s ja 5,1 s. 7.0.2: 1,6 s, 1,4 s ja 1,9 s. Viten oma osuus noin 0,7 s molemmissa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Väliaikainen tiedosto, jossa const x: number = 'nope'",
+        "expected": "tsc löytää virheen",
+        "result": "TS2322, paluuarvo 1. Tiedosto poistettiin.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npx vitest run",
+        "expected": "Vihreä",
+        "result": "40 tiedostoa ja 222 testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI=1 npx playwright test smoke start",
+        "expected": "Peli käynnistyy ilman konsolivirheitä",
+        "result": "8/8 läpi (3,6 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "sha256sum dist/assets/main-*.js verrattuna Pagesin samannimiseen tiedostoon (CI:n TypeScript 6 -build, ebb168d)",
+        "expected": "Peli ei muutu",
+        "result": "Sama nimi main-NkHQSA6i.js ja sama tiiviste 89788a04…",
+        "outcome": "pass"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "npm ci ja npm run build toimivat Samin Windows-koneella",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

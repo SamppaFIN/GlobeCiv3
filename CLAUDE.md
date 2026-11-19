@@ -201,7 +201,7 @@ LICENSE-tiedostoa.
     { "level": "Planeetta", "model_game": "Nuclear War", "mechanics": "johtajat, propaganda ja ydinsota (MVP:n jälkeen)", "number_source": "Avointa lähdettä ei tunneta, omat säännöt merkitään omiksi" }
   ],
   "stack": {
-    "frontend": ["TypeScript 6", "Three.js r186", "Zustand 5 (vanilla store)", "Inter-fontti", "HUD tavallisella TypeScriptillä"],
+    "frontend": ["TypeScript 7", "Three.js r186", "Zustand 5 (vanilla store)", "Inter-fontti", "HUD tavallisella TypeScriptillä"],
     "backend": [],
     "build": ["Vite 8", "tsc (tyyppitarkistus buildissa)", "Node 22 CI:ssä, paikallisesti 20.19+ tai 22.12+"],
     "testing": ["Vitest 5", "Playwright 1.64"]
@@ -462,10 +462,10 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-011", "icon": "🏛️", "title": "Ylemmät tasot: Civ I, Civ III ja Civ V", "status": "todo", "stories": ["STORY-091", "STORY-092", "STORY-093", "STORY-094"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-068 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-068 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-068 (docs/tickets/testing)",
-  "next": "Sami lukee PLAYTEST-001:n ja hyväksyy storyt 073–081, 083 ja 084 sekä avoimet kysymykset 17 ja 18. Sitten STORY-087 (tason tavoite ja nousu), ja STORY-095:n L-suunnitelma Anun katselmointiin."
+  "plans": "PLAN-001 … PLAN-069 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-069 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-069 (docs/tickets/testing)",
+  "next": "Sami lukee PLAYTEST-001:n ja hyväksyy storyt 073–084 sekä avoimet kysymykset 17 ja 18. Sitten STORY-087 (tason tavoite ja nousu), ja STORY-095:n L-suunnitelma Anun katselmointiin."
 }
 ```
 
