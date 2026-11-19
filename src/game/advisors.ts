@@ -91,7 +91,7 @@ export const START_DOES: Record<CityAdvisor, string> = {
   defend: 'Saha tai louhos ensin, sitten soturi ja tiedustelija, joka avaa seuraavan kartan.',
 };
 
-export function startAdvice(advisor: CityAdvisor, city: City, n: { available: Build[]; built: boolean; soldiers: number }): { focus: Focus; build: Build | null } | null {
+export function startAdvice(advisor: CityAdvisor, _city: City, n: { available: Build[]; built: boolean; soldiers: number }): { focus: Focus; build: Build | null } | null {
   if (advisor === 'none') return null;
   const can = (b: Build) => n.available.includes(b);
   const focus: Focus = advisor === 'growth' ? 'food' : 'production';
@@ -99,7 +99,7 @@ export function startAdvice(advisor: CityAdvisor, city: City, n: { available: Bu
     const order: Build[] = advisor === 'growth' ? ['field', 'fishery', 'sawmill', 'quarry'] : ['sawmill', 'quarry', 'field', 'fishery'];
     return { focus, build: order.find(can) ?? null };
   }
-  if (advisor === 'growth') return { focus, build: city.size >= 2 && can('settler') ? 'settler' : null };
+  // The scout opens the city area (Sami 2026-11-20); the Vartija has a soldier first
   if (advisor === 'defend' && n.soldiers < 1 && can('warrior')) return { focus, build: 'warrior' };
   return { focus, build: can('scout') ? 'scout' : null };
 }

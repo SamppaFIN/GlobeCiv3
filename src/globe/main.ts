@@ -734,7 +734,9 @@ function startPlay(startCity: number, saved?: SaveData) {
   // A state with land: 10 of its 49 city areas or more centred on land (a sample, not a scan)
   const hasLand = (state: number) => Array.from({ length: 49 }, (_, k) => pointToTile(regions.centers[2][state * 49 + k])).filter(t => Number.isFinite(world.cost(t))).length >= 10;
   rivalStartStates = rivalStarts(game!.seed, Math.floor(startCity / 49), regions.neighbors, hasLand);
-  const units = new Units(pointToTile(regions.centers[2][startCity]), world, saved?.units);
+  // The new start removes the old start's units below: their sight must not map the city area (STORY-017)
+  const newStart = !saved && !classic && game?.capital !== undefined;
+  const units = new Units(pointToTile(regions.centers[2][startCity]), newStart ? { ...world, reveal: () => {} } : world, saved?.units);
   const province = Math.floor(startCity / 7);
   const provinceTiles: number[] = [];
   for (let c = province * 7; c < province * 7 + 7; c++) provinceTiles.push(...cityTiles(regions, c));
@@ -777,7 +779,7 @@ function startPlay(startCity: number, saved?: SaveData) {
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
-    if (!classic && game?.capital !== undefined) {
+    if (newStart && game?.capital !== undefined) {
       units.units.length = 0;
       foundAt(game.capital);
       play.openCity = null;
@@ -1046,7 +1048,7 @@ function sendSettler(settler: Unit, tile: number) {
 }
 
 function noteSiteOffer(fresh: number[]) {
-  if (!play || !siteOffersOn || play.offers.length || clock.day - play.lastOfferDay < OFFER_EVERY_DAYS) return;
+  if (!play || !siteOffersOn || cityStage() || play.offers.length || clock.day - play.lastOfferDay < OFFER_EVERY_DAYS) return;
   // Only when the city could be built: a free settler, or a city to build one (one waiting site at a time)
   if (play.pendingSite !== null || (!idleSettler() && !play.cities.length)) return;
   const site = play.units.settler ? play.units.currentSite() : null;
@@ -2111,11 +2113,13 @@ function cityView(c: City, y: CityYield): CityView {
       const need = NEEDS[kind];
       // Units wait for the first building of a new game (STORY-070)
       const waits = UNIT_BUILDS.has(kind) && !unitsOpen();
-      const locked = (need !== undefined && !play!.research.known.has(need)) || waits;
+      // The settler waits for the city area (STORY-017)
+      const later = kind === 'settler' && cityStage();
+      const locked = (need !== undefined && !play!.research.known.has(need)) || waits || later;
       return {
         kind, name: b.name, selected: kind === c.build, locked,
         cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) && UPKEEP[kind] ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: waits ? 'ensimmäisen rakennuksen jälkeen' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        eta: later ? 'kun kaupunkialue avautuu' : waits ? 'ensimmäisen rakennuksen jälkeen' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -2158,10 +2162,12 @@ function updateCityCard() {
 /** Builds a city may start: known, not built, and no wonder another city has. */
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
-  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()));
+  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()) && !(kind === 'settler' && cityStage()));
 /** Units the cities build: only after the first building of a new game (STORY-070, Sami). */
 const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
 const unitsOpen = () => !play || play.progress.openLevel < 4 || play.cities.some(c => c.buildings.length > 0);
+/** A new game's first level, the city alone: the city area's systems wait for the scout (STORY-017, Sami 2026-11-20). */
+const cityStage = () => !!play && !classic && play.progress.openLevel === 4;
 /** A resource building needs a known tile of its kind in the city's area (STORY-073). */
 const resourceNear = (c: City, b: ResourceBuilding) => tilesInRings(c.tile, cityRings(c.size)).some(t => ground.resourceOf!(t) === RESOURCE_BUILDINGS[b].kind);
 /** A terrain building needs its terrain within the city's two rings. */
@@ -2504,7 +2510,7 @@ function levelState(): LevelState {
   const p = play!;
   return {
     built: p.cities.some(c => c.buildings.length > 0),
-    firstUnit: p.units.units.some(u => u.kind === 'scout' || u.kind === 'settler'),
+    scout: p.units.units.some(u => u.kind === 'scout'),
     cities: p.cities.length,
     provinces: heldIn(conquestNow(), homeState()),
   };
@@ -2930,7 +2936,7 @@ function raidDay() {
     discoveryCard.notice(`${raidNotice(events, !!band.tribe)} · ${city.name}`);
     moment(events.includes('plundered') || events.includes('won') ? 'raid' : 'victory', city.tile);
   }
-  if (play.raids.band || !raidsOn || !play.cities.length) return;
+  if (play.raids.band || !raidsOn || !play.cities.length || cityStage()) return;
   for (const t of tribesNow()) if (tribeRaids(game.seed, t.tribe, clock.day) && sendTribe(t)) return;
   if (!uprising(game.seed, clock.day, play.cities.length)) return;
   startRaid(play.cities[Math.floor(raidRoll(game.seed, clock.day, 100) * play.cities.length)]);
@@ -3199,6 +3205,8 @@ function rise(opened: number, reached: NonNullable<ReturnType<typeof levelGoal>>
   const s = levelState();
   unlockCard.show(reached.opens.title, `${reached.opens.text}${next ? ` Uusi tavoite: ${next.text} (${goalCount(next, s)} / ${next.need}).` : ''}`);
   moment('unlock', p.cities[0]?.tile ?? pointToTile(rig.target));
+  // The city area shows once it opens (STORY-017)
+  if (opened === 3 && game) reveal(cityTiles(regions, game.startCity));
   // The province, the state and the planet have advisors of their own: chosen once the card is closed (STORY-096)
   if (!classic && opened <= 2) pickPending = opened;
 }
@@ -4135,9 +4143,12 @@ function updateGameFlow(dt: number) {
     fly(leg.to, leg.durationS);
     return;
   }
-  // Landed: the start city area is mapped, it is the game's view, and zooming out
-  // waits for the unlock (STORY-026)
-  if (game) reveal(cityTiles(regions, game.startCity));
+  // Landed: the old start maps the start city area; a new game only the city's rings, so the
+  // game starts at the city level alone and the scout opens the area (Sami 2026-11-20,
+  // STORY-017). Zooming out waits for the unlock (STORY-026)
+  const capital = game?.capital ?? continuing?.cities[0]?.tile;
+  const cityAlone = !classic && (continuing?.progress.openLevel ?? 4) === 4 && capital !== undefined;
+  if (game) reveal(cityAlone ? tilesInRings(capital!, CITY_LEVEL_RINGS) : cityTiles(regions, game.startCity));
   if (game) startPlay(game.startCity, continuing ?? undefined);
   // A new game greets (STORY-096); a continued one and the old start do not
   if (game && !continuing && !classic) {
@@ -4384,7 +4395,7 @@ frameStartPlanet();
   rise: () => {
     const g = play && levelGoal(play.progress.openLevel);
     if (!g) return null;
-    const opened = advance(play!.progress, { built: true, firstUnit: true, cities: g.need, provinces: g.need });
+    const opened = advance(play!.progress, { built: true, scout: true, cities: g.need, provinces: g.need });
     if (opened !== null) rise(opened, g);
     return opened;
   },
