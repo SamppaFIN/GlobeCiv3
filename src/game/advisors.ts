@@ -13,6 +13,7 @@
  *   Vartija      production focus; a soldier in every city, two and walls while bandits are
  *                on their way; it answers the bandit card by building the soldier
  */
+import type { ChainBuilding } from './chains';
 import { isResourceBuilding, RESOURCE_BUILDINGS, SIZE_LIMIT, type Build, type City, type Focus } from './cities';
 import type { Advance } from './science';
 import type { StateLine } from './units';
@@ -86,10 +87,23 @@ export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { fo
 /** What each governor does at the city stage, for its card. */
 export const START_DOES: Record<CityAdvisor, string> = {
   none: 'Valitset kaupungin rakennukset itse kaupunkikortista.',
-  growth: 'Pelto tai kalastamo ensin, sitten kasvu ja uudisasukas, joka avaa seuraavan kartan.',
-  explore: 'Saha tai louhos ensin, sitten tiedustelija, joka avaa seuraavan kartan.',
-  defend: 'Saha tai louhos ensin, sitten soturi ja tiedustelija, joka avaa seuraavan kartan.',
+  growth: 'Metsuri, saha ja louhos ensin, sitten pelto, kalastamo, mylly ja leipomo, jotta kaupunki kasvaa. Tiedustelija avaa seuraavan kartan.',
+  explore: 'Metsuri, saha ja louhos ensin, sitten tiedustelija, joka avaa seuraavan kartan, ja pelto, mylly ja leipomo.',
+  defend: 'Metsuri, saha ja louhos ensin, sitten soturi ja tiedustelija, joka avaa seuraavan kartan.',
 };
+
+/**
+ * The chain building a city's governor starts next in a city of chains (STORY-088), whatever
+ * the level: the base first, then bread, the Kasvattaja the fishery before the mill. The
+ * player's own hand starts none. `open` says whether a building may be started now.
+ */
+export function chainAdvice(advisor: CityAdvisor, open: (b: ChainBuilding) => boolean): ChainBuilding | null {
+  if (advisor === 'none') return null;
+  const order: ChainBuilding[] = advisor === 'growth'
+    ? ['lumberjack', 'sawmill', 'quarry', 'field', 'fishery', 'mill', 'bakery']
+    : ['lumberjack', 'sawmill', 'quarry', 'field', 'mill', 'bakery', 'fishery'];
+  return order.find(open) ?? null;
+}
 
 export function startAdvice(advisor: CityAdvisor, _city: City, n: { available: Build[]; built: boolean; soldiers: number }): { focus: Focus; build: Build | null } | null {
   if (advisor === 'none') return null;

@@ -1,109 +1,128 @@
-# GlobeCiv3 — kaupunkitason tuotantoketjut (STORY-088, PLAN-076)
+# GlobeCiv3 — kaupunkitason tuotantoketjut (STORY-088, PLAN-076; kantajat STORY-101)
 
 > Suunnitelma 2026-11-20 (Enki). Samin valinnat samalta yöltä: ketjut puu ja vilja,
 > kantajat näkyvät ja materiaalit korvaavat tuotannon kaupunkitasolla. L-kokoinen
-> story: Anu katselmoi ja Sami hyväksyy ennen toteutusta.
+> story. Anu ei ollut käytettävissä, joten Utu katselmoi sen Samin päätöksellä
+> ("kyllä muutoksin"). Tämä versio sisältää katselmoinnin muutokset, ja kantajat
+> siirtyivät omaan storyynsä STORY-101.
 
 ## Tavoite
 
 Kaupunkitaso on oma pelinsä: kansa kaataa puuta, sahaa lankkuja, louhii kiveä ja
-leipoo leipää, ja pelaaja näkee kantajien kuljettavan tavaroita rakennuksesta toiseen.
-Rakennukset syntyvät lankuista ja kivestä, ja leipä kasvattaa kaupunkia. Ylemmillä
-tasoilla kaupunki näkyy entisin luvuin (ruoka, tuotanto ja kauppa), joten
-kaupunkialueen ja sitä ylempien tasojen säännöt eivät muutu.
+leipoo leipää. Rakennukset syntyvät lankuista ja kivestä, ja leipä ja kala ruokkivat
+kaupunkia. STORY-101 tuo kantajat, jotka näyttävät tavaroiden kulun.
 
-Koskee uutta peliä. Vanha alku (`?classic`) pysyy ennallaan.
+## Kenellä ketjut ovat
+
+Vain uuden pelin pääkaupungilla on ketjut (`City.chain`). Kentän olemassaolo on
+kytkin: kaikki muut kaupungit, vanha alku (`?classic`) ja tallennukset ennen
+STORY-088:aa jatkavat entisillä säännöillä (maastorakennusten +1 ja 30 tuotannon
+hinta). Utun löydös: muuten vanha tallennus olisi saanut tyhjän varaston ja
+jumittunut, ja vanhan alun rakennusvalikko olisi kasvanut.
+
+Ylemmät tasot näkevät pääkaupungin ruoan, tuotannon ja kaupan samasta yieldistä.
+Luvut ovat alussa pienemmät kuin ennen, koska pelto, saha, louhos ja kalastamo eivät
+enää anna +1:tä, ja ruoka tulee ketjusta vasta, kun leipää tai kalaa on.
 
 ## Tavarat ja varasto
 
-Jokaisella pelaajan kaupungilla on varasto: tukit, lankut, kivi, vilja, jauhot,
-leipä ja kala. Varasto näkyy kaupunkikortissa määrineen ja päivän virtoineen.
-Tallennus saa valinnaisen kentän (`stock`); vanha tallennus saa tyhjän varaston
-(sääntö 8).
+Varastossa ovat tukit, lankut, kivi, vilja, jauhot, leipä ja kala. Kaupunkikortissa
+on yksi tiivis rivi: "Varasto: lankkuja 7, kiveä 2 · Työmaa: Metsuri, valmis 2 pv".
 
 **Aloitusvarasto:** 7 lankkua ja 2 kiveä. Se on Freeserfin pienin aloitusvarasto
-(`src/inventory.cc`, `supplies_template[0]`: lankkuja 7 ja kiveä 2), ja se riittää
-täsmälleen metsurin, sahan ja louhoksen rakentamiseen.
+(`src/inventory.cc`, `supplies_template[0]`), ja se riittää täsmälleen metsuriin,
+sahaan ja louhokseen.
 
 ## Ketjut
 
-| Rakennus | Maasto | Ottaa | Tuottaa | Lankkuja | Kiveä |
+| Rakennus | Paras paikka (tavara päivässä) | Ottaa | Tuottaa | Lankkuja | Kiveä |
 |---|---|---|---|---|---|
 | Metsuri (uusi) | metsä tai viidakko | — | tukki | 2 | 0 |
-| Saha (muuttuu) | — | tukki | lankku | 3 | 2 |
-| Louhos (muuttuu) | kukkula tai vuori | — | kivi | 2 | 0 |
-| Pelto (muuttuu) | ruohomaa tai tasanko | — | vilja | 4 | 1 |
-| Mylly (uusi) | — | vilja | jauhot | 3 | 1 |
+| Saha | — | tukki | lankku | 3 | 2 |
+| Louhos | kukkula tai vuori | — | kivi | 2 | 0 |
+| Pelto | alhaalla | — | vilja | 4 | 1 |
+| Mylly (uusi) | ylhäällä | vilja | jauhot | 3 | 1 |
 | Leipomo (uusi) | — | jauhot | leipä | 2 | 1 |
-| Kalastamo (muuttuu) | ranta | — | kala | 2 | 0 |
+| Kalastamo | (rannalla aina) | — | kala | 2 | 0 |
 
-Rakennusten lankut ja kivet ovat Freeserfistä (`src/building.cc`, `const_info`:
-lumberjack 2/0, sawmill 3/2, stonecutter 2/0, farm 4/1, mill 3/1, baker 2/1 ja
-fisher 2/0; Freeserf on GPL-3.0, commit `f537310`). Ketjujen järjestys tukki →
-lankku ja vilja → jauhot → leipä on Freeserfin. Kaupungin keskusta on varasto
-samaan tapaan kuin Freeserfin linna.
+Lankut ja kivet ovat Freeserfistä (`src/building.cc`, `const_info`, GPL-3.0, commit
+`f537310`), ja yksikkötesti vertaa taulukkoa niihin. Ketjujen järjestys tukki →
+lankku ja vilja → jauhot → leipä on Freeserfin.
 
-**Omat säännöt** (merkitään koodiin omiksi):
+**Omat säännöt** (merkitty koodiin omiksi):
 
-- Jokainen tuottaja tekee yhden tavaran kahdessa päivässä, ja jalostaja muuttaa
-  yhden tavaran kahdessa päivässä, jos raaka-ainetta on varastossa.
-- Leipä ja kala ovat ruokaa: kumpikin lisää ruokalaatikkoon 2 (yhden asukkaan päivän
-  ruoan). Freeserfissä ruoka menee kaivoksille, mutta täällä se kasvattaa kaupunkia.
-- Pelto ja kalastamo eivät enää anna +1 ruokaa ruudulle, vaan viljaa ja kalaa.
-  Saha ja louhos eivät enää anna +1 tuotantoa, vaan lankkuja ja kiveä. Korkeusbonus
-  (STORY-071) siirtyy tuotantonopeuteen: hyvällä korkeudella tuottaja tekee tavaran
-  päivässä.
-- Rakennus valmistuu, kun sen lankut ja kivet on kannettu työmaalle, ja sen jälkeen
-  rakentaminen kestää kaksi päivää.
+- Tuottaja tekee tavaran kahdessa päivässä, parhaalla paikallaan päivässä. Jalostaja
+  ottaa raaka-aineen varastosta työn alkaessa.
+- Ketjurakennus sopii mille tahansa maalle paitsi vuorelle (louhos myös vuorelle,
+  kalastamo rannalle). Korkokuvassa on puita ja kiviä kaikkialla, joten mikään
+  paikka ei jää ilman metsuria tai louhosta (Utun jumiutumishuoli).
+- **Perusta ensin:** pelto, mylly, leipomo ja kalastamo aukeavat vasta, kun metsuri,
+  saha ja louhos ovat valmiit. Aloitusvarasto riittää niihin missä järjestyksessä
+  tahansa, eikä mikään muu järjestys voi jumittaa alkua (Utu: pelto ensin olisi
+  jättänyt sahalle liian vähän lankkuja).
+- Leipä ja kala ovat aterioita: asukas syö enintään yhden päivässä, ja ateria antaa
+  2 ruokaa. Ateriat lasketaan kaupungin päivän ruokaan (`cityYield`), joten ylijäämä
+  ja kasvupäivät näyttävät ne (Utun huomio).
+- Työmaita on yksi kerrallaan. Kun lankut ja kivet ovat työmaalla, rakentaminen
+  kestää kaksi päivää.
 
-## Mikä korvautuu ja mikä jää
+## Päivän järjestys (kiinteä)
 
-- Kaupunkitason rakennukset (taulukon seitsemän) maksavat lankkuja ja kiveä, eivät
-  tuotantoa. Kaupunkikortin rakennuslista näyttää niille materiaalit.
-- Kaupungin ruutujen ruoka, tuotanto ja kauppa (Freeciv) jatkuvat sellaisinaan.
-  Tuotanto rakentaa yksiköt ja kaupunkialueen rakennukset (temppeli, viljavarasto ja
-  muut), ja ruoka täyttää ruokalaatikkoa kuten ennen. Leipä ja kala tulevat lisäksi.
-- Ylemmät tasot näkevät kaupungista samat luvut kuin ennen, ja kaupunkialueen
-  neuvonantajat toimivat kuten ennen.
+1. Kaupungin tavallinen päivä: ruoka, kasvu ja tuotanto (`cityDay`).
+2. Asukkaat syövät ateriat, jotka päivän yield laski.
+3. Rakennukset työskentelevät järjestyksessä metsuri, saha, louhos, pelto, mylly,
+   leipomo ja kalastamo, joten tänään kaadettu tukki voidaan sahata tänään.
+4. Työmaa ottaa varastosta puuttuvat lankut ja kivet, ja rakentajat tekevät päivän työn.
 
-## Kantajat
+Päivä palauttaa siirrot (`Move`), joista STORY-101 piirtää kantajat.
 
-Jokainen siirto näkyy kaupunkitasolla: kantaja kävelee korkokuvan pintaa pitkin
-lähtöruudusta kohteeseen (tuottajalta keskustaan, keskustasta jalostajalle tai
-työmaalle) tavara mukanaan pienenä värillisenä laatikkona. Matka kestää noin
-päivän pelin kellolla ja nopeutuu pelin nopeuden mukana. Samaan aikaan näkyy
-enintään 24 kantajaa, ja ylimenevät siirrot tapahtuvat ilman hahmoa. Vähennetyllä
-liikkeellä kantajat eivät kävele, vaan tavara ilmestyy perille.
+## Tuotanto rinnalla
 
-Kantajat ovat vain kuva: siirto tapahtuu varastossa päivän laskennassa, joten
-ruudunpäivitys ei vaikuta peliin (determinismi, sääntö 7).
+Kaupungin tuotanto (Freeciv) jatkuu rinnalla: se rakentaa yksiköt ja kaupunkialueen
+rakennukset, ja ennen ensimmäistä rakennusta se on kultaa, jotta mitään ei kerry
+pankkiin (Utun huomio). Ketjurakennusta ei voi ostaa kullalla. Ensimmäisen
+rakennuksen jälkeen neuvonantaja tekee tiedustelijan kuten ennen, ja työmaat
+jatkuvat samaan aikaan.
 
-## Komennot
+## Tallennus ja komennot
 
-Rakennuksen valinta on jo komento (`build`). Uusia pelaajan tekoja ei tule;
-tuotanto ja siirrot ovat sääntöjä, joita päivän laskenta toteuttaa.
+- `City.chain` = varasto, rakennusten työpäivät ja työmaa (rakennus, lankut, kivet ja
+  päivät). Tallennus tarkistaa jokaisen kentän kokonaislukurajoin (sääntö 8 ja
+  tietoturvasääntö 5), ja vanha tallennus latautuu ilman kenttää.
+- Työmaan aloitus on `build`-komento: ketjukaupungissa ketjurakennus aloittaa
+  työmaan. Muualla metsuri, mylly ja leipomo hylätään.
 
 ## Neuvonantajat
 
-Kaupunkitason neuvonantajat rakentavat ketjun järjestyksessä metsuri, saha, louhos,
-pelto, mylly ja leipomo (Kalastamo rannalla pellon sijaan), ja sitten tiedustelijan,
-joka avaa kaupunkialueen. Laajempi kuvernöörin peli on STORY-090:ssä.
+Jokainen neuvonantaja pitää työmaan käynnissä millä tasolla tahansa: ensin metsuri,
+saha ja louhos, sitten pelto, mylly, leipomo ja kalastamo (Kasvattaja: kalastamo
+ennen myllyä). Oma ohjaus valitsee itse. Uusi peli aloittaa metsurin työmaan.
 
 ## Testit
 
-- Yksikkötestit: varaston kirjanpito (tavarat eivät synny eivätkä katoa siirroissa),
-  ketjun eteneminen päivittäin, rakennus valmistuu vasta materiaaleilla, aloitusvarasto
-  riittää kolmeen ensimmäiseen rakennukseen, leipä täyttää ruokalaatikkoa ja vanha
-  tallennus saa tyhjän varaston.
-- E2E: uusi peli, metsuri ja saha valmistuvat, lankkuja syntyy, varasto näkyy
-  kaupunkikortissa ja kantajia näkyy kaupunkitasolla (kuvakaappaus).
-- Vanhan alun testit pysyvät vihreinä.
+- Yksikkö: aloitusvarasto riittää täsmälleen perustaan, perusta ensin missä
+  järjestyksessä tahansa, työmaa odottaa puuttuvia tarvikkeita, ketju tuottaa leipää
+  ilman jumia, tavarat säilyvät, determinismi, Freeserfin luvut, ateriat yieldissä,
+  sijoitus ja paras paikka, komento ja tallennus (myös ketjun keskeltä).
+- E2E (`chains.e2e.ts`): uusi peli Oma ohjaus, varastorivi, lukitut työmaat, perusta
+  pelaajan komennoilla, pelto ja tallennus ketjun keskeltä. `new-start.e2e.ts`
+  tarkistaa metsurin työmaan.
+- Vanhan alun testit pysyvät ennallaan.
 
-## Riskit
+## Riskit ja avoimet
 
-- Kaupunkitaso hidastuu, jos kantajia on paljon: enintään 24, ja yksi instanssoitu
-  verkko kaikille.
-- Alku voi jumittua, jos lankut loppuvat ennen sahaa: aloitusvarasto ja
-  neuvonantajien järjestys estävät sen, ja yksikkötesti varmistaa sen.
-- Tasapaino (kahden päivän tahti, leivän ruoka-arvo) on arvaus, ja se kalibroidaan
-  pelitestillä.
+- Tahti on arvaus: siemenellä 42 Oma ohjaus sai perustan noin päivään 6 ja pellon
+  päivään 19. Sahan tahti (lankku kahdessa päivässä) on pullonkaula, ja tukkeja
+  kertyy. Kalibroidaan autopilotilla (STORY-085) ja Inannan pelitestillä.
+- Ylimääräiset lankut ja kivi jäävät varastoon, kun ketju on valmis. Niille tulee
+  käyttöä kaupunkialueen rakennuksissa myöhemmin (STORY-089/090).
+
+## STORY-101: kantajat (seuraava)
+
+Jokainen siirto näkyy kaupunkitasolla: kantaja kävelee korkokuvaa pitkin
+lähtörakennuksesta kohteeseen tavara mukanaan. Siirron logiikka tapahtuu päivän
+laskennassa, ja kantajan matka kestää saman päivän pelin kellolla, joten kuva on
+suora projektio (tietoinen poikkeus sääntöön 5, koska kantajat seuraavat pelin
+kelloa). Enintään 24 kantajaa yhdessä instanssoidussa verkossa, polkujen korkeudet
+tallennetaan, ja vähennetyllä liikkeellä kantajia ei ole. Mittaus Intel UHD:lla ja
+S23 Ultralla (8 ms:n pääsäiebudjetti).

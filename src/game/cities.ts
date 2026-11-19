@@ -19,6 +19,7 @@
  * One turn is one game day. Own choices: citizens work the tiles with the most
  * 2 × food + shields + trade, and a starving city shrinks with an empty food box.
  */
+import { mealsReady, MEAL_FOOD, type ChainState } from './chains';
 import { GOVERNMENTS, governed, type Government } from './government';
 import { isAttacker, type Attacker } from './war';
 import { improvementYield } from './improvements';
@@ -71,7 +72,7 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * fortify bonus with walls), a marketplace +50 % gold (Output_Bonus 50), a library +50 %
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
-export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field',
+export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', 'lumberjack', 'mill', 'bakery',
   'harbour', 'sealery', 'canal', 'lodge', 'corral', 'farmstead', 'forge', 'stable', 'oilwell', 'jeweller', 'mint'] as const;
 /**
  * The terrain buildings (STORY-070; Sami 2026-10-20, own rules): a city builds them from the
@@ -128,7 +129,7 @@ const fromResources = (city: City, key: 'food' | 'shield' | 'content' | 'gold') 
 export const WONDERS = ['colossus', 'gardens', 'greatwall'] as const;
 export const isWonder = (b: Build): boolean => (WONDERS as readonly string[]).includes(b);
 export type Building = (typeof BUILDINGS)[number];
-export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0, fishery: 0, sawmill: 0, quarry: 0, field: 0,
+export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0, fishery: 0, sawmill: 0, quarry: 0, field: 0, lumberjack: 0, mill: 0, bakery: 0,
   harbour: 0, sealery: 0, canal: 0, lodge: 0, corral: 0, farmstead: 0, forge: 0, stable: 0, oilwell: 0, jeweller: 0, mint: 0 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
@@ -170,6 +171,11 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   sawmill: { name: 'Saha', cost: 30, pop: 0 },
   quarry: { name: 'Louhos', cost: 30, pop: 0 },
   field: { name: 'Pelto', cost: 30, pop: 0 },
+  // The chain buildings of a new game's capital are built of planks and stone (STORY-088,
+  // chains.ts); the three only it has get no shield cost anywhere (CHAIN_ONLY)
+  lumberjack: { name: 'Metsuri', cost: 0, pop: 0 },
+  mill: { name: 'Mylly', cost: 0, pop: 0 },
+  bakery: { name: 'Leipomo', cost: 0, pop: 0 },
   // The resource buildings (STORY-073, own)
   harbour: { name: 'Kalasatama', cost: 40, pop: 0 },
   sealery: { name: 'Pyyntiasema', cost: 40, pop: 0 },
@@ -225,6 +231,12 @@ export interface City {
   placed?: Partial<Record<Building, number>>;
   /** Buildings on their best ground, which give a bonus (STORY-071); set by placeAll. */
   best?: Building[];
+  /**
+   * The production chains (STORY-088): only a new game's capital has them, and its chain
+   * buildings are built of planks and stone and make goods instead of the terrain buildings'
+   * +1. Other cities, the old start and saves from before keep the old rules.
+   */
+  chain?: ChainState;
 }
 
 /** 1 when the building stands on its best ground (STORY-071, placement.ts). */
@@ -347,10 +359,13 @@ export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<numb
     y.shield += t.shield;
     y.trade += t.trade;
   }
-  // The terrain buildings' +1 a day (STORY-070), and the buildings on their best ground (STORY-071)
-  const has = (b: Building) => (city.buildings.includes(b) ? 1 : 0);
-  y.food += has('fishery') + has('field') + onBest(city, 'field') + onBest(city, 'granary');
-  y.shield += has('sawmill') + has('quarry') + onBest(city, 'quarry');
+  // The terrain buildings' +1 a day (STORY-070), and the buildings on their best ground (STORY-071);
+  // in a city of chains they make goods instead, and its meals feed it (STORY-088)
+  const has = (b: Building) => (city.buildings.includes(b) && !city.chain ? 1 : 0);
+  const best = (b: Building) => (city.chain ? 0 : onBest(city, b));
+  y.food += has('fishery') + has('field') + best('field') + onBest(city, 'granary');
+  y.shield += has('sawmill') + has('quarry') + best('quarry');
+  if (city.chain) y.food += mealsReady(city.chain, city.size) * MEAL_FOOD;
   // The resource buildings (STORY-073)
   y.food += fromResources(city, 'food');
   y.shield += fromResources(city, 'shield');

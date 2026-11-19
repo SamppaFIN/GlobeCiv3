@@ -1,0 +1,53 @@
+{
+  "id": "TICKET-IMPL-076",
+  "story": "STORY-088",
+  "plan": "PLAN-076",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/chains.ts",
+    "src/game/chains.test.ts",
+    "src/game/cities.ts",
+    "src/game/cities.test.ts",
+    "src/game/placement.ts",
+    "src/game/placement.test.ts",
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/chains.e2e.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "docs/design/tuotantoketjut.md"
+  ],
+  "change_summary": "Uusi chains.ts (varasto, ketjut, työmaa ja ateriat). Pääkaupunki saa City.chain-kentän uudessa pelissä, ja sen pelto, saha, louhos ja kalastamo sekä uudet metsuri, mylly ja leipomo rakennetaan työmaalla lankuista ja kivestä. Kaupunkikortissa on varastorivi ja Työmaalle-ryhmä. build-komento aloittaa ketjukaupungissa työmaan. Neuvonantajat pitävät työmaan käynnissä. Tallennus tarkistaa ketjun. Uudet mallit metsurille, myllylle ja leipomolle.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "City.chain",
+      "cityYield",
+      "fits/isBest/bestOf",
+      "execute 'build'",
+      "validateSave city",
+      "BUILDINGS (+lumberjack, mill, bakery)",
+      "START_DOES"
+    ],
+    "call_sites_found": [
+      "main.ts: startable, kaupunkikortti, uusi alku, cityDays, advisorDay, laattakortti ja siirto",
+      "save.ts: oma BUILDINGS-lista",
+      "classic-testit, jotka laskevat rakennusvalikon (21)"
+    ],
+    "call_sites_updated": [
+      "main.ts kaikki",
+      "save.ts lista ja ketjun tarkistus",
+      "metsuri, mylly ja leipomo pois muiden kaupunkien valikosta, joten classic pysyy 21:ssä"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "3139f76",
+  "progress": 100,
+  "notes": "new-start.e2e tarkistaa nyt metsurin työmaan maastorakennuksen sijaan: käytös muuttui tarkoituksella. Kantajat ovat STORY-101:ssä."
+}

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
 import { baseContent, cityLuxury, cityMood, withMood, BUILDS, buy, buyCost, cityDay, cityGold, cityRings, cityYield, daysToBuild, daysToGrow, foundCity, granary, payUpkeep, shortfall, workedTiles, workedYield, type City } from './cities';
 import { tilesInRings } from './pathfinding';
+import { newChain } from './chains';
 import { type Terrain, type TileInfo } from './terrainTypes';
 
 const START = pointToTile(new THREE.Vector3(0.4, 0.3, 0.866).normalize());
@@ -294,5 +295,18 @@ describe('terrain buildings (STORY-070)', () => {
     c.shields = 19;
     expect(cityDay(c, { ...after, shield: 1, surplus: 0 })).toBe('scout');
     expect(c.build).toBe('coinage');
+  });
+});
+
+describe('a city of chains (STORY-088)', () => {
+  it('its chain buildings give no +1 of their own, and its meals of bread or fish feed it, one a citizen', () => {
+    const c = city(2);
+    c.chain = newChain();
+    const before = cityYield(c, yieldOf);
+    c.buildings.push('field', 'sawmill', 'quarry', 'fishery');
+    expect(cityYield(c, yieldOf)).toEqual(before);
+    c.chain.stock = { bread: 1, fish: 5 };
+    const fed = cityYield(c, yieldOf);
+    expect([fed.food - before.food, fed.surplus - before.surplus]).toEqual([4, 4]);
   });
 });

@@ -2,7 +2,7 @@
  * commands.ts — what the player and the advisors do, as data (STORY-086, project rule 7).
  *
  * An act that changes the game is a Command: founding a city or offering a site for one,
- * choosing what a city builds,
+ * choosing what a city builds (in a city of chains a chain building starts a site, STORY-088),
  * moving a building and choosing a study. The game runs every one of them through
  * execute(), and the ones that took effect go into the CommandLog with their day and
  * actor. The log is saved, so a game can later be replayed and, with a server, shared.
@@ -13,7 +13,8 @@
  */
 import type { AdvisorLevel } from './advisors';
 import type { Build, Building, City } from './cities';
-import { move, type Ground } from './placement';
+import { chainOpen, CHAIN_ONLY, isChainBuilding, startSite } from './chains';
+import { move, spots, type Ground } from './placement';
 import { NEEDS, type Research, type Study } from './science';
 import type { ResourceKind } from './terrainTypes';
 
@@ -80,6 +81,9 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       const c = w.cities.find(x => x.tile === cmd.city);
       const need = NEEDS[cmd.build];
       if (!c || (need && !w.research.known.has(need))) return false;
+      // A chain building is built of planks and stone on a site that has a tile (STORY-088)
+      if (c.chain && isChainBuilding(cmd.build)) return chainOpen(c.chain, c.buildings, cmd.build) && spots(c, cmd.build, w.ground).length > 0 && startSite(c.chain, cmd.build);
+      if (!c.chain && (CHAIN_ONLY as readonly string[]).includes(cmd.build)) return false;
       c.build = cmd.build;
       return true;
     }

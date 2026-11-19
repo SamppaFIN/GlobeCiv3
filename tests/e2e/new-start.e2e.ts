@@ -70,7 +70,8 @@ test('a new game flies down to the city level of a built capital; a building ope
   await expect(card).toContainText('ensimmäisen rakennuksen jälkeen');
   // The settler belongs to the city area: it waits for it even after the building
   await expect(card).toContainText('kun kaupunkialue avautuu');
-  expect(['fishery', 'sawmill', 'quarry', 'field']).toContain((await state(page)).cities[0].build);
+  // The building is the lumberjack, on its site of planks from the stock (STORY-088)
+  expect((await state(page)).cities[0].chain.site.building).toBe('lumberjack');
   await card.getByRole('button', { name: 'Sulje' }).click();
 
   // The Kartoittaja: its building, then a scout, which opens the city area

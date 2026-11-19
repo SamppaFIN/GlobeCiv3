@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T22:41:51Z",
+    "generated_at": "2026-11-19T23:18:48Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "2750f36",
+    "git_commit": "3139f76",
     "git_branch": "main",
     "language": "fi"
   },
@@ -223,20 +223,21 @@
         "STORY-098",
         "STORY-099"
       ],
-      "progress": 50
+      "progress": 62
     },
     {
       "id": "EPIC-010",
       "title": "Kaupunkitaso: Settlers",
       "icon": "🏘️",
       "description": "Kaupunkitaso on oma Settlers-henkinen pelinsä: tuotantoketjut, valmis settlementti tavoitteena ja kuvernööri, joka jatkaa pelaajan noustua.",
-      "status": "todo",
+      "status": "in_progress",
       "stories": [
         "STORY-088",
         "STORY-089",
-        "STORY-090"
+        "STORY-090",
+        "STORY-101"
       ],
-      "progress": 0
+      "progress": 25
     },
     {
       "id": "EPIC-011",
@@ -2334,12 +2335,12 @@
         "Kaupunkitasolla on vähintään kaksi tuotantoketjua, esimerkiksi puu → lankut → rakennukset ja vilja → leipä → asukkaat, ja varastot näkyvät kaupungin kortissa.",
         "Jokaisen luvun lähde on Freeserf, tai luku on merkitty omaksi."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-076",
+        "implementation": "TICKET-IMPL-076",
+        "testing": "TICKET-TEST-076"
       }
     },
     {
@@ -2602,6 +2603,25 @@
         "Kaikki pelin tekstit (HUD, kortit, ilmoitukset, neuvonantajat, keksinnöt, rakennukset, yksiköt ja paikannimien rakenneosat) tulevat käännöstauluista, ja yksikkötesti varmistaa, että jokaisella avaimella on käännös molemmilla kielillä.",
         "Tallennus ei riipu kielestä: sama tallennus latautuu kummallakin kielellä, ja komentoloki sisältää vain tunnisteita, ei tekstejä.",
         "Saavutettavuusnimet (aria-label) ovat valitulla kielellä, ja E2E-testi pelaa alun englanniksi ilman suomenkielisiä tekstejä näkymässä."
+      ]
+    },
+    {
+      "id": "STORY-101",
+      "epic": "EPIC-010",
+      "title": "Kantajat kaupunkitasolla",
+      "type": "story",
+      "narrative": "Rakentajana haluan nähdä kantajien kuljettavan tukit, lankut, kiven ja leivän rakennuksesta toiseen, jotta näen tuotantoketjun toimivan.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-088"
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Jokainen päivän siirto (tuottajalta keskustaan, keskustasta jalostajalle ja työmaalle) näkyy kaupunkitasolla kantajana, joka kävelee korkokuvaa pitkin tavara mukanaan ja ehtii perille saman päivän aikana pelin kellolla.",
+        "Kantajia on enintään 24 kerrallaan yhdessä instanssoidussa verkossa, vähennetyllä liikkeellä niitä ei ole, ja kantajat eivät vaikuta peliin (sama siemen ja samat komennot antavat saman tilan).",
+        "Pääsäikeen JS-aika pysyy alle 8 ms:n framessa kaupunkitasolla 24 kantajalla; mittauksen laite, selain ja menetelmä kirjataan testitikettiin."
       ]
     }
   ]
