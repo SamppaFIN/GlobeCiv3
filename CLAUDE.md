@@ -672,7 +672,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 13. **Planeettataso (Nuclear War).** Mekaniikat ja lähteet. Avointa lähdettä ei tunneta, joten omat säännöt merkitään omiksi. MVP:n jälkeen.
 14. **Tasojen nousuehtojen luvut.** Määritetään STORY-087:n suunnitelmassa ja kalibroidaan autopilotilla ja PLAYTEST-001:llä. Repossa on jo `src/game/goals.ts` ja `progress.ts`, joista suunnitelma lähtee.
 15. **Lähteiden lisenssit ja saatavuus.** Freeserf, Freeciv civ2civ3 ja Unciv tarkistetaan ennen ensimmäistä niistä lainattua lukua. Lainataan vain mekaniikat, mutta lähdeviite kirjataan.
-16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella.
+16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella. PLAYTEST-001 ajettiin Sonnetilla pilvessä 2026-11-19 (130 työkalukutsua, 12,6 min); arvio odottaa Samia.
 
 ### Ratkenneet kysymykset
 

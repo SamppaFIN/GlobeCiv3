@@ -1,0 +1,64 @@
+{
+  "id": "TICKET-TEST-067",
+  "story": "STORY-084",
+  "implementation_ticket": "TICKET-IMPL-067",
+  "status": "review",
+  "tester": "Inanna 🦁 (Claude Sonnet 5.5, pilviajo)",
+  "build": "Pages 37767a6 (viimeisin onnistunut julkaisu 2026-10-20; tämän päivän mergeissä ei ole pelattavuusmuutoksia)",
+  "seed": 42,
+  "personas": [
+    "Uusi pelaaja puhelimella",
+    "Rakentaja",
+    "Valloittaja"
+  ],
+  "report": "docs/playtests/PLAYTEST-001.md",
+  "fix_summary": {
+    "problem_and_root_cause": "Samin havainto, että peli muuttuu heti liian sekavaksi, oli mittaamatta.",
+    "files_changed": [
+      "docs/playtests/PLAYTEST-001.md"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö, headless Chrome SwiftShaderilla, @playwright/mcp 0.0.86 sillan kautta",
+    "tooling": "Inannan 19 selaintyökalua play.mjs-komennolla",
+    "cases": [
+      {
+        "steps": "PLAYTEST-001 kolmella persoonalla siemenellä 42",
+        "expected": "Raportti pohjan mukaan, ja se nimeää kohdan, jossa peli muuttuu sekavaksi",
+        "result": "Raportti on pohjan mukainen (yhteenveto, arviot, sekavuuden kohta, kolme persoonaa aikajanoineen, kolme korjausta ja rajoitukset). Sekavuuden kohta: puhelinpersoona, toiminto #19, päivä 95 (tason avautumiskortti, kaupunkikortti ja rakennusilmoitus samalla hetkellä), ja noin 12 uutta asiaa ensimmäisten 20 toiminnon aikana. Kohta nimetään toimintonumerolla eikä minuutilla, kuten inanna.md ohjeistaa.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvaviitteet",
+        "expected": "Jokainen raportin kuva on olemassa",
+        "result": "49 eri viitettä, 0 puuttuu; 59 kuvaa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sami lukee raportin, ja havainnot kirjataan osioon 13",
+        "expected": "Päätösrivi",
+        "result": "Odottaa Samia",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": "Ei tarkistettu (ei Inannan tehtävä).",
+    "screenshots": [
+      "docs/playtests/shots/PLAYTEST-001-*.webp"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Raportti luettu, ja havainnot vastaavat Samin omaa kokemusta",
+        "checked": false
+      },
+      {
+        "item": "Kelpaako Sonnet Inannaksi (avoin kysymys 16)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

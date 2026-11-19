@@ -72,8 +72,9 @@ tarjoaa jatkamista, valitse uusi peli.
 - Numeroi toimintosi (#1, #2, …) ja kirjaa jokaiseen havaintoon pelipäivä
   HUD:sta. Ne ovat raportin aikaleimat.
 - Tallenna kuvakaappaukset nimellä
-  `docs/playtests/shots/PLAYTEST-NNN-p<persona>-<toiminto>.png`, esimerkiksi
-  `docs/playtests/shots/PLAYTEST-001-p1-07.png`.
+  `docs/playtests/shots/PLAYTEST-NNN-p<persona>-<toiminto>.webp`, esimerkiksi
+  `docs/playtests/shots/PLAYTEST-001-p1-07.webp`. WebP pitää repon kevyenä
+  (PNG:nä yksi pelitesti vei 31 Mt).
 
 ## Mitä etsit
 

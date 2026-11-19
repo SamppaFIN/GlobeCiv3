@@ -1,7 +1,7 @@
 # Pelitestit (Inanna 🦁)
 
 Tähän kansioon tulevat Inannan pelitestit `PLAYTEST-NNN.md` ja niiden
-kuvakaappaukset kansioon `shots/`. Inanna on sokea tekoälypelitestaaja: hän
+kuvakaappaukset WebP-muodossa kansioon `shots/`. Inanna on sokea tekoälypelitestaaja: hän
 pelaa julkaistua peliä kuin uusi pelaaja eikä näe koodia, suunnitelmia eikä
 hyväksymiskriteerejä. Utu tarkistaa, toimiiko peli niin kuin luvattiin, ja
 Inanna tarkistaa, kannattaako sitä pelata.
@@ -36,6 +36,12 @@ Raportin rakenne, persoonat ja arvioiden asteikko on määritelty tiedostossa
 - **Hämmennyksen hetket, kuollut aika, mikä toimi ja lopetuskohta**
   persoonittain.
 - **Missä peli muuttuu sekavaksi** ja **kolme tärkeintä korjausta**.
+
+## Ajot
+
+| Raportti | Päivä | Build | Missä ajettiin |
+|---|---|---|---|
+| [PLAYTEST-001](PLAYTEST-001.md) | 2026-11-19 | Pages 37767a6 | Pilvi: erillinen Sonnet-agentti Inannan ohjeilla, sokeus ohjeen varassa (STORY-084) |
 
 ## Rajoitukset
 
