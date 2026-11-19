@@ -1,0 +1,43 @@
+{
+  "id": "PLAN-074",
+  "story": "STORY-097",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Testilinkki ?planet avaa vapaan näkymän (kuten ?free) ja johtajien sodan: viisi johtajaa (pelaaja ensin), joilla kullakin on kuuden maavaltion valtakunta siemenestä toisistaan kaukana olevien pääkaupunkien ympärillä. Päivä kuluu 1,5 sekunnissa kuten pelissä, tauko ja 1× tai 4×. Jokainen johtaja tekee yhden teon neljän päivän välein: lähettiläs (asenne, kahdesta molemminpuolisesta liitto), propaganda (väkeä itselle), hyökkäys, ja kun maailman jännite on 60, ohjus, ohjusisku ja torjunta. Teot nostavat ja lähettiläät laskevat jännitettä, ja se jäähtyy hiljaa. Ohjus tappaa 15–30 % kohteesta ja laskeumana 1 % kaikista; torjunta pysäyttää puolet. Viimeinen pystyssä tai eniten väkeä päivänä 365 voittaa. Tekoälyt toimivat luonteensa mukaan (haukka, kyyhky ja puhuja). Säännöt ovat puhdas, siemenellä deterministinen moduuli src/game/nuclear.ts, ja teot ovat sarjallistettavia komentoja (Act). Paneeli kertoo johtajat, teot ja tapahtumat, ja pallolla on pääkaupunkien laput ja valtakuntien pisteet; ohjusisku välähtää kohteen pääkaupungissa.",
+  "alternatives_considered": [
+    {
+      "name": "Vuorot",
+      "pros": "Kuten esikuva, helppo moninpeliin",
+      "cons": "Eri kello kuin muu peli",
+      "rejected_because": "Sami valitsi päiväkellon"
+    },
+    {
+      "name": "Pommikoneet ohjusten lisäksi",
+      "pros": "Lähempänä esikuvaa",
+      "cons": "Kokeiluun yksi asetyyppi ja torjunta riittää",
+      "rejected_because": "Yksinkertaisuus; lisätään, jos Sami haluaa"
+    }
+  ],
+  "files_to_change": [
+    "src/game/nuclear.ts",
+    "src/ui/nuclearPanel.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Kalibrointi: autopilotilla seed 42 ohjukset aukeavat päivänä 66, ja sota päättyy päivinä 165–365"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Säännöt ja tekoäly",
+      "verify": "Yksikkötestit: determinismi, ohjukset vasta jännitteellä, teko neljän päivän välein, liitto, propaganda, ohjus ja torjunta, sodan loppu"
+    },
+    {
+      "step": 2,
+      "action": "Paneeli ja merkit pallolla",
+      "verify": "E2E ?planet ja peli ilman sotaa"
+    }
+  ],
+  "status": "approved"
+}

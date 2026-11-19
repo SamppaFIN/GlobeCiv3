@@ -463,10 +463,10 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-012", "icon": "☢️", "title": "Planeettataso: ydinsota (MVP:n jälkeen)", "status": "todo", "stories": ["STORY-097"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-073 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-073 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-073 (docs/tickets/testing)",
-  "next": "Sami hyväksyy storyt 073–084, 087, 096, 098 ja 099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä. Enki: STORY-097 (ydinsotakokeilu); sitten Inannan PLAYTEST-002. STORY-100 (peli englanniksi) MVP:n jälkeen."
+  "plans": "PLAN-001 … PLAN-074 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-074 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-074 (docs/tickets/testing)",
+  "next": "Sami hyväksyy storyt 073–084, 087, 096–099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä, ja pelaa ydinsotakokeilua (?planet). Seuraavaksi Inannan PLAYTEST-002. STORY-100 (peli englanniksi) MVP:n jälkeen."
 }
 ```
 
@@ -660,6 +660,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 | 2026-11-19 | **Tasojen sisältö ja aikakaudet:** jokaisella tasolla on omat rakennukset, yksiköt, politiikka ja uskonto, jotka vaikuttavat juuri sen tason toimintoihin, ja jokainen aikakausi avaa tasoille eri toimintoja. Ydinaseet tulevat vasta pitkälle kehittyneessä pelissä, ja diplomatia tulee ennen niitä. Joka tasolle tulee paneeli, jossa ovat alueen nimi, pikatoiminnot ja laajennettava infografiikka, ja kaupunkilappuihin pienet tiedot ja pikatoiminnot. Ydinsotataso kokeillaan välissä testilinkistä. Järjestys on Enkin: STORY-096, STORY-099 (suunnitelma), STORY-098 ja STORY-097. | Samin visio 2026-11-19: "iso kokonaisuus, tee siinä järjestyksessä kuin parhaaksi näät" | Sami |
 | 2026-11-19 | STORY-098 tehtiin (tila `review`): yläpaneelin mittaririvi kertoo tason ja alueen nimen, ja napautus tai näppäin i avaa infografiikan (asukkaat, tuotanto, kauppa ja tiede, aikakausi, tiedot ja pikatoiminnot). Kaupunkilapussa on lähellä pieni rivi, ensimmäinen napautus avaa pikapaneelin ja toinen kaupunkikortin. Ostaminen on komento. Aikakausi on oma sääntö: Rautatyö avaa rauta-ajan, kunnes Sami päättää aikakauden ehdon. | Oma rivi vei puhelimella 31 % näytöstä, kun STORY-025:n raja on 28 %. Kaksi napautusta on pelin tapa kartan alueissa. | Enki (Sami vahvistaa) |
 | 2026-11-19 | Peli tarvitsee englanninkielisen version: kielivalinta suomi/englanti (STORY-100, EPIC-005) MVP:n jälkeen. | Sami: "tarvitaan myös englanninkielinen versio". Tekstit muuttuvat vielä tasotikkaiden mukana, joten kääntäminen nyt tekisi työn kahdesti. | Sami |
+| 2026-11-19 | **Ydinsotakokeilu (STORY-097, tila `review`):** testilinkki `?planet` avaa johtajien sodan pallolla. Päivä kuluu pelin kellolla, jokainen johtaja tekee yhden teon neljän päivän välein, ja maailman jännite avaa ohjukset ja torjunnan rajalla 60. Viisi keksittyä johtajaa kuuden valtion valtakuntineen; kaikki säännöt ja luvut ovat omia. | Sami valitsi päiväkellon, yhden teon kerrallaan, jännitemittarin ja näkymän pallolla. Autopilotilla ohjukset aukeavat päivänä 66 (siemen 42). | Sami |
 
 ### Avoimet kysymykset
 
