@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T19:32:24Z",
+    "generated_at": "2026-11-19T19:34:34Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "01de43e",
+    "git_commit": "2764991",
     "git_branch": "main",
     "language": "fi"
   },
@@ -222,7 +222,7 @@
         "STORY-098",
         "STORY-099"
       ],
-      "progress": 25
+      "progress": 38
     },
     {
       "id": "EPIC-010",
@@ -2577,12 +2577,12 @@
         "docs/design/tasot-ja-aikakaudet.md kertoo jokaiselle tasolle ja aikakaudelle rakennukset, yksiköt, politiikan ja uskonnon sekä sen, mihin tason toimintoihin ne vaikuttavat, ja mistä mekaniikka on lainattu (sääntö 4).",
         "Suunnitelma jakaa sisällön EPIC-010:n ja EPIC-011:n storyihin, ja Sami hyväksyy sen."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-072",
+        "implementation": "TICKET-IMPL-072",
+        "testing": "TICKET-TEST-072"
       }
     }
   ]

@@ -224,7 +224,7 @@ LICENSE-tiedostoa.
   "deploy": "Push mainiin → GitHub Actions: Vitest ja Playwright → vite build → GitHub Pages (base /GlobeCiv3/). Pelkät docs-, CLAUDE.md- ja backlog.json-muutokset eivät käynnistä ajoa.",
   "has_ui": true,
   "accessibility": "WCAG 2.1 AA HUD:lle ja valikoille. 3D-canvasille: näppäimistöohjaus, prefers-reduced-motion ja tieto myös tekstinä, ei pelkkänä värinä.",
-  "design_reference": "design-brief.md (tasotikkaiden näkymät), docs/design/*.md (pelisuunnitelmat) ja docs/infinite-zoom-tutkimus.md (arkkitehtuurin lähtökohta)."
+  "design_reference": "design-brief.md (tasotikkaiden näkymät), docs/design/*.md (pelisuunnitelmat; tasojen ja aikakausien sisältö: tasot-ja-aikakaudet.md) ja docs/infinite-zoom-tutkimus.md (arkkitehtuurin lähtökohta)."
 }
 ```
 
@@ -463,9 +463,9 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-012", "icon": "☢️", "title": "Planeettataso: ydinsota (MVP:n jälkeen)", "status": "todo", "stories": ["STORY-097"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-071 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-071 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-071 (docs/tickets/testing)",
+  "plans": "PLAN-001 … PLAN-072 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-072 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-072 (docs/tickets/testing)",
   "next": "Sami hyväksyy storyt 073–084, 087 ja 096 sekä avoimet kysymykset 17–19. Enki: STORY-099 (tasojen ja aikakausien suunnitelma), STORY-098 (tasopaneeli) ja STORY-097 (ydinsotakokeilu); sitten Inannan PLAYTEST-002."
 }
 ```
