@@ -17,6 +17,10 @@ import { isResourceBuilding, RESOURCE_BUILDINGS, SIZE_LIMIT, type Build, type Ci
 import type { Advance } from './science';
 import type { StateLine } from './units';
 
+/** The levels with an advisor (STORY-049–051, STORY-057); the city level shares the city area's. */
+export type AdvisorLevel = 'city' | 'province' | 'state' | 'planet';
+export const ADVISOR_LEVELS: readonly AdvisorLevel[] = ['city', 'province', 'state', 'planet'];
+
 export type CityAdvisor = 'none' | 'growth' | 'explore' | 'defend';
 export const CITY_ADVISOR_LIST: readonly CityAdvisor[] = ['none', 'growth', 'explore', 'defend'];
 

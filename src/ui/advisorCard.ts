@@ -1,6 +1,7 @@
 /**
- * advisorCard.ts — the advisor of the level in view (STORY-049): three to choose from or
- * none, what each one does, and what the chosen one did lately. A bottom sheet like the
+ * advisorCard.ts — the advisor of the level in view (STORY-049): three to choose from, what
+ * each one does, and what the chosen one did lately. Ohjaan itse below them leaves the level
+ * to the player and brings out every menu (STORY-096). A bottom sheet like the
  * city card; the game goes on.
  */
 
@@ -35,11 +36,13 @@ export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose
     <div class="city-builds advisor-options" role="radiogroup" aria-labelledby="advisor-options-label">
       <span id="advisor-options-label" class="city-build-label">Kuka hoitaa tason puolestasi</span>
     </div>
+    <button class="btn btn-secondary advisor-own" type="button" aria-pressed="false">Ohjaan itse: kaikki valikot esiin</button>
     <span class="city-build-label">Viimeksi</span>
     <span class="city-area advisor-log"></span>`;
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
+  q('.advisor-own').addEventListener('click', () => on.choose('none'));
   const options = q('.advisor-options');
   let last = '';
   const update = (v: AdvisorView) => {
@@ -48,7 +51,8 @@ export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose
     last = key;
     q('.advisor-level').textContent = v.level;
     options.querySelectorAll('.city-build').forEach(o => o.remove());
-    for (const o of v.options) {
+    q('.advisor-own').setAttribute('aria-pressed', String(v.options.some(o => o.id === 'none' && o.selected)));
+    for (const o of v.options.filter(x => x.id !== 'none')) {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'city-build';

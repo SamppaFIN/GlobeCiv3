@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
+import { CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST } from './advisors';
 import { neighbors, pointToTile } from '../globe/hexTiles';
 import { foundCity, type City } from './cities';
 import { CommandLog, execute, type Command, type CommandWorld } from './commands';
@@ -19,12 +20,13 @@ const heights = new Map<number, number>([[CENTRE, 0.2], [HILL, 0.7], [MOUNTAIN, 
 const ground = { terrainOf: (t: number) => terrains.get(t) ?? 'grassland', heightOf: (t: number) => heights.get(t) ?? 0.2 };
 
 /** A fresh game state: one city with a temple, research from scratch, coal found on the map. */
-function world(): CommandWorld & { settled: number[]; founded: number[] } {
+function world(): CommandWorld & { settled: number[]; founded: number[]; advisors: Record<string, string> } {
   const c: City = foundCity([], CENTRE);
   c.buildings = ['temple'];
   placeAll(c, ground);
   const settled: number[] = [];
   const founded: number[] = [];
+  const advisors: Record<string, string> = { city: 'none', province: 'none', state: 'none', planet: 'none' };
   return {
     cities: [c],
     research: new Research({ known: [], target: null, bulbs: 0, kinds: [] }),
@@ -32,6 +34,8 @@ function world(): CommandWorld & { settled: number[]; founded: number[] } {
     ground,
     settled,
     founded,
+    advisors,
+    advise: (level, advisor) => { if (!({ city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level] as readonly string[]).includes(advisor)) return false; advisors[level] = advisor; return true; },
     // Only the marked site can be set out for, as the HUD's button
     found: tile => { if (tile !== FOREST) return false; founded.push(tile); return true; },
     settle: tile => { settled.push(tile); return true; },
@@ -39,6 +43,15 @@ function world(): CommandWorld & { settled: number[]; founded: number[] } {
 }
 
 describe('commands', () => {
+  it('an advisor is one of its level\'s, or none (STORY-096)', () => {
+    const w = world();
+    expect(execute({ kind: 'advise', level: 'city', advisor: 'growth' }, w)).toBe(true);
+    expect(execute({ kind: 'advise', level: 'state', advisor: 'growth' }, w)).toBe(false);
+    expect(execute({ kind: 'advise', level: 'state', advisor: 'war' }, w)).toBe(true);
+    expect(execute({ kind: 'advise', level: 'city', advisor: 'none' }, w)).toBe(true);
+    expect(w.advisors).toEqual({ city: 'none', province: 'none', state: 'war', planet: 'none' });
+  });
+
   it('a build needs its advance, as the city card asks', () => {
     const w = world();
     expect(execute({ kind: 'build', city: CENTRE, build: 'settler' }, w)).toBe(true);

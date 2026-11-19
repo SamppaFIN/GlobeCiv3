@@ -36,7 +36,9 @@ test('province advisors: three to choose from at the province level, each runnin
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
   await expect(card.locator('.advisor-level')).toHaveText('Lääni');
   const options = card.getByRole('radio');
-  await expect(options).toHaveCount(4);
+  // Three to choose from, and Ohjaan itse below them, pressed (STORY-096)
+  await expect(options).toHaveCount(3);
+  await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
   for (const n of ['Asuttaja', 'Tutkimusmatkailija', 'Vartija']) await expect(options.filter({ hasText: n })).toHaveCount(1);
   await expect(page.locator('.level-bottom:not([hidden])')).toBeHidden();
   await page.screenshot({ path: testInfo.outputPath('province-advisors.png') });

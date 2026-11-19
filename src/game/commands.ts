@@ -11,6 +11,7 @@
  *
  * A saved log is not trusted (security rule 5): save.ts checks every entry.
  */
+import type { AdvisorLevel } from './advisors';
 import type { Build, Building, City } from './cities';
 import { move, type Ground } from './placement';
 import { NEEDS, type Research, type Study } from './science';
@@ -26,10 +27,12 @@ export type Command =
   /** The city on the tile moves its building onto another tile (STORY-071). */
   | { kind: 'move'; city: number; building: Building; tile: number }
   /** The people study this next (STORY-040, STORY-072). */
-  | { kind: 'study'; target: Study };
+  | { kind: 'study'; target: Study }
+  /** A level's advisor (STORY-096): one of its three, or 'none' for the player's own hand. */
+  | { kind: 'advise'; level: AdvisorLevel; advisor: string };
 
 export type CommandKind = Command['kind'];
-export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study'];
+export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
 export type Actor = 'player' | 'people' | 'city' | 'province' | 'state' | 'planet';
@@ -50,6 +53,8 @@ export interface CommandWorld {
   ground: Ground;
   found(tile: number): boolean;
   settle(tile: number): boolean;
+  /** Set a level's advisor; false when it is not one of that level's. */
+  advise(level: AdvisorLevel, advisor: string): boolean;
 }
 
 /**
@@ -61,6 +66,8 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
   switch (cmd.kind) {
     case 'found':
       return w.found(cmd.tile);
+    case 'advise':
+      return w.advise(cmd.level, cmd.advisor);
     case 'settle':
       return w.settle(cmd.tile);
     case 'build': {

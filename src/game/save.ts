@@ -21,7 +21,7 @@ import { ADVANCE_LIST, LUX_RATES, RESOURCE_KINDS, TAX_RATES, type Advance, type 
 import type { Relation, Ties } from './diplomacy';
 import type { ResourceKind } from './terrainTypes';
 import { GOVERNMENT_LIST, type Government } from './government';
-import { CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
+import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
 import { ACTORS, COMMAND_KINDS, type Command, type Logged } from './commands';
 
 export const SAVE_VERSION = 1;
@@ -156,6 +156,11 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'build': return { kind, city: tile(c.city), build: oneOf(c.build, BUILDS, 'build') };
         case 'move': return { kind, city: tile(c.city), building: oneOf(c.building, BUILDINGS, 'building'), tile: tile(c.tile) };
         case 'study': return { kind, target: oneOf(c.target, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'study') };
+        case 'advise': {
+          const level = oneOf(c.level, ADVISOR_LEVELS, 'advisor level');
+          const list: readonly string[] = { city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level];
+          return { kind, level, advisor: oneOf(c.advisor, list, 'advisor') };
+        }
       }
     };
     const yieldOf = (v: unknown): Yield => {

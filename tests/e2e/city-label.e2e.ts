@@ -20,7 +20,10 @@ test('at the city level the city label stays clear of the top panel when the cit
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 15_000 });
   await page.waitForFunction(() => (window as any).globeDebug.cityLevel().relief === 1, null, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
-  await page.getByRole('dialog', { name: 'Neuvonantaja' }).getByRole('button', { name: 'Sulje' }).click();
+  // The greeting and the governor's three cards (STORY-096): the player's own hand, every menu as before
+  await page.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
+  await page.getByRole('button', { name: /^Ohjaan itse/ }).click();
+  await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
   const name = await page.evaluate(() => (window as any).globeGame.state.cities[0].name as string);
   const card = page.getByRole('dialog', { name });
 

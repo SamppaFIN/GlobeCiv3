@@ -38,6 +38,8 @@ export interface CityView {
   hint: string | null;
   /** The advisor running the city, if one does (STORY-049). */
   advisor: string | null;
+  /** The player's own hand (STORY-096): the focus, the builds, buying and research show only then. */
+  own: boolean;
   /** Food left over (may be negative), shields and trade a day. */
   yields: [number, number, number];
   /** Every build: "Soturi", "10 tuotantoa", what it does, "valmis 5 pv", and the one chosen. */
@@ -127,7 +129,8 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     q('.city-advisor').hidden = !v.advisor;
     q('.city-advisor').textContent = v.advisor ?? '';
     const hint = q('.city-hint');
-    hint.hidden = !v.hint;
+    // How to grow faster is the player's to act on, so under an advisor it stays out (STORY-096)
+    hint.hidden = !v.hint || !v.own;
     hint.textContent = v.hint ?? '';
     el.querySelectorAll<HTMLInputElement>('input[name="city-focus"]').forEach(i => { i.checked = i.value === v.focus; });
     el.querySelectorAll<HTMLElement>('.city-yield-n').forEach((n, i) => {
@@ -139,7 +142,10 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     const buildings = q('.city-buildings');
     buildings.hidden = !v.buildings.length;
     buildings.textContent = `Rakennukset: ${v.buildings.join(', ')}`;
-    buyButton.hidden = !v.buy;
+    buyButton.hidden = !v.buy || !v.own;
+    q('.city-focus-row').hidden = !v.own;
+    builds.hidden = !v.own;
+    q('.city-research').hidden = !v.own;
     if (v.buy) {
       buyButton.textContent = v.buy.can ? `Osta ${v.buy.name.toLowerCase()} · ${v.buy.price} kultaa` : `Osta ${v.buy.name.toLowerCase()} · ${v.buy.price} kultaa (kassassa ${v.gold})`;
       buyButton.disabled = !v.buy.can;
