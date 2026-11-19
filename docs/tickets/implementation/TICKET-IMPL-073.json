@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-073",
+  "story": "STORY-098",
+  "plan": "PLAN-073",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/ui/areaPanel.ts",
+    "src/ui/cityQuick.ts",
+    "src/ui/cityLabels.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "tests/e2e/area-panel.e2e.ts",
+    "tests/e2e/city-label.e2e.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "tests/e2e/onboarding.e2e.ts",
+    "tests/e2e/resource-buildings.e2e.ts"
+  ],
+  "change_summary": "Tasopaneeli yläpaneelin mittaririvillä (taso ja alueen nimi, napautus tai i avaa infografiikan, aikakauden, tiedot ja pikatoiminnot), kaupunkilappujen pieni rivi ja pikapaneeli (ensimmäinen napautus) sekä osto komentona (buy). Kaupunkien tuotot lasketaan kerran päivässä tai kaupungin muuttuessa, ei joka framessa.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "CommandWorld.buy",
+      "Command 'buy'",
+      "CityLabel.info/open",
+      "createCityLabels"
+    ],
+    "call_sites_found": [
+      "main.ts: kaupunkikortin osto, Kasvattajan, Kenraalin ja sotaretken ostot",
+      "4 E2E-testiä, jotka avasivat kortin lapusta"
+    ],
+    "call_sites_updated": [
+      "main.ts: kaikki neljä ostoa komentoina",
+      "E2E: lapun jälkeen Kaupunkikortti pikapaneelista (käytös muuttui tarkoituksella)"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Neljä E2E-testiä muutettiin, koska lapun ensimmäinen napautus avaa nyt pikapaneelin eikä korttia. Tämä on storyn tarkoittama käytöksen muutos, ei testin sovittamista."
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T19:34:34Z",
+    "generated_at": "2026-11-19T20:09:00Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "2764991",
+    "git_commit": "bd3ba67",
     "git_branch": "main",
     "language": "fi"
   },
@@ -108,7 +108,8 @@
       "description": "HUD kertoo, missä pelaaja on ja mitä siellä tapahtuu, nykyiseen zoom-tasoon sopivalla tarkkuudella.",
       "status": "todo",
       "stories": [
-        "STORY-018"
+        "STORY-018",
+        "STORY-100"
       ],
       "progress": 0
     },
@@ -222,7 +223,7 @@
         "STORY-098",
         "STORY-099"
       ],
-      "progress": 38
+      "progress": 50
     },
     {
       "id": "EPIC-010",
@@ -2557,12 +2558,12 @@
         "Joka tasolla on paneeli, joka kertoo alueen nimen ja tason, tarjoaa sen pikatoiminnot ja laajenee infografiikaksi (esimerkiksi väestö, tuotanto, kauppa ja tiede).",
         "Kaupunkilapussa näkyvät pieninä koko, rakennus ja tärkeimmät tiedot, ja napautus tarjoaa pikatoiminnot. Puhelimella kohteet ovat vähintään 44 px."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-073",
+        "implementation": "TICKET-IMPL-073",
+        "testing": "TICKET-TEST-073"
       }
     },
     {
@@ -2584,6 +2585,24 @@
         "implementation": "TICKET-IMPL-072",
         "testing": "TICKET-TEST-072"
       }
+    },
+    {
+      "id": "STORY-100",
+      "epic": "EPIC-005",
+      "title": "Peli englanniksi",
+      "type": "story",
+      "narrative": "Englanninkielisenä pelaajana haluan valita pelin kieleksi englannin, jotta voin pelata peliä ymmärtämättä suomea.",
+      "effort": "L",
+      "depends_on": [],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Aloitusnäytöllä on kielivalinta suomi/englanti, joka muistetaan selaimessa. Oletus on selaimen kieli, ja muulla kuin suomella oletus on englanti.",
+        "Kaikki pelin tekstit (HUD, kortit, ilmoitukset, neuvonantajat, keksinnöt, rakennukset, yksiköt ja paikannimien rakenneosat) tulevat käännöstauluista, ja yksikkötesti varmistaa, että jokaisella avaimella on käännös molemmilla kielillä.",
+        "Tallennus ei riipu kielestä: sama tallennus latautuu kummallakin kielellä, ja komentoloki sisältää vain tunnisteita, ei tekstejä.",
+        "Saavutettavuusnimet (aria-label) ovat valitulla kielellä, ja E2E-testi pelaa alun englanniksi ilman suomenkielisiä tekstejä näkymässä."
+      ]
     }
   ]
 }

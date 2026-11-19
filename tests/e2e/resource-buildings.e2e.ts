@@ -35,6 +35,8 @@ test('a known resource in the city area gives its building; the building stands 
 
   // Not known yet: no building
   await page.locator('.city-label', { hasText: start.name }).click();
+  // The label opens the city's quick panel first (STORY-098)
+  await page.getByRole('group', { name: `Kaupunki ${start.name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
   await expect(builds).toBeVisible();
   await expect(farmstead).toHaveCount(0);
 

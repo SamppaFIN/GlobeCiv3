@@ -1,0 +1,81 @@
+{
+  "id": "TICKET-TEST-073",
+  "story": "STORY-098",
+  "implementation_ticket": "TICKET-IMPL-073",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Pelissä ei näkynyt, millä tasolla ja alueella ollaan, eikä kaupungin tilannetta nähnyt avaamatta korttia.",
+    "files_changed": [
+      "src/ui/areaPanel.ts",
+      "src/ui/cityQuick.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "area-panel.e2e: kaupunkitasolla paneeli kertoo Kaupunki ja pääkaupungin nimen, avautuu neljään lukuun, aikakauteen ja kaupungin riveihin; Kaupunkikortti avaa kortin; Kaupunkialueelle näkyy vasta tason avauduttua ja vie kaupunkialueelle, jonka nimi ja tiedot näkyvät; i sulkee",
+        "expected": "Kriteeri 1",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "area-panel.e2e: lapun pieni rivi (rakennus ja ruoka), ensimmäinen napautus avaa pikapaneelin, napit vähintään 44 px, kartan napautus sulkee, toinen napautus avaa kortin",
+        "expected": "Kriteeri 2",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "area-panel.e2e puhelimella 390 × 844: paneeli ja pikapaneeli mahtuvat, napit 44 px; play.e2e: HUD alle 28 % näytöstä",
+        "expected": "Puhelin",
+        "result": "Läpi. Ensimmäinen versio (oma rivi) vei 265 px, kun raja on 236 px, ja siirrettiin mittaririville.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "commands.test: osto maksaa puuttuvan ja kaupunki, jolla ei ole ostettavaa, ei osta; save.test: buy-komento säilyy tallennuksessa",
+        "expected": "Sääntö 7 ja 8",
+        "result": "Vitest 225/225",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Lappua napauttavat E2E-testit (city-label, new-start, onboarding, resource-buildings) sekä goals, play, unlock, region-card, province-advisors ja state-advisors",
+        "expected": "Ei regressiota",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Sami puhelimella Pagesista",
+        "expected": "Hyväksyntä",
+        "result": "Odottaa Samia",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "area-panel: city-level.png, city-area-level.png, city-quick.png, phone-panel.png, phone-quick.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tasopaneeli kertoo tason ja alueen ja avautuu infografiikaksi",
+        "checked": false
+      },
+      {
+        "item": "Kaupunkilappu ja pikapaneeli puhelimella",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

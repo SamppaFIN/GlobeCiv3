@@ -50,6 +50,8 @@ test('a new game flies down to the city level of a built capital; a building ope
 
   // Before the first building the city builds no units: a building is under way
   await page.locator('.city-label', { hasText: s.cities[0].name }).click();
+  // The label opens the city's quick panel first (STORY-098)
+  await page.getByRole('group', { name: `Kaupunki ${s.cities[0].name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
   const card = page.getByRole('dialog', { name: s.cities[0].name });
   const builds = card.getByRole('radiogroup', { name: 'Rakenna' });
   await expect(builds).toBeVisible();

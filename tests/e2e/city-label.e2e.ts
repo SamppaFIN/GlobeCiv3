@@ -29,6 +29,8 @@ test('at the city level the city label stays clear of the top panel when the cit
 
   for (let round = 0; round < 2; round++) {
     await page.locator('.city-label', { hasText: name }).click();
+    // The label opens the city's quick panel first (STORY-098)
+    await page.getByRole('group', { name: `Kaupunki ${name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
     await expect(card).toBeVisible();
     await page.waitForFunction(() => !(window as any).globeCamera.flying, null, { timeout: 10_000 });
     expect(await labelOnTop(page, name)).toBe(true);
