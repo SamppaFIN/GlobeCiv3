@@ -60,8 +60,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä korjauksen jälkeen",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Ajo 44623899393 (7164fd4): success; julkaistu Pagesiin",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
