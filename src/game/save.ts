@@ -22,6 +22,7 @@ import type { Relation, Ties } from './diplomacy';
 import type { ResourceKind } from './terrainTypes';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
+import { ACTORS, COMMAND_KINDS, type Command, type Logged } from './commands';
 
 export const SAVE_VERSION = 1;
 
@@ -98,6 +99,8 @@ export interface SaveData {
   /** The planet-level advisor and the target state, or −1 (STORY-057); saves from before have none. */
   planetAdvisor: PlanetAdvisor;
   targetState: number;
+  /** The commands that took effect (STORY-086); saves from before have none. */
+  commands?: Logged[];
 }
 
 /** Ranges the save is checked against. */
@@ -145,6 +148,18 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
     if (s.version !== SAVE_VERSION) return fail('version');
     const tile = (v: unknown) => int(v, 'tile', 0, limits.tiles - 1);
     const tiles = (v: unknown, max?: number) => list(v, 'tiles', tile, max);
+    // A command is rebuilt from its checked fields only, by its kind (STORY-086)
+    const commandOf = (v: unknown): Command => {
+      const c = obj(v, 'command');
+      const kind = oneOf(c.kind, COMMAND_KINDS, 'command kind');
+      switch (kind) {
+        case 'found':
+        case 'settle': return { kind, tile: tile(c.tile) };
+        case 'build': return { kind, city: tile(c.city), build: oneOf(c.build, BUILDS, 'build') };
+        case 'move': return { kind, city: tile(c.city), building: oneOf(c.building, BUILDINGS, 'building'), tile: tile(c.tile) };
+        case 'study': return { kind, target: oneOf(c.target, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'study') };
+      }
+    };
     const yieldOf = (v: unknown): Yield => {
       const y = obj(v, 'yield');
       return { food: int(y.food, 'food', -100, 100), shield: int(y.shield, 'shield', -100, 100), trade: int(y.trade, 'trade', -100, 100) };
@@ -320,6 +335,12 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       stateAdvisor: s.stateAdvisor === undefined ? 'none' : oneOf(s.stateAdvisor, STATE_ADVISOR_LIST, 'stateAdvisor'),
       planetAdvisor: s.planetAdvisor === undefined ? 'none' : oneOf(s.planetAdvisor, PLANET_ADVISOR_LIST, 'planetAdvisor'),
       targetState: s.targetState === undefined ? -1 : int(s.targetState, 'target state', -1, Math.ceil(limits.cityAreas / 49)),
+      ...(s.commands === undefined ? {} : {
+        commands: list(s.commands, 'commands', v => {
+          const e = obj(v, 'logged');
+          return { day: int(e.day, 'command day'), by: oneOf(e.by, ACTORS, 'actor'), cmd: commandOf(e.cmd) };
+        }),
+      }),
     };
   } catch (e) {
     if (e instanceof Invalid) return null;

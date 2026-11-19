@@ -61,5 +61,9 @@ test('advisors: the city area level has three to choose from, and the chosen one
   await page.getByRole('dialog', { name: 'Luettelo' }).locator('.list-row').filter({ hasText: 'Aamuranta' }).click();
   await expect(page.getByRole('dialog', { name: 'Aamuranta' }).locator('.city-advisor')).toHaveText('Neuvonantaja Vartija hoitaa painotuksen ja rakentamisen.');
   await page.screenshot({ path: testInfo.outputPath('city-advisor.png') });
+  // Both acts went through the command log (STORY-086): the player's found and the Vartija's soldier
+  const log = (await state(page)).commands;
+  expect(log).toContainEqual({ day: expect.any(Number), by: 'player', kind: 'found' });
+  expect(log).toContainEqual({ day: expect.any(Number), by: 'city', kind: 'build' });
   expect(errors).toEqual([]);
 });

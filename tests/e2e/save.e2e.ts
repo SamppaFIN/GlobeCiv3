@@ -13,7 +13,7 @@ const kept = (s: any) => ({
   seed: s.seed, startCity: s.startCity, day: s.day, speed: s.speed, paused: s.paused, mapped: s.mapped, openLevel: s.openLevel,
   cities: s.cities.map((c: any) => [c.name, c.tile, c.size, c.food, c.shields, c.build]),
   units: s.units.map((u: any) => [u.name, u.kind, u.tile, u.mode, u.path, u.task]),
-  site: s.site, improvements: s.improvements, raid: s.raid, found: s.found,
+  site: s.site, improvements: s.improvements, raid: s.raid, found: s.found, commands: s.commands,
 });
 
 test('the game saves itself; after a reload Jatka goes on where it was', async ({ page }, testInfo) => {
@@ -44,6 +44,8 @@ test('the game saves itself; after a reload Jatka goes on where it was', async (
   await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
   await page.getByRole('button', { name: 'Tauko' }).click();
   const before = await state(page);
+  // The player's act is in the command log (STORY-086), and the log is kept
+  expect(before.commands).toContainEqual({ day: expect.any(Number), by: 'player', kind: 'found' });
   expect(await page.evaluate(() => (window as any).globeDebug.saveNow())).toBe(true);
 
   // A reload: the start screen offers the saved game
