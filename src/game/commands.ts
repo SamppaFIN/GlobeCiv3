@@ -29,10 +29,12 @@ export type Command =
   /** The people study this next (STORY-040, STORY-072). */
   | { kind: 'study'; target: Study }
   /** A level's advisor (STORY-096): one of its three, or 'none' for the player's own hand. */
-  | { kind: 'advise'; level: AdvisorLevel; advisor: string };
+  | { kind: 'advise'; level: AdvisorLevel; advisor: string }
+  /** The city on the tile buys what it builds, out of the treasury (STORY-038, STORY-098). */
+  | { kind: 'buy'; city: number };
 
 export type CommandKind = Command['kind'];
-export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise'];
+export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
 export type Actor = 'player' | 'people' | 'city' | 'province' | 'state' | 'planet';
@@ -55,6 +57,8 @@ export interface CommandWorld {
   settle(tile: number): boolean;
   /** Set a level's advisor; false when it is not one of that level's. */
   advise(level: AdvisorLevel, advisor: string): boolean;
+  /** Buy what the city on the tile builds; false when there is nothing to buy or too little gold. */
+  buy(tile: number): boolean;
 }
 
 /**
@@ -68,6 +72,8 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       return w.found(cmd.tile);
     case 'advise':
       return w.advise(cmd.level, cmd.advisor);
+    case 'buy':
+      return w.buy(cmd.city);
     case 'settle':
       return w.settle(cmd.tile);
     case 'build': {

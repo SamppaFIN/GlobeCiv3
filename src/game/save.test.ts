@@ -55,6 +55,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       { day: 10, by: 'player', cmd: { kind: 'move', city: START_TILE, building: 'granary', tile: START_TILE + 1 } },
       { day: 11, by: 'state', cmd: { kind: 'study', target: 'masonry' } },
       { day: 12, by: 'player', cmd: { kind: 'advise', level: 'province', advisor: 'settle' } },
+      { day: 13, by: 'state', cmd: { kind: 'buy', city: 7 } },
     ],
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };

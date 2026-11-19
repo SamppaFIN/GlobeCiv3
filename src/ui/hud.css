@@ -29,6 +29,34 @@
 .level-hint:empty { display: none; }
 .level-bar[hidden] { display: none; }
 
+/* The level panel in the top panel (STORY-098): the meter's row tells where the view is,
+   and a tap opens the area's infographic and quick actions under the goal */
+.hud-area {
+  flex: 0 1 auto; min-width: 0; max-width: 62%; min-height: 28px; display: flex; align-items: center; gap: 6px;
+  padding: 0 6px 0 2px; border: 0; border-radius: var(--radius-sm); background: none;
+  color: inherit; font: inherit; font-size: 12px; text-align: left; cursor: pointer; white-space: nowrap;
+}
+.hud-area[hidden] { display: none; }
+.hud-area:hover { background: color-mix(in srgb, var(--c-text) 7%, transparent); }
+.hud-area svg { flex: none; transition: transform 150ms ease; }
+.hud-area[aria-expanded="true"] svg { transform: rotate(180deg); }
+.hud-area-kicker { flex: none; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-accent-text); }
+.hud-area-name { min-width: 0; font-weight: 500; color: #cfd3e5; overflow: hidden; text-overflow: ellipsis; }
+/* The goal's line tells what the meter counts */
+.hud-meter-row:has(.hud-area:not([hidden])) .hud-meter-name { display: none; }
+.hud-area-info { display: flex; flex-direction: column; gap: 8px; padding: 6px 4px 2px; border-top: 1px solid #3f424d; max-height: 50vh; overflow-y: auto; }
+.hud-area-info[hidden] { display: none; }
+.hud-area-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.hud-area-stat { display: flex; flex-direction: column; align-items: center; padding: 6px 2px; border-radius: 8px; background: #2a2c35; }
+.hud-area-stat-value { font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.hud-area-stat-label { font-size: 11px; color: var(--c-muted); }
+.hud-area-rows { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: 12px; }
+.hud-area-rows dt { color: var(--c-muted); }
+.hud-area-rows dd { margin: 0; color: #cfd3e5; }
+.hud-area-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.hud-area-action { min-height: var(--touch-target); padding: 0 12px; font-size: 13px; }
+.hud-area-action kbd { font: inherit; font-size: 11px; padding: 1px 5px; border-radius: 4px; background: #3f424d; color: var(--c-muted); }
+
 /* Start screen (STORY-021, design view 1a). It blocks input to the globe until the
    new game has landed, also while it fades out. */
 .start { position: absolute; inset: 0; pointer-events: auto; transition: opacity 400ms ease; touch-action: none; cursor: grab; }
@@ -347,6 +375,26 @@
   background: var(--ink); color: var(--c-bg); font-size: 12px; font-variant-numeric: tabular-nums;
 }
 #hud.discovering .city-labels { display: none; }
+/* Close up a small line under the name (STORY-098) */
+.city-label-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+.city-label-info { font-size: 11px; font-weight: 400; color: var(--c-muted); }
+.city-label-info:empty { display: none; }
+.city-label[aria-expanded="true"] { border-color: var(--c-accent-text); }
+/* A city's quick panel under its label (STORY-098) */
+.city-quick {
+  position: absolute; left: 0; top: 0; z-index: 1; width: max-content; max-width: min(320px, calc(100vw - 16px));
+  padding: 8px 8px 8px 14px; border-radius: var(--radius-md); background: var(--c-hud);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 1px #3f424d;
+  pointer-events: auto;
+}
+.city-quick[hidden] { display: none; }
+.city-quick-head { display: flex; align-items: center; gap: 8px; }
+.city-quick-name { flex: 1; margin: 0; font-size: 15px; font-weight: 500; }
+.city-quick-close { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
+.city-quick-lines { margin: 0 6px 8px 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.5; color: #cfd3e5; font-variant-numeric: tabular-nums; }
+.city-quick-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.city-quick-action { min-height: var(--touch-target); padding: 0 12px; font-size: 13px; }
+#hud.discovering .city-quick { display: none; }
 /* City-states (STORY-063): rust, not ink */
 .city-label-native { border-color: var(--c-rust, #b5532f); border-style: dashed; }
 .city-label-native .city-label-size { background: var(--c-rust, #b5532f); }

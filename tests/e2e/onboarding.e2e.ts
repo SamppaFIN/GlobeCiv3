@@ -70,6 +70,8 @@ test('a new game greets, the player picks one of three advisors, a short tour sh
   await expect(page.locator('.hud-research')).toBeHidden();
   // The city card tells, and its builds wait for the player's own hand
   await page.locator('.city-label', { hasText: s.cities[0].name }).click();
+  // The label opens the city's quick panel first (STORY-098)
+  await page.getByRole('group', { name: `Kaupunki ${s.cities[0].name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
   const city = page.getByRole('dialog', { name: s.cities[0].name });
   await expect(city.locator('.city-advisor')).toHaveText('Neuvonantaja Kasvattaja hoitaa painotuksen ja rakentamisen.');
   await expect(city.getByRole('radiogroup', { name: 'Rakenna' })).toBeHidden();
@@ -86,6 +88,8 @@ test('a new game greets, the player picks one of three advisors, a short tour sh
   await card.getByRole('button', { name: 'Sulje' }).click();
   await expect(page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' })).toBeVisible();
   await page.locator('.city-label', { hasText: s.cities[0].name }).click();
+  // The label opens the city's quick panel first (STORY-098)
+  await page.getByRole('group', { name: `Kaupunki ${s.cities[0].name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
   await expect(city.getByRole('radiogroup', { name: 'Rakenna' })).toBeVisible();
   expect(errors).toEqual([]);
 });

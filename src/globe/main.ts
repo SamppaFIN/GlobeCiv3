@@ -11,7 +11,7 @@ import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem
 import { createTradeCard, type TradeView } from '../ui/tradeCard';
 import { attachInput, GlobeCamera } from './camera';
 import { buildHexGrid } from './hexGrid';
-import { backTarget, diveTarget, frameDistances, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
+import { backTarget, diveTarget, frameDistances, LEVEL_NAMES, levelForDist, regionAt, regionCenter, regionPath, sameRegion, type FlightTarget, type RegionRef, type ViewLevel } from './levels';
 import { neighbors, pointToTile, tileCenter, TILE_COUNT } from './hexTiles';
 import { Regions } from './regions';
 import { hash, heightRange, terrainHeight } from './terrain';
@@ -35,6 +35,8 @@ import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, LUX_RATES, NEEDS, Research, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type Study } from '../game/science';
 import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
+import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
+import { createCityQuick } from '../ui/cityQuick';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
@@ -220,6 +222,7 @@ function fly(to: FlightTarget, durationS = 1) {
 }
 
 function onTap(clientX: number, clientY: number) {
+  quickCity = null;
   const rect = renderer.domElement.getBoundingClientRect();
   const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
   // Ray against the sphere itself: works at every zoom level; at the city level against the risen ground
@@ -665,6 +668,8 @@ interface Play {
   listOpen: boolean;
   listTab: ListTab;
   hud: ReturnType<typeof createGameHud>;
+  /** The level panel at the top of the HUD (STORY-098). */
+  area: AreaPanel;
   /** The commands that took effect (STORY-086, rule 7). */
   commands: CommandLog;
 }
@@ -732,7 +737,7 @@ function startPlay(startCity: number, saved?: SaveData) {
   const state = Math.floor(startCity / 49);
   const stateTiles: number[] = [];
   for (let c = state * 49; c < state * 49 + 49; c++) stateTiles.push(...cityTiles(regions, c));
-  const hud = createGameHud(hud_root, {
+  const hud: ReturnType<typeof createGameHud> = createGameHud(hud_root, {
     togglePause: () => { clock.paused = !clock.paused; },
     setSpeed: (speed: Speed) => { clock.speed = speed; clock.paused = false; },
     setMode: (mode: Mode) => { if (play) play.units.setMode(play.units.units[play.selected], mode); },
@@ -764,7 +769,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog() };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -1142,7 +1147,7 @@ function foundSite(tile: number): boolean {
 /** Every act of the player and the advisors goes through here and into the log (STORY-086, rule 7). */
 function dispatch(cmd: Command, by: Actor): boolean {
   if (!play) return false;
-  const done = execute(cmd, { cities: play.cities, research: play.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor });
+  const done = execute(cmd, { cities: play.cities, research: play.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt });
   if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
   return done;
 }
@@ -1157,10 +1162,186 @@ const cityLabels = createCityLabels(hud_root, id => {
     play.tileOpen = tile;
     return;
   }
+  // The first tap opens the city's quick panel, the second its card (STORY-098)
+  if (quickCity !== id) {
+    quickCity = id;
+    return;
+  }
+  openCityCard(id);
+});
+
+function openCityCard(id: number) {
+  if (!play) return;
+  quickCity = null;
   play.openCity = id;
   // From the province or state level, fly to the city
   if (viewLevel !== 3) fly({ point: tileCenter(play.cities[id].tile), dist: frames[3], level: 3 });
+}
+
+/** Buy what the city on the tile builds, out of the treasury (STORY-038; a command, STORY-098). */
+function buyAt(tile: number): boolean {
+  const p = play!;
+  const c = p.cities.find(x => x.tile === tile);
+  const price = c ? buy(c, p.gold) : null;
+  if (price === null) return false;
+  p.gold -= price;
+  return true;
+}
+
+/** The player buys in a city: the card's and the quick panel's button. */
+function buyCity(c: City) {
+  const price = buyCost(c);
+  if (dispatch({ kind: 'buy', city: c.tile }, 'player')) discoveryCard.notice(`${c.name} osti: ${BUILDS[c.build].name} · ${price} kultaa`);
+}
+
+// ─── Level panel and city quick panels (STORY-098) ─
+// The top of the HUD tells the level, the era and the area in view, and opens into the
+// area's infographic and quick actions. A city's label tells in small what it builds and
+// how it grows; a tap opens its quick panel.
+
+/** The city whose quick panel is open (its id), or null. */
+let quickCity: number | null = null;
+const cityQuick = createCityQuick(hud_root, {
+  action: (id, city) => {
+    const c = play?.cities[city];
+    if (!c) return;
+    if (id === 'card') openCityCard(city);
+    else if (id === 'fly') fly({ point: tileCenter(c.tile), dist: cityViewDist(), level: 3 });
+    else if (id === 'buy') buyCity(c);
+  },
+  close: () => { quickCity = null; },
 });
+
+/** The era by its key advance (own, docs/design/tasot-ja-aikakaudet.md; what opens an era is Sami's to decide). */
+const eraName = () => (play?.research.known.has('iron') ? 'Rauta-aika' : 'Varhaisaika');
+
+/** The cities' yields, worked out once a day or when a city changes, not in every frame. */
+let yieldsCache: { key: string; yields: CityYield[] } | null = null;
+function yieldsNow(): CityYield[] {
+  const p = play!;
+  const key = `${clock.day}|${p.gov}|${p.tax}|${p.lux}|${p.cities.map(c => `${c.size}:${c.build}:${c.focus}:${c.buildings.length}`).join(',')}`;
+  if (yieldsCache?.key !== key) yieldsCache = { key, yields: cityYields() };
+  return yieldsCache.yields;
+}
+
+const daysWord = (n: number | null) => (n === null ? 'ei etene' : n === 0 ? 'huomenna' : `${n} pv`);
+
+/** What the city builds and how it grows, in small under its name. */
+function labelInfo(c: City, y: CityYield): string {
+  if (y.disorder) return 'Levottomuutta';
+  const build = c.build === 'coinage' ? `Kultaa +${Math.max(0, y.shield)}` : `${BUILDS[c.build].name} ${daysWord(daysToBuild(c, y))}`;
+  return `${build} · ruokaa ${signed(y.surplus)}`;
+}
+
+/** The city's figures, a short line each: the quick panel and the city level's panel. */
+function cityLines(c: City, y: CityYield): string[] {
+  const grow = daysToGrow(c, y);
+  const growth = y.surplus < 0 ? 'näkee nälkää' : grow === null ? 'ei kasva' : `kasvaa ${daysWord(grow)}`;
+  const build = c.build === 'coinage' ? `Tekee kultaa +${Math.max(0, y.shield)}/pv` : `Rakentaa ${BUILDS[c.build].name} · ${daysWord(daysToBuild(c, y))}`;
+  const mood = moodOf(c, y);
+  const soldiers = soldiersIn(c.tile).length;
+  return [
+    `Koko ${c.size} · ruokaa ${signed(y.surplus)}/pv, ${growth}`,
+    build,
+    `Tuotantoa +${Math.max(0, y.shield)} · kauppaa +${y.trade} · tiedettä +${cityScience(c, y, rates().tax, rates().lux)}`,
+    `${y.disorder ? 'Levottomuutta' : `${mood.happy + mood.content} tyytyväistä, ${mood.unhappy} tyytymätöntä`} · ${soldiers ? `puolustajia ${soldiers}` : 'ei puolustajia'}`,
+    ...(c.buildings.length ? [`Rakennukset: ${c.buildings.map(b => BUILDS[b].name).join(', ')}`] : []),
+  ];
+}
+
+function updateCityQuick(lift: number) {
+  const p = play!;
+  const c = quickCity === null ? undefined : p.cities[quickCity];
+  if (!c || viewLevel === 0 || p.openCity !== null) {
+    quickCity = null;
+    cityQuick.update(null);
+    return;
+  }
+  const y = yieldsNow()[c.id];
+  const price = buyCost(c);
+  const actions = [
+    { id: 'card', label: 'Kaupunkikortti' },
+    ...(cityInView() !== c ? [{ id: 'fly', label: 'Lennä kaupunkiin' }] : []),
+    ...(ownHand() && price > 0 && price <= p.gold ? [{ id: 'buy', label: `Osta ${BUILDS[c.build].name} · ${price} kultaa` }] : []),
+  ];
+  const at = toScreen(tileCenter(c.tile));
+  cityQuick.update({ id: c.id, name: c.name, lines: cityLines(c, y), actions, x: at?.[0] ?? null, y: at ? at[1] - lift : null });
+}
+
+/** A quick action of the level panel. */
+function areaAction(id: string) {
+  if (!play) return;
+  const c = cityInView();
+  if (id === 'advisor') play.hud.element.querySelector<HTMLButtonElement>('.hud-advisor')?.click();
+  else if (id === 'card' && c) openCityCard(c.id);
+  else if (id === 'area' && c) fly({ point: tileCenter(c.tile), dist: frames[3], level: 3 });
+  else if (id === 'up' && viewLevel > lockedLevel) {
+    const to = upTarget(rig.target);
+    if (to) fly(to);
+  } else if (id === 'list') play.hud.element.querySelector<HTMLButtonElement>('.hud-city')?.click();
+}
+
+/** The four figures of the player's cities among these. */
+function areaStats(cities: City[]): AreaStat[] {
+  const yields = yieldsNow();
+  let people = 0, shield = 0, trade = 0, science = 0;
+  for (const c of cities) {
+    const y = yields[c.id];
+    people += c.size;
+    shield += Math.max(0, y.shield);
+    trade += y.trade;
+    science += cityScience(c, y, rates().tax, rates().lux);
+  }
+  return [
+    { label: 'Asukkaita', value: String(people) },
+    { label: 'Tuotanto/pv', value: String(shield) },
+    { label: 'Kauppa/pv', value: String(trade) },
+    { label: 'Tiede/pv', value: String(science) },
+  ];
+}
+
+/** The level panel's view: where the view is, and when open, what is there. */
+function areaView(): AreaView {
+  const p = play!;
+  const era = eraName();
+  const city = cityInView();
+  const open = p.area.open;
+  const advisor = { id: 'advisor', label: `Neuvonantaja: ${viewLevel === 3 ? CITY_ADVISORS[p.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[p.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[p.stateAdvisor].name : PLANET_ADVISORS[p.planetAdvisor].name}` };
+  const up = viewLevel > lockedLevel ? [{ id: 'up', label: 'Taso ylös', key: '-' }] : [];
+  if (city) {
+    return {
+      kicker: 'Kaupunki', name: city.name,
+      stats: open ? areaStats([city]) : [],
+      rows: open ? [{ label: 'Aikakausi', value: era }, ...cityLines(city, yieldsNow()[city.id]).map((value, k) => ({ label: ['Kasvu', 'Tuotanto', 'Tuotot', 'Mieliala', 'Rakennukset'][k], value }))] : [],
+      // Out to the city area once it is open (STORY-070)
+      actions: [{ id: 'card', label: 'Kaupunkikortti' }, advisor, ...(lockedLevel < 4 ? [{ id: 'area', label: 'Kaupunkialueelle' }] : [])],
+    };
+  }
+  const ref = viewLevel > 0 ? path[viewLevel - 1] : undefined;
+  if (!ref) {
+    const won = conquestNow();
+    return {
+      kicker: 'Planeetta', name: 'Koko maailma',
+      stats: open ? areaStats(p.cities) : [],
+      rows: open ? [
+        { label: 'Aikakausi', value: era },
+        { label: 'Valtiot', value: `${won.conquered.size} vallattu` },
+        { label: 'Kaupungit', value: p.cities.length ? someOf(p.cities.map(c => `${c.name} (${c.size})`)) : 'ei kaupunkeja' },
+        { label: 'Kassa', value: `${p.gold} kultaa` },
+      ] : [],
+      actions: [advisor, ...up],
+    };
+  }
+  const name = ref.level === 0 ? stateNameOf(ref.id).name : nameOf(ref.level, ref.id).name;
+  const divisor = [49, 7, 1][ref.level];
+  const inside = open ? p.cities.filter(c => Math.floor(world.cityOf(c.tile) / divisor) === ref.id) : [];
+  return {
+    kicker: LEVEL_NAMES[viewLevel], name,
+    stats: open ? areaStats(inside) : [],
+    rows: open ? [{ label: 'Aikakausi', value: era }, ...regionView(ref).rows] : [],
+    actions: [advisor, ...(viewLevel === 3 && ownHand() ? [{ id: 'list', label: 'Luettelo' }] : []), ...up],
+  };
+}
 
 // What the open city's tiles bring in, over the map and under the card (STORY-039)
 const tileYields = createTileYields(hud_root);
@@ -1173,8 +1354,10 @@ function updateCityLabels() {
   cityLabels.update(viewLevel === 0 ? [] : [
     ...play.cities.map(c => {
       const at = toScreen(tileCenter(c.tile));
-      // Above the city's houses at the city-area level, on the city further out
-      return { id: c.id, name: c.name, size: c.size, x: at?.[0] ?? null, y: at ? at[1] - lift : null };
+      // Above the city's houses at the city-area level, on the city further out; close up
+      // a small line tells what it builds and how it grows (STORY-098)
+      const info = viewLevel === 3 ? labelInfo(c, yieldsNow()[c.id]) : undefined;
+      return { id: c.id, name: c.name, size: c.size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, info, open: quickCity === c.id };
     }),
     ...shown.map((n, k) => {
       const at = toScreen(tileCenter(n.tile));
@@ -1191,6 +1374,7 @@ function updateCityLabels() {
       return { id: -1001 - k, name: t.tribe.name, size: tribeBand(game!.seed, t.tribe, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, foe: 'tribe' as const };
     }),
   ]);
+  updateCityQuick(lift);
 }
 
 // ─── City-states (STORY-063) ──────────────────────
@@ -1756,12 +1940,7 @@ const cityCard = createCityCard(hud_root, {
   },
   openResearch: () => { if (play) play.researchOpen = true; },
   buy: () => {
-    if (!play || play.openCity === null) return;
-    const c = play.cities[play.openCity];
-    const price = buy(c, play.gold);
-    if (price === null) return;
-    play.gold -= price;
-    discoveryCard.notice(`${c.name} osti: ${BUILDS[c.build].name} · ${price} kultaa`);
+    if (play && play.openCity !== null) buyCity(play.cities[play.openCity]);
   },
 });
 
@@ -1968,10 +2147,7 @@ function advisorDay() {
     // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
     if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
       const price = buyCost(c);
-      if (price > 0 && price * 2 <= p.gold && buy(c, p.gold)) {
-        p.gold -= price;
-        advise(`${c.name} osti: ${BUILDS[c.build].name} (${price} kultaa)`);
-      }
+      if (price > 0 && price * 2 <= p.gold && dispatch({ kind: 'buy', city: c.tile }, 'city')) advise(`${c.name} osti: ${BUILDS[c.build].name} (${price} kultaa)`);
     }
   });
   if (p.provinceAdvisor === 'settle') {
@@ -2096,9 +2272,8 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
   if (a === 'war') {
     for (const c of p.cities) {
       if (p.raids.band?.city !== c.tile || !(isSoldier(c.build) || c.build === 'walls')) continue;
-      const price = buy(c, p.gold);
-      if (!price) continue;
-      p.gold -= price;
+      const price = buyCost(c);
+      if (!price || !dispatch({ kind: 'buy', city: c.tile }, 'state')) continue;
       advise(`osti: ${c.name} · ${BUILDS[c.build].name} (${price} kultaa)`, 'state');
     }
   }
@@ -2627,8 +2802,7 @@ function warDay() {
     for (const u of troops) if (u.tile !== camp.tile && !u.path.length) u.path = unitPath(u.tile, camp.tile) ?? [];
     for (const c of armyCities(target)) {
       const price = buyCost(c);
-      if (!isAttacker(c.build) || price <= 0 || price * 2 > p.gold || !buy(c, p.gold)) continue;
-      p.gold -= price;
+      if (!isAttacker(c.build) || price <= 0 || price * 2 > p.gold || !dispatch({ kind: 'buy', city: c.tile }, 'state')) continue;
       advise(`osti: ${c.name} · ${BUILDS[c.build].name} (${price} kultaa)`, 'state');
     }
   }
@@ -3021,6 +3195,7 @@ function updateLevels() {
 
 // "−" zooms out a level on a desktop (the unlock card's hint)
 window.addEventListener('keydown', e => {
+  if (e.key === 'i' && play && !e.ctrlKey && !e.metaKey && !e.altKey) play.area.toggle();
   if ((e.key === '-' || e.key === 'Subtract') && viewLevel > lockedLevel) {
     const to = upTarget(rig.target);
     if (to) fly(to);
@@ -3851,6 +4026,7 @@ function updatePlay(dt: number) {
       : play.research.available(foundKinds).length ? { text: 'Valitse tutkimus', choose: true } : null,
   };
   play.hud.update(state);
+  play.area.update(areaView());
   void autosave();
   unitLayer.update({
     units: play.units.units,
