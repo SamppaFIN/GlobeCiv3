@@ -456,16 +456,16 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-005", "icon": "🎮", "title": "Pelaajan näkymä", "status": "todo", "stories": ["STORY-018"]},
     {"id": "EPIC-006", "icon": "🗺️", "title": "Pelin kulku", "status": "in_progress", "stories": ["STORY-029", "STORY-021", "STORY-022", "STORY-023", "STORY-024", "STORY-025", "STORY-026", "STORY-027", "STORY-028", "STORY-031", "STORY-032", "STORY-033", "STORY-034", "STORY-035", "STORY-036", "STORY-037", "STORY-038", "STORY-039", "STORY-040", "STORY-041", "STORY-042", "STORY-043", "STORY-044", "STORY-045", "STORY-046", "STORY-047", "STORY-048", "STORY-049", "STORY-050", "STORY-051", "STORY-052", "STORY-053", "STORY-054", "STORY-055", "STORY-056", "STORY-057", "STORY-058", "STORY-059", "STORY-060", "STORY-061", "STORY-062", "STORY-063", "STORY-064", "STORY-065", "STORY-066", "STORY-067", "STORY-068", "STORY-069", "STORY-070", "STORY-071", "STORY-072", "STORY-073", "STORY-074", "STORY-075", "STORY-076", "STORY-077", "STORY-078"]},
     {"id": "EPIC-007", "icon": "🧹", "title": "Pohja uudelle suunnalle", "status": "in_progress", "stories": ["STORY-079", "STORY-080", "STORY-081", "STORY-082"]},
-    {"id": "EPIC-008", "icon": "🦁", "title": "Hauskuuden mittaus", "status": "todo", "stories": ["STORY-083", "STORY-084", "STORY-085"]},
-    {"id": "EPIC-009", "icon": "🪜", "title": "Tasotikkaat", "status": "todo", "stories": ["STORY-086", "STORY-087", "STORY-017", "STORY-014"]},
+    {"id": "EPIC-008", "icon": "🦁", "title": "Hauskuuden mittaus", "status": "in_progress", "stories": ["STORY-083", "STORY-084", "STORY-085"]},
+    {"id": "EPIC-009", "icon": "🪜", "title": "Tasotikkaat", "status": "in_progress", "stories": ["STORY-086", "STORY-095", "STORY-087", "STORY-017", "STORY-014"]},
     {"id": "EPIC-010", "icon": "🏘️", "title": "Kaupunkitaso: Settlers", "status": "todo", "stories": ["STORY-088", "STORY-089", "STORY-090"]},
     {"id": "EPIC-011", "icon": "🏛️", "title": "Ylemmät tasot: Civ I, Civ III ja Civ V", "status": "todo", "stories": ["STORY-091", "STORY-092", "STORY-093", "STORY-094"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-063 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-063 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-063 (docs/tickets/testing)",
-  "next": "Sami hyväksyy STORY-079:n ja storyt 073–078. Sitten STORY-080–082 ja Inanna (STORY-083 → STORY-084) ennen tasotikkaita."
+  "plans": "PLAN-001 … PLAN-068 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-068 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-068 (docs/tickets/testing)",
+  "next": "Sami lukee PLAYTEST-001:n ja hyväksyy storyt 073–081, 083 ja 084 sekä avoimet kysymykset 17 ja 18. Sitten STORY-087 (tason tavoite ja nousu), ja STORY-095:n L-suunnitelma Anun katselmointiin."
 }
 ```
 
@@ -673,6 +673,8 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 14. **Tasojen nousuehtojen luvut.** Määritetään STORY-087:n suunnitelmassa ja kalibroidaan autopilotilla ja PLAYTEST-001:llä. Repossa on jo `src/game/goals.ts` ja `progress.ts`, joista suunnitelma lähtee.
 15. **Lähteiden lisenssit ja saatavuus.** Freeserf, Freeciv civ2civ3 ja Unciv tarkistetaan ennen ensimmäistä niistä lainattua lukua. Lainataan vain mekaniikat, mutta lähdeviite kirjataan.
 16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella. PLAYTEST-001 ajettiin Sonnetilla pilvessä 2026-11-19 (130 työkalukutsua, 12,6 min); arvio odottaa Samia.
+17. **STORY-086:n uusinta.** Komentokerros on valmis (kaikki pelaajan ja neuvonantajien teot ovat komentoja, ja loki tallentuu), mutta uusintaa tallennuksen komentolokista ei voi ajaa, koska päivän laskenta on selaimessa (main.ts). Enkin ehdotus: uusintakriteeri todennetaan uudessa STORY-095:ssä (Simulaation ydin irti selaimesta, L), jonka suunnitelman Anu katselmoi, ja STORY-085 (autopilotti) odottaa sitä. STORY-086 on siihen asti tilassa `in_progress`. Sami päättää.
+18. **STORY-017:n uusi kriteeri.** Enki lisäsi PLAYTEST-001:n korjauksen 1: peli pysähtyy vain, kun jokin on oikeasti uutta, ja toistuvat ehdotukset ovat ilmoituksia ilman pysäytystä. Sami vahvistaa tai muuttaa.
 
 ### Ratkenneet kysymykset
 

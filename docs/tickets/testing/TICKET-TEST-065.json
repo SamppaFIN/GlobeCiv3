@@ -2,7 +2,7 @@
   "id": "TICKET-TEST-065",
   "story": "STORY-081",
   "implementation_ticket": "TICKET-IMPL-065",
-  "status": "review",
+  "status": "in_progress",
   "fix_summary": {
     "problem_and_root_cause": "Phosphorin ja paketoitujen kirjastojen MIT-tekstit eivät kulkeneet julkaistun pelin mukana, eikä CLAUDE.md:n lupaamaa aineistotiedostoa ollut.",
     "files_changed": [
@@ -38,7 +38,7 @@
         "outcome": "pass"
       }
     ],
-    "console_findings": "Ei konsolivirheitä.",
+    "console_findings": [],
     "screenshots": []
   },
   "human_acceptance": {

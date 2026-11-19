@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-068",
+  "story": "STORY-086",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Uusi puhdas moduuli src/game/commands.ts: Command-tyyppi viidellä teolla (found = HUDin Perusta kaupunki tähän, settle = kaupunki paikalle korteista, build = kaupungin rakennus tai yksikkö, move = rakennuksen siirto, study = tutkimuskohde), execute(cmd, world), joka tarkistaa teon ennen kuin muuttaa tilaa ja palauttaa false, jos teko ei käy (keksintö puuttuu, tutkimus ei ole auki, ruutu ei kelpaa), sekä CommandLog, johon kirjataan päivä, tekijä (player, people, city, province, state, planet) ja komento. main.ts:n dispatch(cmd, by) on ainoa reitti: pelaajan napit ja kortit sekä kaupunkialueen, läänin ja valtion neuvonantajat kutsuvat sitä, ja vain toteutunut komento kirjataan. Päivän sisällä tehdyt komennot saavat sen päivän numeron, jota simulaatio laskee (tickDay), eivät framen kellonaikaa. Loki tallentuu tallennukseen kenttänä commands, joka validoidaan komento kerrallaan (tietoturvasääntö 5), ja vanha tallennus ilman lokia latautuu tyhjällä lokilla (sääntö 8: taaksepäin yhteensopiva lisäys, SAVE_VERSION pysyy 1:nä).",
+  "alternatives_considered": [
+    {
+      "name": "Kaikki pelitilan muutokset komennoiksi heti, myös simulaatio (kasvu, ylläpito, rosvot, kilpailijat)",
+      "pros": "Yksi malli kaikelle",
+      "cons": "Simulaation säännöt eivät ole valintoja, ja ne lasketaan joka tapauksessa samasta tilasta; loki paisuisi tuhansiin riveihin",
+      "rejected_because": "Sääntö 7 koskee pelaajan ja neuvonantajien tekoja. Simulaation on oltava deterministinen, ei lokitettu."
+    },
+    {
+      "name": "Uusinta tallennuksen lokista jo tässä storyssa",
+      "pros": "Hyväksymiskriteeri 2 kokonaan",
+      "cons": "Koko päivän laskenta on 4 125 rivin main.ts:ssä Three.js:n ja DOMin seassa, ja kaupunkivaltioiden haku jaetaan framejen kesken 3 ms:n paloissa, joten tulos voi riippua ruudunpäivityksestä. Irrotus on L-kokoinen arkkitehtuurimuutos.",
+      "rejected_because": "Ehdotetaan omaksi storyksi STORY-095 (L, Anun katselmointi), ja tämän storyn uusintakriteeri todennetaan siellä"
+    },
+    {
+      "name": "Kuvernöörin rakennusten sijoitus komennoksi",
+      "pros": "Kriteerin sanamuoto 'sijoitus' kattaisi myös sen",
+      "cons": "Sijoitus on placeAll-funktion sääntö, joka lasketaan samasta tilasta aina samaksi, eikä valinta",
+      "rejected_because": "Kuvernöörin sijoitus pysyy sääntönä. Ainoa sijoitusvalinta on pelaajan siirto, joka on komento move."
+    }
+  ],
+  "files_to_change": [
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/advisors.e2e.ts",
+    "tests/e2e/save.e2e.ts"
+  ],
+  "open_questions": [
+    "Hyväksyykö Sami, että STORY-086:n uusintakriteeri todennetaan STORY-095:ssä (simulaation ydin irti selaimesta)?",
+    "Planeettatason neuvonantajan ja kilpailijoiden teot eivät vielä ole komentoja: kilpailijat ovat oma simulaationsa, ja planeettatason Valloittaja toimii valtion Kenraalin kautta. Ne tulevat komennoiksi, kun niihin kosketaan (sääntö 7)."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "commands.ts ja yksikkötestit",
+      "verify": "Vitest: tarkistukset, determinismi samoilla komennoilla, loki"
+    },
+    {
+      "step": 2,
+      "action": "Tallennus ja validointi",
+      "verify": "Vitest: loki säilyy, rikkinäiset komennot hylätään, vanha tallennus latautuu"
+    },
+    {
+      "step": 3,
+      "action": "main.ts: dispatch ja kaikki pelaajan ja neuvonantajien teot sen kautta",
+      "verify": "tsc, build ja selaintestit tutkimuksesta, rakentamisesta, sijoituksesta, rosvoista, neuvonantajista ja tallennuksesta"
+    }
+  ],
+  "status": "approved"
+}

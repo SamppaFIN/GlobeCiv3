@@ -1,0 +1,41 @@
+{
+  "id": "TICKET-IMPL-068",
+  "story": "STORY-086",
+  "plan": "PLAN-068",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "in_progress",
+  "files_changed": [
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/advisors.e2e.ts",
+    "tests/e2e/save.e2e.ts"
+  ],
+  "change_summary": "Komentokerros: viisi tekoa (found, settle, build, move, study) kulkevat execute-funktion kautta, joka tarkistaa ne ennen tilan muutosta. Reititetyt kutsupaikat main.ts:ssä: HUDin Perusta kaupunki tähän (player), kaupunkiehdotuksen ja ruutukortin Asuta (player), kaupunkikortin rakennusvalinta (player), rosvokortin Rakenna soturi (player, ja Vartijan vastaus rosvoihin city), rakennuksen siirto kaupunkitasolla (player), tutkimuskortin valinta (player), kansan oma tutkimuskohde (people), valtion neuvonantajan tutkimus (state) sekä kaupunkien rakentaminen neuvonantajien ohjaamana (city, province tai sodassa state). Komentoloki tallentuu ja validoidaan, ja testikoukku globeGame.state näyttää sen.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "settleAt (palauttaa nyt boolean eikä valitse uudisasukasta)",
+      "chooseRaid (uusi parametri by)",
+      "Play.commands",
+      "SaveData.commands"
+    ],
+    "call_sites_found": [
+      "chooseSite",
+      "tile card settle",
+      "updateRaidAlert",
+      "showCard raid"
+    ],
+    "call_sites_updated": [
+      "chooseSite valitsee uudisasukkaan itse komennon jälkeen",
+      "ruutukortti kutsuu dispatchia",
+      "updateRaidAlert antaa tekijäksi city",
+      "showCard käyttää oletusta player"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 60,
+  "notes": "Turvallisuuteen vaikuttava muutos (tietoturvasääntö 4): tallennukseen tulee uusi kenttä, joka luetaan selaimen IndexedDB:stä. validateSave rakentaa jokaisen komennon uudelleen vain tunnetuista kentistä ja hylkää koko tallennuksen, jos laji, tekijä, ruutu, rakennus tai tutkimuskohde on tuntematon tai päivä negatiivinen. Komentoja ei toisteta vielä mistään, joten tallennuksen loki ei voi muuttaa peliä ladattaessa. Determinismin tunnetut aukot uusintaa varten (STORY-095): kaupunkivaltioiden haku jaetaan framejen kesken 3 ms:n paloissa, ja ruudun päivämäärä on clock.day, kun komento tulee päivän ulkopuolelta (pelaajan napautus)."
+}

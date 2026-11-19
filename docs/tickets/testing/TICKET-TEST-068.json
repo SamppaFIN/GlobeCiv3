@@ -1,0 +1,73 @@
+{
+  "id": "TICKET-TEST-068",
+  "story": "STORY-086",
+  "implementation_ticket": "TICKET-IMPL-068",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Pelaajan ja neuvonantajien teot muuttivat pelitilaa suoraan eri puolilla main.ts:ää, joten peliä ei voinut toistaa eikä tekoja laskea hauskuuden mittareihin.",
+    "files_changed": [
+      "src/game/commands.ts",
+      "src/game/save.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö (Linux, ei GPU:ta), Node 22, Vitest 5.1.1, Playwright 1.64.1 Chrome Headless Shellillä (SwiftShader), CI=1",
+    "tooling": "npm test, npx tsc --noEmit, npm run build, CI=1 npx playwright test",
+    "cases": [
+      {
+        "steps": "commands.test.ts: rakennus vaatii keksinnön, tutkimuskohteen on oltava auki, siirto vain sallittuun ruutuun, found ja settle siirtävät ruudun pelille, sama komentolista kahdesti samasta tilasta, loki kopioi rivit",
+        "expected": "Kelvoton komento ei muuta tilaa eikä kirjaudu, ja sama lista tuottaa identtisen tilan ja lokin",
+        "result": "6/6 läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save.test.ts: loki säilyy tallennuksessa; tuntematon laji, tekijä, ruutu, rakennus tai tutkimuskohde, negatiivinen päivä ja väärän tyyppinen loki hylätään; vanha tallennus ilman lokia latautuu; komennosta jää vain sen omat kentät",
+        "expected": "Validointi hylkää rikkinäisen ja hyväksyy vanhan",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko Vitest-ajo ja tyyppitarkistus",
+        "expected": "Vihreä",
+        "result": "40 tiedostoa ja 222 testiä läpi, tsc ilman virheitä, build onnistui",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Selaintestit: sites, site-card, city, buildings, placement, science, resources, raids, save, advisors, state-advisors, new-start, resource-buildings, smoke",
+        "expected": "Pelaajan teot ja neuvonantajat toimivat kuten ennen",
+        "result": "23/23 läpi (20,3 min) ennen found-komentoa, ja advisors-, province-advisors-, save- ja state-advisors-testit 5/5 läpi (4,3 min) lopullisella versiolla",
+        "outcome": "pass"
+      },
+      {
+        "steps": "advisors.e2e ja save.e2e: komentoloki globeGame.state.commands",
+        "expected": "Lokissa on pelaajan found ja Vartijan rakentama sotilas (city), ja loki säilyy tallennuksen yli",
+        "result": "Läpi: lokissa on player/found ja city/build, ja tallennuksen yli loki säilyy samana (save.e2e vertaa kentän commands ennen ja jälkeen uudelleenlatauksen)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Uusinta: siemen 42 ja tallennuksen komentoloki toistavat pelin identtisesti",
+        "expected": "Hyväksymiskriteeri 2, toinen puolisko",
+        "result": "Ei ajettu. Päivän laskenta on vielä selaimessa (main.ts), joten uusintaa ei voi ajaa Nodessa. Ehdotettu STORY-095:een.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Uusintakriteerin siirto STORY-095:een hyväksytty",
+        "checked": false
+      },
+      {
+        "item": "Peli toimii Pagesista kuten ennen (kaupunki, rakentaminen, tutkimus, neuvonantajat)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
