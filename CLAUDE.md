@@ -462,10 +462,10 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-011", "icon": "🏛️", "title": "Ylemmät tasot: Civ I, Civ III ja Civ V", "status": "todo", "stories": ["STORY-091", "STORY-092", "STORY-093", "STORY-094"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-069 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-069 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-069 (docs/tickets/testing)",
-  "next": "Sami lukee PLAYTEST-001:n ja hyväksyy storyt 073–084 sekä avoimet kysymykset 17 ja 18. Sitten STORY-087 (tason tavoite ja nousu), ja STORY-095:n L-suunnitelma Anun katselmointiin."
+  "plans": "PLAN-001 … PLAN-070 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-070 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-070 (docs/tickets/testing)",
+  "next": "Sami lukee PLAYTEST-001:n ja hyväksyy storyt 073–084 ja 087 sekä avoimet kysymykset 17 ja 18. Seuraavaksi STORY-017 (järjestelmät vain omalla tasollaan) ja Inannan PLAYTEST-002 tasotikkaista, ja STORY-095:n L-suunnitelma Anun katselmointiin."
 }
 ```
 
@@ -654,6 +654,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 | 2026-11-19 | backlog.json sisältää jatkossa vain osat `_meta`, `project`, `epics` ja `stories`. Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja `docs/tickets` (63 + 63 + 63, tarkistettu samoiksi kuin backlogissa), ja storyjen `linked`-kentät viittaavat niihin. | Täysi tiedosto oli noin 600 kt, mikä on liian raskas project knowledgeen. Skeema sallii tämän (plans ja tiketit eivät ole pakollisia). | Enki (Sami vahvistaa) |
 | 2026-11-19 | STORY-079 tehtiin alustuksen yhteydessä: storyt 073–078 kirjattiin backlogiin tilaan `review` commit-viestien ja suunnitelmien (`docs/design/kaupunkitaso.md` ja `diplomatia.md`) perusteella. Niiltä puuttuvat suunnitelmat, toteutus- ja testitiketit sekä Samin hyväksyntä. | Ilman tätä `_meta.git_commit` olisi väittänyt backlogin vastaavan HEADia, vaikka kuusi mergettyä storya puuttui | Enki |
 | 2026-11-19 | Linssin kehitysvaiheen valtuutus (2026-10-09) siirtyy Enkille: Enki hyväksyy S- ja M-kokoisten chore-storyjen suunnitelmat itse ja mergeää omat haaransa mainiin. Storyn merkitsee `done`-tilaan kuitenkin vain Sami (osio 10, sääntö 5), joten Enkin valmiit storyt jäävät tilaan `review`. | Sami: "voitko suoraan aloittaa koodaamisen githubiin". Uusintahaastattelun testaussääntö kumoaa vanhan valtuutuksen kohdan "merkitsee storyt valmiiksi". | Enki (Sami vahvistaa) |
+| 2026-11-19 | **Tasotikkaiden nousuehdot (STORY-087):** taso nousee alemman tason valmiilla tuotoksilla. Kaupunki avaa kaupunkialueen rakennuksella ja ensimmäisellä tiedustelijalla tai uudisasukkaalla, kaupunkialue läänin kolmella kaupungilla, lääni valtion neljällä kotivaltion läänillä ja valtio planeetan kaikilla seitsemällä. Kartoitus ei enää avaa tasoja. Tasotavoite korvaa 16 tavoitteen ketjun: yläpaneelissa on yksi tavoite ja sen laskuri, ja nousu antaa kultaa (30, 60, 80 ja 150) ja pysäyttää pelin kortilla, joka kertoo, mitä aukesi. Luvut ovat omia, ja ne kalibroidaan autopilotilla ja pelitestillä. | Enkin ehdotus, Sami valitsi molemmat suositellut vaihtoehdot. PLAYTEST-001:n korjaus 2: yksi tavoite kerrallaan. | Sami |
 
 ### Avoimet kysymykset
 
@@ -670,7 +671,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 11. ~~**Pelattavuuden uudistus.**~~ Ratkaistu 2026-11-19: jokainen taso on oma pelinsä Settlersistä Nuclear Wariin, ja alempi taso jatkaa neuvonantajilla (päätöstaulukko).
 12. **Moninpeli.** Palvelin, kutsutapa (ehdotus: anonyymi istunto ja kutsulinkki) ja kellon malli: reaaliaikainen kello (noin 1,5 s per päivä) ei sovi suoraan yhteen moninpelin kanssa, joten joko palvelin ajaa kelloa tai peli etenee vuoroissa. Ratkaistaan moninpeli-epicin suunnitelmassa MVP:n jälkeen.
 13. **Planeettataso (Nuclear War).** Mekaniikat ja lähteet. Avointa lähdettä ei tunneta, joten omat säännöt merkitään omiksi. MVP:n jälkeen.
-14. **Tasojen nousuehtojen luvut.** Määritetään STORY-087:n suunnitelmassa ja kalibroidaan autopilotilla ja PLAYTEST-001:llä. Repossa on jo `src/game/goals.ts` ja `progress.ts`, joista suunnitelma lähtee.
+14. ~~**Tasojen nousuehtojen luvut.**~~ Ratkaistu 2026-11-19: 2 askelta, 3 kaupunkia, 4 lääniä ja 7 lääniä (päätöstaulukko, STORY-087). Kalibrointi autopilotilla (STORY-085) ja seuraavalla pelitestillä.
 15. **Lähteiden lisenssit ja saatavuus.** Freeserf, Freeciv civ2civ3 ja Unciv tarkistetaan ennen ensimmäistä niistä lainattua lukua. Lainataan vain mekaniikat, mutta lähdeviite kirjataan.
 16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella. PLAYTEST-001 ajettiin Sonnetilla pilvessä 2026-11-19 (130 työkalukutsua, 12,6 min); arvio odottaa Samia.
 17. **STORY-086:n uusinta.** Komentokerros on valmis (kaikki pelaajan ja neuvonantajien teot ovat komentoja, ja loki tallentuu), mutta uusintaa tallennuksen komentolokista ei voi ajaa, koska päivän laskenta on selaimessa (main.ts). Enkin ehdotus: uusintakriteeri todennetaan uudessa STORY-095:ssä (Simulaation ydin irti selaimesta, L), jonka suunnitelman Anu katselmoi, ja STORY-085 (autopilotti) odottaa sitä. STORY-086 on siihen asti tilassa `in_progress`. Sami päättää.

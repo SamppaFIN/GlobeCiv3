@@ -1,0 +1,68 @@
+{
+  "id": "PLAN-070",
+  "story": "STORY-087",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Samin valinnat 2026-11-19: taso nousee alemman tason valmiilla tuotoksilla, ja tasotavoite korvaa 16 tavoitteen ketjun. goals.ts määrittelee jokaiselle tasolle yhden tavoitteen (nimi, teksti, vihje, kulta, tarve, laskuri ja avautuvan tason kortti): kaupunki = rakennus ja ensimmäinen tiedustelija tai uudisasukas (2), kaupunkialue = 3 kaupunkia, lääni = 4 kotivaltion lääniä hallussa, valtio = 7 lääniä. progress.advance avaa seuraavan tason, kun syvimmän avoimen tason tavoite täyttyy, yksi taso kerrallaan. Kartoitus ei enää avaa tasoa, mutta ohjaa yhä tiedustelijoita ja retkikuntia (UNLOCK_SHARE). HUD näyttää yhden tavoitteen ja sen laskurin mittarissa. Nousu maksaa tavoitteen kullan ja avaa kortin, joka pysäyttää pelin (päivät eivät kulu kortin ollessa auki) ja kertoo, mitä aukesi ja mikä on uusi tavoite. Tallennuksen avoin taso säilyy, ja vanha ketjun indeksi jätetään pois latauksessa (sääntö 8: kenttä poistuu, lataus testattu). globeDebug.rise() avaa seuraavan tason samaa reittiä niille testeille, joiden aihe ei ole nousuehto.",
+  "alternatives_considered": [
+    {
+      "name": "Tuotokset ja kartoitus yhdessä",
+      "pros": "Kartoitus säilyisi merkityksellisenä",
+      "cons": "Kaksi ehtoa samaan aikaan on juuri sitä sekavuutta, jota PLAYTEST-001 moitti",
+      "rejected_because": "Sami valitsi pelkät tuotokset"
+    },
+    {
+      "name": "60 % kartoitus säilyy, mutta näytetään tasotavoitteena",
+      "pros": "Pienin muutos",
+      "cons": "Ei täytä kriteeriä 2",
+      "rejected_because": "Sami valitsi tuotokset"
+    },
+    {
+      "name": "Ketjun tavoitteet välitavoitteiksi tason sisällä",
+      "pros": "Ohjaus säilyy",
+      "cons": "Useampi tavoite kerrallaan",
+      "rejected_because": "Sami valitsi, että tasotavoite korvaa ketjun (Inannan korjaus 2: yksi tavoite kerrallaan)"
+    }
+  ],
+  "files_to_change": [
+    "src/game/goals.ts",
+    "src/game/progress.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/hud.css",
+    "src/game/goals.test.ts",
+    "src/game/progress.test.ts",
+    "src/game/levelActions.test.ts",
+    "src/game/save.test.ts",
+    "tests/e2e/unlock.e2e.ts",
+    "tests/e2e/goals.e2e.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "tests/e2e/play.e2e.ts",
+    "tests/e2e/conquest.e2e.ts",
+    "tests/e2e/state-advisors.e2e.ts",
+    "tests/e2e/province-advisors.e2e.ts",
+    "tests/e2e/region-card.e2e.ts"
+  ],
+  "open_questions": [
+    "Luvut (3 kaupunkia ja 4 lääniä) ovat omia ja kalibroidaan autopilotilla (STORY-085) ja seuraavalla pelitestillä."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "goals.ts ja progress.ts: tasotavoitteet ja nousu",
+      "verify": "Vitest: tavoitteet, laskurit ja yksi taso kerrallaan"
+    },
+    {
+      "step": 2,
+      "action": "main.ts: mittari, tavoite, nousukortti, kulta ja pysäytys; ketju pois; tallennus",
+      "verify": "tsc, Vitest ja vanhan tallennuksen lataus"
+    },
+    {
+      "step": 3,
+      "action": "Selaintestit: nousuehdot kaupungeilla ja lääneillä, muut testit rise-koukulla",
+      "verify": "Koko Playwright-ajo paikallisesti"
+    }
+  ],
+  "status": "approved"
+}

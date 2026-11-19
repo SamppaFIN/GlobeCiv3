@@ -1,0 +1,52 @@
+{
+  "id": "TICKET-IMPL-070",
+  "story": "STORY-087",
+  "plan": "PLAN-070",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/goals.ts",
+    "src/game/progress.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/hud.css",
+    "src/game/goals.test.ts",
+    "src/game/progress.test.ts",
+    "src/game/levelActions.test.ts",
+    "src/game/save.test.ts",
+    "tests/e2e/unlock.e2e.ts",
+    "tests/e2e/goals.e2e.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "tests/e2e/play.e2e.ts",
+    "tests/e2e/conquest.e2e.ts",
+    "tests/e2e/state-advisors.e2e.ts",
+    "tests/e2e/province-advisors.e2e.ts",
+    "tests/e2e/region-card.e2e.ts",
+    "tests/e2e/nomads.e2e.ts",
+    "tests/e2e/war.e2e.ts"
+  ],
+  "change_summary": "Tasotavoitteet (omat luvut ja kulta ketjun vastaavista tavoitteista): kaupunki 2 askelta, +30; kaupunkialue 3 kaupunkia, +60; lääni 4 lääniä, +80; valtio 7 lääniä, +150. Mittari näyttää tavoitteen laskurin, esimerkiksi '2 / 3 kaupunkia', ja tavoitenappi tavoitteen ja vihjeen. Nousukortti: otsikko, mitä tasolla tehdään ja uusi tavoite laskureineen, ja kortin ylärivi kertoo pelin pysähtyneen. Ketju (GOALS ja advanceGoals), Play.goal ja tallennuksen goal poistettiin.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "progress.advance (uusi allekirjoitus: LevelState)",
+      "goals.ts (GOALS ja advanceGoals → LEVEL_GOALS, levelGoal ja goalCount)",
+      "UnlockCard.show (uusi valinnainen teksti)",
+      "SaveData.goal (poistettu)",
+      "meterOf (ei parametria)",
+      "globeGame.state.goal (indeksin tilalla tavoitteen teksti)"
+    ],
+    "call_sites_found": [
+      "main.ts updateLevels, updatePlay (checkGoals ja HUD), goalHint, snapshot ja restore",
+      "levelActions.test.ts ja progress.test.ts käyttivät vanhaa advancea",
+      "13 selaintestiä paljastaa karttaa, joista 5 avasi sillä tason"
+    ],
+    "call_sites_updated": [
+      "Kaikki yllä olevat; viisi tasoja avannutta testiä käyttää rise-koukkua tai perustaa kaupunkeja"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "872c010",
+  "progress": 100,
+  "notes": "Kultaa jaetaan nyt vähemmän: ketju antoi yhteensä 790 kultaa, tasotavoitteet 320 (vanhassa alussa 290). PLAYTEST-001:ssä kassa kasvoi yli 800 kultaan ilman käyttöä, joten suunta on oikea, mutta tasapaino tarkistetaan pelitestillä. Tasolta toiselle hyppäävä vanha tallennus avaa tasot yksi kerrallaan ja saa niiden kullan."
+}
