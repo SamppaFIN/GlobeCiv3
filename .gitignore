@@ -26,3 +26,8 @@ dist-ssr
 # Playwright
 test-results/
 playwright-report/
+
+# Secrets: never in version control
+.env
+.env.*
+!.env.example

@@ -1,0 +1,80 @@
+{
+  "id": "TICKET-TEST-064",
+  "story": "STORY-080",
+  "implementation_ticket": "TICKET-IMPL-064",
+  "status": "review",
+  "fix_summary": {
+    "problem_and_root_cause": "Käyttämätön Svelte toi Dependabot-PR:iä ja build-asetuksia, .env ei ollut .gitignoressa, eikä CI tarkistanut haavoittuvuuksia.",
+    "files_changed": [
+      "package.json",
+      "vite.config.ts",
+      ".gitignore",
+      ".github/workflows/deploy.yml"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Claude Coden pilviympäristö (Linux, ei GPU:ta), Node 22.23.5, npm 10.9.9; Playwrightin Chrome Headless Shell 156 SwiftShaderilla (CI=1)",
+    "tooling": "Vitest 5.1.1, Playwright 1.64.1",
+    "cases": [
+      {
+        "steps": "npm test ennen ja jälkeen",
+        "expected": "Kaikki läpi",
+        "result": "39 tiedostoa ja 215 testiä läpi molemmilla kerroilla",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm run build ennen ja jälkeen",
+        "expected": "Vihreä",
+        "result": "Vihreä; kesto 5,0 s → 4,6 s (yksi ajo kummallakin, arvio)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm ls svelte @sveltejs/vite-plugin-svelte",
+        "expected": "Ei löydy",
+        "result": "Ei löydy",
+        "outcome": "pass"
+      },
+      {
+        "steps": "npm audit --omit=dev --audit-level=high",
+        "expected": "0 haavoittuvuutta",
+        "result": "found 0 vulnerabilities",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI=1 npx playwright test smoke start new-start save city-level",
+        "expected": "Läpi ilman konsolivirheitä",
+        "result": "11/11 läpi (5,7 min). Koko 47 tiedoston sarja ajetaan CI:ssä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": ".gitignore: git check-ignore .env .env.local; .env.example ei ohiteta",
+        "expected": ".env ja .env.local ohitetaan, .env.example ei",
+        "result": "git check-ignore: .env ja .env.local ohitetaan, .env.example ei (negaatiosääntö)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Haaran spike/infinite-zoom poisto",
+        "expected": "Poistettu",
+        "result": "Ei poistettu: kärki 6b00321 ei ole mainissa. Odottaa Samin päätöstä.",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": "Smoke-testi ei löytänyt konsolivirheitä.",
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Svelte poissa ja peli toimii Pagesista",
+        "checked": false
+      },
+      {
+        "item": "spike/infinite-zoom: poistetaanko",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

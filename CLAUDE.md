@@ -206,7 +206,7 @@ LICENSE-tiedostoa.
     "build": ["Vite 8", "tsc (tyyppitarkistus buildissa)", "Node 22 CI:ssä, paikallisesti 20.19+ tai 22.12+"],
     "testing": ["Vitest 5", "Playwright 1.64"]
   },
-  "stack_note": "Svelte 5 on asennettu, mutta .svelte-tiedostoja ei ole. Se poistetaan STORY-080:ssa.",
+  "stack_note": "Svelte 5 poistettiin STORY-080:ssa (2026-11-19), koska .svelte-tiedostoja ei ollut.",
   "database": null,
   "storage": "Ei palvelinta. Tallennukset ovat selaimen IndexedDB:ssä (src/game/saveStore.ts), ja tallennusmuodolla on versio (SAVE_VERSION, src/game/save.ts).",
   "repositories": { "app": "github.com/SamppaFIN/GlobeCiv3 (julkinen)" },
@@ -220,7 +220,7 @@ LICENSE-tiedostoa.
     "dev": "http://localhost:3000/GlobeCiv3/",
     "production": "https://samppafin.github.io/GlobeCiv3/"
   },
-  "branches": { "main": "main", "active": "main", "note": "Story-haarat mergetään mainiin ja poistetaan. spike/infinite-zoom poistetaan STORY-080:ssa." },
+  "branches": { "main": "main", "active": "main", "note": "Story-haarat mergetään mainiin ja poistetaan. spike/infinite-zoom jää, kunnes Sami päättää, koska sen kärki 6b00321 ei ole mainissa (STORY-080)." },
   "deploy": "Push mainiin → GitHub Actions: Vitest ja Playwright → vite build → GitHub Pages (base /GlobeCiv3/). Pelkät docs-, CLAUDE.md- ja backlog.json-muutokset eivät käynnistä ajoa.",
   "has_ui": true,
   "accessibility": "WCAG 2.1 AA HUD:lle ja valikoille. 3D-canvasille: näppäimistöohjaus, prefers-reduced-motion ja tieto myös tekstinä, ei pelkkänä värinä.",
