@@ -34,9 +34,15 @@
         "outcome": "pass"
       },
       {
-        "steps": "Pysähdys vain uudesta ja diplomatia valtiotasolla (kriteerit 1 ja 2 ylemmillä tasoilla)",
+        "steps": "firsts.e2e: ensimmäiset rosvot pysäyttävät pelin kortilla ja seuraavat ovat ilmoitus ilman pysähdystä; ensimmäinen kaupunkipaikka on kortti ja seuraava ilmoitus; diplomatian välilehti näkyy vasta valtiotasolla. save.test: firsts tallentuu, vanha tallennus saa tyhjän, tuntematon laji hylätään",
         "expected": "Kriteerit",
-        "result": "Osa 2 tekemättä",
+        "result": "Läpi (3/3 E2E, Vitest 233/233). Vanhan alun raids, list ja diplomacy sekä new-start läpi.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
         "outcome": "not_run"
       },
       {

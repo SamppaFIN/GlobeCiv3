@@ -466,7 +466,7 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
   "plans": "PLAN-001 … PLAN-075 (docs/plans)",
   "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-075 (docs/tickets/implementation)",
   "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-075 (docs/tickets/testing)",
-  "next": "Sami hyväksyy storyt 073–084, 087, 096–099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä, ja pelaa ydinsotakokeilua (?planet). Enki: STORY-017:n osa 2 (pysähdys vain uudesta, diplomatia valtiotasolla). Inannan PLAYTEST-002, kun CI on vihreä. STORY-100 (peli englanniksi) MVP:n jälkeen."
+  "next": "Sami hyväksyy storyt 073–084, 087, 096–099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä, ja pelaa ydinsotakokeilua (?planet). Inannan PLAYTEST-002, kun CI on vihreä (STORY-017 mukana). STORY-100 (peli englanniksi) MVP:n jälkeen."
 }
 ```
 
@@ -682,7 +682,7 @@ docs/playtests/PLAYTEST-NNN.md              (Inanna, alkaen STORY-084)
 15. **Lähteiden lisenssit ja saatavuus.** Freeserf, Freeciv civ2civ3 ja Unciv tarkistetaan ennen ensimmäistä niistä lainattua lukua. Lainataan vain mekaniikat, mutta lähdeviite kirjataan.
 16. **Inannan malli.** Sonnet vai Opus: arvioidaan PLAYTEST-001:n jälkeen raporttien syvyyden perusteella. PLAYTEST-001 ajettiin Sonnetilla pilvessä 2026-11-19 (130 työkalukutsua, 12,6 min); arvio odottaa Samia.
 17. **STORY-086:n uusinta.** Komentokerros on valmis (kaikki pelaajan ja neuvonantajien teot ovat komentoja, ja loki tallentuu), mutta uusintaa tallennuksen komentolokista ei voi ajaa, koska päivän laskenta on selaimessa (main.ts). Enkin ehdotus: uusintakriteeri todennetaan uudessa STORY-095:ssä (Simulaation ydin irti selaimesta, L), jonka suunnitelman Anu katselmoi, ja STORY-085 (autopilotti) odottaa sitä. STORY-086 on siihen asti tilassa `in_progress`. Sami päättää.
-18. **STORY-017:n uusi kriteeri.** Enki lisäsi PLAYTEST-001:n korjauksen 1: peli pysähtyy vain, kun jokin on oikeasti uutta, ja toistuvat ehdotukset ovat ilmoituksia ilman pysäytystä. Sami vahvistaa tai muuttaa.
+18. **STORY-017:n uusi kriteeri.** Enki lisäsi PLAYTEST-001:n korjauksen 1: peli pysähtyy vain, kun jokin on oikeasti uutta, ja toistuvat ehdotukset ovat ilmoituksia ilman pysäytystä. Toteutettu 2026-11-20 (ensimmäinen kaupunkipaikka, ensimmäiset rosvot ja ensimmäinen paimentolaishyökkäys), kun Sami sanoi "jatka"; Sami vahvistaa tai muuttaa.
 19. **MVP:n koko.** Uudet storyt 096, 098 ja 099 nostivat MVP:n 22 storyyn, kun raja ylisuunnittelulle on 20. Enkin ehdotus: tasojen sisältö (STORY-099) sulautetaan EPIC-010:n ja EPIC-011:n storyihin 088–094 eikä se tuo uusia, ja STORY-014 (alempi taso tiivistettynä) siirtyy MVP:n jälkeen, jos tahti vaatii. Sami päättää.
 
 ### Ratkenneet kysymykset
