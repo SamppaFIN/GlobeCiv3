@@ -415,3 +415,51 @@
   display: flex; flex-direction: column; gap: 8px;
   background: var(--c-surface); border-top: 1px solid var(--c-divider);
 }
+
+/* The war of leaders, a trial at ?planet (STORY-097) */
+.nuclear {
+  position: absolute; left: 8px; right: 8px; bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px)); margin: 0 auto; max-width: 480px;
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; max-height: 62vh; overflow-y: auto;
+  border-radius: var(--radius-md); background: var(--c-hud); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 0 1px #3f424d; pointer-events: auto;
+}
+.nuclear-head { display: flex; align-items: center; gap: 8px; }
+.nuclear-title { flex: 1; display: flex; flex-direction: column; }
+.nuclear-kicker { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-accent-text); }
+.nuclear-day { font-size: 15px; font-weight: 500; }
+.nuclear-pause { min-height: var(--touch-target); padding: 0 14px; }
+.nuclear-tension { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #cfd3e5; }
+.nuclear-meter { flex: 1; height: 6px; border-radius: 3px; background: #3f424d; position: relative; }
+.nuclear-meter-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7fb7be, #e0a458 60%, #d8737f); }
+.nuclear-meter-tick { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--c-text); }
+.nuclear-tension-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nuclear-leaders { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.nuclear-leader {
+  width: 100%; min-height: var(--touch-target); display: grid; grid-template-columns: 12px 1fr auto; grid-template-rows: auto auto; column-gap: 8px;
+  align-items: center; padding: 4px 8px; border: 1px solid transparent; border-radius: 8px; background: #2a2c35;
+  color: inherit; font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.nuclear-leader[aria-pressed="true"] { border-color: var(--leader); }
+.nuclear-leader:disabled { cursor: default; }
+.nuclear-dot { grid-row: 1 / 3; width: 10px; height: 10px; border-radius: 5px; background: var(--leader); }
+.nuclear-name { font-weight: 500; }
+.nuclear-people { font-variant-numeric: tabular-nums; }
+.nuclear-line { grid-column: 2 / 4; font-size: 11px; color: var(--c-muted); }
+.nuclear-line:empty { display: none; }
+.nuclear-ready { margin: 0; font-size: 12px; color: #cfd3e5; }
+.nuclear-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.nuclear-buttons:empty { display: none; }
+.nuclear-act { min-height: var(--touch-target); padding: 0 12px; font-size: 13px; }
+.nuclear-log { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.5; color: var(--c-muted); }
+.nuclear-log:empty { display: none; }
+.nuclear-marks { position: absolute; inset: 0; pointer-events: none; }
+.nuclear-capital {
+  position: absolute; left: 0; top: 0; padding: 4px 10px; border: 1px solid var(--leader); border-radius: 999px;
+  background: color-mix(in srgb, var(--c-bg) 85%, transparent); font-size: 12px; font-weight: 500; white-space: nowrap;
+}
+.nuclear-capital[hidden], .nuclear-realm[hidden] { display: none; }
+.nuclear-realm { position: absolute; left: 0; top: 0; width: 8px; height: 8px; border-radius: 4px; opacity: 0.85; }
+/* On a wide screen the war's panel stands at the right, leaving the globe free */
+@media (min-width: 900px) {
+  .nuclear { left: auto; right: 12px; top: 12px; bottom: auto; width: 380px; max-height: calc(100vh - 24px); }
+}

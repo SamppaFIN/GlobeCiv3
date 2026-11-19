@@ -37,6 +37,8 @@ import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
 import { createCityQuick } from '../ui/cityQuick';
+import { act as leaderAct, day as leaderDay, newWar, type NuclearWorld } from '../game/nuclear';
+import { createNuclearPanel } from '../ui/nuclearPanel';
 import { economy, type CityEconomy } from '../game/economy';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
@@ -295,7 +297,9 @@ const levelBar = createLevelBar(hud, () => {
 // ?seed=N fixes the game seed, so the same seed starts in the same place.
 const params = new URLSearchParams(window.location.search);
 type Screen = 'start' | 'intro' | 'playing' | 'free';
-let screen: Screen = params.has('free') ? 'free' : 'start';
+/** The war of leaders at the planet level, a trial that leaves the game alone (?planet, STORY-097). */
+const planetTrial = params.has('planet');
+let screen: Screen = params.has('free') || planetTrial ? 'free' : 'start';
 let game: { seed: number; startCity: number; capital?: number } | null = null;
 /**
  * The old start, for the tests of the game's mechanics: scouts and a settler at the city area
@@ -1192,6 +1196,69 @@ function buyAt(tile: number): boolean {
 function buyCity(c: City) {
   const price = buyCost(c);
   if (dispatch({ kind: 'buy', city: c.tile }, 'player')) discoveryCard.notice(`${c.name} osti: ${BUILDS[c.build].name} · ${price} kultaa`);
+}
+
+// ─── The war of leaders, a trial (?planet, STORY-097) ─
+// Five leaders, the player first, each with a realm of six land states around a capital
+// spread over the globe (the seed's). Days pass by the clock (Sami: the day clock), one act
+// a leader every few days; the world's tension opens the missiles (src/game/nuclear.ts).
+const war = planetTrial ? (() => {
+  const seed = params.has('seed') ? Number(params.get('seed')) : 42;
+  const centers = regions.centers[0];
+  const land = centers.map((c, s) => (terrainOf(pointToTile(c)) !== 'ocean' ? s : -1)).filter(s => s >= 0);
+  // Capitals far apart: the seed's first, then each time the land state farthest from those taken
+  const capitals = [land[seed % land.length]];
+  while (capitals.length < 5) {
+    capitals.push(land.reduce((best, s) => {
+      const d = Math.min(...capitals.map(c => centers[c].angleTo(centers[s])));
+      return d > best.d ? { s, d } : best;
+    }, { s: -1, d: -1 }).s);
+  }
+  // Each realm: its capital and the five land states nearest to it not yet taken
+  const taken = new Set(capitals);
+  const realms = capitals.map(c => [c]);
+  for (let round = 0; round < 5; round++) {
+    realms.forEach(r => {
+      const s = land.filter(x => !taken.has(x)).sort((a, b) => centers[r[0]].angleTo(centers[a]) - centers[r[0]].angleTo(centers[b]))[0];
+      if (s !== undefined) { r.push(s); taken.add(s); }
+    });
+  }
+  return { world: newWar(seed, realms), clock: 0, paused: false, speed: 1, seen: 0 };
+})() : null;
+
+const warPanel = war ? createNuclearPanel(hud_root, {
+  act: a => {
+    if (war && leaderAct(war.world, 0, a) && a.kind !== 'build') moment(a.kind === 'missile' ? 'raid' : 'find', pointToTile(regions.centers[0][war.world.leaders[a.to].states[0]]));
+  },
+  togglePause: () => { if (war) war.paused = !war.paused; },
+  setSpeed: s => { if (war) { war.speed = s; war.paused = false; } },
+}) : null;
+if (war) Object.assign(window, { globeWar: war });
+
+function updateWar(dt: number) {
+  if (!war || !warPanel) return;
+  const w: NuclearWorld = war.world;
+  if (!war.paused && w.winner === null) {
+    // A day in 1.5 s at 1×, as the game's clock
+    war.clock += (dt * war.speed) / 1.5;
+    while (war.clock >= 1 && w.winner === null) {
+      war.clock -= 1;
+      const before = w.log[0];
+      leaderDay(w);
+      // The computer's missiles flash on their target's capital
+      for (const line of w.log) {
+        if (line === before) break;
+        const hit = line.startsWith('Ohjusisku') ? w.leaders.find(l => line.includes(`→ ${l.name},`)) : undefined;
+        if (hit) moment('raid', pointToTile(regions.centers[0][hit.states[0]]));
+      }
+    }
+  }
+  const capitals = w.leaders.map(l => toScreen(regions.centers[0][l.states[0]]));
+  const dots = w.leaders.flatMap(l => l.states.slice(1).flatMap(s => {
+    const at = toScreen(regions.centers[0][s]);
+    return at ? [{ leader: l.id, at }] : [];
+  }));
+  warPanel.update(w, war.paused, war.speed, { capitals, dots });
 }
 
 // ─── Level panel and city quick panels (STORY-098) ─
@@ -4147,6 +4214,7 @@ function animate(now = performance.now()) {
   tiles.screenUp.value.copy(lightY);
   updateTileTypes(now);
   updatePlay(dt);
+  updateWar(dt);
   updateCityLevel(dt);
   // The canvas fills the window: its height without a layout read (STORY-062)
   tiles.update(camera, window.innerHeight, dt);
