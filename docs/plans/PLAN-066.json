@@ -1,0 +1,56 @@
+{
+  "id": "PLAN-066",
+  "story": "STORY-083",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Claude Coden subagentti .claude/agents/inanna.md (model: sonnet), joka pelaa julkaistua peliä Playwrightin MCP-palvelimen kautta. .mcp.json käynnistää @playwright/mcp 0.0.86:n (Apache-2.0) npx:llä asetuksin --caps vision (koordinaattinapautukset 3D-canvasille), --isolated (jokainen ajo alkaa tyhjällä tallennuksella), --viewport-size 1280x800 ja --output-dir docs/playtests/shots. Inannan työkalut ovat vain selaimen pelaamiseen tarvittavat MCP-työkalut ja Write raporttia varten: ei Read-, Grep-, Glob- eikä Bash-työkalua, eikä MCP:n browser_evaluate-, browser_run_code_unsafe-, konsoli- eikä verkkotyökaluja, joilla pelin sisuskaluihin näkisi. Persoonat, pelitapa, arvioiden asteikko ja raportin rakenne ovat agentin tiedostossa, koska Inanna ei voi lukea erillistä pohjaa. docs/playtests/README.md kertoo ihmiselle, miten testi ajetaan. CI ohittaa .claude- ja .mcp.json-muutokset kuten docs-muutokset.",
+  "alternatives_considered": [
+    {
+      "name": "Oma Playwright-skripti, jota Inanna ajaa Bashilla",
+      "pros": "Toimii missä tahansa ilman MCP:tä",
+      "cons": "Bash ja Read antaisivat pääsyn koodiin, jolloin sokeus olisi vain ohjeen varassa",
+      "rejected_because": "Hyväksymiskriteeri: Inannalla ei ole tiedostonlukutyökaluja"
+    },
+    {
+      "name": "Kaksi MCP-palvelinta, toinen puhelinlaitteen emulaatiolla",
+      "pros": "Oikea kosketusemulaatio",
+      "cons": "Työkalulista kaksinkertaistuu ja asetukset monimutkaistuvat",
+      "rejected_because": "Ikkunan koko (384 × 824) riittää ensimmäiseen versioon; rajoitus kirjataan raporttiin"
+    },
+    {
+      "name": "Raporttipohja erillisenä tiedostona",
+      "pros": "Ihmisen helppo muokata",
+      "cons": "Inanna ei voi lukea sitä ilman lukutyökalua",
+      "rejected_because": "Pohja on agentin tiedostossa, ja README viittaa siihen"
+    }
+  ],
+  "files_to_change": [
+    ".claude/agents/inanna.md",
+    ".mcp.json",
+    "docs/playtests/README.md",
+    "docs/playtests/shots/.gitkeep",
+    ".github/workflows/deploy.yml",
+    "CLAUDE.md"
+  ],
+  "open_questions": [
+    "Riittääkö Sonnet syvään raporttiin (avoin kysymys 16)? Arvioidaan PLAYTEST-001:n jälkeen."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "MCP-palvelimen työkalut ja asetukset",
+      "verify": "Työkalulista vision-kyvyllä, savutesti Pagesia vasten"
+    },
+    {
+      "step": 2,
+      "action": "Agentin tiedosto ja .mcp.json",
+      "verify": "Jokainen agentin MCP-työkalu löytyy palvelimesta repon asetuksilla"
+    },
+    {
+      "step": 3,
+      "action": "README, CLAUDE.md ja CI:n ohitukset",
+      "verify": "Katselmointi"
+    }
+  ],
+  "status": "approved"
+}

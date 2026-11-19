@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T11:41:00Z",
+    "generated_at": "2026-11-19T12:04:25Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "1a5e413",
+    "git_commit": "965cd31",
     "git_branch": "main",
     "language": "fi"
   },
@@ -204,7 +204,7 @@
         "STORY-084",
         "STORY-085"
       ],
-      "progress": 0
+      "progress": 33
     },
     {
       "id": "EPIC-009",
@@ -2207,12 +2207,12 @@
         ".claude/agents/inanna.md käyttää Sonnetia. Inannalla ei ole tiedostonlukutyökaluja, eli hän näkee vain pelin ja README:n.",
         "Inanna pelaa Playwrightilla ?seed=N-parametrilla kolmella persoonalla (Uusi pelaaja puhelimella, Rakentaja ja Valloittaja) ja kirjoittaa raportin pohjan docs/playtests/ mukaan: viisi arviota 1–5 (selkeys, tahti, valintojen merkitys, palkitsevuus ja halu jatkaa), hämmennyksen hetket aikaleimoineen ja kuvakaappauksineen sekä kolme tärkeintä korjausta."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-066",
+        "implementation": "TICKET-IMPL-066",
+        "testing": "TICKET-TEST-066"
       }
     },
     {

@@ -249,8 +249,14 @@ Enki: PLAN-NNN ──► (L-koko: Anu katselmoi) ──► Sami hyväksyy
 ```
 
 Claude Codessa Utu, Nisaba ja Inanna voivat olla subagentteja kansiossa
-`.claude/agents/` (`model: sonnet` tai `model: haiku`). Inannan määrittely
-tehdään STORY-083:ssa, eikä hänellä ole tiedostonlukutyökaluja.
+`.claude/agents/` (`model: sonnet` tai `model: haiku`).
+
+**Inanna** on määritelty tiedostossa `.claude/agents/inanna.md` (STORY-083). Hän
+pelaa Playwrightin MCP-palvelimen kautta (`.mcp.json`, `@playwright/mcp` 0.0.86),
+eikä hänellä ole tiedostonlukutyökaluja. Kutsu Claude Codessa esimerkiksi:
+"Inanna, tee PLAYTEST-001 siemenellä 42." Kerro kutsussa vain tunniste,
+siemen, persoonat ja osoite, älä sitä, mitä muutettiin. Ohjeet:
+`docs/playtests/README.md`.
 
 `C:\Projects\CLAUDE.md` ladataan Claude Codessa myös. Sen identiteetti
 (Aavistus) jää tämän projektin identiteettien alle.
