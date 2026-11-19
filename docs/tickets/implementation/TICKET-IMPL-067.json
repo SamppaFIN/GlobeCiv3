@@ -1,0 +1,24 @@
+{
+  "id": "TICKET-IMPL-067",
+  "story": "STORY-084",
+  "plan": "PLAN-067",
+  "implemented_by_model": "Opus 5.5 (Enki) ja Sonnet 5.5 (Inanna)",
+  "status": "review",
+  "files_changed": [
+    "docs/playtests/PLAYTEST-001.md",
+    "docs/playtests/shots/ (59 WebP-kuvaa)",
+    "docs/playtests/README.md",
+    ".claude/agents/inanna.md",
+    "CLAUDE.md"
+  ],
+  "change_summary": "PLAYTEST-001 kolmella persoonalla (puhelin noin 20, rakentaja 24 ja valloittaja 19 toimintoa, 130 työkalukutsua, 12,6 min). Raportin sisältö on Inannan, eikä sitä ole muokattu. Ainoa muutos on kuvaviitteiden pääte .png → .webp, koska 59 kuvaa veivät PNG:nä 31 Mt ja WebP:nä (laatu 80) 3,4 Mt. Inannan ohje nimeää kuvat jatkossa suoraan .webp-päätteellä. README:hen tuli ajotaulukko.",
+  "impact_analysis": {
+    "changed_symbols": [],
+    "call_sites_found": [],
+    "call_sites_updated": [],
+    "compile_errors_before": 0
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Pilviajon rajoitukset: sokeus oli ohjeen varassa, ei työkalujen (agentilla oli Bash ja Read, mutta käskynä ajaa vain play.mjs:ää ja avata vain kuvakaappauksia; silta torjui muut selaintyökalut ja osoitteet). Ilman näytönohjainta piirto oli hidasta, ja tekoälyn reaktioaika antoi pelin edetä toimintojen välillä. Silta ei ole repossa, koska Samin koneella .mcp.json hoitaa saman."
+}

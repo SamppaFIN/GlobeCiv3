@@ -1,0 +1,49 @@
+{
+  "id": "PLAN-067",
+  "story": "STORY-084",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-19",
+  "approach": "Lähtötason pelitesti nykyisestä julkaisusta (Pages, 37767a6) ennen yhtään pelattavuusmuutosta. Sami pyysi ajoa pilvessä, koska hän ei ollut koneella. Projektin inanna-agentti latautui istuntoon, mutta Playwrightin MCP-palvelin ei, joten Enki rakensi repon ulkopuolelle sillan: sama @playwright/mcp 0.0.86 taustalla (headless Chrome, SwiftShader, --no-sandbox), paikallinen HTTP-portti ja komento play.mjs, jotka päästävät läpi vain Inannan 19 selaintyökalua, sallivat vain pelin osoitteen ja README-sivun ja tallentavat kuvat yhteen kansioon. Erillinen Sonnet-agentti sai Inannan ohjeet sellaisinaan ja säännön ajaa vain play.mjs:ää ja avata vain omia kuvakaappauksiaan. Raportti ja kuvat siirretään repoon, kuvat WebP-muodossa.",
+  "alternatives_considered": [
+    {
+      "name": "Odotetaan, että Sami ajaa Inannan Claude Codessa",
+      "pros": "Sokeus työkalutasolla ja oikea näytönohjain",
+      "cons": "Lähtötaso viivästyy",
+      "rejected_because": "Sami pyysi ajoa heti, koska hän ei ollut koneella"
+    },
+    {
+      "name": "Enki pelaa itse",
+      "pros": "Ei siltaa",
+      "cons": "Enki on nähnyt koodin ja suunnitelmat",
+      "rejected_because": "Projektisääntö 6: pelitestaaja ei tunne suunnitelmaa"
+    }
+  ],
+  "files_to_change": [
+    "docs/playtests/PLAYTEST-001.md",
+    "docs/playtests/shots/PLAYTEST-001-*.webp",
+    "docs/playtests/README.md",
+    ".claude/agents/inanna.md",
+    "CLAUDE.md"
+  ],
+  "open_questions": [
+    "Riittääkö Sonnet (avoin kysymys 16)? Sami arvioi raportin."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Silta ja sen rajaukset",
+      "verify": "browser_evaluate ja vieras osoite torjutaan, kuvan polku pysyy kansiossa"
+    },
+    {
+      "step": 2,
+      "action": "Inanna pelaa kolme persoonaa",
+      "verify": "Raportti pohjan mukaan"
+    },
+    {
+      "step": 3,
+      "action": "Raportti ja kuvat repoon",
+      "verify": "Kuvaviitteet osuvat tiedostoihin"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T12:04:25Z",
+    "generated_at": "2026-11-19T12:28:58Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "965cd31",
+    "git_commit": "17e5b1f",
     "git_branch": "main",
     "language": "fi"
   },
@@ -204,7 +204,7 @@
         "STORY-084",
         "STORY-085"
       ],
-      "progress": 33
+      "progress": 67
     },
     {
       "id": "EPIC-009",
@@ -2229,12 +2229,12 @@
         "PLAYTEST-001 tehdään nykyisestä pelistä kolmella persoonalla siemenellä 42, ja raportti nimeää kohdan (pelipäivä ja minuutti), jossa peli muuttuu sekavaksi.",
         "Sami lukee raportin, ja havainnot kirjataan CLAUDE.md:n osioon 13."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-067",
+        "implementation": "TICKET-IMPL-067",
+        "testing": "TICKET-TEST-067"
       }
     },
     {
