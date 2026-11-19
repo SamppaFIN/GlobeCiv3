@@ -53,6 +53,11 @@ export interface CityView {
   buy: { name: string; price: number; can: boolean } | null;
   /** Names of the buildings in the city. */
   buildings: string[];
+  /**
+   * A city of chains (STORY-088): its stock and site in a line ("Varasto: lankkuja 5 · Työmaa:
+   * Saha, puuttuu 2 kiveä"), and its chain buildings to put on the site, built of planks and stone.
+   */
+  chain?: { line: string; builds: CityView['builds'] };
 }
 
 export interface CityCard {
@@ -96,7 +101,11 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
       ${LABELS.map((label, i) => `<div class="city-yield">${YIELD_ICONS[i]}<span class="city-yield-n"></span><span class="city-yield-label">${label}</span></div>`).join('')}
     </div>
     <span class="city-buildings"></span>
-    <div class="city-builds" role="radiogroup" aria-labelledby="city-builds-label">
+    <span class="city-chain"></span>
+    <div class="city-builds city-sites" role="radiogroup" aria-labelledby="city-sites-label">
+      <span class="city-builds-head"><span id="city-sites-label" class="city-build-label">Työmaalle</span></span>
+    </div>
+    <div class="city-builds city-shields" role="radiogroup" aria-labelledby="city-builds-label">
       <span class="city-builds-head"><span id="city-builds-label" class="city-build-label">Rakenna</span><span class="city-gold"></span></span>
     </div>
     <button class="btn btn-secondary city-buy" type="button"></button>
@@ -104,7 +113,8 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
-  const builds = q('.city-builds');
+  const builds = q('.city-shields');
+  const sites = q('.city-sites');
   const buyButton = q<HTMLButtonElement>('.city-buy');
   buyButton.addEventListener('click', on.buy);
   q('.city-research').addEventListener('click', on.openResearch);
@@ -145,15 +155,22 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     buyButton.hidden = !v.buy || !v.own;
     q('.city-focus-row').hidden = !v.own;
     builds.hidden = !v.own;
+    sites.hidden = !v.own || !v.chain?.builds.length;
+    q('.city-chain').hidden = !v.chain;
+    q('.city-chain').textContent = v.chain?.line ?? '';
     q('.city-research').hidden = !v.own;
     if (v.buy) {
       buyButton.textContent = v.buy.can ? `Osta ${v.buy.name.toLowerCase()} · ${v.buy.price} kultaa` : `Osta ${v.buy.name.toLowerCase()} · ${v.buy.price} kultaa (kassassa ${v.gold})`;
       buyButton.disabled = !v.buy.can;
     }
-    // One button per build, made once; a tap chooses it. A building once built leaves the list
-    builds.querySelectorAll<HTMLButtonElement>('.city-build').forEach((opt, i) => { if (i >= v.builds.length) opt.remove(); });
-    v.builds.forEach((b, i) => {
-      let opt = builds.querySelectorAll<HTMLButtonElement>('.city-build')[i];
+    fill(builds, v.builds);
+    fill(sites, v.chain?.builds ?? []);
+  };
+  // One button per build, made once; a tap chooses it. A building once built leaves the list
+  const fill = (group: HTMLElement, list: CityView['builds']) => {
+    group.querySelectorAll<HTMLButtonElement>('.city-build').forEach((opt, i) => { if (i >= list.length) opt.remove(); });
+    list.forEach((b, i) => {
+      let opt = group.querySelectorAll<HTMLButtonElement>('.city-build')[i];
       if (!opt) {
         opt = document.createElement('button');
         opt.type = 'button';
@@ -161,7 +178,7 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
         opt.setAttribute('role', 'radio');
         opt.innerHTML = '<span class="city-build-top"><span class="city-build-name"></span><span class="city-build-eta"></span></span><span class="city-build-info"></span>';
         opt.addEventListener('click', () => on.setBuild(opt!.dataset.kind as Build));
-        builds.appendChild(opt);
+        group.appendChild(opt);
       }
       opt.dataset.kind = b.kind;
       opt.setAttribute('aria-checked', String(b.selected));

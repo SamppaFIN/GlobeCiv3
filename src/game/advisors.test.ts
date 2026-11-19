@@ -1,5 +1,6 @@
+import type { ChainBuilding } from './chains';
 import { describe, expect, it } from 'vitest';
-import { planetTarget, startAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
+import { chainAdvice, planetTarget, startAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
 
@@ -126,5 +127,19 @@ describe('governors at the city stage (STORY-070)', () => {
     expect(startAdvice('growth', city(2), { available: all.filter(b => b !== 'settler'), built: true, soldiers: 0 })!.build).toBe('scout');
     expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('warrior');
     expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 1 })!.build).toBe('scout');
+  });
+});
+
+describe('governors in a city of chains (STORY-088)', () => {
+  it('the base first, then bread; the Kasvattaja fish before the mill; the own hand none', () => {
+    const built = new Set<ChainBuilding>();
+    const open = (b: ChainBuilding) => !built.has(b);
+    expect(chainAdvice('none', open)).toBeNull();
+    expect(chainAdvice('explore', open)).toBe('lumberjack');
+    built.add('lumberjack').add('sawmill').add('quarry').add('field');
+    expect(chainAdvice('explore', open)).toBe('mill');
+    expect(chainAdvice('growth', open)).toBe('fishery');
+    // No shore: the fishery is not open
+    expect(chainAdvice('growth', b => open(b) && b !== 'fishery')).toBe('mill');
   });
 });

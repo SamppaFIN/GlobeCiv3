@@ -5,6 +5,7 @@ import { cityMood, cityScience, cityYield, foundCity, workedYield, type City } f
 import { tilesInRings } from './pathfinding';
 import { bestTile, fits, isBest, move, placeAll, spots, HIGHER, ROOM } from './placement';
 import type { Terrain } from './terrainTypes';
+import { newChain } from './chains';
 
 const CENTRE = pointToTile(new THREE.Vector3(0.4, 0.3, 0.866).normalize());
 const ring1 = neighbors(CENTRE);
@@ -45,6 +46,25 @@ describe('placement', () => {
     expect(fits(c, 'field', HILL, ground)).toBe(false);
     expect(fits(c, 'fishery', LOW, ground)).toBe(true);
     expect(fits(c, 'fishery', HILL, ground)).toBe(neighbors(HILL).includes(SEA));
+  });
+
+  it('in a city of chains a chain building stands on any land but steep, and does best on its own ground (STORY-088)', () => {
+    const c = city();
+    c.chain = newChain();
+    expect(fits(c, 'sawmill', LOW, ground)).toBe(true);
+    expect(fits(c, 'lumberjack', HILL, ground)).toBe(true);
+    expect(fits(c, 'lumberjack', MOUNTAIN, ground)).toBe(false);
+    expect(fits(c, 'quarry', LOW, ground)).toBe(true);
+    expect(fits(c, 'quarry', MOUNTAIN, ground)).toBe(true);
+    expect(fits(c, 'fishery', HILL, ground)).toBe(neighbors(HILL).includes(SEA));
+    expect(isBest(c, 'lumberjack', FOREST, ground)).toBe(true);
+    expect(isBest(c, 'lumberjack', LOW, ground)).toBe(false);
+    expect(isBest(c, 'quarry', HILL, ground)).toBe(true);
+    expect(isBest(c, 'mill', HILL, ground)).toBe(true);
+    expect(isBest(c, 'field', LOW, ground)).toBe(true);
+    expect(isBest(c, 'sawmill', LOW, ground)).toBe(false);
+    // The temple keeps its height
+    expect(isBest(c, 'temple', HILL, ground)).toBe(true);
   });
 
   it(`up is ${HIGHER} tile spacings higher than the centre; the temple and library do best up, the field, granary and market low, the quarry on a mountain`, () => {

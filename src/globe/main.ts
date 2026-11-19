@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
-import { isUp, placeAll, spots, standsOnTile, BEST, PLACE_RINGS, type Ground } from '../game/placement';
+import { bestOf, isUp, placeAll, spots, standsOnTile, PLACE_RINGS, type Ground } from '../game/placement';
 import { CommandLog, execute, type Actor, type Command } from '../game/commands';
 import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
 import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
@@ -46,7 +46,7 @@ import { RIVALS, Rival, rivalStarts, type RivalUnit, type RivalWorld } from '../
 import { oklchToSrgb } from './colors';
 import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS, TRIBE_REACH, type Tribe } from '../game/nomads';
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, MAX_ARMY, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
-import { PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, startAdvice, START_DOES, type AdvisorLevel, type PlanetAdvisor } from '../game/advisors';
+import { chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, startAdvice, START_DOES, type AdvisorLevel, type PlanetAdvisor } from '../game/advisors';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard } from '../ui/advisorCard';
 import { createOnboarding } from '../ui/onboarding';
@@ -67,6 +67,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
+import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type ChainBuilding } from '../game/chains';
 import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, RESOURCE_BUILDING_LIST, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
@@ -785,8 +786,12 @@ function startPlay(startCity: number, saved?: SaveData) {
       units.units.length = 0;
       foundAt(game.capital);
       play.openCity = null;
-      // A building first: the city's units come after it (Sami)
-      play.cities[0].build = startable(play.cities[0]).find(isTerrainBuilding) ?? 'coinage';
+      // A building first: the city's units come after it (Sami). The capital's buildings are
+      // built of planks and stone from its stock, and the lumberjack's site starts (STORY-088)
+      const capital = play.cities[0];
+      capital.chain = newChain();
+      capital.build = 'coinage';
+      startSite(capital.chain, 'lumberjack');
     }
     return;
   }
@@ -935,6 +940,22 @@ function arrangeEntertainers() {
   }
 }
 
+/**
+ * A day of a city of chains (STORY-088), in a fixed order: the people eat the meals the day's
+ * yield counted, the buildings work, and the site takes its materials and its builders' day.
+ */
+function chainDay(c: City, citizens: number) {
+  const s = c.chain!;
+  eat(s, citizens);
+  const built = c.buildings.filter(isChainBuilding);
+  workDay(s, built, built.filter(b => c.best?.includes(b)));
+  const { done } = buildDay(s);
+  if (!done) return;
+  c.buildings.push(done);
+  moment('city', c.tile);
+  discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
+}
+
 /** A day of every city: units it cannot pay for leave first (newest first), then it grows and builds. */
 function cityDays() {
   if (!play) return;
@@ -965,6 +986,8 @@ function cityDays() {
     }
     const size = c.size;
     const done = cityDay(c, yields[i]);
+    // The chains' day (STORY-088): today's meals, which the yield counted, then the goods and the site
+    if (c.chain) chainDay(c, size);
     // A full box at the size limit: said once (STORY-054)
     if (c.size >= sizeLimit(c) && c.food >= granary(c.size) && !atLimit.has(c.id)) {
       atLimit.add(c.id);
@@ -1614,6 +1637,21 @@ const cityLevel = (() => {
     } else if (kind === 'field') {
       add(box(0.3, 0.012, 0.24), 0xc9b85a);
       for (const z of [-0.08, 0, 0.08]) add(box(0.28, 0.016, 0.02), 0x8f7f38, 0, 0, z * s);
+    } else if (kind === 'lumberjack') {
+      // A hut and a pile of logs (STORY-088)
+      add(box(0.1, 0.07, 0.08), 0x8a6a48);
+      add(roof(0.08, 0.06), 0x4f6b3a, 0, 0.07 * s, 0);
+      for (const [y, z] of [[0, -0.02], [0, 0.02], [0.034, 0]]) add(new THREE.CylinderGeometry(0.016 * s, 0.016 * s, 0.12 * s, 6).rotateZ(Math.PI / 2).translate(0, 0.016 * s, 0), 0x7a5232, 0.02 * s, y * s, (0.1 + z) * s);
+    } else if (kind === 'mill') {
+      // A windmill: a tower, a cap and four sails (STORY-088)
+      add(new THREE.CylinderGeometry(0.05 * s, 0.07 * s, 0.2 * s, 8).translate(0, 0.1 * s, 0), 0xe6dcc4);
+      add(roof(0.065, 0.06, 8), 0x9a4630, 0, 0.2 * s, 0);
+      for (let k = 0; k < 4; k++) add(box(0.025, 0.13, 0.008).rotateZ((k * Math.PI) / 2 + 0.3), 0xf2efe6, 0, 0.17 * s, 0.07 * s);
+    } else if (kind === 'bakery') {
+      // A house with an oven's chimney (STORY-088)
+      add(box(0.14, 0.08, 0.11), 0xd9c38a);
+      add(roof(0.11, 0.07), 0x9a4630, 0, 0.08 * s, 0);
+      add(box(0.025, 0.07, 0.025), 0x8c3b2a, 0.04 * s, 0.1 * s, 0.02 * s);
     } else if (kind in RESOURCE_BUILDINGS) {
       // A resource building (STORY-073): a hut, its roof and sign in the colour of what it gives
       const r = RESOURCE_BUILDINGS[kind as ResourceBuilding];
@@ -2085,7 +2123,43 @@ const BUILD_PURPOSE: Record<Build, string> = {
   greatwall: 'Ihme: muurin suoja kaikkiin kaupunkeihin',
   ...(Object.fromEntries(RESOURCE_BUILDING_LIST.map(b => [b, resourcePurpose(b)])) as Record<ResourceBuilding, string>),
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa; alhaalla +1 ruoka päivässä', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa; alhaalla +1 kauppa päivässä',
+  lumberjack: 'Kaataa tukin kahdessa päivässä, metsässä joka päivä', mill: 'Jauhaa viljan jauhoiksi, ylhäällä joka päivä', bakery: 'Leipoo jauhoista leipää: leipä ruokkii asukkaan',
 };
+/** What each chain building does in a city of chains (STORY-088): a good in two days, on its best ground in one. */
+const CHAIN_PURPOSE: Record<ChainBuilding, string> = {
+  lumberjack: BUILD_PURPOSE.lumberjack,
+  sawmill: 'Sahaa tukin lankuksi: lankut ovat rakennusten tarvike',
+  quarry: 'Louhii kiveä kahdessa päivässä, kukkulalla tai vuorella joka päivä',
+  field: 'Kasvattaa viljaa kahdessa päivässä, alhaalla joka päivä',
+  mill: BUILD_PURPOSE.mill,
+  bakery: BUILD_PURPOSE.bakery,
+  fishery: 'Rannalle: kala kahdessa päivässä, ja kala ruokkii asukkaan',
+};
+/** "3 lankkua ja 2 kiveä" */
+const goodsText = (planks: number, stones: number) => [planks && `${planks} ${planks === 1 ? 'lankku' : 'lankkua'}`, stones && `${stones} ${stones === 1 ? 'kivi' : 'kiveä'}`].filter(Boolean).join(' ja ');
+/** What the stock holds, the most first: "lankkuja 5, kiveä 2". */
+const STOCK_WORDS: Record<(typeof GOODS)[number], [string, string]> = { log: ['tukki', 'tukkeja'], plank: ['lankku', 'lankkuja'], stone: ['kivi', 'kiveä'], wheat: ['vilja', 'viljaa'], flour: ['jauhot', 'jauhoja'], bread: ['leipä', 'leipiä'], fish: ['kala', 'kaloja'] };
+
+/** The stock, the site and the chain buildings of a city of chains, for its card (STORY-088). */
+function chainView(c: City): CityView['chain'] {
+  const s = c.chain;
+  if (!s) return undefined;
+  const goods = GOODS.filter(g => stockOf(s, g) > 0).map(g => `${STOCK_WORDS[g][stockOf(s, g) === 1 ? 0 : 1]} ${stockOf(s, g)}`);
+  const missing = siteMissing(s);
+  const site = s.site && missing ? `Työmaa: ${BUILDS[s.site.building].name}, ${missing.planks || missing.stones ? `puuttuu ${goodsText(missing.planks, missing.stones)}` : `valmis ${Math.max(1, BUILD_DAYS - s.site.days)} pv`}` : null;
+  return {
+    line: [`Varasto: ${goods.length ? goods.join(', ') : 'tyhjä'}`, site].filter(Boolean).join(' · '),
+    builds: CHAIN_BUILDINGS.filter(b => !c.buildings.includes(b) && spots(c, b, ground).length > 0).map(b => {
+      const base = waitsForBase(c.buildings, b);
+      const busy = s.site !== null && s.site.building !== b;
+      return {
+        kind: b, name: BUILDS[b].name, selected: s.site?.building === b, locked: base || busy,
+        cost: goodsText(CHAIN_RULES[b].planks, CHAIN_RULES[b].stones), purpose: CHAIN_PURPOSE[b],
+        eta: s.site?.building === b ? 'työmaalla' : base ? 'metsurin, sahan ja louhoksen jälkeen' : busy ? 'kun työmaa valmistuu' : 'aloita työmaa',
+      };
+    }),
+  };
+}
 
 function cityView(c: City, y: CityYield): CityView {
   const grow = daysToGrow(c, y);
@@ -2129,7 +2203,8 @@ function cityView(c: City, y: CityYield): CityView {
     growText: y.surplus < 0 ? 'nälkää' : c.size >= sizeLimit(c) ? 'vesijohto puuttuu' : grow === null ? 'ei kasva' : `kasvaa ${grow} pv`,
     yields: [y.surplus, y.shield, y.trade],
     // A terrain building only where its terrain is (STORY-070)
-    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind)) && !(isResourceBuilding(kind) && !resourceNear(c, kind))).map(kind => {
+    chain: chainView(c),
+    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind)) && !(isResourceBuilding(kind) && !resourceNear(c, kind)) && !shieldless(c, kind)).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       const need = NEEDS[kind];
@@ -2181,9 +2256,14 @@ function updateCityCard() {
 // (advisors.ts). The higher level goes first: the state's target, then the province's
 // builds and expeditions, then the city's.
 
+/**
+ * Builds a city makes of shields: in a city of chains not its chain buildings, which go on a
+ * site, and elsewhere not the three only a city of chains has (STORY-088).
+ */
+const shieldless = (c: City, kind: Build) => (c.chain ? isChainBuilding(kind) : (CHAIN_ONLY as readonly Build[]).includes(kind));
 /** Builds a city may start: known, not built, and no wonder another city has. */
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
-  !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
+  !shieldless(c, kind) && !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
   && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()) && !(kind === 'settler' && cityStage()));
 /** Units the cities build: only after the first building of a new game (STORY-070, Sami). */
 const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
@@ -2242,6 +2322,9 @@ function advisorDay() {
       const by = war ? 'state' : ordered ? 'province' : 'city';
       if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise(`${c.name} rakentaa: ${BUILDS[build].name}`, by);
     }
+    // The governor keeps a site going in a city of chains (STORY-088), whatever the level
+    const site = c.chain && !c.chain.site ? chainAdvice(p.cityAdvisor, b => chainOpen(c.chain!, c.buildings, b) && spots(c, b, ground).length > 0) : null;
+    if (site && dispatch({ kind: 'build', city: c.tile, build: site }, 'city')) advise(`${c.name} aloitti työmaan: ${BUILDS[site].name}`);
     // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
     if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
       const price = buyCost(c);
@@ -3977,7 +4060,7 @@ function placementRows(id: number): TileView['rows'] {
   const here = c.buildings.filter(b => c.placed?.[b] === id);
   return [
     { label: 'Korkeus', value: terrainOf(id) === 'mountains' ? 'jyrkkä vuori: vain louhos' : isUp(c, id, ground) ? PLACE_NAMES.up : PLACE_NAMES.low },
-    ...(here.length ? [{ label: 'Rakennukset', value: here.map(b => `${BUILDS[b].name}${c.best?.includes(b) ? ` (paras paikka: ${BEST[b]!.gives})` : ''}`).join(', ') }] : []),
+    ...(here.length ? [{ label: 'Rakennukset', value: here.map(b => `${BUILDS[b].name}${c.best?.includes(b) ? ` (paras paikka: ${bestOf(c, b)!.gives})` : ''}`).join(', ') }] : []),
   ];
 }
 
@@ -4002,11 +4085,11 @@ function stopMoving() {
 
 /** The card while a building moves: where it does best, and how to put it there. */
 function movingView(c: City, b: Building): TileView {
-  const best = BEST[b];
+  const best = bestOf(c, b);
   return {
     kicker: c.name, title: `Siirrä: ${BUILDS[b].name}`,
     rows: [
-      { label: 'Paras paikka', value: best ? `${PLACE_NAMES[best.at]}: ${best.gives}` : 'ei erityistä paikkaa' },
+      { label: 'Paras paikka', value: best ? `${typeof best.at === 'string' ? PLACE_NAMES[best.at] : best.at.map(t => TERRAIN_RULES[t].name.toLowerCase()).join(' tai ')}: ${best.gives}` : 'ei erityistä paikkaa' },
       { label: 'Valitse', value: 'Napauta merkittyä ruutua. Kultainen merkki on paras paikka.' },
     ],
     actions: ['Peru'],

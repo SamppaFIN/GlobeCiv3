@@ -11,9 +11,15 @@
  *   lower. Up, a temple calms one more citizen and a library brings +1 science a day. Low, a
  *   field and a granary bring +1 food and a market +1 trade a day. A quarry on a mountain
  *   brings +1 shield more.
+ * - In a city of chains (STORY-088, own) a chain building stands on any land but steep, the
+ *   quarry on mountains too and the fishery on a shore, and on its best ground it makes a
+ *   good a day instead of in two: the lumberjack in a forest or jungle, the quarry on hills or
+ *   mountains, the field low and the mill up, in the wind. The relief has trees and stones
+ *   everywhere, so no site lacks a lumberjack or a quarry.
  */
 import { neighbors } from '../globe/hexTiles';
 import { tilesInRings } from './pathfinding';
+import { isChainBuilding, type ChainBuilding } from './chains';
 import { cityRings, RESOURCE_BUILDINGS, TERRAIN_BUILDINGS, isResourceBuilding, isTerrainBuilding, type Building, type City } from './cities';
 import type { ResourceKind, Terrain } from './terrainTypes';
 
@@ -42,6 +48,16 @@ export const BEST: Partial<Record<Building, { at: 'up' | 'low' | 'mountains'; gi
   quarry: { at: 'mountains', gives: '+1 tuotanto päivässä' },
 };
 
+/** Where each chain building makes a good a day in a city of chains (STORY-088). */
+export const CHAIN_BEST: Partial<Record<ChainBuilding, { at: 'up' | 'low' | readonly Terrain[]; gives: string }>> = {
+  lumberjack: { at: ['forest', 'jungle'], gives: 'tukki päivässä' },
+  quarry: { at: ['hills', 'mountains'], gives: 'kivi päivässä' },
+  field: { at: 'low', gives: 'vilja päivässä' },
+  mill: { at: 'up', gives: 'jauhot päivässä' },
+};
+/** What a building gives on its best ground in this city, if it has a best ground. */
+export const bestOf = (city: City, b: Building) => (city.chain && isChainBuilding(b) ? CHAIN_BEST[b] : BEST[b]);
+
 /** Buildings that stand on a tile; walls and the great wall ring the city instead. */
 export const standsOnTile = (b: Building) => b !== 'walls' && b !== 'greatwall';
 
@@ -61,13 +77,15 @@ export function fits(city: City, b: Building, tile: number, g: Ground): boolean 
   const t = g.terrainOf(tile);
   if (t === 'ocean' || (t === 'mountains' && b !== 'quarry')) return false;
   if (b === 'fishery') return neighbors(tile).some(n => g.terrainOf(n) === 'ocean');
+  if (city.chain && isChainBuilding(b)) return true;
   return !isTerrainBuilding(b) || (TERRAIN_BUILDINGS[b] as readonly Terrain[]).includes(t);
 }
 
 /** Whether a building on a tile stands where it does best. */
 export function isBest(city: City, b: Building, tile: number, g: Ground): boolean {
-  const best = BEST[b];
+  const best = bestOf(city, b);
   if (!best) return false;
+  if (typeof best.at !== 'string') return best.at.includes(g.terrainOf(tile));
   if (best.at === 'mountains') return g.terrainOf(tile) === 'mountains';
   return isUp(city, tile, g) === (best.at === 'up');
 }

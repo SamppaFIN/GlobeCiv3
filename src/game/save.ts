@@ -12,6 +12,7 @@ import { SPEEDS, type Speed } from './clock';
 import { ATTACKERS, type Losses, type WarSave } from './war';
 import { RIVALS, type RivalSave, type RivalUnit } from './rivals';
 import { RESOURCE_BUILDING_LIST, type City, type Build, type Building, type Focus } from './cities';
+import { CHAIN_BUILDINGS, GOODS, type ChainState } from './chains';
 import type { Discovery, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
@@ -115,7 +116,7 @@ const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
-const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', ...RESOURCE_BUILDING_LIST];
+const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', 'lumberjack', 'mill', 'bakery', ...RESOURCE_BUILDING_LIST];
 const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior', ...ATTACKERS];
@@ -200,6 +201,19 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         bulbs: int(r.bulbs, 'bulbs'),
       };
     };
+    // A city's production chains (STORY-088): its stock, each building's days of work and its site
+    const chain = (v: unknown): ChainState => {
+      const x = obj(v, 'chain');
+      const site = orNull(x.site, w => {
+        const y = obj(w, 'site');
+        return { building: oneOf(y.building, CHAIN_BUILDINGS, 'site building'), planks: int(y.planks, 'site planks', 0, 10), stones: int(y.stones, 'site stones', 0, 10), days: int(y.days, 'site days', 0, 10) };
+      });
+      return {
+        stock: Object.fromEntries(Object.entries(obj(x.stock, 'stock')).map(([g, n]) => [oneOf(g, GOODS, 'good'), int(n, 'goods', 0, 1_000_000)])),
+        work: Object.fromEntries(Object.entries(obj(x.work, 'work')).map(([b, n]) => [oneOf(b, CHAIN_BUILDINGS, 'chain building'), int(n, 'work days', 0, 10)])),
+        site,
+      };
+    };
     // The player's cities and the rivals' (STORY-068)
     const city = (v: unknown): City => {
       const c = obj(v, 'city');
@@ -215,6 +229,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         ...(c.native === undefined ? {} : { native: bool(c.native, 'native') }),
         // Where the buildings stand (STORY-071); the bonuses follow from it when the game goes on
         ...(c.placed === undefined ? {} : { placed: Object.fromEntries(Object.entries(obj(c.placed, 'placed')).map(([b, t]) => [oneOf(b, BUILDINGS, 'placed building'), tile(t)])) }),
+        // The production chains (STORY-088): a city without them keeps the old rules
+        ...(c.chain === undefined ? {} : { chain: chain(c.chain) }),
       };
     };
 

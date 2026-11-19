@@ -111,6 +111,11 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.cities[0].native = 'yes'; })).toBeNull();
     expect(broken(s => { s.cities[0].placed = { dragon: START_TILE }; })).toBeNull();
     expect(broken(s => { s.cities[0].placed.granary = -1; })).toBeNull();
+    // The production chains (STORY-088)
+    expect(broken(s => { s.cities[0].chain = { stock: { gold: 3 }, work: {}, site: null }; })).toBeNull();
+    expect(broken(s => { s.cities[0].chain = { stock: { plank: -1 }, work: {}, site: null }; })).toBeNull();
+    expect(broken(s => { s.cities[0].chain = { stock: {}, work: { dragon: 1 }, site: null }; })).toBeNull();
+    expect(broken(s => { s.cities[0].chain = { stock: {}, work: {}, site: { building: 'temple', planks: 0, stones: 0, days: 0 } }; })).toBeNull();
     expect(broken(s => { s.research.kinds = ['unicorns']; })).toBeNull();
     expect(broken(s => { s.ties[0].state = 'truce'; })).toBeNull();
     expect(broken(s => { s.ties[0].attitude = 101; })).toBeNull();
@@ -132,6 +137,15 @@ describe('saved game (STORY-036)', () => {
     expect(validateSave(null, LIMITS)).toBeNull();
     expect(validateSave('{"version":1}', LIMITS)).toBeNull();
     expect(validateSave([], LIMITS)).toBeNull();
+  });
+
+  it('a city of chains comes back mid-chain, and a city of a save from before has none (STORY-088)', () => {
+    const { data } = playedSave();
+    expect(validateSave(data, LIMITS)!.cities[0].chain).toBeUndefined();
+    const mid: any = JSON.parse(JSON.stringify(data));
+    mid.cities[0].buildings = ['lumberjack', 'sawmill'];
+    mid.cities[0].chain = { stock: { log: 1, plank: 2, stone: 0 }, work: { lumberjack: 1 }, site: { building: 'quarry', planks: 1, stones: 0, days: 0 } };
+    expect(validateSave(mid, LIMITS)).toEqual(mid);
   });
 
   it('a save from before gold and buildings (STORY-038) gets the start gold and no buildings', () => {

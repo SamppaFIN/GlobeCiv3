@@ -1,3 +1,4 @@
+import { newChain } from './chains';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { type AdvisorLevel, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST } from './advisors';
@@ -83,6 +84,18 @@ describe('commands', () => {
     w.research.known.add('pottery');
     expect(execute({ kind: 'build', city: CENTRE, build: 'granary' }, w)).toBe(true);
     expect(execute({ kind: 'build', city: HILL, build: 'warrior' }, w)).toBe(false);
+  });
+
+  it('in a city of chains a chain building starts a site, the base first; elsewhere the chains\' own are refused (STORY-088)', () => {
+    const w = world();
+    expect(execute({ kind: 'build', city: CENTRE, build: 'lumberjack' }, w)).toBe(false);
+    w.cities[0].chain = newChain();
+    expect(execute({ kind: 'build', city: CENTRE, build: 'field' }, w)).toBe(false);
+    expect(execute({ kind: 'build', city: CENTRE, build: 'lumberjack' }, w)).toBe(true);
+    expect(w.cities[0].chain.site?.building).toBe('lumberjack');
+    expect(w.cities[0].build).not.toBe('lumberjack');
+    // One site at a time
+    expect(execute({ kind: 'build', city: CENTRE, build: 'quarry' }, w)).toBe(false);
   });
 
   it('a study must be open: a kind once found, an advance once its needs are known', () => {
