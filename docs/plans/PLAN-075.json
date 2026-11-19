@@ -1,0 +1,43 @@
+{
+  "id": "PLAN-075",
+  "story": "STORY-017",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-20",
+  "approach": "Osa 1 (Samin linjaus 2026-11-20: peli alkaa vain alimmalta tasolta, ja kun tiedustelija on rakennettu, seuraava taso näytetään): uusi peli kartoittaa vain kaupungin kolme rengasta, ja kaupunkialue kartoitetaan, kun tiedustelija avaa sen. Kaupunkitason tavoite on rakennus ja tiedustelija. Kaupunkitasolla ei tarjota kaupunkipaikkoja eikä tule rosvoja tai paimentolaisia, ja uudisasukas odottaa kaupunkialuetta. Kaikki kaupunkitason neuvonantajat rakentavat rakennuksen jälkeen tiedustelijan. Osa 2: peli pysähtyy vain ensimmäisellä kerralla (kaupunkipaikka, rosvot ja paimentolaiset), ja myöhemmät ovat ilmoituksia, sekä diplomatia vasta valtiotasolla. Vanha alku (?classic) ei muutu.",
+  "alternatives_considered": [
+    {
+      "name": "Kaupunkialue näkyvissä mutta himmennettynä",
+      "pros": "Pelaaja näkee, mitä on tulossa",
+      "cons": "Kaksi tasoa näkyy yhä, ja niiden viestit sekoittuvat",
+      "rejected_because": "Sami: aloita vain alimmalta tasolta"
+    },
+    {
+      "name": "Mikä tahansa ensimmäinen yksikkö avaa kaupunkialueen",
+      "pros": "Nykyinen sääntö",
+      "cons": "Uudisasukas kaupunkitasolla on ylemmän tason järjestelmä",
+      "rejected_because": "Sami: tiedustelija avaa seuraavan tason"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts",
+    "src/game/goals.ts",
+    "src/game/advisors.ts",
+    "tests/e2e/new-start.e2e.ts"
+  ],
+  "open_questions": [
+    "Osa 2: pysäyttääkö vain ensimmäinen kaupunkipaikka ja ensimmäiset rosvot (avoin kysymys 18)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Yhden tason alku ja tiedustelija avaa kaupunkialueen",
+      "verify": "new-start.e2e: neljäs rengas kartoittamatta alussa ja kartoitettu nousussa; ei kaupunkipaikkoja; uudisasukas odottaa"
+    },
+    {
+      "step": 2,
+      "action": "Pysähdys vain uudesta, diplomatia valtiotasolla",
+      "verify": "E2E ja PLAYTEST-002"
+    }
+  ],
+  "status": "approved"
+}

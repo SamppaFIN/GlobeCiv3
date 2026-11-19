@@ -1,0 +1,69 @@
+{
+  "id": "TICKET-TEST-075",
+  "story": "STORY-017",
+  "implementation_ticket": "TICKET-IMPL-075",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Alussa kaupunkitaso ja kaupunkialue näkyivät yhtä aikaa, koska aloitusalue kartoitettiin laskeutuessa ja vanhan alun tiedustelijat kartoittivat näkökentällään ennen kuin ne poistettiin, ja kaupunkialueen viestit (kaupunkipaikka päivänä 2) tulivat kaupunkitasolla.",
+    "files_changed": [
+      "src/globe/main.ts",
+      "src/game/goals.ts",
+      "src/game/advisors.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "new-start.e2e: laskeutuessa kaupungin neljännen renkaan ruudut ovat kartoittamatta, tavoite on Rakenna rakennus ja tiedustelija, uudisasukas odottaa kaupunkialuetta, Kartoittaja rakentaa rakennuksen ja tiedustelijan, nousu kartoittaa kaupunkialueen, eikä kaupunkipaikkoja tarjottu",
+        "expected": "Samin linjaus ja kriteeri 1 kaupunkitasolla",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: goals, progress ja advisors (Kasvattaja rakentaa tiedustelijan)",
+        "expected": "Säännöt",
+        "result": "232/232",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Uutta peliä käyttävät E2E: area-panel, onboarding, goals, city-label, placement, resource-buildings ja smoke",
+        "expected": "Ei regressiota",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Pysähdys vain uudesta ja diplomatia valtiotasolla (kriteerit 1 ja 2 ylemmillä tasoilla)",
+        "expected": "Kriteerit",
+        "result": "Osa 2 tekemättä",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Sekavuusindeksi laskee (PLAYTEST-002 ja autopilotti)",
+        "expected": "Kriteeri 3",
+        "result": "Odottaa PLAYTEST-002:ta",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "new-start: landing.png, city-area.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Alussa näkyy vain kaupunkitaso",
+        "checked": false
+      },
+      {
+        "item": "Tiedustelija avaa kaupunkialueen",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T20:21:41Z",
+    "generated_at": "2026-11-19T22:22:30Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "ae801e4",
+    "git_commit": "90b9518",
     "git_branch": "main",
     "language": "fi"
   },
@@ -663,12 +663,12 @@
         "Peli pysähtyy vain, kun jokin on oikeasti uutta (esimerkiksi ensimmäinen kaupunkipaikka ja ensimmäiset rosvot). Toistuvat ehdotukset ja tapahtumat ovat ilmoituksia, jotka eivät pysäytä peliä (PLAYTEST-001, korjaus 1).",
         "Sekavuusindeksi laskee lähtötasosta (PLAYTEST-001 ja autopilotti)."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "in_progress",
+      "progress": 40,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-075",
+        "implementation": "TICKET-IMPL-075",
+        "testing": "TICKET-TEST-075"
       }
     },
     {
