@@ -8,8 +8,8 @@ const dayAfterFrames = (page: Page, frames: number) => page.evaluate(n => new Pr
   requestAnimationFrame(step);
 }), frames);
 
-/** A new game on seed 42 in the player's own hand, its city area open. */
-async function cityAreaGame(page: Page, errors: string[]) {
+/** A new game on seed 42, in the player's own hand or a governor's, its city area open. */
+async function cityAreaGame(page: Page, errors: string[], advisor = /^Ohjaan itse/) {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -20,7 +20,7 @@ async function cityAreaGame(page: Page, errors: string[]) {
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
-  await page.getByRole('button', { name: /^Ohjaan itse/ }).click();
+  await page.getByRole('button', { name: advisor }).click();
   await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
   await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
@@ -51,14 +51,37 @@ test('bandits stop the game the first time only; later ones are notices, and the
   const s = await state(page);
   expect(s.raid).not.toBeNull();
   expect(s.raidAlert).toBe(false);
-  await expect(page.locator('.hud-notice')).toContainText('liikkeellä kohti kaupunkia');
+  // From the game's log: a frame at 4× may run more days, and the screen keeps only its last notice
+  await expect.poll(() => page.evaluate(() => (window as any).globeDebug.notices().join(' | '))).toContain('liikkeellä kohti kaupunkia');
   await expect(card).toBeHidden();
   expect(await dayAfterFrames(page, 60)).toBeGreaterThan(s.day);
   await page.screenshot({ path: testInfo.outputPath('second-raid.png') });
   expect(errors).toEqual([]);
 });
 
-test('a city site stops the game the first time only; later sites are notices (STORY-017)', async ({ page }) => {
+test('a city site stops the game the first time only; later the governor takes each itself (STORY-017, PLAYTEST-002)', async ({ page }) => {
+  test.setTimeout(150_000);
+  const errors: string[] = [];
+  await cityAreaGame(page, errors, /^Kartoittaja/);
+  await page.evaluate(() => (window as any).globeDebug.setSiteOffers(true));
+  await page.evaluate(() => (window as any).globeDebug.fastForward(4));
+  const card = page.getByRole('dialog').filter({ hasText: 'Tiedustelija löysi hyvän paikan kaupungille' });
+  await expect(card).toBeVisible({ timeout: 60_000 });
+  await card.getByRole('button', { name: /Myöhemmin/ }).click();
+  // The next site: no card and no stop, and the governor sends a settler there (a notice alone
+  // left the site unfound in PLAYTEST-002)
+  await page.waitForFunction(() => (window as any).globeGame.state.offered.length >= 2, null, { timeout: 90_000 });
+  const s = await state(page);
+  expect(s.offer).toBeNull();
+  expect(s.commands.filter((e: { by: string; kind: string }) => e.by === 'city' && e.kind === 'settle')).toHaveLength(1);
+  // The site is on its way: the capital builds its settler, a settler walks there, or its city stands
+  expect(s.pendingSite === s.offered[1] || s.site === s.offered[1] || s.cities.some((c: { tile: number }) => c.tile === s.offered[1])).toBe(true);
+  await expect(card).toBeHidden();
+  expect(await dayAfterFrames(page, 60)).toBeGreaterThan(s.day);
+  expect(errors).toEqual([]);
+});
+
+test('in the own hand every city site comes as its card, so that the player chooses it (PLAYTEST-002)', async ({ page }) => {
   test.setTimeout(150_000);
   const errors: string[] = [];
   await cityAreaGame(page, errors);
@@ -67,13 +90,9 @@ test('a city site stops the game the first time only; later sites are notices (S
   const card = page.getByRole('dialog').filter({ hasText: 'Tiedustelija löysi hyvän paikan kaupungille' });
   await expect(card).toBeVisible({ timeout: 60_000 });
   await card.getByRole('button', { name: /Myöhemmin/ }).click();
-  // The next site: offered with a notice, no card and no stop
-  await page.waitForFunction(() => (window as any).globeGame.state.offered.length >= 2, null, { timeout: 90_000 });
-  const s = await state(page);
-  expect(s.offer).toBeNull();
-  await expect(page.locator('.hud-notice')).toContainText('Kaupunkipaikka:');
   await expect(card).toBeHidden();
-  expect(await dayAfterFrames(page, 60)).toBeGreaterThan(s.day);
+  await expect(card).toBeVisible({ timeout: 90_000 });
+  expect((await state(page)).offered.length).toBe(2);
   expect(errors).toEqual([]);
 });
 
