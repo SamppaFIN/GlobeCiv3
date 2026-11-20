@@ -72,8 +72,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä PLAYTEST-002:n korjauksen jälkeen",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Ajo 44666610239 (03178d9) success: 97 läpi ja 1 vaihteli (tile-card.e2e, läpi uusinnalla). Vitest 249/249. Julkaistu Pagesiin 2026-11-20 04.24 UTC.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
