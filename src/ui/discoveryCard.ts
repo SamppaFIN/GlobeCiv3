@@ -39,6 +39,11 @@ export interface DiscoveryCard {
   setRing(x: number | null, y: number | null): void;
   /** A notice under the top panel for a few seconds. */
   notice(text: string): void;
+  /**
+   * The last notices, newest last. A frame that runs several days at 4× may show only its last
+   * notice, so tests read what was told from here and not from the screen.
+   */
+  readonly log: readonly string[];
   readonly visible: boolean;
 }
 
@@ -69,6 +74,7 @@ export function createDiscoveryCard(root: HTMLElement, onChoose: (index: number)
   const q = <T extends HTMLElement>(sel: string) => layer.querySelector<T>(sel)!;
   const ring = q<HTMLElement>('.discovery-ring');
   let noticeTimer = 0;
+  const log: string[] = [];
 
   return {
     show(view) {
@@ -102,11 +108,14 @@ export function createDiscoveryCard(root: HTMLElement, onChoose: (index: number)
       if (x !== null && y !== null) ring.style.transform = `translate(${x}px, ${y}px)`;
     },
     notice(text) {
+      log.push(text);
+      if (log.length > 50) log.shift();
       notice.textContent = text;
       notice.classList.add('hud-notice-on');
       clearTimeout(noticeTimer);
       noticeTimer = window.setTimeout(() => notice.classList.remove('hud-notice-on'), NOTICE_MS);
     },
+    log,
     get visible() { return !layer.hidden; },
   };
 }
