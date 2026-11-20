@@ -48,8 +48,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä korjauksen jälkeen",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Ajo 44651871053 (a0d1950) success: 95 läpi ja 2 vaihteli (raids.e2e yksikön valinnassa ennen ryöstöä ja site-card.e2e; molemmat läpi uusinnalla). Julkaistu Pagesiin 2026-11-20 02.19 UTC.",
+        "outcome": "pass"
       },
       {
         "steps": "Sami pelaa kaupunkitason Pagesista",
