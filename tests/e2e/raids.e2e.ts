@@ -92,7 +92,8 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
 
   // The fights decide it: the last bandit falls, or the band plunders the capital
   await page.waitForFunction(() => (window as any).globeGame.state.raid === null, null, { timeout: 90_000 });
-  const notices: string[] = await page.evaluate(() => (window as any).notices.filter((n: string) => /rosvo/i.test(n)));
+  // From the game's log: at 4× a slow frame runs several days, and the screen keeps only its last notice
+  const notices: string[] = await page.evaluate(() => (window as any).globeDebug.notices().filter((n: string) => /rosvo/i.test(n)));
   testInfo.annotations.push({ type: 'raid', description: notices.join(' | ') });
   expect(notices.at(-1)).toMatch(/(Soturi torjui rosvon|Soturit torjuivat \d rosvoa|Rosvot ryöstivät kaupungin) · Aamuranta$/);
   expect(errors).toEqual([]);

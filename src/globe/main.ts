@@ -1335,10 +1335,20 @@ function yieldsNow(): CityYield[] {
 
 const daysWord = (n: number | null) => (n === null ? 'ei etene' : n === 0 ? 'huomenna' : `${n} pv`);
 
+/** A city of chains' site in short: "Saha · puuttuu 2 kiveä" or "Saha · 2 pv" (STORY-088). */
+function siteText(c: City): string | null {
+  const s = c.chain;
+  const missing = s && siteMissing(s);
+  if (!s?.site || !missing) return null;
+  const state = missing.planks || missing.stones ? `puuttuu ${goodsText(missing.planks, missing.stones)}` : daysWord(Math.max(1, BUILD_DAYS - s.site.days));
+  return `${BUILDS[s.site.building].name} · ${state}`;
+}
+
 /** What the city builds and how it grows, in small under its name. */
 function labelInfo(c: City, y: CityYield): string {
   if (y.disorder) return 'Levottomuutta';
-  const build = c.build === 'coinage' ? `Kultaa +${Math.max(0, y.shield)}` : `${BUILDS[c.build].name} ${daysWord(daysToBuild(c, y))}`;
+  const site = siteText(c);
+  const build = c.build !== 'coinage' ? `${BUILDS[c.build].name} ${daysWord(daysToBuild(c, y))}` : site ? site.replace(' · ', ' ') : `Kultaa +${Math.max(0, y.shield)}`;
   return `${build} · ruokaa ${signed(y.surplus)}`;
 }
 
@@ -1346,7 +1356,9 @@ function labelInfo(c: City, y: CityYield): string {
 function cityLines(c: City, y: CityYield): string[] {
   const grow = daysToGrow(c, y);
   const growth = y.surplus < 0 ? 'näkee nälkää' : grow === null ? 'ei kasva' : `kasvaa ${daysWord(grow)}`;
-  const build = c.build === 'coinage' ? `Tekee kultaa +${Math.max(0, y.shield)}/pv` : `Rakentaa ${BUILDS[c.build].name} · ${daysWord(daysToBuild(c, y))}`;
+  // The site of a city of chains first, then what its shields build (STORY-088)
+  const builds = [siteText(c), c.build === 'coinage' ? null : `${BUILDS[c.build].name} · ${daysWord(daysToBuild(c, y))}`].filter(Boolean);
+  const build = builds.length ? `Rakentaa ${builds.join(' ja ')}` : `Tekee kultaa +${Math.max(0, y.shield)}/pv`;
   const mood = moodOf(c, y);
   const soldiers = soldiersIn(c.tile).length;
   return [
@@ -4403,6 +4415,8 @@ frameStartPlanet();
 // For tests: map tiles without waiting for the scouts
 (window as any).globeDebug = {
   reveal: (ids: number[]) => reveal(ids),
+  /** Every notice told lately, also those a frame of several days covered at once. */
+  notices: () => [...discoveryCard.log],
   /** Unmapped land tiles holding discoveries, nearest to the camp first (STORY-027). */
   discoverySites: (count: number) => {
     if (!play || !game) return [];
