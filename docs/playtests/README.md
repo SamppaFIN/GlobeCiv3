@@ -42,6 +42,7 @@ Raportin rakenne, persoonat ja arvioiden asteikko on määritelty tiedostossa
 | Raportti | Päivä | Build | Missä ajettiin |
 |---|---|---|---|
 | [PLAYTEST-001](PLAYTEST-001.md) | 2026-11-19 | Pages 37767a6 | Pilvi: erillinen Sonnet-agentti Inannan ohjeilla, sokeus ohjeen varassa (STORY-084) |
+| [PLAYTEST-002](PLAYTEST-002.md) | 2026-11-20 | Pages a0d1950 | Pilvi: sama silta kuin PLAYTEST-001 (Inannan projektiagentilla ei ollut Playwright-palvelinta), Sonnet-agentti Inannan ohjeilla; kuvat muunnettiin WebP:ksi ja polut muotoon `shots/…` (STORY-017 ja STORY-088) |
 
 ## Rajoitukset
 

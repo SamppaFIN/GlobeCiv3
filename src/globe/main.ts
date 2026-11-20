@@ -1086,11 +1086,13 @@ function noteSiteOffer(fresh: number[]) {
   if (tile === undefined) return;
   play.offered.push(tile);
   play.lastOfferDay = clock.day;
-  // The first site stops the game with its card; later ones are notices, and the hex card sends
-  // a settler (STORY-017). The Asuttaja still takes each itself
-  if (play.provinceAdvisor !== 'settle' && !firstTime('site')) {
+  // The first site stops the game with its card (STORY-017). Later ones a governor takes itself,
+  // and the player's own hand gets the card each time: a notice alone left the site unfound and the
+  // settler waiting, eating its city's food (PLAYTEST-002). The Asuttaja takes each through its card
+  if (!firstTime('site') && play.provinceAdvisor !== 'settle' && play.cityAdvisor !== 'none') {
     moment('find', tile);
-    discoveryCard.notice(`Kaupunkipaikka: ${nameOf(2, regions.tileTable()[tile]).name} · napauta ruutua, niin uudisasukas lähtee`);
+    const name = nameOf(2, regions.tileTable()[tile]).name;
+    if (dispatch({ kind: 'settle', tile }, 'city')) advise(`uusi kaupunkipaikka: ${name}`);
     return;
   }
   play.offers.push({ tile, finder: finderOf(tile) });
@@ -1335,6 +1337,16 @@ function yieldsNow(): CityYield[] {
 
 const daysWord = (n: number | null) => (n === null ? 'ei etene' : n === 0 ? 'huomenna' : `${n} pv`);
 
+/**
+ * When the city's build is done: "huomenna", "3 pv", or, for a settler in a city too small,
+ * "vaatii koon 2" and whether the city grows at all (PLAYTEST-002: "valmis huomenna" for 140 days).
+ */
+function buildWhen(c: City, y: CityYield): string {
+  const pop = BUILDS[c.build].pop;
+  if (pop && c.size <= pop) return `vaatii koon ${pop + 1}${y.surplus <= 0 ? ', ei kasva' : ''}`;
+  return daysWord(daysToBuild(c, y));
+}
+
 /** A city of chains' site in short: "Saha · puuttuu 2 kiveä" or "Saha · 2 pv" (STORY-088). */
 function siteText(c: City): string | null {
   const s = c.chain;
@@ -1348,7 +1360,7 @@ function siteText(c: City): string | null {
 function labelInfo(c: City, y: CityYield): string {
   if (y.disorder) return 'Levottomuutta';
   const site = siteText(c);
-  const build = c.build !== 'coinage' ? `${BUILDS[c.build].name} ${daysWord(daysToBuild(c, y))}` : site ? site.replace(' · ', ' ') : `Kultaa +${Math.max(0, y.shield)}`;
+  const build = c.build !== 'coinage' ? `${BUILDS[c.build].name} ${buildWhen(c, y)}` : site ? site.replace(' · ', ' ') : `Kultaa +${Math.max(0, y.shield)}`;
   return `${build} · ruokaa ${signed(y.surplus)}`;
 }
 
@@ -1357,7 +1369,7 @@ function cityLines(c: City, y: CityYield): string[] {
   const grow = daysToGrow(c, y);
   const growth = y.surplus < 0 ? 'näkee nälkää' : grow === null ? 'ei kasva' : `kasvaa ${daysWord(grow)}`;
   // The site of a city of chains first, then what its shields build (STORY-088)
-  const builds = [siteText(c), c.build === 'coinage' ? null : `${BUILDS[c.build].name} · ${daysWord(daysToBuild(c, y))}`].filter(Boolean);
+  const builds = [siteText(c), c.build === 'coinage' ? null : `${BUILDS[c.build].name} · ${buildWhen(c, y)}`].filter(Boolean);
   const build = builds.length ? `Rakentaa ${builds.join(' ja ')}` : `Tekee kultaa +${Math.max(0, y.shield)}/pv`;
   const mood = moodOf(c, y);
   const soldiers = soldiersIn(c.tile).length;
@@ -2228,7 +2240,7 @@ function cityView(c: City, y: CityYield): CityView {
       return {
         kind, name: b.name, selected: kind === c.build, locked,
         cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) && UPKEEP[kind] ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: later ? 'kun kaupunkialue avautuu' : waits ? 'ensimmäisen rakennuksen jälkeen' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        eta: later ? 'kun kaupunkialue avautuu' : waits ? 'ensimmäisen rakennuksen jälkeen' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}${y.surplus <= 0 ? ', kaupunki ei kasva: vaihda painotus Ruokaan' : ''}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -2560,7 +2572,7 @@ function listView(): ListView {
     cities: play!.cities.map((c, i) => {
       const y = yields[i];
       const ready = daysToBuild(c, y);
-      const when = c.build === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : ready === 0 ? 'valmis huomenna' : `${ready} pv`;
+      const when = c.build === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : BUILDS[c.build].pop >= c.size ? buildWhen(c, y) : ready === 0 ? 'valmis huomenna' : `${ready} pv`;
       return {
         id: c.id, name: c.name, size: `Koko ${c.size}`,
         line: [...(y.disorder ? ['LEVOTTOMUUKSIA'] : []), `${BUILDS[c.build].name} · ${when}`, `ruokaa ${y.surplus < 0 ? '−' : '+'}${Math.abs(y.surplus)}`, ...(c.buildings.length ? [c.buildings.map(b => BUILDS[b].name).join(', ')] : [])].join(' · '),

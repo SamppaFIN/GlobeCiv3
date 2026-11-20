@@ -56,6 +56,24 @@
         "expected": "Kriteeri 3",
         "result": "Odottaa PLAYTEST-002:ta",
         "outcome": "not_run"
+      },
+      {
+        "steps": "Inannan PLAYTEST-002 julkaisusta a0d1950 siemenellä 42 kolmella persoonalla (docs/playtests/PLAYTEST-002.md)",
+        "expected": "Alussa näkyy vain kaupunkitaso, ja toistuvat tapahtumat eivät pysäytä peliä",
+        "result": "Alku toimi kaikilla persoonilla: kaupunkitaso ensin, kaupunkialue tiedustelijan jälkeen (päivät 12–54). Löydös: myöhemmät kaupunkipaikat olivat pelkkiä ilmoituksia, joista paikkaa ei löytänyt, joten uudisasukas odotti ja söi kaupunkinsa ruoan ja kolmas kaupunki ei syntynyt (kaikki persoonat jumiin). Korjattu: neuvonantaja asuttaa myöhemmät paikat itse, ja Oma ohjaus saa kortin joka kerta; uudisasukkaan odotus kertoo 'vaatii koon 2, ei kasva'.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "firsts.e2e korjauksen jälkeen: ensimmäinen paikka kortilla, seuraavan asuttaa neuvonantaja; Oma ohjaus saa kortin joka kerta",
+        "expected": "Läpi",
+        "result": "Läpi paikallisesti (4/4), samoin sites, site-card ja goals",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä PLAYTEST-002:n korjauksen jälkeen",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
       }
     ],
     "console_findings": [],
