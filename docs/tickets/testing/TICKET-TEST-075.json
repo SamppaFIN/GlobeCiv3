@@ -42,7 +42,7 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
+        "result": "Osa 1: ajo 44628026798 (230de71) success ja julkaistu Pagesiin 2026-11-19 23.33 UTC. Osa 2: ajo 7259d3b peruttiin, koska 4fcbc0c (sisältää osan 2 ja STORY-088:n) korvasi sen jonossa; ajo 44636697095 käynnissä 2026-11-20 00.33 UTC.",
         "outcome": "not_run"
       },
       {
