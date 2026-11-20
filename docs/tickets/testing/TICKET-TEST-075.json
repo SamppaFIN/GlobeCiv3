@@ -42,7 +42,13 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Osa 1: ajo 44628026798 (230de71) success ja julkaistu Pagesiin 2026-11-19 23.33 UTC. Osa 2: ajo 7259d3b peruttiin, koska 4fcbc0c (sisältää osan 2 ja STORY-088:n) korvasi sen jonossa; ajo 44636697095 käynnissä 2026-11-20 00.33 UTC.",
+        "result": "Osa 1: ajo 44628026798 (230de71) success ja julkaistu Pagesiin 2026-11-19 23.33 UTC, mutta raids.e2e vaihteli (läpi uusinnalla). Osa 2: ajettiin 4fcbc0c:n mukana (ajo 44636697095), joka oli punainen STORY-088:n area-panel-testin takia (TICKET-TEST-076); raids vaihteli taas. Syy: 4×-nopeudella hidas frame ajaa monta päivää, ja ilmoituskenttä näyttää vain viimeisen ilmoituksen, joten testin tarkkailija ei nähnyt taistelun tulosta. Korjaus 595a35d: peli pitää ilmoituslokia, ja testi lukee tuloksen siitä.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä korjauksen jälkeen (osa 2 mukana)",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
         "outcome": "not_run"
       },
       {

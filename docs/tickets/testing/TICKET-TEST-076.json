@@ -42,6 +42,12 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
+        "result": "Ajo 44636697095 (4fcbc0c) oli punainen: 95 läpi, 1 kaatui ja 1 vaihteli. area-panel kaatui, koska pääkaupunki rakentaa työmaalla ja sen tuotanto tekee kultaa, joten pikapaneeli kertoi \"Tekee kultaa\" eikä \"Rakentaa\". Korjaus 595a35d: lappu ja pikapaneeli kertovat työmaan (\"Rakentaa Metsuri · 1 pv\"). raids vaihteli (ks. TICKET-TEST-075).",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä korjauksen jälkeen",
+        "expected": "Vihreä",
         "result": "Odottaa CI-ajoa",
         "outcome": "not_run"
       },
@@ -54,7 +60,8 @@
     ],
     "console_findings": [],
     "screenshots": [
-      "chains: stock.png, field.png"
+      "chains: stock.png, field.png",
+      "area-panel: city-quick.png (Rakentaa Metsuri · 1 pv)"
     ]
   },
   "human_acceptance": {
