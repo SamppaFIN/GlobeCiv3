@@ -1,0 +1,55 @@
+{
+  "id": "TICKET-IMPL-078",
+  "story": "STORY-105",
+  "plan": "PLAN-078",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/game/persons.ts",
+    "src/game/persons.test.ts",
+    "src/ui/portraits.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/onboarding.ts",
+    "src/ui/hud.css",
+    "tests/e2e/onboarding.e2e.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "tests/e2e/firsts.e2e.ts",
+    "tests/e2e/area-panel.e2e.ts",
+    "tests/e2e/advisors.e2e.ts",
+    "tests/e2e/province-advisors.e2e.ts",
+    "tests/e2e/state-advisors.e2e.ts",
+    "tests/e2e/conquest.e2e.ts"
+  ],
+  "change_summary": "Uudet persons.ts (30 henkilöä) ja portraits.ts (omat SVG-muotokuvat osista). advisors.ts: TownAdvisor (Rakentaja, Ruokkija, Retkeilijä), townAdvice ja chainAdvice kaupunkitason roolein, TOWN_OF_CITY-migraatio; startAdvice ja START_DOES poistuivat. Komentojen taso ja tekijä town. main.ts: levelAdvisor, advisorButtons, yleinen neuvonantajakortti, valintakortit henkilöineen, kaupunkialueen oma valinta nousussa. HUD: .hud-advisors-ryhmä kasvoineen.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "AdvisorLevel (+town)",
+      "Actor (+town)",
+      "SaveData.townAdvisor",
+      "GameHudState.advisors",
+      "GameHudHandlers.chooseAdvisor",
+      "AdvisorView.options.person",
+      "PickView.options.person"
+    ],
+    "call_sites_found": [
+      "main.ts: advisorDay, advise, setAdvisor, updateAdvisorCard, showPick, ownHand, areaView, cityView, HUD-tila, globeDebug.setAdvisors",
+      "E2E: valintakortit, .hud-advisor, advisor-level-teksti ja city-advisor-teksti"
+    ],
+    "call_sites_updated": [
+      "kaikki main.ts:n kohdat; globeDebug.setAdvisors({city}) asettaa myös vastaavan townAdvisorin",
+      "E2E-testit muutettiin käytöksen mukaan (kirjattu commit-viestiin)"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "33dffca",
+  "progress": 100,
+  "notes": "Puhelimella näkyy vain valittu muotokuva, koska Utun arvion mukaan kolme ja käsi eivät mahdu ylärivin 390 px:iin; työpöydällä kaikki neljä."
+}

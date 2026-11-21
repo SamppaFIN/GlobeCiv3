@@ -1,0 +1,77 @@
+{
+  "id": "TICKET-TEST-078",
+  "story": "STORY-105",
+  "implementation_ticket": "TICKET-IMPL-078",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Neuvonantajilla ei ollut nimiä, kasvoja eikä aikakausia, ja kaupunkitaso jakoi kaupunkialueen neuvonantajat.",
+    "files_changed": [
+      "src/game/persons.ts",
+      "src/ui/portraits.ts",
+      "src/game/advisors.ts",
+      "src/globe/main.ts",
+      "src/ui/gameHud.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "persons.test: 30 henkilöä, roolit vastaavat tasojen listoja, nimet uniikit eivätkä yksiköiden listasta, muotokuvat deterministiset ja erilaiset",
+        "expected": "Kriteeri 2",
+        "result": "3/3",
+        "outcome": "pass"
+      },
+      {
+        "steps": "advisors.test (townAdvice ja chainAdvice), save.test (townAdvisor ja migraatio, kaupunkitasolla cityAdvisor nollautuu), commands.test (taso town)",
+        "expected": "Kriteerit 1 ja 3",
+        "result": "Vitest 257/257",
+        "outcome": "pass"
+      },
+      {
+        "steps": "onboarding.e2e: kaupunkitason kolmikko henkilöineen ja kasvoineen, HUDissa neljä nappia, vaihto kasvoista komentona, kortin henkilöt, jatkettu peli, kaupunkialueen oma valinta nousussa, puhelimen valintakortit",
+        "expected": "Kriteerit 1–3",
+        "result": "Läpi (4/4)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "new-start, firsts, area-panel, advisors, province-advisors, state-advisors, conquest, play (puhelimen HUD alle 28 %), chains, unlock, region-card ja city-label",
+        "expected": "Ei regressiota",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: valintakortti, HUD työpöydällä, neuvonantajakortti ja puhelimen HUD",
+        "expected": "Kasvot näkyvät, valittu korostettu, puhelimella vain valittu",
+        "result": "Tarkistettu silmämääräisesti (1280×800 ja 390×844)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "pick.png, hud.png, card.png ja phone.png (siemen 42, 2026-11-21), lähetetty Samille keskustelussa"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Neuvonantajien kasvot ja nimet näkyvät joka tasolla",
+        "checked": false
+      },
+      {
+        "item": "Kaupunkitason oma kolmikko toimii",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
