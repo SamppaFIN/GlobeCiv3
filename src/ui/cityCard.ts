@@ -8,6 +8,7 @@
  * build and the buildings in the city (STORY-038).
  */
 import { FOCUS_NAMES, type Build, type Focus } from '../game/cities';
+import { renderRich, type Rich } from './richText';
 
 // Icons from design 8a: close, food (grain), production (hammer), trade (coin)
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
@@ -36,8 +37,8 @@ export interface CityView {
   focus: Focus;
   areaText: string;
   hint: string | null;
-  /** The advisor running the city, if one does (STORY-049). */
-  advisor: string | null;
+  /** The advisor running the city, if one does (STORY-049); its person coloured (STORY-103). */
+  advisor: Rich | null;
   /** The player's own hand (STORY-096): the focus, the builds, buying and research show only then. */
   own: boolean;
   /** Food left over (may be negative), shields and trade a day. */
@@ -137,7 +138,7 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     q('.city-disorder').textContent = v.disorder ?? '';
     q('.city-area').textContent = v.areaText;
     q('.city-advisor').hidden = !v.advisor;
-    q('.city-advisor').textContent = v.advisor ?? '';
+    renderRich(q('.city-advisor'), v.advisor ?? '');
     const hint = q('.city-hint');
     // How to grow faster is the player's to act on, so under an advisor it stays out (STORY-096)
     hint.hidden = !v.hint || !v.own;

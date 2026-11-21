@@ -325,6 +325,24 @@
 .hud-notice-on { opacity: 1; visibility: visible; }
 @media (prefers-reduced-motion: reduce) { .hud-notice { transition: none; } }
 
+/* Coloured and linked texts (STORY-103): each kind of name has its colour, and a city or a unit
+   that can be visited is an underlined button. Colour is never the only cue (accessibility). */
+.rich { font-weight: 600; }
+.rich-person { color: var(--c-accent-text); }
+.rich-city { color: var(--ink); }
+.rich-unit { color: oklch(0.82 0.09 210); }
+.rich-building { color: var(--yield-prod); }
+.rich-advance { color: var(--faith); }
+.rich-resource { color: var(--yield-food); }
+.rich-era { color: var(--c-accent-light); }
+button.rich-link {
+  font: inherit; font-weight: 600; background: none; border: 0; margin: 0; padding: 2px 0; cursor: pointer;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px;
+}
+button.rich-link:hover { text-decoration-thickness: 2px; }
+button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outline-offset: 2px; border-radius: var(--radius-sm); }
+.advisor-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
 /* City card (STORY-028, design 8a) */
 .city-card {
   position: absolute; left: 8px; right: 8px; bottom: max(14px, calc(env(safe-area-inset-bottom) + 8px));
