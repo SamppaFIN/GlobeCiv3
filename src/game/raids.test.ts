@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
 import { tilesInRings } from './pathfinding';
-import { banditWins, defencePower, raidStart, Raids, RAID_ONSET, uprising, type RaidWorld } from './raids';
+import { banditWins, defencePower, holdChance, raidStart, Raids, RAID_ONSET, uprising, type RaidWorld } from './raids';
 
 const CITY = pointToTile(new THREE.Vector3(0.4, 0.3, 0.866).normalize());
 const land = () => 1;
@@ -89,6 +89,36 @@ describe('raids (Freeciv civ1 barbarians)', () => {
     const world = makeWorld(2, [0, 0, 0, 0]);
     expect(runOut(raids, world)).toEqual(['won', 'won', 'plundered']);
     expect([world.soldiers, world.plundered, raids.band]).toEqual([0, 1, null]);
+  });
+
+  it('tells the chance a city holds against the whole band, as the days fight it out (STORY-108)', () => {
+    const p = banditWins('grassland');
+    expect(holdChance([], 1, 'grassland')).toBe(0);
+    expect(holdChance([1], 0, 'grassland')).toBe(1);
+    // One soldier, one bandit: one fight
+    expect(holdChance([1], 1, 'grassland')).toBeCloseTo(1 - p);
+    // One soldier, two bandits: it must win twice
+    expect(holdChance([1], 2, 'grassland')).toBeCloseTo((1 - p) ** 2);
+    // Two soldiers against one bandit: the second fights only if the first falls
+    expect(holdChance([1, 1], 1, 'grassland')).toBeCloseTo(1 - p * p);
+    // The best fights first; walls and a phalanx help
+    expect(holdChance([1, 2], 1, 'grassland')).toBeCloseTo(holdChance([2, 1], 1, 'grassland'));
+    expect(holdChance([2], 2, 'grassland')).toBeGreaterThan(holdChance([1], 2, 'grassland'));
+    expect(holdChance([1], 2, 'grassland', true)).toBeGreaterThan(holdChance([1], 2, 'grassland'));
+    // The same as Raids.day over many seeded rolls
+    for (const [soldiers, size] of [[1, 2], [2, 2], [2, 1]] as const) {
+      let state = 12345 + soldiers * 7 + size;
+      const rand = () => ((state = (state * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
+      let held = 0;
+      const runs = 4000;
+      for (let k = 0; k < runs; k++) {
+        const raids = new Raids();
+        raids.start(CITY, raidStart(CITY, 0.2, () => true, () => true)!, size, land);
+        const world = { ...makeWorld(soldiers, []), roll: rand };
+        if (!runOut(raids, world).includes('plundered')) held++;
+      }
+      expect(held / runs, `${soldiers} vs ${size}`).toBeCloseTo(holdChance(Array(soldiers).fill(1), size, 'grassland'), 1);
+    }
   });
 
   it('no way to the city, no band', () => {

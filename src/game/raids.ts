@@ -51,6 +51,29 @@ export const defencePower = (terrain: Terrain, walls = false, defense = SOLDIER_
 /** The chance that a bandit (of attack 2, or a nomad's, STORY-066) beats a soldier defending a city on this terrain. */
 export const banditWins = (terrain: Terrain, walls = false, defense = SOLDIER_DEFENSE, attack = BANDIT_ATTACK) => attack / (attack + defencePower(terrain, walls, defense));
 
+/**
+ * The chance that a city holds against a whole band (STORY-108): the way Raids.day fights it out,
+ * the best soldier first, a bandit that wins staying on, and the band plundering once no soldier
+ * is left. `defenses` are the soldiers' defense values (with any advisor's bonus in them).
+ */
+export function holdChance(defenses: readonly number[], bandits: number, terrain: Terrain, walls = false, attack = BANDIT_ATTACK): number {
+  const left = [...defenses].sort((a, b) => b - a);
+  const memo = new Map<string, number>();
+  const hold = (soldiers: number, band: number): number => {
+    if (band === 0) return 1;
+    if (soldiers === 0) return 0;
+    const key = `${soldiers}/${band}`;
+    const known = memo.get(key);
+    if (known !== undefined) return known;
+    // The best of those left fights: they fall best first
+    const p = banditWins(terrain, walls, left[left.length - soldiers], attack);
+    const chance = p * hold(soldiers - 1, band) + (1 - p) * hold(soldiers, band - 1);
+    memo.set(key, chance);
+    return chance;
+  };
+  return hold(left.length, bandits);
+}
+
 /** Where an uprising starts: a known land tile 5 to 8 tiles from the city, from a roll in [0, 1). */
 export function raidStart(city: number, roll: number, known: (id: number) => boolean, isLand: (id: number) => boolean): number | null {
   const near = new Set(tilesInRings(city, UNREST_MIN - 1));

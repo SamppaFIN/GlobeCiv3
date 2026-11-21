@@ -93,7 +93,7 @@ test('coloured texts: a unit in the hex card and a city in the advisor log take 
   await expect(cityLink).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(cityLink).toHaveClass(/rich-city/);
-  await expect(advisor.locator('.advisor-log')).toContainText(`${city} rakentaa sotilaan rosvoja vastaan`);
+  await expect(advisor.locator('.advisor-log')).toContainText(new RegExp(`${city} (rakentaa|osti) sotilaan rosvoja vastaan`));
   await page.screenshot({ path: testInfo.outputPath('advisor-links.png') });
   await advisor.getByRole('button', { name: 'Sulje' }).click();
   await dragAside(page, camp);

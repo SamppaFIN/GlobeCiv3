@@ -59,9 +59,12 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   const card = page.getByRole('dialog', { name: 'Rosvoja liikkeellä' });
   await expect(card).toBeVisible();
   await expect(card.locator('.discovery-kicker')).toHaveText('Uhka · Aamuranta');
-  await expect(card.locator('.discovery-body')).toHaveText(/^(Rosvo|2 rosvoa) on matkalla kohti kaupunkia ja perillä noin \d+ päivässä\. Kaupungissa (ei ole sotureita|on \d+ soturia?)\.$/);
-  await expect(card.locator('.discovery-option-title')).toHaveText(['Rakenna soturi', 'Luota puolustukseen']);
-  await expect(card.locator('.discovery-option-effect').last()).toHaveText(/^(Soturi voittaa rosvon \d+ %:n todennäköisyydellä|Ilman soturia rosvot ryöstävät kaupungin)$/);
+  // The chances are for the whole band, and the soldier's time against the band's (STORY-108)
+  await expect(card.locator('.discovery-body')).toHaveText(/^(Rosvo|2 rosvoa) on matkalla kohti kaupunkia ja perillä noin \d+ päivässä\. Kaupungissa (ei ole sotilaita|on \d+ sotilas(ta)?)\. Jokainen (hyökkääjä|hyökkääjistä) taistelee, kunnes se kaatuu tai kaupungissa ei ole enää sotilaita\. Soturi on heikko puolustaja: falangi tai muuri auttaa\.$/);
+  await expect(card.locator('.discovery-option-title').first()).toHaveText('Rakenna soturi');
+  await expect(card.locator('.discovery-option-title').last()).toHaveText('Luota puolustukseen');
+  await expect(card.locator('.discovery-option-effect').first()).toHaveText(/^(Valmis \d+ pv, ennen rosvoja · kaupunki kestää \d+ %|Valmis vasta \d+ pv: rosvot ehtivät ensin|Kaupungilla ei ole tuotantoa)$/);
+  await expect(card.locator('.discovery-option-effect').last()).toHaveText(/^(kaupunki kestää \d+ %|Ilman sotilasta rosvot ryöstävät kaupungin)$/);
   const s = await state(page);
   expect(s.raidAlert).toBe(true);
   // From known land 5 to 8 tiles away, every bandit on its way to the capital
@@ -95,9 +98,10 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   // From the game's log: at 4× a slow frame runs several days, and the screen keeps only its last notice
   const notices: string[] = await page.evaluate(() => (window as any).globeDebug.notices().filter((n: string) => /rosvo/i.test(n)));
   testInfo.annotations.push({ type: 'raid', description: notices.join(' | ') });
-  expect(notices.at(-1)).toMatch(/(Soturi torjui rosvon|Soturit torjuivat \d rosvoa|Rosvot ryöstivät kaupungin) · Aamuranta$/);
+  // A plunder tells what would have held the city (STORY-108)
+  expect(notices.at(-1)).toMatch(/(Soturi torjui rosvon|Soturit torjuivat \d rosvoa) · Aamuranta$|Rosvot ryöstivät kaupungin · Aamuranta\. Puolustukseksi auttaa (toinen sotilas|sotilas), falangi \(Pronssityö\) tai muuri \(Muuraus\)$/);
   // The capital's chronicle tells the raid once, held or plundered as the notice said (STORY-106)
   const raids = (await state(page)).cities[0].history.filter((e: { kind: string }) => e.kind === 'raid');
-  expect(raids).toEqual([expect.objectContaining({ kind: 'raid', held: !notices.at(-1)!.startsWith('Rosvot ryöstivät'), nomads: false })]);
+  expect(raids).toEqual([expect.objectContaining({ kind: 'raid', held: !notices.at(-1)!.includes('ryöstivät'), nomads: false })]);
   expect(errors).toEqual([]);
 });

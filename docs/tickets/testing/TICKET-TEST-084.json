@@ -1,0 +1,90 @@
+{
+  "id": "TICKET-TEST-084",
+  "story": "STORY-108",
+  "implementation_ticket": "TICKET-IMPL-084",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "PLAYTEST-002: rosvot ryöstivät kaupungin, vaikka pelaaja rakensi soturin, koska kortin prosentti koski yhtä taistelua eikä koko joukkoa, sotilas valmistui usein vasta rosvojen jälkeen, eikä peli kertonut, mikä olisi auttanut. Toinen kaupunki avasi korttinsa itsestään, koska jokainen perustaminen avasi kortin.",
+    "files_changed": [
+      "src/game/raids.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "raids.test: holdChance yksi sotilas yhtä ja kahta rosvoa vastaan, kaksi sotilasta, paras ensin, falangi ja muuri; 4 000 siemennettyä Raids.day-ajoa kolmella asetelmalla",
+        "expected": "Sama todennäköisyys kuin päivä päivältä taisteltuna",
+        "result": "8/8; Monte Carlo 0,05:n sisällä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "defence.e2e: vanha alku, ensimmäinen kaupunki avaa korttinsa; toinen kaupunki ei, ja ilmoitus 'Uusi kaupunki: …'",
+        "expected": "Kriteeri 4",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "defence.e2e: rosvot uutta kaupunkia vastaan, 500 kultaa; kortin tekstit verrataan raidPlaniin; sotilas ei ehdi (kaupungilla ei ole tuotantoa), joten Osta soturi 50 kultaa, kaupunki kestää 43 %; osto vähentää kultaa ja kertoo sen",
+        "expected": "Kriteeri 1",
+        "result": "Läpi; kuvakaappaus raid-card.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "defence.e2e ja raids.e2e: taistelujen jälkeen ryöstöilmoitus kertoo keinot (sotilas tai toinen sotilas, falangi (Pronssityö) tai muuri (Muuraus))",
+        "expected": "Kriteeri 3",
+        "result": "Läpi kummallakin lopputuloksella",
+        "outcome": "pass"
+      },
+      {
+        "steps": "advisors.e2e ja rich-links.e2e: Vartija vastaa korttiin rakentamalla tai ostamalla",
+        "expected": "Kriteeri 2",
+        "result": "Läpi; ostohaara riippuu kassasta ja valmistumisajasta, joten yksikkötestiä Vartijan ostolle ei ole",
+        "outcome": "pass"
+      },
+      {
+        "steps": "firsts, nomads, phalanx, discovery, sites, site-card ja city",
+        "expected": "Ei regressiota",
+        "result": "15/15 läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vihreä laatta siirtymässä (PLAYTEST-002 #14)",
+        "expected": "Toistuu tai ei",
+        "result": "Ei tutkittu tässä storyssa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: defence.e2e raid-card.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Rosvokortti kertoo ymmärrettävästi, kestääkö kaupunki",
+        "checked": false
+      },
+      {
+        "item": "Toisen kaupungin perustaminen ei keskeytä",
+        "checked": false
+      },
+      {
+        "item": "Puolustuksen tasapaino (luvut ennallaan)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
