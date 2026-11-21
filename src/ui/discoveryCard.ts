@@ -7,6 +7,7 @@
  * a notice (role=status) tells what changed; the game's other notices use it too.
  */
 import { PAUSE } from './gameHud';
+import { plain, renderRich, type Rich } from './richText';
 
 /** What a choice on the card is: building a city at a suggested site, a soldier against bandits, or later. */
 export type ChoiceKind = 'site' | 'defend' | 'later' | 'treaty';
@@ -37,8 +38,8 @@ export interface DiscoveryCard {
   hide(): void;
   /** Screen position (CSS px) of the discovery tile, or null when out of view. */
   setRing(x: number | null, y: number | null): void;
-  /** A notice under the top panel for a few seconds. */
-  notice(text: string): void;
+  /** A notice under the top panel for a few seconds: its names coloured, but no links, as it fades (STORY-103). */
+  notice(text: string | Rich): void;
   /**
    * The last notices, newest last. A frame that runs several days at 4× may show only its last
    * notice, so tests read what was told from here and not from the screen.
@@ -108,9 +109,9 @@ export function createDiscoveryCard(root: HTMLElement, onChoose: (index: number)
       if (x !== null && y !== null) ring.style.transform = `translate(${x}px, ${y}px)`;
     },
     notice(text) {
-      log.push(text);
+      log.push(plain(text));
       if (log.length > 50) log.shift();
-      notice.textContent = text;
+      renderRich(notice, text);
       notice.classList.add('hud-notice-on');
       clearTimeout(noticeTimer);
       noticeTimer = window.setTimeout(() => notice.classList.remove('hud-notice-on'), NOTICE_MS);

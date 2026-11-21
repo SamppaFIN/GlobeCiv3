@@ -6,6 +6,8 @@
  * levels it tells of the tapped city area, province or state (STORY-067), with a way in.
  */
 
+import { renderRich, type Rich, type RichLinks } from './richText';
+
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
 export interface TileView {
@@ -13,8 +15,8 @@ export interface TileView {
   kicker: string;
   /** "Ruohomaa · Hedelmällinen maa", or "Kartoittamaton". */
   title: string;
-  /** Label and value rows: "Tuottaa" — "ruokaa 2 · tuotantoa 1 · kauppaa 0". */
-  rows: { label: string; value: string }[];
+  /** Label and value rows: "Tuottaa" — "ruokaa 2 · tuotantoa 1 · kauppaa 0". A value may name cities and units as links (STORY-103). */
+  rows: { label: string; value: string | Rich }[];
   /** Buttons under the rows, e.g. "Sukella sisään" (STORY-067) or "Siirrä temppeli" (STORY-071). */
   actions?: string[];
 }
@@ -27,7 +29,7 @@ export interface TileCard {
 }
 
 /** A card of rows and buttons; `id` names its title, for a second card of the kind (diplomacy, STORY-076). */
-export function createTileCard(root: HTMLElement, on: { close(): void; action?(index: number): void }, id = 'tile'): TileCard {
+export function createTileCard(root: HTMLElement, on: { close(): void; action?(index: number): void; links?: RichLinks }, id = 'tile'): TileCard {
   const el = document.createElement('section');
   el.className = 'city-card tile-card';
   el.setAttribute('role', 'dialog');
@@ -62,7 +64,7 @@ export function createTileCard(root: HTMLElement, on: { close(): void; action?(i
       const dt = document.createElement('dt');
       dt.textContent = r.label;
       const dd = document.createElement('dd');
-      dd.textContent = r.value;
+      renderRich(dd, r.value, on.links);
       return [dt, dd];
     }));
   };

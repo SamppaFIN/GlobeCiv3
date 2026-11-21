@@ -7,6 +7,7 @@
 
 import type { Person } from '../game/persons';
 import { portraitSvg } from './portraits';
+import { renderRich, type Rich, type RichLinks } from './richText';
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
@@ -15,8 +16,8 @@ export interface AdvisorView {
   level: string;
   /** The role, what it does, and the era's person in it (STORY-105). */
   options: { id: string; name: string; does: string; selected: boolean; person?: Person | null }[];
-  /** What the advisor did lately, the newest first. */
-  log: string[];
+  /** What the advisor did lately, the newest first: coloured, its cities and units linked (STORY-103). */
+  log: Rich[];
 }
 
 export interface AdvisorCard {
@@ -26,7 +27,7 @@ export interface AdvisorCard {
   readonly visible: boolean;
 }
 
-export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose(id: string): void }): AdvisorCard {
+export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose(id: string): void; links: RichLinks }): AdvisorCard {
   const el = document.createElement('section');
   el.className = 'city-card advisor-card';
   el.setAttribute('role', 'dialog');
@@ -42,7 +43,7 @@ export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose
     </div>
     <button class="btn btn-secondary advisor-own" type="button" aria-pressed="false">Ohjaan itse: kaikki valikot esiin</button>
     <span class="city-build-label">Viimeksi</span>
-    <span class="city-area advisor-log"></span>`;
+    <ul class="city-area advisor-log"></ul>`;
   root.appendChild(el);
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   q('.city-close').addEventListener('click', on.close);
@@ -71,7 +72,13 @@ export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose
       b.addEventListener('click', () => on.choose(o.id));
       options.appendChild(b);
     }
-    q('.advisor-log').textContent = v.log.length ? v.log.join(' · ') : 'Ei vielä toimia.';
+    const log = q('.advisor-log');
+    log.replaceChildren();
+    for (const line of v.log.length ? v.log : ['Ei vielä toimia.']) {
+      const li = document.createElement('li');
+      renderRich(li, line, on.links);
+      log.appendChild(li);
+    }
   };
   return {
     show(v) {

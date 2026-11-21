@@ -50,6 +50,7 @@ import { chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, townAd
 import { ERA_NAMES, personOf, type Era, type Person } from '../game/persons';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
+import { city as cityRef, plain, term, unit as unitRef, type Rich, type RichLinks } from '../ui/richText';
 import { createOnboarding } from '../ui/onboarding';
 import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
@@ -656,23 +657,23 @@ interface Play {
   tradeOpen: number | null;
   /** The city level's advisor and what it did lately (STORY-105). */
   townAdvisor: TownAdvisor;
-  townLog: string[];
+  townLog: Rich[];
   /** The city area's advisor, the advisor card, and what it did lately (STORY-049). */
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
-  advisorLog: string[];
+  advisorLog: Rich[];
   /** The province-level advisor and what it did lately (STORY-050). */
   provinceAdvisor: ProvinceAdvisor;
-  provinceLog: string[];
+  provinceLog: Rich[];
   /** The state-level advisor, what it did lately, and the days without disorder (STORY-051). */
   stateAdvisor: StateAdvisor;
-  stateLog: string[];
+  stateLog: Rich[];
   calmDays: number;
   /** The planet-level advisor, what it did lately, and the target state, or −1 (STORY-057). */
   planetAdvisor: PlanetAdvisor;
   /** What has stopped the game once already (STORY-017). */
   firsts: Set<FirstKind>;
-  planetLog: string[];
+  planetLog: Rich[];
   targetState: number;
   researchOpen: boolean;
   /** The list of cities and units is open, and which tab (STORY-042). */
@@ -960,7 +961,7 @@ function chainDay(c: City, citizens: number) {
   if (!done) return;
   c.buildings.push(done);
   moment('city', c.tile);
-  discoveryCard.notice(`${c.name} rakensi: ${BUILDS[done].name}`);
+  discoveryCard.notice([cityRef(c.tile, c.name), ' rakensi: ', term('building', BUILDS[done].name)]);
 }
 
 /** A day of every city: units it cannot pay for leave first (newest first), then it grows and builds. */
@@ -1005,13 +1006,14 @@ function cityDays() {
     play!.gold = paid.treasury;
     if (paid.sold.length) discoveryCard.notice(`Kulta loppui: ${c.name} myi ${paid.sold.map(b => BUILDS[b].name.toLowerCase()).join(' ja ')}`);
     if (c.size > size) {
-      discoveryCard.notice(`${c.name} kasvoi kokoon ${c.size}${cityRings(c.size) > cityRings(size) ? ', ja sen alue laajeni' : ''}`);
+      discoveryCard.notice([cityRef(c.tile, c.name), ` kasvoi kokoon ${c.size}${cityRings(c.size) > cityRings(size) ? ', ja sen alue laajeni' : ''}`]);
       moment('city', c.tile);
     }
     if (!done) return;
     if (isBuilding(done)) moment(isWonder(done) ? 'unlock' : 'city', c.tile);
-    else if (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') play!.units.spawn(done, c.tile, world, c.id);
-    discoveryCard.notice(`${c.name} rakensi${isWonder(done) ? ' ihmeen' : ''}: ${BUILDS[done].name}`);
+    // A unit is named, a building a building (STORY-102, STORY-103)
+    const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') ? play!.units.spawn(done, c.tile, world, c.id) : null;
+    discoveryCard.notice([cityRef(c.tile, c.name), ` rakensi${isWonder(done) ? ' ihmeen' : ''}: `, made ? unitRef(made.id, made.name) : term('building', BUILDS[done].name)]);
     if (isResourceBuilding(done)) rewardOf(c, done);
   });
   // The governor puts new buildings on their best ground, and the bonuses follow (STORY-071)
@@ -1024,14 +1026,14 @@ function cityDays() {
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
   } else if (learned) {
     const opens = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
-    discoveryCard.notice(`Keksintö: ${ADVANCES[learned].name}${learned === 'mapmaking' ? ' · yksiköt kulkevat rannikkovesillä' : ''}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`);
+    discoveryCard.notice(['Keksintö: ', term('advance', ADVANCES[learned].name), `${learned === 'mapmaking' ? ' · yksiköt kulkevat rannikkovesillä' : ''}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`]);
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
   }
   // With nothing chosen the people study a kind found and not known (STORY-072, own)
   if (play.research.target === null) {
     const kind = play.research.available(foundKinds).find(isKind);
     if (kind && dispatch({ kind: 'study', target: kind }, 'people')) {
-      discoveryCard.notice(`Kansa tutkii: ${studyName(kind).toLowerCase()}`);
+      discoveryCard.notice(['Kansa tutkii: ', term('resource', studyName(kind).toLowerCase())]);
     }
   }
   // A suggested site waiting for a settler gets the first free one
@@ -1039,7 +1041,7 @@ function cityDays() {
   if (free && play.pendingSite !== null) {
     sendSettler(free, play.pendingSite);
     play.pendingSite = null;
-    discoveryCard.notice(`${free.name} lähti kaupunkipaikalle`);
+    discoveryCard.notice([unitRef(free.id, free.name), ' lähti kaupunkipaikalle']);
   } else if (play.pendingSite !== null && !free && play.cities[0] && !play.cities.some(c => c.build === 'settler')) {
     // The waiting site keeps a settler coming (STORY-060): a soldier against bandits, an
     // advisor or the player may have changed the build, and the site would wait for ever
@@ -1182,13 +1184,13 @@ function settleAt(tile: number): boolean {
   const settler = idleSettler();
   if (settler) {
     sendSettler(settler, tile);
-    discoveryCard.notice(`${settler.name} lähti perustamaan kaupunkia`);
+    discoveryCard.notice([unitRef(settler.id, settler.name), ' lähti perustamaan kaupunkia']);
     return true;
   }
   if (!play.cities.length) return false;
   play.cities[0].build = 'settler';
   play.pendingSite = tile;
-  discoveryCard.notice(`${play.cities[0].name} rakentaa uudisasukkaan kaupunkipaikalle`);
+  discoveryCard.notice([cityRef(play.cities[0].tile, play.cities[0].name), ' rakentaa uudisasukkaan kaupunkipaikalle']);
   return true;
 }
 
@@ -1233,6 +1235,35 @@ function openCityCard(id: number) {
   if (viewLevel !== 3) fly({ point: tileCenter(play.cities[id].tile), dist: frames[3], level: 3 });
 }
 
+/**
+ * Where the links in the game's texts lead (STORY-103): a city to itself, with its quick panel,
+ * and a unit to where it stands now, selected. The view goes no further out than the level lock.
+ */
+const richLinks: RichLinks = {
+  city: tile => {
+    if (!play) return;
+    const id = play.cities.findIndex(c => c.tile === tile);
+    if (id < 0) return;
+    play.advisorOpen = false;
+    play.openCity = null;
+    play.tileOpen = null;
+    fly({ point: tileCenter(tile), dist: Math.min(cityViewDist(), rig.maxDist), level: 3 });
+    quickCity = id;
+  },
+  unit: id => {
+    if (!play) return false;
+    const index = play.units.units.findIndex(u => u.id === id);
+    if (index < 0) return false;
+    play.selected = index;
+    play.advisorOpen = false;
+    play.openCity = null;
+    play.tileOpen = null;
+    fly({ point: tileCenter(play.units.units[index].tile), dist: Math.min(frames[3], rig.maxDist), level: 3 });
+    return true;
+  },
+  unitAlive: id => !!play?.units.units.some(u => u.id === id),
+};
+
 /** Buy what the city on the tile builds, out of the treasury (STORY-038; a command, STORY-098). */
 function buyAt(tile: number): boolean {
   const p = play!;
@@ -1246,7 +1277,7 @@ function buyAt(tile: number): boolean {
 /** The player buys in a city: the card's and the quick panel's button. */
 function buyCity(c: City) {
   const price = buyCost(c);
-  if (dispatch({ kind: 'buy', city: c.tile }, 'player')) discoveryCard.notice(`${c.name} osti: ${BUILDS[c.build].name} · ${price} kultaa`);
+  if (dispatch({ kind: 'buy', city: c.tile }, 'player')) discoveryCard.notice([cityRef(c.tile, c.name), ' osti: ', term('building', BUILDS[c.build].name), ` · ${price} kultaa`]);
 }
 
 // ─── The war of leaders, a trial (?planet, STORY-097) ─
@@ -1478,7 +1509,7 @@ function areaView(): AreaView {
   return {
     kicker: LEVEL_NAMES[viewLevel], name,
     stats: open ? areaStats(inside) : [],
-    rows: open ? [{ label: 'Aikakausi', value: era }, ...regionView(ref).rows] : [],
+    rows: open ? [{ label: 'Aikakausi', value: era }, ...regionView(ref).rows.map(r => ({ label: r.label, value: plain(r.value) }))] : [],
     actions: [advisor, ...(viewLevel === 3 && ownHand() ? [{ id: 'list', label: 'Luettelo' }] : []), ...up],
   };
 }
@@ -2220,7 +2251,7 @@ function cityView(c: City, y: CityYield): CityView {
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
     hint: c.size >= sizeLimit(c) ? `Koko ${SIZE_LIMIT} on raja: kaupunki kasvaa vasta vesijohdon kanssa${play!.research.known.has('construction') ? '' : ' (Rakentaminen-tutkimus)'}.`
       : y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
-    advisor: (a => a.id === 'none' ? null : `Neuvonantaja ${a.name}${a.person ? ` (${a.person.name} ${a.person.title})` : ''} hoitaa ${a.level === 'town' ? 'työmaat ja rakentamisen' : 'painotuksen ja rakentamisen'}.`)(levelAdvisor(c.chain && play!.progress.openLevel === 4 ? 'town' : 'city')),
+    advisor: (a => a.id === 'none' ? null : [`Neuvonantaja ${a.name}`, ...(a.person ? [' (', term('person', `${a.person.name} ${a.person.title}`), ')'] : []), ` hoitaa ${a.level === 'town' ? 'työmaat ja rakentamisen' : 'painotuksen ja rakentamisen'}.`])(levelAdvisor(c.chain && play!.progress.openLevel === 4 ? 'town' : 'city')),
     own: ownHand(),
     gold: play?.gold ?? 0,
     income: cityGold(c, y, rates().tax, rates().lux) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
@@ -2309,9 +2340,10 @@ const resourceNear = (c: City, b: ResourceBuilding) => tilesInRings(c.tile, city
 const terrainNear = (c: City, b: TerrainBuilding) => tilesInRings(c.tile, 2).some(t => (TERRAIN_BUILDINGS[b] as readonly Terrain[]).includes(terrainOf(t)));
 
 
-function advise(text: string, level: AdvisorLevel = 'city') {
+/** What an advisor did, newest first, four at most: coloured, its cities and units linked (STORY-103). */
+function advise(text: string | Rich, level: AdvisorLevel = 'city') {
   const log = level === 'town' ? 'townLog' : level === 'city' ? 'advisorLog' : level === 'province' ? 'provinceLog' : level === 'state' ? 'stateLog' : 'planetLog';
-  play![log] = [`Päivä ${clock.day}: ${text}`, ...play![log]].slice(0, 4);
+  play![log] = [[`Päivä ${clock.day}: `, ...(typeof text === 'string' ? [text] : text)], ...play![log]].slice(0, 4);
 }
 
 /** The best city site among the mapped land of an area (STORY-050). */
@@ -2353,15 +2385,15 @@ function advisorDay() {
     // A settler for a waiting city site is not changed
     if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null)) {
       const by = war ? 'state' : ordered ? 'province' : town ? 'town' : 'city';
-      if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise(`${c.name} rakentaa: ${BUILDS[build].name}`, by);
+      if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise([cityRef(c.tile, c.name), ' rakentaa: ', term('building', BUILDS[build].name)], by);
     }
     // The city level's advisor keeps a site going in a city of chains (STORY-088, STORY-105), whatever the level
     const site = c.chain && !c.chain.site ? chainAdvice(p.townAdvisor, b => chainOpen(c.chain!, c.buildings, b) && spots(c, b, ground).length > 0) : null;
-    if (site && dispatch({ kind: 'build', city: c.tile, build: site }, 'town')) advise(`${c.name} aloitti työmaan: ${BUILDS[site].name}`, 'town');
+    if (site && dispatch({ kind: 'build', city: c.tile, build: site }, 'town')) advise([cityRef(c.tile, c.name), ' aloitti työmaan: ', term('building', BUILDS[site].name)], 'town');
     // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
     if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
       const price = buyCost(c);
-      if (price > 0 && price * 2 <= p.gold && dispatch({ kind: 'buy', city: c.tile }, 'city')) advise(`${c.name} osti: ${BUILDS[c.build].name} (${price} kultaa)`);
+      if (price > 0 && price * 2 <= p.gold && dispatch({ kind: 'buy', city: c.tile }, 'city')) advise([cityRef(c.tile, c.name), ' osti: ', term('building', BUILDS[c.build].name), ` (${price} kultaa)`]);
     }
   });
   if (p.provinceAdvisor === 'settle') {
@@ -2396,7 +2428,7 @@ function advisorDay() {
     for (const u of p.units.units) {
       if (u.kind !== 'settler' || u.home === null || u.task !== 'found' || (p.units.founding && u === p.units.settler)) continue;
       p.units.setTask(u, 'improve', world);
-      advise(`${u.name} kehittää maata`);
+      advise([unitRef(u.id, u.name), ' kehittää maata']);
     }
   }
 }
@@ -2454,7 +2486,7 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
   if (p.research.target === null) {
     // A kind of resource first: it is cheap, and it shows and yields (STORY-072)
     const next = p.research.available(foundKinds).find(isKind) ?? nextAdvance(plan.order, p.research.available() as Advance[]);
-    if (next && dispatch({ kind: 'study', target: next }, 'state')) advise(`tutkitaan: ${studyName(next)}`, 'state');
+    if (next && dispatch({ kind: 'study', target: next }, 'state')) advise(['tutkitaan: ', term('advance', studyName(next))], 'state');
   }
   if (startRevolution()) advise('vallankumous Monarkiaan', 'state');
   // Luxury a step up while a city is in disorder, a step down after calm days
@@ -2488,7 +2520,7 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
       if (p.raids.band?.city !== c.tile || !(isSoldier(c.build) || c.build === 'walls')) continue;
       const price = buyCost(c);
       if (!price || !dispatch({ kind: 'buy', city: c.tile }, 'state')) continue;
-      advise(`osti: ${c.name} · ${BUILDS[c.build].name} (${price} kultaa)`, 'state');
+      advise(['osti: ', cityRef(c.tile, c.name), ' · ', term('building', BUILDS[c.build].name), ` (${price} kultaa)`], 'state');
     }
   }
 }
@@ -2559,6 +2591,7 @@ function setAdvisor(level: AdvisorLevel, id: string): boolean {
 }
 
 const advisorCard = createAdvisorCard(hud_root, {
+  links: richLinks,
   close: () => { if (play) play.advisorOpen = false; },
   choose: (id: string) => {
     dispatch({ kind: 'advise', level: advisorLevel(), advisor: id }, 'player');
@@ -3050,7 +3083,7 @@ function warDay() {
     for (const c of armyCities(target)) {
       const price = buyCost(c);
       if (!isAttacker(c.build) || price <= 0 || price * 2 > p.gold || !dispatch({ kind: 'buy', city: c.tile }, 'state')) continue;
-      advise(`osti: ${c.name} · ${BUILDS[c.build].name} (${price} kultaa)`, 'state');
+      advise(['osti: ', cityRef(c.tile, c.name), ' · ', term('building', BUILDS[c.build].name), ` (${price} kultaa)`], 'state');
     }
   }
   const events = p.war.day(troops, warWorld, clock.day, need);
@@ -3106,7 +3139,7 @@ function raidDay() {
   const city = band && play.cities.find(c => c.tile === band.city);
   const events = play.raids.day(raidWorld);
   if (city && events.length) {
-    discoveryCard.notice(`${raidNotice(events, !!band.tribe)} · ${city.name}`);
+    discoveryCard.notice([`${raidNotice(events, !!band.tribe)} · `, cityRef(city.tile, city.name)]);
     moment(events.includes('plundered') || events.includes('won') ? 'raid' : 'victory', city.tile);
   }
   if (play.raids.band || !raidsOn || !play.cities.length || cityStage()) return;
@@ -3126,7 +3159,7 @@ function startRaid(c: City): boolean {
   play.raidAlert = play.cityAdvisor === 'defend' || firstTime('raid');
   if (!play.raidAlert) {
     moment('raid', from);
-    discoveryCard.notice(`${size === 1 ? 'Rosvo' : `${size} rosvoa`} liikkeellä kohti kaupunkia ${c.name}`);
+    discoveryCard.notice([`${size === 1 ? 'Rosvo' : `${size} rosvoa`} liikkeellä kohti kaupunkia `, cityRef(c.tile, c.name)]);
   }
   return true;
 }
@@ -3140,7 +3173,7 @@ function updateRaidAlert() {
   if (play.cityAdvisor === 'defend') {
     const c = play.cities.find(x => x.tile === band.city);
     chooseRaid(0, 'city');
-    if (c) advise(`${c.name} rakentaa sotilaan rosvoja vastaan`);
+    if (c) advise([cityRef(c.tile, c.name), ' rakentaa sotilaan rosvoja vastaan']);
     return;
   }
   if (!discoveryCard.visible) {
@@ -3178,7 +3211,7 @@ function chooseRaid(index: number, by: Actor = 'player') {
   const band = play.raids.band;
   const c = band && play.cities.find(x => x.tile === band.city);
   if (index !== 0 || !c || !dispatch({ kind: 'build', city: c.tile, build: bestSoldier() }, by)) return;
-  discoveryCard.notice(`${c.name} rakentaa ${c.build === 'phalanx' ? 'falangin' : 'soturin'}`);
+  discoveryCard.notice([cityRef(c.tile, c.name), ` rakentaa ${c.build === 'phalanx' ? 'falangin' : 'soturin'}`]);
 }
 
 // ─── Province and state levels (STORY-026) ────────
@@ -3506,6 +3539,7 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
 }
 
 const tileCard = createTileCard(hud_root, {
+  links: richLinks,
   close: () => {
     if (!play) return;
     if (play.moving) stopMoving();
@@ -3627,7 +3661,8 @@ function tileView(id: number): TileView {
   const kind = found && knownKind(found) ? found : null;
   const { city, owner, worked, y } = tileYieldNow(id);
   const done = (['irrigation', 'mine', 'road'] as const).filter(k => p.improvements.has(id, k)).map(k => IMPROVEMENT_NAMES[k]);
-  const units = p.units.units.filter(u => u.tile === id).map(u => u.name);
+  // The units here, each a link that selects it (STORY-103)
+  const units = p.units.units.filter(u => u.tile === id).flatMap((u, i): Rich => (i ? [', ', unitRef(u.id, u.name)] : [unitRef(u.id, u.name)]));
   const bonus = p.bonuses.get(id);
   const cost = world.cost(id);
   const native = nativeAt(id);
@@ -3642,9 +3677,9 @@ function tileView(id: number): TileView {
     ...(tribe ? [{ label: 'Paimentolaiset', value: tribeLine(tribe) }] : []),
     ...((native || tribe || rival) && p.war.target === id ? [{ label: 'Sotaretki', value: `Kenraalin kohde · ${army().length} / ${warNeed(id)} hyökkääjää${p.war.marching ? ' · hyökkäys käynnissä' : ''}` }] : []),
     rival ? { label: 'Kilpailija', value: `${rival.rival.name}: ${rival.city.name}, koko ${rival.city.size}` } :
-    native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? `${city.name}, koko ${city.size}` : owner ? `${owner.name}: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}` : 'ei kaupungin alueella' },
+    native ? { label: 'Kaupunkivaltio', value: nativeLine(native) } : { label: 'Kaupunki', value: city ? [cityRef(city.tile, city.name), `, koko ${city.size}`] : owner ? [cityRef(owner.tile, owner.name), `: ${worked ? 'asukas työstää ruutua' : 'alueella, ei työstetä'}`] : 'ei kaupungin alueella' },
     ...cityRows(id, city ?? owner ?? null),
-    ...(units.length ? [{ label: 'Yksiköt', value: units.join(', ') }] : []),
+    ...(units.length ? [{ label: 'Yksiköt', value: units }] : []),
     ...(p.raids.band?.bandits.some(b => b.tile === id) ? [{ label: 'Uhka', value: 'Rosvoja ruudulla' }] : []),
     { label: 'Kulku', value: Number.isFinite(cost) ? `${cost} pv` : coastal(id) ? (canSail() ? 'rannikkovesi: 1 pv' : 'rannikkovesi: Kartanteko avaa kulun') : 'avomeri: ei kulkua' },
     ...(p.units.isOpen(id, world) ? [] : [{ label: 'Valtio', value: 'lukossa, kunnes kotivaltio on vallattu' }]),

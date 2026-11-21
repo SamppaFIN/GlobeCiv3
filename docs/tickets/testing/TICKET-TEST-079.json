@@ -1,0 +1,78 @@
+{
+  "id": "TICKET-TEST-079",
+  "story": "STORY-103",
+  "implementation_ticket": "TICKET-IMPL-079",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Pelin tekstit olivat yksivärisiä merkkijonoja, eikä niistä päässyt kaupunkiin tai yksikköön.",
+    "files_changed": [
+      "src/ui/richText.ts",
+      "src/globe/main.ts",
+      "src/ui/advisorCard.ts",
+      "src/ui/tileCard.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "richText.test: plain, värit ja linkit tyypeittäin (saavutettava nimi), kaatunut yksikkö tekstinä myös napautushetkellä, ilmoitus ilman linkkejä, tallennuksen nimi '<img …>{yksikkö:1}' tekstinä eikä innerHTML:ää",
+        "expected": "Kriteerit 1 ja 2 (turvallisuus ja kohde napautushetkellä)",
+        "result": "5/5, Vitest 262/262",
+        "outcome": "pass"
+      },
+      {
+        "steps": "rich-links.e2e: ruudun kortin yksikkölinkki (siirretyltä näkymältä) valitsee yksikön, sulkee kortin ja tuo yksikön ruudun keskelle; neuvonantajalokin kaupunkilinkki tuo kaupungin keskelle ja avaa pikapaneelin",
+        "expected": "Kriteeri 2",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Henkilö-, rakennus-, keksintö-, resurssi- ja aikakausiviitteet painikkeina",
+        "expected": "Kriteeri 1",
+        "result": "Värit ovat, painikkeet tulevat STORY-104:ssä, kun niillä on kohde",
+        "outcome": "fail"
+      },
+      {
+        "steps": "advisors, province-advisors, state-advisors, tile-card, wonders, area-panel, raids, chains ja new-start",
+        "expected": "Ei regressiota",
+        "result": "Läpi (11/11)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: neuvonantajaloki ja ruudun kortti",
+        "expected": "Kaupunki musteen, yksikkö syaanin värisenä ja alleviivattuna",
+        "result": "Tarkistettu silmämääräisesti (CI-koko 640×400)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/rich-links…/tile-links.png",
+      "test-results/rich-links…/advisor-links.png",
+      "test-results/rich-links…/city-link.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tekstit ovat värikkäitä ja kaupungit ja yksiköt linkkejä",
+        "checked": false
+      },
+      {
+        "item": "Muut viitteet saavat linkit Tietokirjan myötä (STORY-104)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
