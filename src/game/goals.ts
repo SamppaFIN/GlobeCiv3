@@ -1,7 +1,7 @@
 /**
  * goals.ts — each level's own goal, which is also how the player rises to the next level
  * (STORY-087; Sami 2026-11-19). A level rises on the finished output of the level below:
- * the city on its first unit, the city area on its cities, the province on the home
+ * the city as a ready settlement (STORY-089), the city area on its cities, the province on the home
  * state's provinces held and the state on all seven. One goal shows at a time, with its
  * progress on the meter. Own design: the goals, the counts and the gold (the counts and the
  * gold are those of the goal chain of STORY-041 and STORY-056 that this replaces).
@@ -9,10 +9,8 @@
 
 /** What the level goals count, a summary of the game. */
 export interface LevelState {
-  /** A city has a building (the city level's first step, STORY-070). */
-  built: boolean;
-  /** A scout is on the map (Sami 2026-11-20: the scout opens the city area). */
-  scout: boolean;
+  /** The capital's steps to a ready settlement, of three: the base, a chain of food, three citizens (STORY-089). */
+  settlement: number;
   cities: number;
   /** The home state's provinces held, of seven; one without land counts (STORY-016, STORY-058). */
   provinces: number;
@@ -37,10 +35,10 @@ export interface LevelGoal {
 
 export const LEVEL_GOALS: readonly LevelGoal[] = [
   {
-    level: 4, name: 'Kaupunki', text: 'Rakenna rakennus ja tiedustelija', reward: 30, need: 2, unit: '',
-    hint: 'Valitse kaupunkikortista maaston rakennus. Kun se valmistuu, kaupunki voi rakentaa tiedustelijan, joka avaa kaupunkialueen.',
-    count: s => (s.built ? 1 : 0) + (s.scout ? 1 : 0),
-    opens: { title: 'Kaupunkialue avautui, zoomaa ulos', text: 'Kaupunkialueella tiedustelijat kartoittavat maata ja uudisasukkaat perustavat kaupunkeja.' },
+    level: 4, name: 'Settlementti', text: 'Tee kaupungista valmis settlementti', reward: 30, need: 3, unit: '',
+    hint: 'Kolme askelta: perusta (metsuri, saha ja louhos), ruokaketju (pelto, mylly ja leipomo tai kalastamo) ja kolme asukasta. Valmis settlementti avaa kaupunkialueen.',
+    count: s => s.settlement,
+    opens: { title: 'Valmis settlementti: kaupunkialue avautui, zoomaa ulos', text: 'Kaupunkisi on valmis settlementti, ja sen ensimmäinen tiedustelija lähti matkaan. Kaupunkialueella tiedustelijat kartoittavat maata ja uudisasukkaat perustavat kaupunkeja.' },
   },
   {
     level: 3, name: 'Kaupungit', text: 'Perusta kolme kaupunkia', reward: 60, need: 3, unit: 'kaupunkia',

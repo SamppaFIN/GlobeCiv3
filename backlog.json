@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T22:46:34Z",
+    "generated_at": "2026-11-21T23:50:35Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "95978ed",
+    "git_commit": "9dab56b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -238,7 +238,7 @@
         "STORY-090",
         "STORY-101"
       ],
-      "progress": 50
+      "progress": 75
     },
     {
       "id": "EPIC-011",
@@ -2375,12 +2375,12 @@
         "Kaupunkitason tavoite (rakennukset ja asukkaat) näkyy HUD:ssa.",
         "Kun tavoite täyttyy, kaupungista tulee valmis settlementti, ja kaupunkialuetaso aukeaa nousuhetkellä."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-085",
+        "implementation": "TICKET-IMPL-085",
+        "testing": "TICKET-TEST-085"
       }
     },
     {

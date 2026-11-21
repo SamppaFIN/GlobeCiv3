@@ -89,6 +89,23 @@ const add = (s: ChainState, g: Good, n: number) => { s.stock[g] = has(s, g) + n;
  * once all three stand. A field first would leave too few planks for the sawmill, for good.
  */
 export const BASE: readonly ChainBuilding[] = ['lumberjack', 'sawmill', 'quarry'];
+/** The chains of food: bread from the field through the mill and the bakery, or fish. */
+export const FOOD_CHAINS: readonly (readonly ChainBuilding[])[] = [['field', 'mill', 'bakery'], ['fishery']];
+/** The citizens of a ready settlement (own). */
+export const SETTLEMENT_SIZE = 3;
+/**
+ * A ready settlement (STORY-089; Sami 2026-11-22, own rule): the base, a chain of food and three
+ * citizens. Its steps, each done or not; all three make the city level's goal.
+ */
+export function settlementSteps(built: readonly string[], size: number): { base: boolean; food: boolean; size: boolean } {
+  return {
+    base: BASE.every(b => built.includes(b)),
+    food: FOOD_CHAINS.some(chain => chain.every(b => built.includes(b))),
+    size: size >= SETTLEMENT_SIZE,
+  };
+}
+export const settlementDone = (built: readonly string[], size: number) => Object.values(settlementSteps(built, size)).every(Boolean);
+
 /** Whether a chain building may be started: not built, no other site under way, the base first. */
 export const chainOpen = (s: ChainState, built: readonly string[], b: ChainBuilding) =>
   !built.includes(b) && (s.site === null || s.site.building === b) && (BASE.includes(b) || BASE.every(x => built.includes(x)));

@@ -74,7 +74,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
-import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
+import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, settlementDone, settlementSteps, SETTLEMENT_SIZE, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
@@ -772,7 +772,7 @@ function startPlay(startCity: number, saved?: SaveData) {
       rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
     },
     openResearch: () => { if (play) play.researchOpen = true; },
-    goalHint: () => { const g = play && levelGoal(play.progress.openLevel); if (g) discoveryCard.notice(g.hint); },
+    goalHint: () => { const g = play && levelGoal(play.progress.openLevel); if (g) discoveryCard.notice(g.level === 4 ? settlementHint() : g.hint); },
     openList: () => {
       if (!play) return;
       play.listOpen = !play.listOpen;
@@ -2333,7 +2333,7 @@ function chainView(c: City): CityView['chain'] {
   const missing = siteMissing(s);
   const site = s.site && missing ? `Työmaa: ${BUILDS[s.site.building].name}, ${missing.planks || missing.stones ? `puuttuu ${goodsText(missing.planks, missing.stones)}` : `valmis ${Math.max(1, BUILD_DAYS - s.site.days)} pv`}` : null;
   return {
-    line: [`Varasto: ${goods.length ? goods.join(', ') : 'tyhjä'}`, site].filter(Boolean).join(' · '),
+    line: [`Varasto: ${goods.length ? goods.join(', ') : 'tyhjä'}`, site, settlementDone(c.buildings, c.size) ? 'Valmis settlementti' : null].filter(Boolean).join(' · '),
     builds: CHAIN_BUILDINGS.filter(b => !c.buildings.includes(b) && spots(c, b, ground).length > 0).map(b => {
       const base = waitsForBase(c.buildings, b);
       const busy = s.site !== null && s.site.building !== b;
@@ -2394,15 +2394,13 @@ function cityView(c: City, y: CityYield): CityView {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       const need = NEEDS[kind];
-      // Units wait for the first building of a new game (STORY-070)
-      const waits = UNIT_BUILDS.has(kind) && !unitsOpen();
-      // The settler waits for the city area (STORY-017)
-      const later = kind === 'settler' && cityStage();
-      const locked = (need !== undefined && !play!.research.known.has(need)) || waits || later;
+      // Units wait for the city area, which the ready settlement opens (STORY-089)
+      const later = UNIT_BUILDS.has(kind) && !unitsOpen();
+      const locked = (need !== undefined && !play!.research.known.has(need)) || later;
       return {
         kind, name: b.name, selected: kind === c.build, locked,
         cost: kind === 'coinage' ? 'Tuotanto kullaksi' : `${b.cost} tuotantoa${b.pop ? ` ja ${b.pop} asukas` : ''}${isBuilding(kind) && UPKEEP[kind] ? `, ${UPKEEP[kind]} ${UPKEEP[kind] === 1 ? 'kulta' : 'kultaa'}/pv` : ''}`, purpose: BUILD_PURPOSE[kind],
-        eta: later ? 'kun kaupunkialue avautuu' : waits ? 'ensimmäisen rakennuksen jälkeen' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}${y.surplus <= 0 ? ', kaupunki ei kasva: vaihda painotus Ruokaan' : ''}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
+        eta: later ? 'kun kaupunkialue avautuu' : locked && need ? `vaatii: ${ADVANCES[need].name}` : kind === 'coinage' ? `+${Math.max(0, y.shield)} kultaa/pv` : ready === null ? 'ei tuotantoa' : c.size <= b.pop ? `vaatii koon ${b.pop + 1}${y.surplus <= 0 ? ', kaupunki ei kasva: vaihda painotus Ruokaan' : ''}` : ready === 0 ? 'valmis huomenna' : `valmis ${ready} pv`,
       };
     }),
   };
@@ -2451,9 +2449,9 @@ const shieldless = (c: City, kind: Build) => (c.chain ? isChainBuilding(kind) : 
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !shieldless(c, kind) && !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
   && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()) && !(kind === 'settler' && cityStage()));
-/** Units the cities build: only after the first building of a new game (STORY-070, Sami). */
+/** Units the cities build: once the city area is open; a new game's city level has none (STORY-089, Sami 2026-11-22). */
 const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
-const unitsOpen = () => !play || play.progress.openLevel < 4 || play.cities.some(c => c.buildings.length > 0);
+const unitsOpen = () => !play || play.progress.openLevel < 4;
 /** A new game's first level, the city alone: the city area's systems wait for the scout (STORY-017, Sami 2026-11-20). */
 const cityStage = () => !!play && !classic && play.progress.openLevel === 4;
 /** The state level is open, where diplomacy, war and trade belong (STORY-017); always in the old start. */
@@ -2493,10 +2491,9 @@ function advisorDay() {
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
     const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, hasWonder('gardens'), luxury, p.gov);
-    // At the city stage the city level's advisor builds the way to the next map (STORY-070, STORY-105)
+    // At the city stage the city level's advisor sets the way to the ready settlement (STORY-105, STORY-089)
     const town = p.progress.openLevel === 4;
-    const scouts = p.units.units.filter(u => u.kind === 'scout').length;
-    const advice = town ? townAdvice(p.townAdvisor, { available, built: c.buildings.length > 0, scouts }) : cityAdvice(p.cityAdvisor, c, {
+    const advice = town ? townAdvice(p.townAdvisor, settlementDone(c.buildings, c.size)) : cityAdvice(p.cityAdvisor, c, {
       available, soldiers, unrestNear: !!yields[i].disorder || bigger.disorder, disorder: !!yields[i].disorder,
       threat: p.raids.band?.city === c.tile, soldier: bestSoldier(), settlers: supportOf(c).settlers,
     });
@@ -2835,9 +2832,9 @@ function updateListCard() {
 /** What the level goals count. */
 function levelState(): LevelState {
   const p = play!;
+  const capital = p.cities.find(c => c.capital) ?? p.cities[0];
   return {
-    built: p.cities.some(c => c.buildings.length > 0),
-    scout: p.units.units.some(u => u.kind === 'scout'),
+    settlement: capital ? Object.values(settlementSteps(capital.buildings, capital.size)).filter(Boolean).length : 0,
     cities: p.cities.length,
     provinces: heldIn(conquestNow(), homeState()),
   };
@@ -3608,8 +3605,13 @@ function rise(opened: number, reached: NonNullable<ReturnType<typeof levelGoal>>
   const s = levelState();
   unlockCard.show(reached.opens.title, `${reached.opens.text}${next ? ` Uusi tavoite: ${next.text} (${goalCount(next, s)} / ${next.need}).` : ''}`);
   moment('unlock', p.cities[0]?.tile ?? pointToTile(rig.target));
-  // The city area shows once it opens (STORY-017)
-  if (opened === 3 && game) reveal(cityTiles(regions, game.startCity));
+  // The city area shows once it opens (STORY-017), and the ready settlement sends its first scout,
+  // the Retkeilijä's two (STORY-089, own)
+  if (opened === 3 && game) {
+    reveal(cityTiles(regions, game.startCity));
+    const capital = p.cities.find(c => c.capital) ?? p.cities[0];
+    if (capital && !classic) for (let k = p.townAdvisor === 'roam' ? 2 : 1; k > 0; k--) p.units.spawn('scout', capital.tile, world, capital.id);
+  }
   // The province, the state and the planet have advisors of their own: chosen once the card is closed (STORY-096)
   // Each level with advisors of its own asks for one as it opens; the city area too (STORY-105)
   if (!classic && opened <= 3) pickPending = opened;
@@ -4325,7 +4327,7 @@ function cityRows(id: number, c: City | null): TileView['rows'] {
     rows = [
       { label: 'Kaupunki tässä', value: `alussa ${yieldText(start)} päivässä` },
       { label: 'Koko alue', value: `kaksi rengasta: ${yieldText(area)} päivässä` },
-      { label: 'Uudisasukas', value: block ? `ei kaupunkia: ${block}` : going ? 'matkalla perustamaan kaupunkia' : p.pendingSite === id ? `${p.cities[0]?.name ?? 'Kaupunki'} rakentaa uudisasukasta tänne` : !unitsOpen() ? 'avautuu ensimmäisen rakennuksen jälkeen' : idleSettler() ? 'vapaa uudisasukas voi lähteä' : 'pääkaupunki voi rakentaa sellaisen' },
+      { label: 'Uudisasukas', value: block ? `ei kaupunkia: ${block}` : going ? 'matkalla perustamaan kaupunkia' : p.pendingSite === id ? `${p.cities[0]?.name ?? 'Kaupunki'} rakentaa uudisasukasta tänne` : !unitsOpen() ? 'avautuu, kun kaupunki on valmis settlementti' : idleSettler() ? 'vapaa uudisasukas voi lähteä' : 'pääkaupunki voi rakentaa sellaisen' },
     ];
   }
   cityRowsCache = { key, rows };
@@ -4429,6 +4431,18 @@ function updateTileCard() {
   const at = toScreen(tileCenter(id));
   const y = mapState.isMapped(id) ? tileYieldNow(id).y : null;
   tileYields.update(y ? [{ x: at?.[0] ?? null, y: at?.[1] ?? null, food: y.food, shield: y.shield, trade: y.trade, centre: false }] : []);
+}
+
+/** The city level's goal step by step (STORY-089): what the capital still needs to be a ready settlement. */
+function settlementHint(): string {
+  const c = play!.cities.find(x => x.capital) ?? play!.cities[0];
+  if (!c) return levelGoal(4)!.hint;
+  const step = settlementSteps(c.buildings, c.size);
+  return `Valmis settlementti avaa kaupunkialueen: ${[
+    step.base ? 'perusta valmis' : 'perusta (metsuri, saha ja louhos)',
+    step.food ? 'ruokaketju valmis' : 'ruokaketju (pelto, mylly ja leipomo tai kalastamo)',
+    `asukkaita ${Math.min(c.size, SETTLEMENT_SIZE)} / ${SETTLEMENT_SIZE}`,
+  ].join(' · ')}.`;
 }
 
 /** The top panel's meter: how far the deepest open level's goal is (STORY-087), then the states conquered. */
@@ -4851,7 +4865,7 @@ frameStartPlanet();
   rise: () => {
     const g = play && levelGoal(play.progress.openLevel);
     if (!g) return null;
-    const opened = advance(play!.progress, { built: true, scout: true, cities: g.need, provinces: g.need });
+    const opened = advance(play!.progress, { settlement: 3, cities: g.need, provinces: g.need });
     if (opened !== null) rise(opened, g);
     return opened;
   },

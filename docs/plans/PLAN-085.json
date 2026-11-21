@@ -1,0 +1,49 @@
+{
+  "id": "PLAN-085",
+  "story": "STORY-089",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Kaupunkitason tavoite on valmis settlementti (Samin valinta 2026-11-22): perusta (metsuri, saha ja louhos), ruokaketju (pelto, mylly ja leipomo tai kalastamo) ja kolme asukasta. chains.ts saa funktiot settlementSteps ja settlementDone sekä vakion SETTLEMENT_SIZE = 3, ja goals.ts:n tason 4 tavoite laskee pääkaupungin valmiit askeleet (0–3). Kun tavoite täyttyy, nousu avaa kaupunkialueen, ja pääkaupungista lähtee tiedustelija, Retkeilijällä kaksi. Kaupunkitaso ei rakenna yksiköitä, vaan ne odottavat kaupunkialuetta, jolloin kaupunkitason ja kaupunkialueen viestit eivät mene sekaisin. Tavoitteen vihje kertoo askeleet pääkaupungin tilan mukaan, ja kaupunkikortin varastorivi kertoo, kun settlementti on valmis. Kaupunkitason neuvonantajat eivät enää rakenna tiedustelijoita: ne asettavat painotuksen, ja Rakentaja painottaa tuotantoa vasta valmiissa settlementissä, koska tuotantopainotuksella pääkaupunki jäi kokoon 2 (siemen 42). Säännöt ja luvut ovat omia.",
+  "alternatives_considered": [
+    {
+      "name": "Rakennus ja tiedustelija avaavat kuten ennen (STORY-087)",
+      "pros": "Nopea nousu, ei uutta sääntöä",
+      "cons": "Kaupunkitasolla ei ole omaa valmistumista, ja tuotantoketju jää kesken",
+      "rejected_because": "Sami valitsi valmiin settlementin"
+    },
+    {
+      "name": "Rakentaja kääntyy ruokaan, kun kaupunki ei kasva",
+      "pros": "Rakentaja säilyttää tuotantopainotuksen alussa",
+      "cons": "Painotus vaihtelee päivästä toiseen, ja kasvun pysähtymisen tunnistus on hauras",
+      "rejected_because": "Tasapainoinen painotus valmiiseen settlementtiin asti on yksinkertaisempi ja kasvaa jokaisella mitatulla siemenellä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/chains.ts",
+    "src/game/goals.ts",
+    "src/game/advisors.ts",
+    "src/game/progress.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Nousuun kuluu siemenellä 42 Ruokkijalla 26, Retkeilijällä 56 ja Rakentajalla 85 päivää, ja siemenellä 7 kaikilla 24–27 päivää. Koko 3 ja ero neuvonantajien välillä kalibroidaan autopilotilla (STORY-085) ja pelitestillä."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "settlementSteps, settlementDone ja tason 4 tavoite",
+      "verify": "chains.test, goals.test ja progress.test"
+    },
+    {
+      "step": 2,
+      "action": "Nousu avaa kaupunkialueen ja lähettää tiedustelijat; yksiköt odottavat kaupunkialuetta",
+      "verify": "new-start.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Kaupunkitason neuvonantajien painotus ja mittaus kolmella neuvonantajalla",
+      "verify": "advisors.test ja mittausajo siemenillä 42 ja 7"
+    }
+  ],
+  "status": "approved"
+}

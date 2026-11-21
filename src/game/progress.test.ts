@@ -2,16 +2,16 @@ import { describe, expect, it } from 'vitest';
 import type { LevelState } from './goals';
 import { advance, startProgress } from './progress';
 
-const none: LevelState = { built: false, scout: false, cities: 1, provinces: 1 };
+const none: LevelState = { settlement: 0, cities: 1, provinces: 1 };
 
 describe('the levels open on their goals (STORY-070, STORY-087)', () => {
-  it('a new game starts at the city; a building and the first scout or settler open the city area', () => {
+  it('a new game starts at the city; the ready settlement opens the city area (STORY-089)', () => {
     const p = startProgress(true);
     expect(p).toEqual({ openLevel: 4, meter: 'city' });
     // Cities and provinces do not count before the city level's own goal
     expect(advance(p, { ...none, cities: 3, provinces: 7 })).toBeNull();
-    expect(advance(p, { ...none, built: true })).toBeNull();
-    expect(advance(p, { ...none, built: true, scout: true })).toBe(3);
+    expect(advance(p, { ...none, settlement: 2 })).toBeNull();
+    expect(advance(p, { ...none, settlement: 3 })).toBe(3);
     expect(p).toEqual({ openLevel: 3, meter: 'province' });
   });
 

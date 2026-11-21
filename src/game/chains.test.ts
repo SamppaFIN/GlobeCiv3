@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BASE, buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_RULES, eat, GOODS, has, MAKE_DAYS, mealsReady, newChain, startSite, workDay, type ChainBuilding, type ChainState } from './chains';
+import { settlementDone, settlementSteps } from './chains';
 
 const total = (s: ChainState) => GOODS.reduce((n, g) => n + has(s, g), 0);
 /** Build a site to the end; the days it took. */
@@ -147,5 +148,18 @@ describe('production chains (STORY-088)', () => {
     startSite(s, 'quarry');
     s.stock.plank = 2;
     expect(buildDay(s).moves).toEqual([{ good: 'plank', from: 'centre', to: 'site' }, { good: 'plank', from: 'centre', to: 'site' }]);
+  });
+});
+
+describe('the ready settlement (STORY-089)', () => {
+  it('is the base, a chain of food (bread or fish) and three citizens', () => {
+    expect(settlementSteps([], 1)).toEqual({ base: false, food: false, size: false });
+    expect(settlementSteps(['lumberjack', 'sawmill', 'quarry'], 2)).toEqual({ base: true, food: false, size: false });
+    // Bread needs the whole chain; fish alone is enough
+    expect(settlementSteps(['lumberjack', 'sawmill', 'quarry', 'field', 'mill'], 3).food).toBe(false);
+    expect(settlementSteps(['lumberjack', 'sawmill', 'quarry', 'field', 'mill', 'bakery'], 3)).toEqual({ base: true, food: true, size: true });
+    expect(settlementDone(['lumberjack', 'sawmill', 'quarry', 'fishery'], 3)).toBe(true);
+    expect(settlementDone(['lumberjack', 'sawmill', 'quarry', 'fishery'], 2)).toBe(false);
+    expect(settlementDone(['sawmill', 'quarry', 'fishery', 'field', 'mill', 'bakery'], 5)).toBe(false);
   });
 });

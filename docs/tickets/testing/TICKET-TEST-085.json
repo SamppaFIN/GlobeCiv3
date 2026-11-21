@@ -1,0 +1,77 @@
+{
+  "id": "TICKET-TEST-085",
+  "story": "STORY-089",
+  "implementation_ticket": "TICKET-IMPL-085",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemenet 42 ja 7",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "chains.test: settlementSteps perustalla, kummallakin ruokaketjulla ja koolla 3",
+        "expected": "Askeleet täyttyvät erikseen, ja settlementDone vaatii kaikki",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "goals.test ja progress.test: tason 4 tavoite laskee askeleet ja avaa tason 3 kolmella",
+        "expected": "Kriteeri 1 ja 2 (logiikka)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "advisors.test: townAdvice ilman valmista settlementtiä ja sen kanssa",
+        "expected": "Rakentaja tasapaino → tuotanto, Ruokkija ruoka, Retkeilijä tasapaino, Oma ohjaus ei mitään",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "new-start.e2e: tavoite 'Tee kaupungista valmis settlementti' ja mittari 0 / 3; kaupunkikortin yksiköt 'kun kaupunkialue avautuu'; Retkeilijällä perusta pysäytetään, mittari 1–2 / 3, vihje 'perusta valmis', ei yksiköitä; nousu tasolle 3, koko vähintään 3 ja kaksi tiedustelijaa; kortti 'Valmis settlementti: kaupunkialue avautui, zoomaa ulos'",
+        "expected": "Kriteerit 1 ja 2",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Mittausajo kolmella kaupunkitason neuvonantajalla, siemenet 42 ja 7",
+        "expected": "Jokainen neuvonantaja saavuttaa valmiin settlementin",
+        "result": "Siemen 42: Ruokkija 26, Retkeilijä 56 ja Rakentaja 85 päivää (tuotantopainotuksella ennen korjausta Rakentaja jäi kokoon 2 päivään 452 asti). Siemen 7: Rakentaja 26, Ruokkija 24 ja Retkeilijä 27 päivää",
+        "outcome": "pass"
+      },
+      {
+        "steps": "onboarding, chains, area-panel, codex ja city-level",
+        "expected": "Ei regressiota",
+        "result": "11/11 läpi Retkeilijän kuvauksen korjauksen jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "carriers, chronicle, city-label, firsts, planet-trial, placement, resource-buildings, resources ja smoke",
+        "expected": "Ei regressiota",
+        "result": "16/16 läpi; placement.e2e kaatui carriers.e2e:n jälkeen myös mainissa, koska carriers.e2e jätti sivun auki, ja korjauksen jälkeen molemmat läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tavoite ja sen vihje kertovat, mitä kaupunki vielä tarvitsee",
+        "checked": false
+      },
+      {
+        "item": "Nousu valmiista settlementistä tuntuu ansaitulta eikä liian hitaalta",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
