@@ -90,6 +90,8 @@ test('a new game flies down to the city level of a built capital; a building ope
   await page.waitForFunction(() => (window as any).globeGame.state.openLevel === 3, null, { timeout: 60_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   expect((await state(page)).units.map((u: { kind: string }) => u.kind)).toContain('scout');
+  // Every character has a given name from the seed (STORY-102)
+  for (const u of (await state(page)).units) expect(u.name).toMatch(/^(Tiedustelija|Soturi|Uudisasukas) \p{Lu}\p{Ll}+/u);
   await expect(page.getByRole('heading', { name: 'Kaupunkialue avautui, zoomaa ulos' })).toBeVisible();
   // The scout shows the next level: the city area is mapped now
   expect(await ring4Mapped(page, s.cities[0].tile)).toBeGreaterThan(0);

@@ -739,7 +739,8 @@ function startPlay(startCity: number, saved?: SaveData) {
   rivalStartStates = rivalStarts(game!.seed, Math.floor(startCity / 49), regions.neighbors, hasLand);
   // The new start removes the old start's units below: their sight must not map the city area (STORY-017)
   const newStart = !saved && !classic && game?.capital !== undefined;
-  const units = new Units(pointToTile(regions.centers[2][startCity]), newStart ? { ...world, reveal: () => {} } : world, saved?.units);
+  // Characters get given names in a new game, from its seed (STORY-102); the old start keeps numbers
+  const units = new Units(pointToTile(regions.centers[2][startCity]), newStart ? { ...world, reveal: () => {} } : world, saved?.units, classic ? null : game!.seed);
   const province = Math.floor(startCity / 7);
   const provinceTiles: number[] = [];
   for (let c = province * 7; c < province * 7 + 7; c++) provinceTiles.push(...cityTiles(regions, c));

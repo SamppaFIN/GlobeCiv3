@@ -75,6 +75,22 @@ describe('units', () => {
     }
   });
 
+  it('in a new game each is a kind and a given name from the seed, none twice among the living (STORY-102)', () => {
+    const named = () => {
+      const units = new Units(START_TILE, makeWorld(), undefined, 42);
+      for (let k = 0; k < 6; k++) units.spawn('warrior', START_TILE, makeWorld());
+      return units.units.map(u => u.name);
+    };
+    const names = named();
+    expect(names).toEqual(named());
+    expect(names[0]).toMatch(/^Uudisasukas \p{Lu}/u);
+    expect(names[1]).toMatch(/^Tiedustelija \p{Lu}/u);
+    expect(names.slice(3).every(n => /^Soturi \p{Lu}/u.test(n))).toBe(true);
+    expect(new Set(names.map(n => n.split(' ').slice(1).join(' '))).size).toBe(names.length);
+    // The old start keeps its numbered names
+    expect(new Units(START_TILE, makeWorld()).units.map(u => u.name)).toEqual(['Uudisasukas', 'Tiedustelija 1', 'Tiedustelija 2']);
+  });
+
   it('explore the fog day by day, slower through costly tiles', () => {
     const world = makeWorld();
     const units = new Units(START_TILE, world);
