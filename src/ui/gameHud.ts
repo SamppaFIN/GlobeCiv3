@@ -10,6 +10,7 @@
 import { SPEEDS, type Speed } from '../game/clock';
 import { MODE_NAMES, TASK_NAMES, type Mode, type SettlerTask, type UnitKind } from '../game/units';
 import type { Person } from '../game/persons';
+import { describeBonus } from '../game/bonuses';
 import { ownHandSvg, portraitSvg } from './portraits';
 
 // Phosphor icons (MIT): play, pause, flag
@@ -163,7 +164,8 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       b.className = `hud-advisor-face${a.chosen ? ' hud-advisor' : ''}${a.id === 'none' ? ' hud-advisor-own' : ''}`;
       // Our own drawing from constants (portraits.ts); the names go into the label as text
       b.innerHTML = a.person ? portraitSvg(a.person, 40) : ownHandSvg(40);
-      const who = a.person ? `, ${a.person.name} ${a.person.title}` : '';
+      // The person and what they add while chosen (STORY-107)
+      const who = a.person ? `, ${a.person.name} ${a.person.title}: ${describeBonus(a.person.level, a.person.bonus)}` : '';
       b.setAttribute('aria-label', a.chosen ? `Neuvonantaja: ${a.role}${who}` : `Vaihda neuvonantajaksi ${a.role}${who}`);
       b.setAttribute('aria-pressed', String(a.chosen));
       b.title = `${a.role}${who}: ${a.does}`;

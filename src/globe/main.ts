@@ -46,12 +46,13 @@ import { RIVALS, Rival, rivalStarts, type RivalUnit, type RivalWorld } from '../
 import { oklchToSrgb } from './colors';
 import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS, TRIBE_REACH, type Tribe } from '../game/nomads';
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, MAX_ARMY, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
-import { chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, townAdvice, TOWN_ADVISORS, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
+import { ADVISOR_LEVELS, chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, townAdvice, TOWN_ADVISORS, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
 import { ERA_NAMES, personOf, type Era, type Person } from '../game/persons';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { city as cityRef, plain, term, unit as unitRef, type Rich, type RichLinks } from '../ui/richText';
 import { marksPassed, narrate, record } from '../game/history';
+import { defenseBonus, goldBonus, goodsBonus, scienceBonus, settleBonus, sightBonus, yieldBonus, type ActiveBonuses } from '../game/bonuses';
 import { createOnboarding } from '../ui/onboarding';
 import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
@@ -875,8 +876,9 @@ function supportOf(c: City): Support {
 function cityYields(): CityYield[] {
   if (!play) return [];
   const taken = new Set<number>();
+  const active = activeBonuses();
   return play.cities.map(c => {
-    const y = cityYield(c, yieldOf, taken, supportOf(c), play!.gov);
+    const y = withBonus(cityYield(c, yieldOf, taken, supportOf(c), play!.gov), c, active);
     for (const t of workedTiles(c, yieldOf, taken)) taken.add(t);
     return withMood(y, moodOf(c, y));
   });
@@ -931,6 +933,27 @@ function foundAt(tile: number, founder: string | null = null) {
   play.openCity = city.id;
 }
 
+/**
+ * The bonuses of the levels' active advisors (STORY-107): the person of this era in each chosen
+ * role. The own hand has none.
+ */
+function activeBonuses(): ActiveBonuses {
+  const out: ActiveBonuses = {};
+  if (!play) return out;
+  for (const level of ADVISOR_LEVELS) {
+    const id = chosenAdvisor(level);
+    const person = id === 'none' ? null : personOf(level, id, eraNow());
+    if (person) out[level] = person.bonus;
+  }
+  return out;
+}
+
+/** A city's yield with its level's advisor's bonus: the capital the city level's, the others the city area's. */
+function withBonus(y: CityYield, c: City, active: ActiveBonuses): CityYield {
+  const b = yieldBonus(active, c.capital);
+  return { ...y, food: y.food + b.food, shield: y.shield + b.shield, trade: y.trade + b.trade, surplus: y.surplus + b.food };
+}
+
 /** The day an event goes into the chronicle: the day being played, in a frame of several. */
 const today = () => tickDay ?? clock.day;
 
@@ -963,12 +986,13 @@ function chronicleEraDay() {
  */
 function arrangeEntertainers() {
   const p = play!;
+  const active = activeBonuses();
   const taken = new Set<number>();
   for (const c of p.cities) {
     let best = 0;
     for (let e = 0; e <= c.size; e++) {
       c.entertainers = e;
-      const y = cityYield(c, yieldOf, taken, supportOf(c), p.gov);
+      const y = withBonus(cityYield(c, yieldOf, taken, supportOf(c), p.gov), c, active);
       if (!moodOf(c, y).disorder) { best = e; break; }
     }
     c.entertainers = best;
@@ -984,7 +1008,7 @@ function chainDay(c: City, citizens: number) {
   const s = c.chain!;
   eat(s, citizens);
   const built = c.buildings.filter(isChainBuilding);
-  workDay(s, built, built.filter(b => c.best?.includes(b)));
+  workDay(s, built, built.filter(b => c.best?.includes(b)), c.capital ? goodsBonus(activeBonuses()) : 0);
   const { done } = buildDay(s);
   if (!done) return;
   c.buildings.push(done);
@@ -1022,7 +1046,7 @@ function cityDays() {
       yields = cityYields();
     }
     const size = c.size;
-    const done = cityDay(c, yields[i]);
+    const done = cityDay(c, yields[i], settleBonus(activeBonuses()));
     // The chains' day (STORY-088): today's meals, which the yield counted, then the goods and the site
     if (c.chain) chainDay(c, size);
     // A full box at the size limit: said once (STORY-054)
@@ -1053,7 +1077,9 @@ function cityDays() {
   // The governor puts new buildings on their best ground, and the bonuses follow (STORY-071)
   for (const c of play.cities) placeAll(c, ground);
   // The cities' science; an advance learned opens what needs it (STORY-040)
-  const learned = play.research.add(peopleStudy() + play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
+  // The state's advisor adds gold to the treasury (STORY-107)
+  if (play.cities.length) play.gold += goldBonus(activeBonuses());
+  const learned = play.research.add(peopleStudy() + scienceBonus(activeBonuses()) + play.cities.reduce((sum, c, i) => sum + cityScience(c, yields[i], rates().tax, rates().lux), 0));
   if (learned && isKind(learned)) {
     const opens = opensFrom(learned).map(a => ADVANCES[a].name);
     discoveryCard.notice(`Tutkittu: ${studyName(learned).toLowerCase()} on ${RESOURCES[learned].name} · näkyy kartalla ja tuottaa${opens.length ? ` · ${opens.join(' ja ')} avautui tutkittavaksi` : ''}`);
@@ -2987,7 +3013,8 @@ const raidWorld: RaidWorld = {
   terrainOf,
   walls: tile => { const c = play?.cities.find(x => x.tile === tile); return c ? hasWalls(c) : false; },
   defenders: tile => soldiersIn(tile).length,
-  defense: tile => Math.max(1, ...soldiersIn(tile).map(u => defenseOf(u.kind))),
+  // The advisors' bonus (STORY-107): bandits answer to the city level at the capital and to the city area elsewhere, nomads to the province
+  defense: tile => Math.max(1, ...soldiersIn(tile).map(u => defenseOf(u.kind))) * defenseBonus(activeBonuses(), play?.raids.band?.tribe ? 'nomads' : 'bandits', !!play?.cities.find(c => c.tile === tile)?.capital),
   // The best defender fights, and falls
   loseDefender: tile => {
     const soldiers = soldiersIn(tile);
@@ -3818,7 +3845,8 @@ function rivalWarWorld(r: Rival): WarWorld<RivalUnit> {
     defence: tile => {
       const c = play!.cities.find(x => x.tile === tile);
       const soldiers = soldiersIn(tile);
-      return { full: soldiers.length, defense: Math.max(1, ...soldiers.map(u => defenseOf(u.kind))), walls: c ? hasWalls(c) : false, terrain: terrainOf(tile), live: true };
+      // The planet's advisor answers the rivals' attacks (STORY-107)
+      return { full: soldiers.length, defense: Math.max(1, ...soldiers.map(u => defenseOf(u.kind))) * defenseBonus(activeBonuses(), 'rival', !!c?.capital), walls: c ? hasWalls(c) : false, terrain: terrainOf(tile), live: true };
     },
     path: landPath,
     roll: k => warRoll(game!.seed + 7919 * (r.id + 1), clock.day, k),
@@ -4328,6 +4356,8 @@ function updatePlay(dt: number) {
   for (let d = 0; d < days; d++) {
     tickDay = clock.day - (days - 1 - d);
     scouting = true;
+    // The scouts see as far as the city area's advisor lets them (STORY-107)
+    play.units.extraSight = sightBonus(activeBonuses());
     // The founding settler's name goes into the chronicle before the settler becomes the city
     const founder = play.units.founding ? (play.units.settler?.name ?? null) : null;
     const founded = play.units.day(world);

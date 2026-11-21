@@ -6,6 +6,7 @@
  */
 
 import type { Person } from '../game/persons';
+import { describeBonus } from '../game/bonuses';
 import { portraitSvg } from './portraits';
 import { renderRich, type Rich, type RichLinks } from './richText';
 
@@ -64,11 +65,13 @@ export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', String(o.selected));
       // The face is our own drawing from constants (portraits.ts); every text goes in as text
-      b.innerHTML = `${o.person ? `<span class="advisor-face">${portraitSvg(o.person, 40)}</span>` : ''}<span class="advisor-option-text"><span class="city-build-top"><span class="city-build-name"></span><span class="city-build-cost advisor-person"></span></span><span class="city-build-info"></span></span>`;
+      b.innerHTML = `${o.person ? `<span class="advisor-face">${portraitSvg(o.person, 40)}</span>` : ''}<span class="advisor-option-text"><span class="city-build-top"><span class="city-build-name"></span><span class="city-build-cost advisor-person"></span></span><span class="city-build-info"></span><span class="advisor-bonus"></span></span>`;
       b.classList.add('advisor-option');
       b.querySelector('.city-build-name')!.textContent = o.name;
       b.querySelector('.advisor-person')!.textContent = o.person ? `${o.person.name} ${o.person.title}` : '';
       b.querySelector('.city-build-info')!.textContent = o.does;
+      // What the person adds while chosen (STORY-107)
+      b.querySelector('.advisor-bonus')!.textContent = o.person ? `Bonus: ${describeBonus(o.person.level, o.person.bonus)}` : '';
       b.addEventListener('click', () => on.choose(o.id));
       options.appendChild(b);
     }

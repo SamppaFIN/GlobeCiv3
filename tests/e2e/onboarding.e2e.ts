@@ -86,17 +86,23 @@ test('a new game greets, the player picks one of three advisors, a short tour sh
   await page.screenshot({ path: testInfo.outputPath('city-advisor.png') });
   await city.getByRole('button', { name: 'Sulje' }).click();
 
-  // A face chooses another advisor: a command too
+  // A face chooses another advisor: a command too. Its bonus is in its name and counts at once
+  // in the capital (STORY-107): Anni's bread makes no shields, Kustaa's +1 does
+  const shields = (await state(page)).cities[0].yield.shield;
   await page.getByRole('button', { name: /^Vaihda neuvonantajaksi Rakentaja/ }).click();
-  await expect(page.getByRole('button', { name: 'Neuvonantaja: Rakentaja, Kustaa Kirvesmies' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Neuvonantaja: Rakentaja, Kustaa Kirvesmies: +1 tuotanto pääkaupungissa' })).toBeVisible();
   expect((await state(page)).townAdvisor).toBe('build');
+  expect((await state(page)).cities[0].yield.shield).toBe(shields + 1);
   // Ohjaan itse brings every menu out
   await page.getByRole('button', { name: 'Neuvonantaja: Rakentaja, Kustaa Kirvesmies' }).click();
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
   await expect(card.getByRole('radio')).toHaveCount(3);
   await expect(card.locator('.advisor-person')).toHaveText(['Kustaa Kirvesmies', 'Anni Leipämuori', 'Juho Polunpolkija']);
+  await expect(card.locator('.advisor-bonus')).toHaveText(['Bonus: +1 tuotanto pääkaupungissa', 'Bonus: +1 leipä päivässä pääkaupungissa', 'Bonus: +1 kauppa pääkaupungissa']);
   await card.getByRole('button', { name: /^Ohjaan itse/ }).click();
   await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
+  // The own hand has no bonus
+  expect((await state(page)).cities[0].yield.shield).toBe(shields);
   await card.getByRole('button', { name: 'Sulje' }).click();
   await expect(page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' })).toBeVisible();
   await page.locator('.city-label', { hasText: s.cities[0].name }).click();
