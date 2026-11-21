@@ -1,0 +1,50 @@
+{
+  "id": "PLAN-081",
+  "story": "STORY-107",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-21",
+  "approach": "Jokaisella 30 henkilöllä on yksi bonus (src/game/persons.ts), ja säännöt ovat tiedostossa src/game/bonuses.ts. Bonus on voimassa vain, kun henkilö on tasonsa aktiivinen neuvonantaja, ja vain tason omissa kohteissa, joten kaksi tasoa ei koskaan kasvata samaa lukua. Kaupunkitason kohteet ovat pääkaupungin tuotto, sen ketjujen leipä ja puolustus rosvoja vastaan. Kaupunkialueen kohteet ovat muiden kaupunkien tuotto, niiden puolustus rosvoja vastaan ja tiedustelijoiden näkö. Läänin kohteet ovat uudisasukkaan hinta ja puolustus paimentolaisia vastaan, valtion kulta ja tiede päivässä, ja planeetan puolustus kilpailijoiden hyökkäyksiä vastaan. Oma ohjaus ei saa bonusta. Jokainen vaikutustyyppi on kytketty yhteen kohtaan säännöissä: cityYields, workDay, Units.sight, cityDay, kassa, tutkimus sekä rosvojen ja kilpailijoiden taistelut. Bonus näkyy kasvonapin saavutettavassa nimessä ja otsikossa, neuvonantajakortissa ja valintakorteissa.",
+  "alternatives_considered": [
+    {
+      "name": "Sama vaikutustyyppi usealla tasolla samaan kohteeseen",
+      "pros": "Enemmän vaihtelua henkilöiden välillä",
+      "cons": "Kaksi aktiivista neuvonantajaa kasvattaisi samaa lukua, mikä rikkoo kasautumissäännön",
+      "rejected_because": "Kriteeri 2: vain oman tasonsa kohteisiin"
+    },
+    {
+      "name": "Bonus kuutena parametrina sääntöfunktioille",
+      "pros": "Ei uutta tyyppiä",
+      "cons": "Suunnitelma pyysi yhtä oliota",
+      "rejected_because": "ActiveBonuses-olio kulkee yhtenä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/bonuses.ts",
+    "src/game/persons.ts",
+    "src/game/cities.ts",
+    "src/game/chains.ts",
+    "src/game/units.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/onboarding.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Kaikki luvut ovat omia, ja ne kalibroidaan pelitestillä",
+    "Planeetan tutkimusmatkailijoiden bonus on puolustus, koska planeettatasolla ei vielä ole muita kohteita"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "bonuses.ts ja henkilöiden bonukset",
+      "verify": "bonuses.test"
+    },
+    {
+      "step": 2,
+      "action": "Kytkennät sääntöihin ja käyttöliittymään",
+      "verify": "onboarding.e2e ja neuvonantajien E2E-testit"
+    }
+  ],
+  "status": "approved"
+}
