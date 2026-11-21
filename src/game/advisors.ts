@@ -24,6 +24,7 @@ import type { StateLine } from './units';
  */
 export type AdvisorLevel = 'town' | 'city' | 'province' | 'state' | 'planet';
 export const ADVISOR_LEVELS: readonly AdvisorLevel[] = ['town', 'city', 'province', 'state', 'planet'];
+export const ADVISOR_LEVEL_NAMES: Record<AdvisorLevel, string> = { town: 'Kaupunki', city: 'Kaupunkialue', province: 'Lääni', state: 'Valtio', planet: 'Planeetta' };
 
 /**
  * The city level's own three (STORY-105, own; Sami 2026-11-21: every level its advisors). They

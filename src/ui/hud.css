@@ -335,6 +335,8 @@
 .rich-advance { color: var(--faith); }
 .rich-resource { color: var(--yield-food); }
 .rich-era { color: var(--c-accent-light); }
+.rich-unittype { color: oklch(0.82 0.09 210); }
+.rich-good { color: var(--yield-trade); }
 button.rich-link {
   font: inherit; font-weight: 600; background: none; border: 0; margin: 0; padding: 2px 0; cursor: pointer;
   text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px;
@@ -348,6 +350,15 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .city-story summary:focus-visible { outline: 2px solid var(--c-accent-light); outline-offset: 2px; border-radius: var(--radius-sm); }
 .city-story-text p { margin: 0 0 8px; color: var(--c-text); }
 .advisor-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+/* The Tietokirja (STORY-104): a sheet over the other cards */
+.codex-card { z-index: 2; }
+.codex-card .codex-back[hidden] { display: none; }
+.codex-card #codex-title:focus { outline: none; }
+.codex-text { margin: 0; font-size: 14px; line-height: 1.5; }
+.codex-facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; margin: 0; font-size: 13px; line-height: 1.5; }
+.codex-facts dt { color: var(--c-muted); }
+.codex-facts dd { margin: 0; }
 
 /* City card (STORY-028, design 8a) */
 .city-card {

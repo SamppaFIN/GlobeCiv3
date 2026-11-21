@@ -10,9 +10,11 @@
  */
 
 import { BUILDS, isWonder, type Building, type City } from './cities';
+import { buildRef, eraRef, resourceRef } from './codex';
 import { mix } from './personNames';
+import { RESOURCE_KINDS } from './science';
 import type { Era } from './persons';
-import type { Terrain } from './terrainTypes';
+import { RESOURCES, type Terrain } from './terrainTypes';
 import { city as cityRef, term, unit as unitRef, type Rich, type Segment } from '../ui/richText';
 
 export type HistoryEvent =
@@ -97,7 +99,7 @@ const ERA_OPENING: Record<Era, readonly string[]> = {
   early: ['Ennen kirjoitusta kaikki muistettiin lauluina.'],
   iron: ['Sitten tuli rauta-aika, ja kirjurit alkoivat pitää aikakirjaa.', 'Rauta-ajan myötä kertomukset vaihtuivat aikakirjoiksi.'],
 };
-const ERA_NOW: Record<Era, Segment> = { early: term('era', 'varhaisaikaa'), iron: term('era', 'rauta-aikaa') };
+const ERA_NOW: Record<Era, Segment> = { early: eraRef('early', 'varhaisaikaa'), iron: eraRef('iron', 'rauta-aikaa') };
 /** The songs count in words. */
 const IN_WORDS: Record<number, string> = { 3: 'kolme', 5: 'viisi', 8: 'kahdeksan' };
 
@@ -137,7 +139,7 @@ export function narrate(city: Pick<City, 'id' | 'name' | 'tile' | 'buildings' | 
   if (log[0]?.kind !== 'founded' && log[0]?.kind !== 'taken') {
     say([name, ` on vanha kaupunki ${IN[terrain]}. Kaupungin alkuvuosista ei ole kirjoitettu.`]);
     const known = city.buildings.filter(b => !log.some(e => e.kind === 'built' && e.building === b));
-    if (known.length) say(['Sen kaduilla seisovat ', ...known.flatMap((b, i): Segment[] => [i ? (i === known.length - 1 ? ' ja ' : ', ') : '', term('building', buildingName(b))]), '.']);
+    if (known.length) say(['Sen kaduilla seisovat ', ...known.flatMap((b, i): Segment[] => [i ? (i === known.length - 1 ? ' ja ' : ', ') : '', buildRef(b, buildingName(b))]), '.']);
   }
   log.forEach(e => {
     if (e.kind === 'era') {
@@ -153,12 +155,14 @@ export function narrate(city: Pick<City, 'id' | 'name' | 'tile' | 'buildings' | 
       case 'founded': {
         const founder: Segment = e.founder && e.founder !== 'Uudisasukas' ? term('person', midName(e.founder)) : 'uudisasukkaat';
         say(fill(pick(v.founded, seed, city.id, e), { c: name, f: founder, p: AT[e.terrain] }));
-        if (e.resource) say(['Seudun aarteena tunnettiin ', term('resource', e.resource.toLowerCase()), '.']);
+        // The log keeps the name; its kind gives the page (STORY-104)
+        const kind = RESOURCE_KINDS.find(k => RESOURCES[k].name === e.resource);
+        if (e.resource) say(['Seudun aarteena tunnettiin ', kind ? resourceRef(kind, true, true) : term('resource', e.resource.toLowerCase()), '.']);
         if (e.near) say(['Lähimpänä naapurina oli ', cityRef(e.near.tile, e.near.name), '.']);
         break;
       }
       case 'built':
-        say(fill(pick(isWonder(e.building) ? v.wonder : v.built, seed, city.id, e), { b: term('building', buildingName(e.building)), d: String(e.day) }));
+        say(fill(pick(isWonder(e.building) ? v.wonder : v.built, seed, city.id, e), { b: buildRef(e.building, buildingName(e.building)), d: String(e.day) }));
         break;
       case 'grew':
         say(fill(pick(v.grew, seed, city.id, e), { d: String(e.day), n: voice === 'early' ? (IN_WORDS[e.size] ?? String(e.size)) : String(e.size) }));

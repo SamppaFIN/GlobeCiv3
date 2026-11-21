@@ -29,6 +29,8 @@ const UNREST_MAX = 8;
 const RATE = 2;
 export const BANDIT_ATTACK = 2;
 export const SOLDIER_DEFENSE = 1;
+/** A soldier's defense by kind: Militia 1, Phalanx 2 (Freeciv civ1 units.ruleset). */
+export const defenseOf = (kind: string) => (kind === 'phalanx' ? 2 : SOLDIER_DEFENSE);
 const FORTIFIED = 1.5;
 const WALLS = 3;
 const DEFENSE_BONUS: Partial<Record<Terrain, number>> = { forest: 50, hills: 100, jungle: 50, mountains: 200, swamp: 50 };

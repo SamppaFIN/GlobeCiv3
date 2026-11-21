@@ -77,6 +77,24 @@ describe('rich text', () => {
     expect([el.nodes()[0].tag, el.textContent]).toEqual(['span', 'Soturi Aino']);
   });
 
+  it('links a term with a page to the Tietokirja, and leaves one without a page as text (STORY-104)', () => {
+    const el = new Node('p');
+    const opened: string[] = [];
+    const { l } = links();
+    const withPages: RichLinks = { ...l, page: key => { opened.push(key); } };
+    renderRich(el as unknown as HTMLElement, [term('building', 'Viljavarasto', 'building/granary'), ' ja ', term('good', 'lankkua', 'good/plank'), ' · ', term('building', 'Kultaa')], withPages);
+    const [g, p, k] = el.nodes();
+    expect([g.tag, g.className, g.attrs['aria-label']]).toEqual(['button', 'rich rich-building rich-link', 'Viljavarasto, rakennus']);
+    expect([p.tag, p.className, p.attrs['aria-label']]).toEqual(['button', 'rich rich-good rich-link', 'lankkua, tavara']);
+    expect(k.tag).toBe('span');
+    g.click();
+    p.click();
+    expect(opened).toEqual(['building/granary', 'good/plank']);
+    // Without a Tietokirja to open, a term with a page is only coloured
+    renderRich(el as unknown as HTMLElement, [term('building', 'Viljavarasto', 'building/granary')], l);
+    expect(el.nodes()[0].tag).toBe('span');
+  });
+
   it('only colours when there are no links (a notice)', () => {
     const el = new Node('div');
     renderRich(el as unknown as HTMLElement, [city(12, 'Aamuranta'), ' kasvoi'], undefined);
