@@ -71,7 +71,11 @@ test('carriers walk the day\'s goods over the risen ground, 24 at most, none wit
   await newGame(calm, true, errors);
   await calm.evaluate(() => (window as any).globeDebug.fastForward(1));
   const same = await runTo(calm, target);
-  expect((await level(calm)).carriers).toBe(0);
+  const left = (await level(calm)).carriers;
+  // A page of browser.newPage() is not closed by the test runner: left open, its game ran on
+  // into the next test and slowed its start past 20 s
+  await calm.close();
+  expect(left).toBe(0);
   expect(same).toEqual(walked);
   expect(errors).toEqual([]);
 });
