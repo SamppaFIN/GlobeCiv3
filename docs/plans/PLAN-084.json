@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-084",
+  "story": "STORY-108",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "PLAYTEST-002:n korjaukset 2 ja 3. Juurisyy rosvoissa: kortti kertoi yhden taistelun todennäköisyyden, vaikka kahden rosvon joukko on voitettava kahdesti ja voittanut rosvo jää paikalle. Esimerkiksi yksi soturi ruohomaalla voittaa yhden taistelun 43 %:n todennäköisyydellä, mutta kahta rosvoa vastaan kaupunki kestää vain 18 %:n todennäköisyydellä. Uusi raids.ts:n holdChance laskee todennäköisyyden, jolla kaupunki kestää koko joukon, samalla tavalla kuin Raids.day taistelee: paras sotilas taistelee ensin, voittanut rosvo jatkaa, ja ilman sotilaita kaupunki ryöstetään. main.ts:n raidPlan kertoo kaupungin tilanteen: todennäköisyys nyt ja yhdellä sotilaalla lisää, saapumispäivä, sotilaan valmistumisaika ja ostohinta. Kortti näyttää nämä, ja jos sotilas ei ehdi ja kassa riittää, kortissa on Osta-vaihtoehto. Vartija ostaa sotilaan samassa tilanteessa, kun hinta on enintään puolet kassasta. Ryöstöilmoitus kertoo, mikä olisi auttanut. Toinen ja myöhemmät kaupungit eivät enää avaa korttiaan perustettaessa, vaan ilmoitus kertoo niistä linkillä.",
+  "alternatives_considered": [
+    {
+      "name": "Rosvojen heikentäminen (yksi rosvo kerrallaan tai pienempi hyökkäys)",
+      "pros": "Puolustus onnistuisi useammin",
+      "cons": "Muuttaa Freecivin civ1-lukuja ja pelin tasapainoa, mikä on Samin päätös",
+      "rejected_because": "Ensin näytetään oikeat todennäköisyydet ja keinot; tasapainon muutos jää Samille"
+    },
+    {
+      "name": "Uuden kaupungin kortti kokonaan pois, myös ensimmäiseltä",
+      "pros": "Johdonmukaista",
+      "cons": "Vanhan alun ensimmäinen kaupunki opettaa kaupunkikortin, ja 12 E2E-testiä nojaa siihen",
+      "rejected_because": "Pelitestin ongelma koski toista kaupunkia, joka aukesi kesken muun"
+    }
+  ],
+  "files_to_change": [
+    "src/game/raids.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Vihreä laatta siirtymässä (PLAYTEST-002 #14) ei toistunut, eikä sitä korjattu",
+    "Vastustajien puute ennen valtiotasoa kuuluu STORY-094:ään"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "holdChance ja sen vertailu Raids.dayhin",
+      "verify": "raids.test"
+    },
+    {
+      "step": 2,
+      "action": "Rosvokortti, osto, Vartijan osto ja ryöstöilmoitus",
+      "verify": "defence.e2e, raids.e2e ja advisors.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Myöhempi kaupunki ei avaa korttiaan",
+      "verify": "defence.e2e"
+    }
+  ],
+  "status": "approved"
+}

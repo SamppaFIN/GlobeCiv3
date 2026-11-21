@@ -1,0 +1,37 @@
+{
+  "id": "TICKET-IMPL-084",
+  "story": "STORY-108",
+  "plan": "PLAN-084",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/raids.ts",
+    "src/game/raids.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/defence.e2e.ts",
+    "tests/e2e/raids.e2e.ts",
+    "tests/e2e/advisors.e2e.ts",
+    "tests/e2e/rich-links.e2e.ts"
+  ],
+  "change_summary": "raids.ts: holdChance(defenses, bandits, terrain, walls, attack). main.ts: raidPlan(c), raidChoices, updateRaidAlert näyttää todennäköisyydet koko joukolle, valmistumisen suhteessa saapumiseen ja tarvittaessa Osta-vaihtoehdon; chooseRaid rakentaa tai ostaa; Vartija ostaa, kun sotilas ei ehdi ja hinta on enintään puolet kassasta; raidLesson lisää ryöstöilmoitukseen keinot; foundAt avaa kortin vain ensimmäiselle kaupungille ja ilmoittaa muista. Debug: raidPlan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "updateRaidAlert",
+      "chooseRaid(index, by)",
+      "foundAt",
+      "raidDay:n ilmoitus"
+    ],
+    "call_sites_found": [
+      "chooseRaid: discoveryCard ja Vartija",
+      "foundAt: units.day, uusi alku, foundHere ja foundIn"
+    ],
+    "call_sites_updated": [
+      "Vartija käyttää yhä indeksiä 0 (rakenna); pelaajan valinta luetaan raidChoicesista",
+      "Uuden alun pääkaupunki, foundHere ja foundIn sulkivat kortin jo ennestään"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "95978ed",
+  "progress": 100,
+  "notes": "Rosvojen luvut (hyökkäys 2, soturin puolustus 1 × maasto × 1,5) pysyivät Freecivin civ1-lukuina. Soturi on rosvoja vastaan heikko: kahta rosvoa vastaan kaupunki kestää ruohomaalla yhdellä soturilla 18 %, kahdella 39 % ja yhdellä falangilla 36 %. Kortti kertoo tämän nyt suoraan. Jos puolustuksen pitää tuntua vahvemmalta, se on tasapainopäätös Samille."
+}

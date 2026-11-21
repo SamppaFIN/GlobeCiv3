@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T22:21:37Z",
+    "generated_at": "2026-11-21T22:46:34Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "b501c7f",
+    "git_commit": "95978ed",
     "git_branch": "main",
     "language": "fi"
   },
@@ -221,9 +221,10 @@
         "STORY-014",
         "STORY-096",
         "STORY-098",
-        "STORY-099"
+        "STORY-099",
+        "STORY-108"
       ],
-      "progress": 62
+      "progress": 67
     },
     {
       "id": "EPIC-010",
@@ -2775,6 +2776,31 @@
       "acceptance_criteria": [
         "Jokaisella 30 henkilöllä on yksi oma bonus yhdestä vaikutustyypistä (ruoka, tuotanto, kauppa, tiede, tavaran teko, näkö, puolustus, asutus tai kulta), ja se näkyy napin saavutettavassa nimessä ja kortissa.",
         "Bonus vaikuttaa vain, kun henkilö on tasonsa aktiivinen neuvonantaja, ja vain oman tasonsa kohteisiin; Oma ohjaus ei saa bonusta, ja jokaisella vaikutustyypillä on yksikkötesti."
+      ]
+    },
+    {
+      "id": "STORY-108",
+      "epic": "EPIC-009",
+      "title": "PLAYTEST-002:n rosvot ja itsestään aukeava kaupunkikortti",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä, kestääkö kaupunki rosvojen hyökkäyksen ja mitä voin tehdä ajoissa, ja haluan, ettei uuden kaupungin kortti peitä näkymää kysymättä, jotta puolustus tuntuu merkitykselliseltä eikä peli hyppää silmille.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-034",
+        "STORY-017"
+      ],
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-084",
+        "implementation": "TICKET-IMPL-084",
+        "testing": "TICKET-TEST-084"
+      },
+      "acceptance_criteria": [
+        "Rosvokortti kertoo, millä todennäköisyydellä kaupunki kestää koko joukon hyökkäyksen nykyisillä sotilailla ja yhdellä sotilaalla lisää, ja ehtiikö sotilas valmiiksi ennen rosvoja. Jos se ei ehdi ja kassa riittää, kortti tarjoaa sotilaan ostoa hintoineen.",
+        "Vartija ostaa uhatun kaupungin sotilaan, kun se ei muuten ehdi valmiiksi ja hinta on enintään puolet kassasta (oma sääntö).",
+        "Ryöstön jälkeen ilmoitus kertoo, mikä olisi auttanut: sotilas tai toinen sotilas, falangi ja muuri, ja tarvittava keksintö, jos sitä ei vielä tunneta.",
+        "Ensimmäisen jälkeen perustettu kaupunki ei avaa korttiaan itsestään, vaan ilmoitus kertoo uudesta kaupungista linkillä."
       ]
     }
   ]
