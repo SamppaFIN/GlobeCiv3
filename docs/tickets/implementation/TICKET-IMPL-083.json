@@ -1,0 +1,48 @@
+{
+  "id": "TICKET-IMPL-083",
+  "story": "STORY-104",
+  "plan": "PLAN-083",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/codex.ts",
+    "src/game/codex.test.ts",
+    "src/ui/codexCard.ts",
+    "src/ui/richText.ts",
+    "src/ui/richText.test.ts",
+    "src/game/history.ts",
+    "src/game/history.test.ts",
+    "src/game/raids.ts",
+    "src/game/advisors.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/codex.e2e.ts",
+    "tests/e2e/area-panel.e2e.ts",
+    "docs/design/hahmot-ja-tarinat.md"
+  ],
+  "change_summary": "codex.ts: PageKind, Page, codexKeys, codexPage(key, known), buildRef, advanceRef, resourceRef, goodRef, eraRef ja personRef sekä BUILD_PURPOSE ja CHAIN_PURPOSE, jotka siirtyivät main.ts:stä sellaisinaan. richText.ts: lajit unittype ja good, TermKind, term(kind, name, page?) ja RichLinks.page. codexCard.ts: dialogi Tietokirja, takaisin- ja sulkunappi, Escape sulkee ja otsikko saa fokuksen. main.ts: codexTrail, openCodex, closeCodex ja showCodex, richLinks.page, kaupunki- ja yksikkölinkit sulkevat Tietokirjan, tasopaneelin pikatoiminto Tietokirja, ja ilmoitusten ja neuvonantajien rakennus-, keksintö-, resurssi- ja henkilötermit kantavat sivunsa. history.ts: kertomuksen rakennukset, aikakausi ja resurssi linkittyvät. defenseOf siirtyi raids.ts:ään ja ADVISOR_LEVEL_NAMES advisors.ts:ään.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Ref (page?)",
+      "term(kind, name, page?)",
+      "RichLinks.page?",
+      "BUILD_PURPOSE ja CHAIN_PURPOSE (siirto)",
+      "defenseOf (siirto)",
+      "ADVISOR_LEVEL_NAMES (siirto)"
+    ],
+    "call_sites_found": [
+      "term: main.ts 12 kutsua, history.ts 5",
+      "renderRich: advisorCard, cityCard, tileCard, discoveryCard ja codexCard",
+      "defenseOf: main.ts viisi kutsua"
+    ],
+    "call_sites_updated": [
+      "main.ts:n term-kutsut vaihtuivat viitefunktioihin; uudisasukkaan nimi kertomuksessa jäi termiksi ilman sivua, koska yksikkö ei ole neuvonantaja",
+      "Ilmoitukset (discoveryCard) piirtyvät edelleen ilman linkkejä",
+      "history.test ja area-panel.e2e päivitettiin uuden käytöksen mukaan, ja muutos sanottiin ääneen"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "b501c7f",
+  "progress": 100,
+  "notes": "Sivuja on 87, ja jokainen viite johtaa olemassa olevalle sivulle (yksikkötesti). Hakemisto ja kaikki maininnat nimeävät tuntemattoman resurssin maastonsa mukaan, mutta resurssirakennusten nimet (esimerkiksi Talli) vihjaavat lajista kuten ennenkin."
+}

@@ -1,0 +1,100 @@
+{
+  "id": "TICKET-TEST-083",
+  "story": "STORY-104",
+  "implementation_ticket": "TICKET-IMPL-083",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Rakennukset, keksinnöt, resurssit ja aikakaudet olivat teksteissä värillisiä termejä ilman paikkaa, jonne ne veisivät, eikä säännöistä ollut pelissä yhtä kuvausta.",
+    "files_changed": [
+      "src/game/codex.ts",
+      "src/ui/codexCard.ts",
+      "src/ui/richText.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "codex.test: sivu jokaiselle rakennukselle, yksikölle, keksinnölle, resurssille, tavaralle, neuvonantajaroolille ja aikakaudelle, tekstin ja tosiasioiden kanssa; tuntemattomat avaimet palauttavat null",
+        "expected": "Kriteeri 1: sivut sääntötaulukoista",
+        "result": "86 sivua ja hakemisto",
+        "outcome": "pass"
+      },
+      {
+        "steps": "codex.test: luvut (viljavaraston hinta, ylläpito ja vaatimus, sahan lankut ja kivet, falangin puolustus, katapultin hyökkäys, uudisasukkaan asukas, keksintöjen polut, hevosten tuotto, leivän ketju ja Rakentajan henkilöt bonuksineen)",
+        "expected": "Kriteeri 1: kuvaus ja luvut",
+        "result": "Kaikki täsmäävät sääntötaulukoihin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "codex.test: yhdelläkään sivulla ei ole sanoja Freeciv, Freeserf, Unciv, ruleset, civ1 tai 'lähde:'",
+        "expected": "Kriteeri 1: lähdettä ei näytetä",
+        "result": "Ei osumia",
+        "outcome": "pass"
+      },
+      {
+        "steps": "codex.test: jokainen viite jokaisella sivulla johtaa olemassa olevalle sivulle sekä kaikki lajit tuntien että ilman, ja hakemisto tavoittaa kaikki sivut",
+        "expected": "Kriteeri 2: viitteet ovat linkkejä olemassa oleville sivuille",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "codex.test: tuntematon resurssilaji näkyy maastonsa nimellä kaikilla sivuilla",
+        "expected": "STORY-072:n salaisuus säilyy",
+        "result": "Läpi; Hevoset näkyy nimellä Tasangon resurssi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "richText.test: sivullinen termi on nappi, jonka saavutettava nimi kertoo lajin ja joka avaa sivun; ilman sivua tai ilman linkkejä termi on teksti",
+        "expected": "Kriteeri 2",
+        "result": "6/6",
+        "outcome": "pass"
+      },
+      {
+        "steps": "codex.e2e: tasopaneelin Tietokirja avaa hakemiston ilman takaisin-nappia, Viljavarasto → Keramiikka, takaisin kahdesti hakemistoon, Escape sulkee; kaupunkikortin kertomuksen 'varhaisaikaa' avaa aikakauden sivun kortin päälle, henkilö vie roolin sivulle, takaisin hakemistoon, sulkeminen jättää kaupunkikortin näkyviin; ei konsolivirheitä",
+        "expected": "Kriteeri 2 selaimessa",
+        "result": "Läpi (1,6 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "area-panel, chronicle, rich-links, onboarding, advisors ja tile-card",
+        "expected": "Ei regressiota",
+        "result": "10/10 läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: hakemisto, keksinnön sivu ja sivu kaupunkikortin päällä",
+        "expected": "Linkit erottuvat väreinä ja alleviivattuina, kortti peittää kaupunkikortin",
+        "result": "Tarkistettu (codex.e2e: index.png, advance.png ja over-card.png)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: codex.e2e index.png, advance.png ja over-card.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Sivut kertovat säännöt ymmärrettävästi",
+        "checked": false
+      },
+      {
+        "item": "Linkit löytyvät ja vievät oikeaan paikkaan puhelimella",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

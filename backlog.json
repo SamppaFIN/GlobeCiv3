@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T21:25:58Z",
+    "generated_at": "2026-11-21T22:21:37Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "932870f",
+    "git_commit": "b501c7f",
     "git_branch": "main",
     "language": "fi"
   },
@@ -278,7 +278,7 @@
         "STORY-107",
         "STORY-104"
       ],
-      "progress": 83
+      "progress": 100
     }
   ],
   "stories": [
@@ -2697,9 +2697,13 @@
         "STORY-103",
         "STORY-105"
       ],
-      "status": "todo",
-      "progress": 0,
-      "linked": {},
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-083",
+        "implementation": "TICKET-IMPL-083",
+        "testing": "TICKET-TEST-083"
+      },
       "acceptance_criteria": [
         "Jokaisella rakennuksella, yksiköllä, keksinnöllä, resurssilla, tavaralla, neuvonantajalla ja aikakaudella on sääntötaulukoista syntyvä sivu, jossa on kuvaus ja luvut. Lähdettä ei näytetä sivulla, vaan lähteet pysyvät koodikommenteissa ja tiketeissä (Sami 2026-11-21).",
         "Sivujen viitteet ovat linkkejä olemassa oleville sivuille, Tietokirja aukeaa linkistä ja tasopaneelista, ja siinä on takaisin-nappi."
