@@ -112,18 +112,25 @@ Pelin sisäinen wiki. Sivut syntyvät sääntötaulukoista:
 - neuvonantajat
 - tasot ja aikakaudet
 
-**Sisältö:** jokaisella sivulla on kuvaus, luvut ja lähde. Lähdekenttä tulee
-sääntötaulukoihin pakollisena. Vahvistetut lähteet kirjataan, muut ovat "oma" tai "ei
-tiedossa", eikä lähdettä arvata (koodaussääntö 5). Avoin kysymys Samille: saako
-avoimen lähdekoodin projektien nimet Freeciv ja Freeserf näkyä pelissä lähteinä?
-Sääntö 4 kieltää vain esikuvapelien nimet. Sivujen väliset viitteet ovat linkkejä. Esimerkiksi viljavarasto viittaa
+**Sisältö:** jokaisella sivulla on kuvaus ja luvut. Lähdettä ei näytetä sivulla (Sami
+2026-11-21), vaan lähteet pysyvät sääntötaulukoiden koodikommenteissa ja tiketeissä
+(sääntö 4). Sivujen väliset viitteet ovat linkkejä. Esimerkiksi viljavarasto viittaa
 keksintöön Keramiikka ja leipä myllyyn.
 
 **Avaaminen:** Tietokirja aukeaa linkistä ja tasopaneelin (i) pikatoiminnosta.
 Kortissa on takaisin-nappi.
 
+**Toteutus (2026-11-22):** sivut syntyvät tiedostossa `src/game/codex.ts`
+sääntötaulukoista, ja kortti on `src/ui/codexCard.ts`. Sivuja on 87: 28 rakennusta,
+8 yksikköä, 15 keksintöä, 11 resurssia, 7 tavaraa, 15 neuvonantajaroolia ja 2
+aikakautta, sekä hakemisto. Henkilön nimi vie roolinsa sivulle, jossa ovat roolin
+henkilöt aikakausittain bonuksineen. Resurssilaji, jota kansa ei vielä tunne, on
+Tietokirjassakin maastonsa nimellä ("Tasangon resurssi"), kuten kartalla
+(STORY-072).
+
 **Testit:**
-- Jokaisella rakennukselle, yksiköllä ja keksinnöllä on sivu, jolla on lähde.
+- Jokaisella rakennuksella, yksiköllä, keksinnöllä, resurssilla, tavaralla, neuvonantajalla
+  ja aikakaudella on sivu, eikä millään sivulla näy lähdettä.
 - Linkit osoittavat olemassa oleville sivuille.
 - E2E: avaus, linkki ja takaisin.
 

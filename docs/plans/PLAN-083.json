@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-083",
+  "story": "STORY-104",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Uusi src/game/codex.ts rakentaa sivut sääntötaulukoista pyydettäessä: rakennukset (BUILDS, UPKEEP, NEEDS, TERRAIN_BUILDINGS, RESOURCE_BUILDINGS ja CHAIN_RULES), yksiköt (BUILDS, NEEDS, ATTACK, defenseOf ja SIGHT), keksinnöt (ADVANCES ja NEEDS), resurssit (RESOURCES ja opensFrom), tavarat (CHAIN_RULES), neuvonantajaroolit (tason roolitaulukot ja ALL_PERSONS bonuksineen) ja aikakaudet, sekä hakemisto. Sivulla on otsikko, laji, teksti ja tosiasiat Rich-segmentteinä, ja jokainen viite on termi, jolla on sivu. Termi saa richText.ts:ssä valinnaisen page-kentän, ja RichLinks saa valinnaisen page-funktion, joten linkki syntyy vain siellä, missä tekstillä on linkit. Pelin tekstit käyttävät codexin viitefunktioita (buildRef, advanceRef, resourceRef, goodRef, eraRef ja personRef). Kortti src/ui/codexCard.ts on muiden korttien päällä, ja main.ts pitää polkua takaisin-nappia varten. Tunnistamaton resurssilaji näytetään maastonsa nimellä (STORY-072).",
+  "alternatives_considered": [
+    {
+      "name": "Viitteiden haku nimen perusteella",
+      "pros": "Vanhat term-kutsut linkittyisivät ilman muutoksia",
+      "cons": "Nimet taipuvat (rauta-aikaa, lankkua), sama nimi on kahdessa lajissa (Kala resurssina ja tavarana), ja tuntematon resurssi paljastuisi",
+      "rejected_because": "Viite kantaa sivunsa avaimen, jolloin jokainen linkki on varmasti oikea"
+    },
+    {
+      "name": "Lähde jokaisen sivun alaosaan",
+      "pros": "Pelaaja näkisi, mistä luku tulee",
+      "cons": "Sami päätti 2026-11-21, ettei lähdettä näytetä",
+      "rejected_because": "Samin päätös"
+    },
+    {
+      "name": "Sivu jokaiselle henkilölle",
+      "pros": "Henkilöllä olisi oma sivunsa",
+      "cons": "30 lähes samanlaista sivua, ja rooli kertoo, mitä henkilö tekee",
+      "rejected_because": "Roolin sivulla ovat sen henkilöt aikakausittain bonuksineen, ja henkilön nimi vie sinne"
+    }
+  ],
+  "files_to_change": [
+    "src/game/codex.ts",
+    "src/ui/codexCard.ts",
+    "src/ui/richText.ts",
+    "src/game/history.ts",
+    "src/game/raids.ts",
+    "src/game/advisors.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Planeetan neuvonantajien sivut kertovat puolustusbonuksen, koska planeettatasolla ei vielä ole muita kohteita (STORY-107)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "codex.ts ja viitefunktiot",
+      "verify": "codex.test: sivut, linkit, luvut, ei lähteitä ja salainen resurssi"
+    },
+    {
+      "step": 2,
+      "action": "Termien sivulinkit richText.ts:ssä ja pelin teksteissä",
+      "verify": "richText.test ja history.test"
+    },
+    {
+      "step": 3,
+      "action": "Kortti, polku ja tasopaneelin pikatoiminto",
+      "verify": "codex.e2e ja kuvakaappaukset"
+    }
+  ],
+  "status": "approved"
+}

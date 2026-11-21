@@ -43,7 +43,7 @@ test('the level panel tells the level, the era and the area, and opens into its 
   await expect(info.locator('dd').first()).toHaveText('Varhaisaika');
   await expect(info.locator('dd').nth(1)).toContainText('Koko 1');
   // Out to the city area only once it is open
-  await expect(info.getByRole('button')).toHaveText(['Kaupunkikortti', /^Neuvonantaja: /]);
+  await expect(info.getByRole('button')).toHaveText(['Kaupunkikortti', /^Neuvonantaja: /, 'Tietokirja']);
   await page.screenshot({ path: testInfo.outputPath('city-level.png') });
   await info.getByRole('button', { name: 'Kaupunkikortti' }).click();
   const card = page.getByRole('dialog', { name });
@@ -53,7 +53,7 @@ test('the level panel tells the level, the era and the area, and opens into its 
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
   // The city area's own advisors come as it opens (STORY-105)
   await page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkialuetta?' }).getByRole('button', { name: /^Ohjaan itse/ }).click();
-  await expect(info.getByRole('button')).toHaveText(['Kaupunkikortti', /^Neuvonantaja: /, 'Kaupunkialueelle']);
+  await expect(info.getByRole('button')).toHaveText(['Kaupunkikortti', /^Neuvonantaja: /, 'Kaupunkialueelle', 'Tietokirja']);
 
   // Up to the city area: its name, its details, and the key i closes the panel
   await info.getByRole('button', { name: 'Kaupunkialueelle' }).click();

@@ -43,7 +43,7 @@ describe('the chronicle (STORY-106)', () => {
     expect(refs(story)).toEqual(expect.arrayContaining([
       { ref: 'city', tile: 500, name: 'Aamuranta' },
       { ref: 'city', tile: 777, name: 'Kuusela' },
-      { ref: 'resource', name: 'hiili' },
+      { ref: 'resource', name: 'hiili', page: 'resource/coal' },
       expect.objectContaining({ ref: 'person' }),
     ]));
   });
@@ -67,10 +67,10 @@ describe('the chronicle (STORY-106)', () => {
     expect(story.length).toBe(2);
     expect(plain(story[1])).toMatch(/^(Sitten tuli rauta-aika|Rauta-ajan myötä)/);
     expect(refs(story)).toEqual(expect.arrayContaining([
-      { ref: 'building', name: 'metsuri' },
-      { ref: 'building', name: 'Kolossi' },
+      { ref: 'building', name: 'metsuri', page: 'building/lumberjack' },
+      { ref: 'building', name: 'Kolossi', page: 'building/colossus' },
       { ref: 'unit', id: 5, name: 'soturi Kalervo' },
-      { ref: 'era', name: 'rauta-aikaa' },
+      { ref: 'era', name: 'rauta-aikaa', page: 'era/iron' },
     ]));
     expect(plain(story[1])).toContain('paimentolaiset');
     expect(plain(story[1])).toContain('99');

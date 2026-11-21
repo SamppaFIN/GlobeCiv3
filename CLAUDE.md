@@ -1,6 +1,6 @@
 # CLAUDE.md — GlobeCiv3
 
-> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · alustettu uudelleen 2026-11-19 (claude.ai-projekti "Globe Civ 3.0") · päivitetty 2026-11-21
+> Generoitu `init-project`-alustuksella 2026-10-09T14:38:29Z · alustettu uudelleen 2026-11-19 (claude.ai-projekti "Globe Civ 3.0") · päivitetty 2026-11-22
 > Lue tämä kokonaan ennen ensimmäistä vastausta jokaisessa uudessa keskustelussa.
 > Osiot 1–11 syntyivät haastattelusta. Osiot 12 ja 13 kasvavat projektin mukana —
 > päivitä päivämäärä aina, kun muutat tiedostoa.
@@ -464,10 +464,10 @@ Suunnitelmat ja tiketit ovat omina tiedostoinaan kansioissa `docs/plans` ja
     {"id": "EPIC-013", "icon": "🎭", "title": "Hahmot ja tarinat", "status": "in_progress", "stories": ["STORY-102", "STORY-105", "STORY-103", "STORY-106", "STORY-107", "STORY-104"]}
   ],
   "mvp_epics": ["EPIC-007", "EPIC-008", "EPIC-009", "EPIC-010", "EPIC-011"],
-  "plans": "PLAN-001 … PLAN-082 (docs/plans)",
-  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-082 (docs/tickets/implementation)",
-  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-082 (docs/tickets/testing)",
-  "next": "Sami lukee PLAYTEST-002:n ja hyväksyy storyt 017, 073–084, 087, 088 ja 096–099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä, ja pelaa ydinsotakokeilua (?planet). PLAYTEST-002:n avoimet löydökset: rosvot ryöstävät puolustuksesta huolimatta, kaupunkikortti aukeaa itsestään, vihreä laatta siirtymässä ja vastustajien puute ennen valtiotasoa. EPIC-013:n storyt 102, 105, 103, 106 ja 107 sekä kantajat (STORY-101) odottavat hyväksyntää, ja seuraavaksi tulee Tietokirja (STORY-104). Kantajien 8 ms:n raja mitataan oikealla GPU:lla (TICKET-TEST-082). STORY-100 (peli englanniksi) MVP:n jälkeen."
+  "plans": "PLAN-001 … PLAN-083 (docs/plans)",
+  "implementation_tickets": "TICKET-IMPL-001 … TICKET-IMPL-083 (docs/tickets/implementation)",
+  "testing_tickets": "TICKET-TEST-001 … TICKET-TEST-083 (docs/tickets/testing)",
+  "next": "Sami lukee PLAYTEST-002:n ja hyväksyy storyt 017, 073–084, 087, 088 ja 096–099 sekä avoimet kysymykset 17–19 ja tasot-ja-aikakaudet.md:n kolme kysymystä, ja pelaa ydinsotakokeilua (?planet). PLAYTEST-002:n avoimet löydökset: rosvot ryöstävät puolustuksesta huolimatta, kaupunkikortti aukeaa itsestään, vihreä laatta siirtymässä ja vastustajien puute ennen valtiotasoa. EPIC-013:n kaikki storyt (102–107) ja kantajat (STORY-101) odottavat hyväksyntää. Kantajien 8 ms:n raja mitataan oikealla GPU:lla (TICKET-TEST-082). STORY-100 (peli englanniksi) MVP:n jälkeen."
 }
 ```
 
