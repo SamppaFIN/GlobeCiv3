@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-085",
+  "story": "STORY-089",
+  "plan": "PLAN-085",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/chains.ts",
+    "src/game/chains.test.ts",
+    "src/game/goals.ts",
+    "src/game/goals.test.ts",
+    "src/game/progress.ts",
+    "src/game/progress.test.ts",
+    "src/game/advisors.ts",
+    "src/game/advisors.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/new-start.e2e.ts",
+    "tests/e2e/carriers.e2e.ts"
+  ],
+  "change_summary": "chains.ts: FOOD_CHAINS, SETTLEMENT_SIZE, settlementSteps ja settlementDone. goals.ts: LevelState { settlement, cities, provinces }, ja tason 4 tavoite 'Tee kaupungista valmis settlementti' (3 askelta, 30 kultaa). advisors.ts: townAdvice(advisor, ready) palauttaa vain painotuksen; Rakentaja painottaa tuotantoa vasta valmiissa settlementissä. main.ts: levelState laskee pääkaupungin askeleet, unitsOpen vaatii kaupunkialueen, nousu tasolle 3 lähettää tiedustelijat, settlementHint kertoo askeleet, ja kaupunkikortin varastorivi kertoo valmiin settlementin. Debug rise käyttää uutta tilaa.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "LevelState",
+      "levelGoal(4)",
+      "townAdvice(advisor, ready)",
+      "unitsOpen",
+      "rise",
+      "chainView"
+    ],
+    "call_sites_found": [
+      "levelState: meterOf, advance ja debug rise",
+      "townAdvice: advisorDay",
+      "unitsOpen: kaupunkikortti, ruudun kortti ja yksikkörakentaminen"
+    ],
+    "call_sites_updated": [
+      "Kaikki",
+      "Vanha alku (?classic) alkaa kaupunkialueelta, joten sen yksiköt ovat auki kuten ennen"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "9dab56b",
+  "progress": 100,
+  "notes": "Tallennusmuoto ei muuttunut: tavoite lasketaan kaupungista eikä tallenneta, joten SAVE_VERSION pysyy. Tallennus, joka on kaupunkitasolla, nousee vasta valmiissa settlementissä. Retkeilijän kuvaus kirjoitettiin uudelleen, koska sana 'Rakentajan' teki onboarding.e2e:n Rakentaja-valinnasta moniselitteisen. Samalla korjattiin STORY-101:n testi: carriers.e2e jätti toisen sivunsa auki, ja sen peli hidasti seuraavan testin käynnistyksen yli 20 s:n (placement.e2e, myös mainissa). Testin tarkistukset eivät muuttuneet."
+}
