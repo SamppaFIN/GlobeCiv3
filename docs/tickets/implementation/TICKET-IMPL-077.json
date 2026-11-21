@@ -1,0 +1,33 @@
+{
+  "id": "TICKET-IMPL-077",
+  "story": "STORY-102",
+  "plan": "PLAN-077",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/personNames.ts",
+    "src/game/personNames.test.ts",
+    "src/game/units.ts",
+    "src/game/units.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/new-start.e2e.ts"
+  ],
+  "change_summary": "Uusi personNames.ts (80 omaa etunimeä ja givenName). Units saa valinnaisen nimeämissiemenen: alkuyksiköt ja spawn nimetään tyypillä ja etunimellä. main.ts antaa siemenen uudessa pelissä, ja ?classic pitää vanhat nimet.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Units constructor (4. parametri naming)",
+      "Units.spawn"
+    ],
+    "call_sites_found": [
+      "main.ts startPlay",
+      "units.test, save.test, levelActions.test (ilman siementä: vanhat nimet)"
+    ],
+    "call_sites_updated": [
+      "main.ts startPlay"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "87882b9",
+  "progress": 100,
+  "notes": "Ensimmäinen versio kirjoitti vahingossa olemassa olevan src/game/names.ts:n (aluenimet) päälle; tiedosto palautettiin gitistä ennen committia, ja uusi koodi on tiedostossa personNames.ts."
+}

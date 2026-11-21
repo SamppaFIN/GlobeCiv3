@@ -1,0 +1,40 @@
+{
+  "id": "PLAN-077",
+  "story": "STORY-102",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-21",
+  "approach": "Uuden pelin yksikön nimi on tyyppi ja etunimi (\"Tiedustelija Kalervo\"). Etunimi lasketaan siemenestä ja yksikön tunnisteesta omasta 80 nimen listasta (src/game/personNames.ts: kalevalaisia ja vanhoja suomalaisia etunimiä), ja elossa olevien kesken nimi ei toistu. Vanha alku ?classic pitää numeroidut nimet. Nimi tallentuu jo yksikön mukana, joten tallennusmuoto ei muutu. Kokonaissuunnitelma: docs/design/hahmot-ja-tarinat.md (EPIC-013), jonka Utu katselmoi (kyllä muutoksin).",
+  "alternatives_considered": [
+    {
+      "name": "Nimet myös vanhaan alkuun",
+      "pros": "Yksi sääntö kaikkialla",
+      "cons": "Noin 15 mekaniikkatestiä nojaa nimiin Uudisasukas ja Tiedustelija 1",
+      "rejected_because": "Vanha alku on kehitystila mekaniikkatesteille; nimet tulevat uuteen peliin, jota pelaaja pelaa"
+    },
+    {
+      "name": "Pelkkä etunimi ilman tyyppiä",
+      "pros": "Lyhyempi",
+      "cons": "Ilmoituksista ei näe, onko kyse tiedustelijasta vai sotilaasta, ja testit hakevat tyypin alusta",
+      "rejected_because": "Tyyppi ja etunimi kertovat molemmat"
+    }
+  ],
+  "files_to_change": [
+    "src/game/personNames.ts",
+    "src/game/units.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Nimilista ja givenName(siemen, tunniste, varatut)",
+      "verify": "Yksikkötestit: determinismi, ei toistoa elossa olevilla, lista ilman kaksoiskappaleita"
+    },
+    {
+      "step": 2,
+      "action": "Units nimeää yksiköt, kun pelillä on siemen; main.ts antaa siemenen paitsi ?classic-tilassa",
+      "verify": "units.test ja new-start.e2e"
+    }
+  ],
+  "status": "approved"
+}

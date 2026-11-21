@@ -1,0 +1,56 @@
+{
+  "id": "TICKET-TEST-077",
+  "story": "STORY-102",
+  "implementation_ticket": "TICKET-IMPL-077",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Yksiköillä oli vain tyyppi ja numero (\"Tiedustelija 1\").",
+    "files_changed": [
+      "src/game/personNames.ts",
+      "src/game/units.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "personNames.test: sama siemen ja tunniste antavat saman nimen, varattu nimi ei toistu, listan lopussa numero, ei kaksoiskappaleita",
+        "expected": "Kriteeri 1 ja 2",
+        "result": "3/3",
+        "outcome": "pass"
+      },
+      {
+        "steps": "units.test: uuden pelin yksiköt ovat tyyppi ja etunimi, sama siemen antaa samat nimet, ei toistoa, vanha alku pitää numerot",
+        "expected": "Kriteerit 1 ja 2",
+        "result": "Vitest 253/253",
+        "outcome": "pass"
+      },
+      {
+        "steps": "new-start.e2e: uuden pelin kaikilla yksiköillä on etunimi; advisors.e2e (tiedustelijat tunnistetaan nimen alusta)",
+        "expected": "Kriteeri 1",
+        "result": "Läpi (2/2)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Yksiköillä on nimet uudessa pelissä",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
