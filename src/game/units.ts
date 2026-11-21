@@ -20,6 +20,7 @@ import { IMPROVEMENT_NAMES, type ImprovementKind, type Job } from './improvement
 import type { UnitsSave } from './save';
 import { tileCenter } from '../globe/hexTiles';
 import { ATTACKER_NAMES, isAttacker, type Attacker } from './war';
+import { givenName } from './personNames';
 
 export type UnitKind = 'scout' | 'settler' | 'warrior' | 'phalanx' | Attacker;
 export type Mode = 'explore' | 'gather' | 'defend';
@@ -79,6 +80,9 @@ export interface World {
   improve?(tile: number, kind: ImprovementKind): void;
 }
 
+/** Each kind's word before a character's given name (STORY-102). */
+const KIND_LABEL: Record<UnitKind, string> = { scout: 'Tiedustelija', settler: 'Uudisasukas', warrior: 'Soturi', phalanx: 'Falangi', ...ATTACKER_NAMES };
+
 export class Units {
   readonly units: Unit[] = [];
   /** The settler's camp: where defenders stay and gatherers bring loads. */
@@ -108,9 +112,15 @@ export class Units {
   /** The home province: Puolustus keeps exploring scouts inside it. */
   homeProvince = -1;
   private nextId = 0;
+  /**
+   * The game's seed when its characters get given names (STORY-102): "Tiedustelija Kalervo".
+   * Null in the old start (?classic), whose units keep "Tiedustelija 1".
+   */
+  private readonly naming: number | null;
 
   /** A new game's units at the landing tile, or a saved game's as they were (STORY-036). */
-  constructor(landing: number, world: World, saved?: UnitsSave) {
+  constructor(landing: number, world: World, saved?: UnitsSave, naming: number | null = null) {
+    this.naming = naming;
     if (saved) {
       this.units.push(...saved.units);
       this.camp = saved.camp;
@@ -127,9 +137,9 @@ export class Units {
     this.camp = landing;
     this.homeProvince = Math.floor(world.cityOf(landing) / 7);
     const land = tilesInRings(landing, 1).filter(id => id !== landing && Number.isFinite(world.cost(id)));
-    this.add('settler', 'Uudisasukas', landing);
-    this.add('scout', 'Tiedustelija 1', land[0] ?? landing);
-    this.add('scout', 'Tiedustelija 2', land[Math.floor(land.length / 2)] ?? landing);
+    this.add('settler', this.nameFor('settler', 'Uudisasukas'), landing);
+    this.add('scout', this.nameFor('scout', 'Tiedustelija 1'), land[0] ?? landing);
+    this.add('scout', this.nameFor('scout', 'Tiedustelija 2'), land[Math.floor(land.length / 2)] ?? landing);
     this.findSites(world);
     for (const u of this.units) if (u.kind === 'scout') world.reveal(tilesInRings(u.tile, this.sight));
   }
@@ -204,7 +214,7 @@ export class Units {
   spawn(kind: UnitKind, tile: number, world: World, home: number | null = null): Unit {
     const n = this.units.filter(u => u.kind === kind).length + 1;
     const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'warrior' ? `Soturi ${n}` : kind === 'phalanx' ? `Falangi ${n}` : isAttacker(kind) ? `${ATTACKER_NAMES[kind]} ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
-    this.add(kind, name, tile);
+    this.add(kind, this.nameFor(kind, name), tile);
     const u = this.units[this.units.length - 1];
     u.home = home;
     if (kind === 'scout') world.reveal(tilesInRings(tile, this.sight));
@@ -233,6 +243,16 @@ export class Units {
     this.founding = false;
     this.settler.path = [];
     return true;
+  }
+
+  /**
+   * The name of the next unit: its kind and a given name free among the living (STORY-102),
+   * or the old numbered name in the old start.
+   */
+  private nameFor(kind: UnitKind, numbered: string): string {
+    if (this.naming === null) return numbered;
+    const taken = new Set(this.units.map(u => u.name.slice(u.name.indexOf(' ') + 1)));
+    return `${KIND_LABEL[kind]} ${givenName(this.naming, this.nextId, taken)}`;
   }
 
   private add(kind: UnitKind, name: string, tile: number) {

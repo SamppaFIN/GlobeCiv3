@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-19T23:18:48Z",
+    "generated_at": "2026-11-21T11:30:03Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "3139f76",
+    "git_commit": "87882b9",
     "git_branch": "main",
     "language": "fi"
   },
@@ -263,6 +263,22 @@
         "STORY-097"
       ],
       "progress": 100
+    },
+    {
+      "id": "EPIC-013",
+      "title": "Hahmot ja tarinat",
+      "icon": "🎭",
+      "description": "Jokaisella hahmolla on nimi, jokaisella tasolla neuvonantajien muotokuvanapit, jokaisen aikakauden neuvonantajilla nimet, kuvat ja bonukset, jokaisella kaupungilla tapahtumista kasvava kertomus, ja tekstit ovat värikkäitä ja linkitettyjä kaupunkeihin, yksiköihin ja Tietokirjaan. Samin toive 2026-11-21. Suunnitelma: docs/design/hahmot-ja-tarinat.md. Ei MVP-epicien listassa, mutta tehdään ennen kantajia.",
+      "status": "in_progress",
+      "stories": [
+        "STORY-102",
+        "STORY-105",
+        "STORY-103",
+        "STORY-106",
+        "STORY-107",
+        "STORY-104"
+      ],
+      "progress": 17
     }
   ],
   "stories": [
@@ -2622,6 +2638,119 @@
         "Jokainen päivän siirto (tuottajalta keskustaan, keskustasta jalostajalle ja työmaalle) näkyy kaupunkitasolla kantajana, joka kävelee korkokuvaa pitkin tavara mukanaan ja ehtii perille saman päivän aikana pelin kellolla.",
         "Kantajia on enintään 24 kerrallaan yhdessä instanssoidussa verkossa, vähennetyllä liikkeellä niitä ei ole, ja kantajat eivät vaikuta peliin (sama siemen ja samat komennot antavat saman tilan).",
         "Pääsäikeen JS-aika pysyy alle 8 ms:n framessa kaupunkitasolla 24 kantajalla; mittauksen laite, selain ja menetelmä kirjataan testitikettiin."
+      ]
+    },
+    {
+      "id": "STORY-102",
+      "epic": "EPIC-013",
+      "title": "Nimet hahmoille",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että jokaisella yksiköllä on oma nimi, jotta tunnistan hahmot ja niiden tarinat.",
+      "effort": "S",
+      "depends_on": [],
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-077",
+        "implementation": "TICKET-IMPL-077",
+        "testing": "TICKET-TEST-077"
+      },
+      "acceptance_criteria": [
+        "Uuden pelin jokaisella yksiköllä on tyyppi ja etunimi (esimerkiksi \"Tiedustelija Kalervo\"), joka lasketaan siemenestä ja yksikön tunnisteesta omasta nimilistasta; elossa olevilla yksiköillä ei ole samaa etunimeä yhtä aikaa.",
+        "Sama siemen ja samat komennot antavat samat nimet, vanhat tallennukset pitävät nimensä, ja vanha alku ?classic pitää vanhat nimet."
+      ]
+    },
+    {
+      "id": "STORY-103",
+      "epic": "EPIC-013",
+      "title": "Rikas teksti ja linkit",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että tekstien nimet ovat värikkäitä ja linkkejä, jotta pääsen kaupunkiin, yksikön sijaintiin tai Tietokirjaan suoraan tekstistä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-102"
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Ilmoitusten, korttien ja kertomusten viitteet (kaupunki, yksikkö, henkilö, rakennus, keksintö, resurssi, aikakausi) piirretään tyypin värillä ja alleviivattuina painikkeina, joiden saavutettava nimi kertoo tyypin.",
+        "Kaupunkilinkki lentää kaupunkiin ja avaa pikapaneelin, yksikkölinkki lentää yksikön nykyiseen ruutuun ja valitsee sen (kohde tarkistetaan napautushetkellä), teksti rakennetaan segmenteistä ilman innerHTML:ää, ja tallennuksesta tuleva nimi tai rikkinäinen viite näkyy pelkkänä tekstinä. Ilmoitukset saavat värit mutta eivät linkkejä."
+      ]
+    },
+    {
+      "id": "STORY-104",
+      "epic": "EPIC-013",
+      "title": "Tietokirja",
+      "type": "story",
+      "narrative": "Pelaajana haluan pelin sisäisen wikin rakennuksista, yksiköistä, keksinnöistä, resursseista, ketjuista, neuvonantajista ja aikakausista, jotta ymmärrän säännöt ja voin seurata linkkejä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-103",
+        "STORY-105"
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Jokaisella rakennuksella, yksiköllä, keksinnöllä, resurssilla, tavaralla, neuvonantajalla ja aikakaudella on sääntötaulukoista syntyvä sivu, jossa on kuvaus, luvut ja lähde (Freeciv civ1, Freeserf tai oma).",
+        "Sivujen viitteet ovat linkkejä olemassa oleville sivuille, Tietokirja aukeaa linkistä ja tasopaneelista, ja siinä on takaisin-nappi."
+      ]
+    },
+    {
+      "id": "STORY-105",
+      "epic": "EPIC-013",
+      "title": "Neuvonantajat kasvoineen",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä joka tasolla neuvonantajieni kasvot ja nimet ja vaihtaa niitä yhdellä napautuksella, ja haluan, että jokainen aikakausi tuo uudet henkilöt, jotta neuvonantajat tuntuvat hahmoilta.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-102"
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Joka tasolla (kaupunki, kaupunkialue, lääni, valtio, planeetta) on tason kolmen neuvonantajan muotokuvanapit ja Ohjaan itse; aktiivinen on korostettu ja vaihto on komento. Kaupunkitasolla on oma kolmikko (Rakentaja, Ruokkija, Retkeilijä), ja vanha tallennus saa sen cityAdvisorista.",
+        "Jokaisella roolilla on aikakausittain oma henkilö (nimi, arvonimi ja oma SVG-muotokuva); Varhaisajalle ja Rauta-ajalle on 30 henkilöä, ja uusi aikakausi vaihtaa henkilöt.",
+        "Puhelimen HUD pysyy alle 28 %:n korkeudesta (tarvittaessa aktiivinen muotokuva avaa kolmikon), napeilla on saavutettavat nimet, ja vanha tallennus latautuu."
+      ]
+    },
+    {
+      "id": "STORY-106",
+      "epic": "EPIC-013",
+      "title": "Kaupungin kertomus",
+      "type": "story",
+      "narrative": "Pelaajana haluan lukea kaupunkini historian kertomuksena, joka kasvaa pelin tapahtumista, jotta kaupungit tuntuvat omilta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-102",
+        "STORY-103"
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Kaupungin tapahtumat (perustaminen ja perustaja, ensimmäiset rakennukset, kasvu, rosvot, ihmeet, aikakausi, valtaus) kirjautuvat tallennettavaan lokiin, ja kaupunkikortti näyttää niistä kronikoitsijan kertomuksen, jonka sävy vaihtuu aikakauden mukana.",
+        "Kertomuksessa on linkit perustajaan, rakennuksiin ja naapureihin, sama loki antaa saman tekstin, ja vanha tallennus saa kertomuksen siitä, mitä tiedetään."
+      ]
+    },
+    {
+      "id": "STORY-107",
+      "epic": "EPIC-013",
+      "title": "Aikakauden neuvonantajien bonukset",
+      "type": "story",
+      "narrative": "Pelaajana haluan, että jokaisella aikakauden neuvonantajalla on oma bonus, jotta valinta muuttaa peliä.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-105"
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {},
+      "acceptance_criteria": [
+        "Jokaisella 30 henkilöllä on yksi oma bonus yhdestä vaikutustyypistä (ruoka, tuotanto, kauppa, tiede, tavaran teko, näkö, puolustus, asutus tai kulta), ja se näkyy napin saavutettavassa nimessä ja kortissa.",
+        "Bonus vaikuttaa vain, kun henkilö on tasonsa aktiivinen neuvonantaja, ja vain oman tasonsa kohteisiin; Oma ohjaus ei saa bonusta, ja jokaisella vaikutustyypillä on yksikkötesti."
       ]
     }
   ]
