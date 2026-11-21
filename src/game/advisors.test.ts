@@ -1,6 +1,6 @@
 import type { ChainBuilding } from './chains';
 import { describe, expect, it } from 'vitest';
-import { chainAdvice, planetTarget, startAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
+import { chainAdvice, planetTarget, townAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
 
@@ -112,34 +112,31 @@ describe('planet advisors (STORY-057)', () => {
   });
 });
 
-describe('governors at the city stage (STORY-070)', () => {
-  const city = (size: number) => ({ ...foundCity([], 1), size });
-  const all: Build[] = ['field', 'fishery', 'sawmill', 'quarry', 'warrior', 'settler', 'scout'];
-  it('a terrain building first, then the unit that opens the next map', () => {
-    expect(startAdvice('none', city(1), { available: all, built: false, soldiers: 0 })).toBeNull();
-    expect(startAdvice('growth', city(1), { available: all, built: false, soldiers: 0 })).toEqual({ focus: 'food', build: 'field' });
-    expect(startAdvice('explore', city(1), { available: all, built: false, soldiers: 0 })).toEqual({ focus: 'production', build: 'sawmill' });
-    // Only what the start's terrain allows
-    expect(startAdvice('explore', city(1), { available: ['fishery', 'field'], built: false, soldiers: 0 })!.build).toBe('field');
-    expect(startAdvice('explore', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('scout');
-    // The scout opens the city area for every advisor (Sami 2026-11-20); no settler at the city level
-    expect(startAdvice('growth', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('scout');
-    expect(startAdvice('growth', city(2), { available: all.filter(b => b !== 'settler'), built: true, soldiers: 0 })!.build).toBe('scout');
-    expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 0 })!.build).toBe('warrior');
-    expect(startAdvice('defend', city(1), { available: all, built: true, soldiers: 1 })!.build).toBe('scout');
+describe('the city level\'s own advisors (STORY-105)', () => {
+  const all: Build[] = ['warrior', 'settler', 'scout'];
+  it('nothing before the first building, then a scout that opens the city area; the Retkeilijä a second', () => {
+    expect(townAdvice('none', { available: all, built: false, scouts: 0 })).toBeNull();
+    expect(townAdvice('build', { available: all, built: false, scouts: 0 })).toEqual({ focus: 'production', build: null });
+    expect(townAdvice('feed', { available: all, built: true, scouts: 0 })).toEqual({ focus: 'food', build: 'scout' });
+    expect(townAdvice('feed', { available: all, built: true, scouts: 1 })!.build).toBeNull();
+    expect(townAdvice('roam', { available: all, built: true, scouts: 1 })).toEqual({ focus: 'balanced', build: 'scout' });
+    expect(townAdvice('roam', { available: all, built: true, scouts: 2 })!.build).toBeNull();
+    // The units open after the first building
+    expect(townAdvice('roam', { available: [], built: true, scouts: 0 })!.build).toBeNull();
   });
 });
 
 describe('governors in a city of chains (STORY-088)', () => {
-  it('the base first, then bread; the Kasvattaja fish before the mill; the own hand none', () => {
+  it('the base first, then bread; the Ruokkija fish before the mill; the own hand none (STORY-105)', () => {
     const built = new Set<ChainBuilding>();
     const open = (b: ChainBuilding) => !built.has(b);
     expect(chainAdvice('none', open)).toBeNull();
-    expect(chainAdvice('explore', open)).toBe('lumberjack');
+    expect(chainAdvice('build', open)).toBe('lumberjack');
     built.add('lumberjack').add('sawmill').add('quarry').add('field');
-    expect(chainAdvice('explore', open)).toBe('mill');
-    expect(chainAdvice('growth', open)).toBe('fishery');
+    expect(chainAdvice('build', open)).toBe('mill');
+    expect(chainAdvice('roam', open)).toBe('mill');
+    expect(chainAdvice('feed', open)).toBe('fishery');
     // No shore: the fishery is not open
-    expect(chainAdvice('growth', b => open(b) && b !== 'fishery')).toBe('mill');
+    expect(chainAdvice('feed', b => open(b) && b !== 'fishery')).toBe('mill');
   });
 });

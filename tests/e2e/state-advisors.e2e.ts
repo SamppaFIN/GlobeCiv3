@@ -46,7 +46,7 @@ test('state advisors: science, taxes, the line, the revolution and the target pr
 
   await page.getByRole('button', { name: 'Neuvonantaja: Oma ohjaus' }).click();
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
-  await expect(card.locator('.advisor-level')).toHaveText('Valtio');
+  await expect(card.locator('.advisor-level')).toHaveText(/^Valtio · (Varhaisaika|Rauta-aika)$/);
   const options = card.getByRole('radio');
   // Three to choose from, and Ohjaan itse below them, pressed (STORY-096)
   await expect(options).toHaveCount(3);

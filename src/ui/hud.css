@@ -194,11 +194,30 @@
 .onboard-card .btn { min-height: var(--touch-target); }
 .onboard-options { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 .onboard-option {
-  display: flex; flex-direction: column; gap: 4px; min-height: 64px; padding: 10px 14px; text-align: left;
+  display: flex; flex-direction: row; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px; text-align: left;
   border: 1px solid #3f424d; border-radius: var(--radius-md); background: var(--c-bg); color: inherit; font: inherit; cursor: pointer;
 }
 .onboard-option:hover { border-color: var(--c-accent-light); }
+.onboard-option-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .onboard-option-name { font-size: 16px; font-weight: 500; }
+.onboard-option-person { font-size: 13px; color: var(--c-accent-text); }
+.onboard-option-person:empty { display: none; }
+/* The advisors' faces (STORY-105): in the HUD, the pick cards and the advisor card */
+.advisor-face { flex: none; display: inline-flex; border-radius: 50%; }
+.city-build.advisor-option { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+.advisor-option-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.advisor-person { color: var(--c-accent-text); }
+.hud-advisors { display: flex; gap: 6px; flex: none; }
+.hud-advisors[hidden] { display: none; }
+.hud-advisor-face {
+  width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid transparent; border-radius: 50%; background: none; cursor: pointer; opacity: 0.62;
+}
+.hud-advisor-face:hover, .hud-advisor-face:focus-visible { opacity: 1; }
+.hud-advisor-face.hud-advisor { border-color: var(--c-accent-light); opacity: 1; }
+.hud-advisor-face svg { width: 40px; height: 40px; }
+/* A phone shows only the chosen face; the advisor card holds the others */
+@media (max-width: 599px) { .hud-advisor-face:not(.hud-advisor) { display: none; } }
 .onboard-option-does { font-size: 13px; line-height: 1.4; color: var(--c-muted); }
 .onboard-own { font-size: 13px; }
 .tour-tip {

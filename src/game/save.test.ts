@@ -47,7 +47,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       id: 1, nextId: 2,
       cities: [{ id: 0, name: 'Mielikkälä', tile: START_TILE + 40, capital: true, size: 2, food: 5, shields: 9, build: 'settler', buildings: [], focus: 'balanced', entertainers: 0 }],
       units: [{ id: 0, kind: 'warrior', tile: START_TILE + 40, path: [], wait: 0, home: 0, site: null }, { id: 1, kind: 'settler', tile: START_TILE + 41, path: [START_TILE + 42], wait: 1, home: 0, site: START_TILE + 43 }],
-    }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000, maps: 3 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, lux: 10, gov: 'anarchy', anarchyUntil: 140, cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3, firsts: ['site', 'raid'],
+    }], ties: [{ met: true, state: 'war', attitude: -55, since: 9, lost: 0, offered: -1000, maps: 3 }], gold: 73, research: { known: ['pottery'], target: 'masonry', bulbs: 4, kinds: ['fish', 'horses'] }, tax: 30, lux: 10, gov: 'anarchy', anarchyUntil: 140, townAdvisor: 'roam', cityAdvisor: 'defend', provinceAdvisor: 'settle', stateAdvisor: 'science', planetAdvisor: 'conquer', targetState: 3, firsts: ['site', 'raid'],
     commands: [
       { day: 3, by: 'player', cmd: { kind: 'settle', tile: START_TILE + 5 } },
       { day: 4, by: 'player', cmd: { kind: 'found', tile: START_TILE + 6 } },
@@ -137,6 +137,17 @@ describe('saved game (STORY-036)', () => {
     expect(validateSave(null, LIMITS)).toBeNull();
     expect(validateSave('{"version":1}', LIMITS)).toBeNull();
     expect(validateSave([], LIMITS)).toBeNull();
+  });
+
+  it('a save from before the city level\'s own advisors gets the one its city area\'s advisor stood for (STORY-105)', () => {
+    const { data } = playedSave();
+    const old: any = JSON.parse(JSON.stringify(data));
+    delete old.townAdvisor;
+    expect(validateSave(old, LIMITS)).toMatchObject({ townAdvisor: 'build', cityAdvisor: 'defend' });
+    // While only the city level was open, the city area's advisor was the city's: the city area has none yet
+    old.progress.openLevel = 4;
+    expect(validateSave(old, LIMITS)).toMatchObject({ townAdvisor: 'build', cityAdvisor: 'none' });
+    expect(validateSave({ ...data, townAdvisor: 'dragon' }, LIMITS)).toBeNull();
   });
 
   it('a city of chains comes back mid-chain, and a city of a save from before has none (STORY-088)', () => {

@@ -51,6 +51,8 @@ test('the level panel tells the level, the era and the area, and opens into its 
   await card.getByRole('button', { name: 'Sulje' }).click();
   await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
+  // The city area's own advisors come as it opens (STORY-105)
+  await page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkialuetta?' }).getByRole('button', { name: /^Ohjaan itse/ }).click();
   await expect(info.getByRole('button')).toHaveText(['Kaupunkikortti', /^Neuvonantaja: /, 'Kaupunkialueelle']);
 
   // Up to the city area: its name, its details, and the key i closes the panel
@@ -111,6 +113,7 @@ test.describe('on a phone', () => {
     await page.screenshot({ path: testInfo.outputPath('phone-panel.png') });
     await page.evaluate(() => (window as any).globeDebug.rise());
     await page.getByRole('button', { name: 'Myöhemmin' }).tap();
+    await page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkialuetta?' }).getByRole('button', { name: /^Ohjaan itse/ }).tap();
     await info.getByRole('button', { name: 'Kaupunkialueelle' }).tap();
     await arrived(page);
     await head.tap();

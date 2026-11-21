@@ -97,7 +97,7 @@ async function conquer(page: Page, testInfo: TestInfo) {
   await expect(page.locator('.planet-name')).toHaveText('Kotivaltio');
   await page.getByRole('button', { name: 'Neuvonantaja: Oma ohjaus' }).click();
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
-  await expect(card.locator('.advisor-level')).toHaveText('Planeetta');
+  await expect(card.locator('.advisor-level')).toHaveText(/^Planeetta · (Varhaisaika|Rauta-aika)$/);
   // Three to choose from, and Ohjaan itse below them, pressed (STORY-096)
   await expect(card.getByRole('radio')).toHaveCount(3);
   await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');

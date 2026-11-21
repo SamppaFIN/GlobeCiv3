@@ -18,9 +18,34 @@ import { isResourceBuilding, RESOURCE_BUILDINGS, SIZE_LIMIT, type Build, type Ci
 import type { Advance } from './science';
 import type { StateLine } from './units';
 
-/** The levels with an advisor (STORY-049–051, STORY-057); the city level shares the city area's. */
-export type AdvisorLevel = 'city' | 'province' | 'state' | 'planet';
-export const ADVISOR_LEVELS: readonly AdvisorLevel[] = ['city', 'province', 'state', 'planet'];
+/**
+ * The levels with an advisor (STORY-049–051, STORY-057): the city level ('town', STORY-105),
+ * the city area ('city'), the province, the state and the planet.
+ */
+export type AdvisorLevel = 'town' | 'city' | 'province' | 'state' | 'planet';
+export const ADVISOR_LEVELS: readonly AdvisorLevel[] = ['town', 'city', 'province', 'state', 'planet'];
+
+/**
+ * The city level's own three (STORY-105, own; Sami 2026-11-21: every level its advisors). They
+ * run the capital of a new game: its chain sites whatever the level, and its builds until the
+ * city area opens. Each builds a scout after the first building, as the scout opens the city area.
+ *
+ *   Rakentaja   production focus; the chain's order: the base, then the field, the mill and the bakery
+ *   Ruokkija    food focus; after the base the field and the fishery, then the mill and the bakery
+ *   Retkeilijä  balanced focus; a second scout after the first, to map the city area faster
+ */
+export type TownAdvisor = 'none' | 'build' | 'feed' | 'roam';
+export const TOWN_ADVISOR_LIST: readonly TownAdvisor[] = ['none', 'build', 'feed', 'roam'];
+
+export const TOWN_ADVISORS: Record<TownAdvisor, { name: string; does: string }> = {
+  none: { name: 'Oma ohjaus', does: 'Valitset kaupungin rakennukset ja työmaat itse kaupunkikortista.' },
+  build: { name: 'Rakentaja', does: 'Metsuri, saha ja louhos ensin, sitten pelto, mylly ja leipomo. Kaupunki painottaa tuotantoa, ja tiedustelija avaa seuraavan kartan.' },
+  feed: { name: 'Ruokkija', does: 'Perustan jälkeen pelto ja kalastamo, sitten mylly ja leipomo, jotta leipää ja kalaa riittää. Kaupunki painottaa ruokaa.' },
+  roam: { name: 'Retkeilijä', does: 'Tiedustelija heti ensimmäisen rakennuksen jälkeen ja toinen perään, jotta seuraava kartta aukeaa ja tulee tutuksi nopeasti.' },
+};
+
+/** A save from before STORY-105 had the city area's advisor run the city level too. */
+export const TOWN_OF_CITY: Record<CityAdvisor, TownAdvisor> = { none: 'none', growth: 'feed', explore: 'roam', defend: 'build' };
 
 export type CityAdvisor = 'none' | 'growth' | 'explore' | 'defend';
 export const CITY_ADVISOR_LIST: readonly CityAdvisor[] = ['none', 'growth', 'explore', 'defend'];
@@ -79,43 +104,28 @@ export function cityAdvice(advisor: CityAdvisor, city: City, n: CityNeeds): { fo
 }
 
 /**
- * The city stage of a new game (STORY-070; Sami 2026-10-20: everything by choosing a governor).
- * Before the next map opens each governor builds a terrain building first, as the units open
- * only after the first building, then the unit that opens the next map: Kartoittaja a scout,
- * Kasvattaja a settler once the city has grown, Vartija a soldier and then a scout.
+ * The chain building the city level's advisor starts next in a city of chains (STORY-088,
+ * STORY-105), whatever the level: the base first, then bread, the Ruokkija the fishery before
+ * the mill. The player's own hand starts none. `open` says whether a building may be started now.
  */
-/** What each governor does at the city stage, for its card. */
-export const START_DOES: Record<CityAdvisor, string> = {
-  none: 'Valitset kaupungin rakennukset itse kaupunkikortista.',
-  growth: 'Metsuri, saha ja louhos ensin, sitten pelto, kalastamo, mylly ja leipomo, jotta kaupunki kasvaa. Tiedustelija avaa seuraavan kartan.',
-  explore: 'Metsuri, saha ja louhos ensin, sitten tiedustelija, joka avaa seuraavan kartan, ja pelto, mylly ja leipomo.',
-  defend: 'Metsuri, saha ja louhos ensin, sitten soturi ja tiedustelija, joka avaa seuraavan kartan.',
-};
-
-/**
- * The chain building a city's governor starts next in a city of chains (STORY-088), whatever
- * the level: the base first, then bread, the Kasvattaja the fishery before the mill. The
- * player's own hand starts none. `open` says whether a building may be started now.
- */
-export function chainAdvice(advisor: CityAdvisor, open: (b: ChainBuilding) => boolean): ChainBuilding | null {
+export function chainAdvice(advisor: TownAdvisor, open: (b: ChainBuilding) => boolean): ChainBuilding | null {
   if (advisor === 'none') return null;
-  const order: ChainBuilding[] = advisor === 'growth'
+  const order: ChainBuilding[] = advisor === 'feed'
     ? ['lumberjack', 'sawmill', 'quarry', 'field', 'fishery', 'mill', 'bakery']
     : ['lumberjack', 'sawmill', 'quarry', 'field', 'mill', 'bakery', 'fishery'];
   return order.find(open) ?? null;
 }
 
-export function startAdvice(advisor: CityAdvisor, _city: City, n: { available: Build[]; built: boolean; soldiers: number }): { focus: Focus; build: Build | null } | null {
+/**
+ * The capital's build while only the city level is open (STORY-070, STORY-105): nothing before
+ * the first building, which is built of planks on its site, and then a scout, which opens the
+ * city area; the Retkeilijä a second one.
+ */
+export function townAdvice(advisor: TownAdvisor, n: { available: Build[]; built: boolean; scouts: number }): { focus: Focus; build: Build | null } | null {
   if (advisor === 'none') return null;
-  const can = (b: Build) => n.available.includes(b);
-  const focus: Focus = advisor === 'growth' ? 'food' : 'production';
-  if (!n.built) {
-    const order: Build[] = advisor === 'growth' ? ['field', 'fishery', 'sawmill', 'quarry'] : ['sawmill', 'quarry', 'field', 'fishery'];
-    return { focus, build: order.find(can) ?? null };
-  }
-  // The scout opens the city area (Sami 2026-11-20); the Vartija has a soldier first
-  if (advisor === 'defend' && n.soldiers < 1 && can('warrior')) return { focus, build: 'warrior' };
-  return { focus, build: can('scout') ? 'scout' : null };
+  const focus: Focus = advisor === 'feed' ? 'food' : advisor === 'build' ? 'production' : 'balanced';
+  if (!n.built || !n.available.includes('scout')) return { focus, build: null };
+  return { focus, build: n.scouts < (advisor === 'roam' ? 2 : 1) ? 'scout' : null };
 }
 
 /** The area the Kartoittaja sends the scouts to: the least mapped one not yet all mapped. */

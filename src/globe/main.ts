@@ -46,9 +46,10 @@ import { RIVALS, Rival, rivalStarts, type RivalUnit, type RivalWorld } from '../
 import { oklchToSrgb } from './colors';
 import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS, TRIBE_REACH, type Tribe } from '../game/nomads';
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, MAX_ARMY, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
-import { chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, startAdvice, START_DOES, type AdvisorLevel, type PlanetAdvisor } from '../game/advisors';
+import { chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, townAdvice, TOWN_ADVISORS, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
+import { ERA_NAMES, personOf, type Era, type Person } from '../game/persons';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
-import { createAdvisorCard } from '../ui/advisorCard';
+import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { createOnboarding } from '../ui/onboarding';
 import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
@@ -60,7 +61,7 @@ import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, step
 import { PulseLayer, type PulseKind } from './pulses';
 import { SAVE_VERSION, validateSave, type FirstKind, type SaveData } from '../game/save';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
-import { createGameHud, type GameHudState } from '../ui/gameHud';
+import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, stateName, type RegionName } from '../game/names';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
@@ -553,7 +554,7 @@ function snapshot(): SaveData | null {
     found: play.found, cities: play.cities.map(c => ({ ...c, buildings: [...c.buildings] })), ties: play.ties.map(t => ({ ...t })), offers: play.offers.map(o => ({ ...o })), offered: [...play.offered],
     lastOfferDay: Number.isFinite(play.lastOfferDay) ? play.lastOfferDay : null, pendingSite: play.pendingSite,
     improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
-    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, firsts: [...play.firsts],
+    research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, townAdvisor: play.townAdvisor, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, firsts: [...play.firsts],
     commands: play.commands.save(),
   };
 }
@@ -653,7 +654,10 @@ interface Play {
   diplomacyOpen: number | null;
   /** The rival whose trade card is open (STORY-078). */
   tradeOpen: number | null;
-  /** The city-level advisor, its card, and what it did lately (STORY-049). */
+  /** The city level's advisor and what it did lately (STORY-105). */
+  townAdvisor: TownAdvisor;
+  townLog: string[];
+  /** The city area's advisor, the advisor card, and what it did lately (STORY-049). */
   cityAdvisor: CityAdvisor;
   advisorOpen: boolean;
   advisorLog: string[];
@@ -777,9 +781,11 @@ function startPlay(startCity: number, saved?: SaveData) {
       play.researchOpen = false;
       play.listOpen = false;
     },
+    // A face in the HUD chooses that advisor of the level in view (STORY-105)
+    chooseAdvisor: (id: string) => { dispatch({ kind: 'advise', level: advisorLevel(), advisor: id }, 'player'); },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -806,7 +812,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
     // The ties with them (STORY-076); a save from before meets them anew
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? play.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []),
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, townAdvisor: saved.townAdvisor, townLog: [], cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []),
     commands: new CommandLog(saved.commands ?? []),
   });
   clock.day = saved.day;
@@ -1440,7 +1446,7 @@ function areaView(): AreaView {
   const era = eraName();
   const city = cityInView();
   const open = p.area.open;
-  const advisor = { id: 'advisor', label: `Neuvonantaja: ${viewLevel === 3 ? CITY_ADVISORS[p.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[p.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[p.stateAdvisor].name : PLANET_ADVISORS[p.planetAdvisor].name}` };
+  const advisor = { id: 'advisor', label: `Neuvonantaja: ${levelAdvisor(advisorLevel()).name}` };
   const up = viewLevel > lockedLevel ? [{ id: 'up', label: 'Taso ylös', key: '-' }] : [];
   if (city) {
     return {
@@ -2214,7 +2220,7 @@ function cityView(c: City, y: CityYield): CityView {
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
     hint: c.size >= sizeLimit(c) ? `Koko ${SIZE_LIMIT} on raja: kaupunki kasvaa vasta vesijohdon kanssa${play!.research.known.has('construction') ? '' : ' (Rakentaminen-tutkimus)'}.`
       : y.surplus <= 1 ? `Kasvaa hitaasti: ${ways.join(', ')}.` : null,
-    advisor: play!.cityAdvisor === 'none' ? null : `Neuvonantaja ${CITY_ADVISORS[play!.cityAdvisor].name} hoitaa painotuksen ja rakentamisen.`,
+    advisor: (a => a.id === 'none' ? null : `Neuvonantaja ${a.name}${a.person ? ` (${a.person.name} ${a.person.title})` : ''} hoitaa ${a.level === 'town' ? 'työmaat ja rakentamisen' : 'painotuksen ja rakentamisen'}.`)(levelAdvisor(c.chain && play!.progress.openLevel === 4 ? 'town' : 'city')),
     own: ownHand(),
     gold: play?.gold ?? 0,
     income: cityGold(c, y, rates().tax, rates().lux) - c.buildings.reduce((sum, b) => sum + UPKEEP[b], 0),
@@ -2304,7 +2310,7 @@ const terrainNear = (c: City, b: TerrainBuilding) => tilesInRings(c.tile, 2).som
 
 
 function advise(text: string, level: AdvisorLevel = 'city') {
-  const log = level === 'city' ? 'advisorLog' : level === 'province' ? 'provinceLog' : level === 'state' ? 'stateLog' : 'planetLog';
+  const log = level === 'town' ? 'townLog' : level === 'city' ? 'advisorLog' : level === 'province' ? 'provinceLog' : level === 'state' ? 'stateLog' : 'planetLog';
   play![log] = [`Päivä ${clock.day}: ${text}`, ...play![log]].slice(0, 4);
 }
 
@@ -2319,7 +2325,7 @@ function advisorDay() {
   if (!p) return;
   p.units.keepHome = p.provinceAdvisor === 'defend';
   if (p.planetAdvisor !== 'none') planetAdvisorDay();
-  if (p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
+  if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
   // The campaign first: a city taken today gets its yields with the others
@@ -2331,8 +2337,10 @@ function advisorDay() {
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
     const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, hasWonder('gardens'), luxury, p.gov);
-    // At the city stage the governor builds the way to the next map (STORY-070)
-    const advice = p.progress.openLevel === 4 ? startAdvice(p.cityAdvisor, c, { available, built: c.buildings.length > 0, soldiers }) : cityAdvice(p.cityAdvisor, c, {
+    // At the city stage the city level's advisor builds the way to the next map (STORY-070, STORY-105)
+    const town = p.progress.openLevel === 4;
+    const scouts = p.units.units.filter(u => u.kind === 'scout').length;
+    const advice = town ? townAdvice(p.townAdvisor, { available, built: c.buildings.length > 0, scouts }) : cityAdvice(p.cityAdvisor, c, {
       available, soldiers, unrestNear: !!yields[i].disorder || bigger.disorder, disorder: !!yields[i].disorder,
       threat: p.raids.band?.city === c.tile, soldier: bestSoldier(), settlers: supportOf(c).settlers,
     });
@@ -2344,12 +2352,12 @@ function advisorDay() {
     const build = war ?? ordered ?? advice?.build ?? null;
     // A settler for a waiting city site is not changed
     if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null)) {
-      const by = war ? 'state' : ordered ? 'province' : 'city';
+      const by = war ? 'state' : ordered ? 'province' : town ? 'town' : 'city';
       if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise(`${c.name} rakentaa: ${BUILDS[build].name}`, by);
     }
-    // The governor keeps a site going in a city of chains (STORY-088), whatever the level
-    const site = c.chain && !c.chain.site ? chainAdvice(p.cityAdvisor, b => chainOpen(c.chain!, c.buildings, b) && spots(c, b, ground).length > 0) : null;
-    if (site && dispatch({ kind: 'build', city: c.tile, build: site }, 'city')) advise(`${c.name} aloitti työmaan: ${BUILDS[site].name}`);
+    // The city level's advisor keeps a site going in a city of chains (STORY-088, STORY-105), whatever the level
+    const site = c.chain && !c.chain.site ? chainAdvice(p.townAdvisor, b => chainOpen(c.chain!, c.buildings, b) && spots(c, b, ground).length > 0) : null;
+    if (site && dispatch({ kind: 'build', city: c.tile, build: site }, 'town')) advise(`${c.name} aloitti työmaan: ${BUILDS[site].name}`, 'town');
     // In disorder a city makes no shields: the Kasvattaja buys the calm (STORY-060), at half the treasury at most
     if (p.cityAdvisor === 'growth' && yields[i].disorder && (c.build === 'temple' || c.build === 'colosseum')) {
       const price = buyCost(c);
@@ -2485,12 +2493,55 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
   }
 }
 
-/** The level whose advisor the card and the button show: the city area, the province or the state, else none. */
-const advisorLevel = (): AdvisorLevel | null => (viewLevel === 3 ? 'city' : viewLevel === 2 ? 'province' : viewLevel === 1 ? 'state' : 'planet');
+/**
+ * The level whose advisors the card and the buttons show: the city level while it is the only
+ * one open or the view is close on the capital of chains (STORY-105), else the level in view.
+ */
+const advisorLevel = (): AdvisorLevel => (viewLevel === 3 ? (!classic && !!play && (play.progress.openLevel === 4 || !!cityInView()?.chain) ? 'town' : 'city') : viewLevel === 2 ? 'province' : viewLevel === 1 ? 'state' : 'planet');
+
+/** The era of the people: the iron age with Rautatyö (own, until Sami decides the era's condition). */
+const eraNow = (): Era => (play?.research.known.has('iron') ? 'iron' : 'early');
+
+/** Each level's advisors: their ids, role names and what they do, the own hand first. */
+const LEVEL_ADVISORS: Record<AdvisorLevel, { list: readonly string[]; names: Record<string, { name: string; does: string }> }> = {
+  town: { list: TOWN_ADVISOR_LIST, names: TOWN_ADVISORS },
+  city: { list: CITY_ADVISOR_LIST, names: CITY_ADVISORS },
+  province: { list: PROVINCE_ADVISOR_LIST, names: PROVINCE_ADVISORS },
+  state: { list: STATE_ADVISOR_LIST, names: STATE_ADVISORS },
+  planet: { list: PLANET_ADVISOR_LIST, names: PLANET_ADVISORS },
+};
+
+/** The chosen advisor of a level. */
+function chosenAdvisor(level: AdvisorLevel): string {
+  const p = play!;
+  return level === 'town' ? p.townAdvisor : level === 'city' ? p.cityAdvisor : level === 'province' ? p.provinceAdvisor : level === 'state' ? p.stateAdvisor : p.planetAdvisor;
+}
+
+/** A level's advisor: the role, its name, and the person of this era in it (none in the own hand). */
+function levelAdvisor(level: AdvisorLevel, id = chosenAdvisor(level)): { id: string; level: AdvisorLevel; name: string; does: string; person: Person | null } {
+  const role = LEVEL_ADVISORS[level].names[id];
+  return { id, level, name: role.name, does: role.does, person: personOf(level, id, eraNow()) };
+}
+
+/** The HUD's advisor buttons of a level (STORY-105): the three faces, then the own hand. */
+function advisorButtons(level: AdvisorLevel): AdvisorButton[] {
+  const chosen = chosenAdvisor(level);
+  const list = LEVEL_ADVISORS[level].list;
+  return [...list.filter(id => id !== 'none'), 'none'].map(id => {
+    const a = levelAdvisor(level, id);
+    return { id, role: a.name, person: a.person, does: a.does, chosen: id === chosen };
+  });
+}
 
 /** Set a level's advisor (the advise command, STORY-096); false when it is not one of that level's. */
 function setAdvisor(level: AdvisorLevel, id: string): boolean {
   if (!play) return false;
+  if (level === 'town' && (TOWN_ADVISOR_LIST as readonly string[]).includes(id)) {
+    play.townAdvisor = id as TownAdvisor;
+    play.townLog = [];
+    return true;
+  }
+
   if (level === 'city' && (CITY_ADVISOR_LIST as readonly string[]).includes(id)) {
     play.cityAdvisor = id as CityAdvisor;
     play.advisorLog = [];
@@ -2510,35 +2561,24 @@ function setAdvisor(level: AdvisorLevel, id: string): boolean {
 const advisorCard = createAdvisorCard(hud_root, {
   close: () => { if (play) play.advisorOpen = false; },
   choose: (id: string) => {
-    const level = advisorLevel();
-    if (level) dispatch({ kind: 'advise', level, advisor: id }, 'player');
+    dispatch({ kind: 'advise', level: advisorLevel(), advisor: id }, 'player');
   },
 });
 
+/** Each advisor level's name in the cards. */
+const ADVISOR_LEVEL_NAMES: Record<AdvisorLevel, string> = { town: 'Kaupunki', city: 'Kaupunkialue', province: 'Lääni', state: 'Valtio', planet: 'Planeetta' };
+
 function updateAdvisorCard() {
   const level = advisorLevel();
-  if (!play || !play.advisorOpen || !level || discoveryCard.visible) {
+  if (!play || !play.advisorOpen || discoveryCard.visible) {
     if (advisorCard.visible) advisorCard.hide();
     return;
   }
-  // At the city stage the city advisor is the city's governor (STORY-070)
-  const stage = play.progress.openLevel === 4;
-  const view = level === 'city' ? {
-    level: stage ? 'Kaupunki · kuvernööri' : 'Kaupunkialue',
-    options: CITY_ADVISOR_LIST.map(id => ({ id, name: CITY_ADVISORS[id].name, does: stage ? START_DOES[id] : CITY_ADVISORS[id].does, selected: id === play!.cityAdvisor })),
-    log: play.advisorLog,
-  } : level === 'province' ? {
-    level: 'Lääni',
-    options: PROVINCE_ADVISOR_LIST.map(id => ({ id, name: PROVINCE_ADVISORS[id].name, does: PROVINCE_ADVISORS[id].does, selected: id === play!.provinceAdvisor })),
-    log: play.provinceLog,
-  } : level === 'state' ? {
-    level: 'Valtio',
-    options: STATE_ADVISOR_LIST.map(id => ({ id, name: STATE_ADVISORS[id].name, does: STATE_ADVISORS[id].does, selected: id === play!.stateAdvisor })),
-    log: play.stateLog,
-  } : {
-    level: 'Planeetta',
-    options: PLANET_ADVISOR_LIST.map(id => ({ id, name: PLANET_ADVISORS[id].name, does: PLANET_ADVISORS[id].does, selected: id === play!.planetAdvisor })),
-    log: play.planetLog,
+  const log = level === 'town' ? play.townLog : level === 'city' ? play.advisorLog : level === 'province' ? play.provinceLog : level === 'state' ? play.stateLog : play.planetLog;
+  const view: AdvisorView = {
+    level: `${ADVISOR_LEVEL_NAMES[level]} · ${ERA_NAMES[eraNow()]}`,
+    options: advisorButtons(level).map(b => ({ id: b.id, name: b.role, does: b.does, selected: b.chosen, person: b.person })),
+    log,
   };
   if (advisorCard.visible) advisorCard.update(view);
   else advisorCard.show(view);
@@ -3305,28 +3345,26 @@ const onboarding = createOnboarding(hud_root, {
   done: () => {},
 });
 
-/** The advisor level of a zoom level: the city and its area share theirs. */
-const advisorOfLevel = (level: number): AdvisorLevel => (level >= 3 ? 'city' : level === 2 ? 'province' : level === 1 ? 'state' : 'planet');
+/** The advisor level of a zoom level: the city level has its own (STORY-105). */
+const advisorOfLevel = (level: number): AdvisorLevel => (level >= 4 ? 'town' : level === 3 ? 'city' : level === 2 ? 'province' : level === 1 ? 'state' : 'planet');
 
 /** The player's own hand: every menu shows. Under an advisor of the level played, only the goal, the time and the advisor. */
 function ownHand(): boolean {
   if (classic || !play) return true;
-  const level = advisorOfLevel(play.progress.openLevel);
-  return (level === 'city' ? play.cityAdvisor : level === 'province' ? play.provinceAdvisor : level === 'state' ? play.stateAdvisor : play.planetAdvisor) === 'none';
+  return chosenAdvisor(advisorOfLevel(play.progress.openLevel)) === 'none';
 }
 
-/** The three advisors of a level as big cards. */
+/** Each level's question in the big advisor cards. */
+const PICK_TITLES: Record<AdvisorLevel, string> = { town: 'Kuka hoitaa kaupunkiasi?', city: 'Kuka hoitaa kaupunkialuetta?', province: 'Kuka hoitaa lääniäsi?', state: 'Kuka hoitaa valtiotasi?', planet: 'Kuka hoitaa suhteet muihin valtioihin?' };
+
+/** The three advisors of a level as big cards, each with this era's person (STORY-105). */
 function showPick(level: number) {
   pickFor = advisorOfLevel(level);
-  const stage = level === 4;
-  const view = pickFor === 'city'
-    ? { kicker: stage ? 'Kaupunki' : 'Kaupunkialue', title: 'Kuka hoitaa kaupunkiasi?', options: CITY_ADVISOR_LIST.map(id => ({ id, name: CITY_ADVISORS[id].name, does: stage ? START_DOES[id] : CITY_ADVISORS[id].does })) }
-    : pickFor === 'province'
-      ? { kicker: 'Lääni', title: 'Kuka hoitaa lääniäsi?', options: PROVINCE_ADVISOR_LIST.map(id => ({ id, name: PROVINCE_ADVISORS[id].name, does: PROVINCE_ADVISORS[id].does })) }
-      : pickFor === 'state'
-        ? { kicker: 'Valtio', title: 'Kuka hoitaa valtiotasi?', options: STATE_ADVISOR_LIST.map(id => ({ id, name: STATE_ADVISORS[id].name, does: STATE_ADVISORS[id].does })) }
-        : { kicker: 'Planeetta', title: 'Kuka hoitaa suhteet muihin valtioihin?', options: PLANET_ADVISOR_LIST.map(id => ({ id, name: PLANET_ADVISORS[id].name, does: PLANET_ADVISORS[id].does })) };
-  onboarding.pick({ ...view, options: view.options.filter(o => o.id !== 'none') });
+  onboarding.pick({
+    kicker: `${ADVISOR_LEVEL_NAMES[pickFor]} · ${ERA_NAMES[eraNow()]}`,
+    title: PICK_TITLES[pickFor],
+    options: advisorButtons(pickFor).filter(b => b.id !== 'none').map(b => ({ id: b.id, name: b.role, does: b.does, person: b.person })),
+  });
 }
 
 /**
@@ -3346,7 +3384,8 @@ function rise(opened: number, reached: NonNullable<ReturnType<typeof levelGoal>>
   // The city area shows once it opens (STORY-017)
   if (opened === 3 && game) reveal(cityTiles(regions, game.startCity));
   // The province, the state and the planet have advisors of their own: chosen once the card is closed (STORY-096)
-  if (!classic && opened <= 2) pickPending = opened;
+  // Each level with advisors of its own asks for one as it opens; the city area too (STORY-105)
+  if (!classic && opened <= 3) pickPending = opened;
 }
 
 /** Chips and panels of the province and state levels, and the unlocks. */
@@ -4235,7 +4274,8 @@ function updatePlay(dt: number) {
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
     goal: (g => g && { text: g.text, reward: g.reward })(levelGoal(play.progress.openLevel)),
-    advisor: viewLevel === 3 ? CITY_ADVISORS[play.cityAdvisor].name : viewLevel === 2 ? PROVINCE_ADVISORS[play.provinceAdvisor].name : viewLevel === 1 ? STATE_ADVISORS[play.stateAdvisor].name : PLANET_ADVISORS[play.planetAdvisor].name,
+    advisor: levelAdvisor(advisorLevel()).name,
+    advisors: advisorButtons(advisorLevel()),
     own: ownHand(),
     research: !play.cities.length || play.researchOpen || !ownHand() ? null
       : play.research.target ? { text: `Tiede · ${studyName(play.research.target)} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
@@ -4467,8 +4507,10 @@ frameStartPlanet();
   setRaids: (on: boolean) => { raidsOn = on; },
   /** Long test games: a faster clock and the advisors of every level (STORY-060). */
   fastForward: (speed: number) => { clock.speed = speed as Speed; clock.paused = false; },
-  setAdvisors: (a: { city?: CityAdvisor; province?: ProvinceAdvisor; state?: StateAdvisor; planet?: PlanetAdvisor }) => {
+  setAdvisors: (a: { town?: TownAdvisor; city?: CityAdvisor; province?: ProvinceAdvisor; state?: StateAdvisor; planet?: PlanetAdvisor }) => {
     if (!play) return;
+    // The city area's advisor alone sets the city level's too, the one it stands for (STORY-105)
+    if (a.town ?? a.city) play.townAdvisor = a.town ?? TOWN_OF_CITY[a.city!];
     if (a.city) play.cityAdvisor = a.city;
     if (a.province) play.provinceAdvisor = a.province;
     if (a.state) play.stateAdvisor = a.state;
@@ -4586,7 +4628,7 @@ frameStartPlanet();
       raidAlert: play?.raidAlert ?? false,
       gold: play?.gold ?? null,
       commands: play?.commands.entries.map(e => ({ day: e.day, by: e.by, kind: e.cmd.kind })) ?? [],
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: (play && levelGoal(play.progress.openLevel)?.text) ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, townAdvisor: play?.townAdvisor ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: (play && levelGoal(play.progress.openLevel)?.text) ?? null,
     };
   },
 };

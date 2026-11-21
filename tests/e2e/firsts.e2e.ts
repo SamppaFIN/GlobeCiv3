@@ -20,10 +20,12 @@ async function cityAreaGame(page: Page, errors: string[], advisor = /^Ohjaan its
   await page.getByRole('button', { name: 'Uusi peli' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
-  await page.getByRole('button', { name: advisor }).click();
+  await page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkiasi?' }).getByRole('button', { name: /^Ohjaan itse/ }).click();
   await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
   await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
+  // The city area's own three come as it opens (STORY-105): the advisor asked for, or the own hand
+  await page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkialuetta?' }).getByRole('button', { name: advisor }).click();
   expect((await state(page)).openLevel).toBe(3);
 }
 
