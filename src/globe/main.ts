@@ -4696,7 +4696,12 @@ frameStartPlanet();
   /** A tile's score as a city site (STORY-065). */
   siteScore: (id: number) => world.siteScore(id),
   /** The card a tapped hex would show (STORY-055). */
-  tileView: (id: number) => (play ? tileView(id) : null),
+  // The rows as plain text, as the tests read them; the card itself colours and links them (STORY-103)
+  tileView: (id: number) => {
+    if (!play) return null;
+    const v = tileView(id);
+    return { ...v, rows: v.rows.map(r => ({ label: r.label, value: plain(r.value) })) };
+  },
   /** Found a city on the first land tile of a province that has none (STORY-016). */
   /** Open the next level as if its goal were reached: its gold and its card (STORY-087). */
   rise: () => {

@@ -49,8 +49,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "CI 48eae87 punainen: war.e2e luki globeDebug.tileView-rivit merkkijonoina, mutta ne olivat nyt segmenttejä (korjattu: debug-rajapinta palauttaa rivit tekstinä), ja rich-links.e2e:n raahaus saattoi tuoda kaupungin keskelle suunnasta riippuen (testin oma vika, korjattu raahaamalla ruutu kiinteään kohtaan). Korjausten jälkeen paikallisesti läpi (3/3); uusi CI-ajo odottaa.",
+        "outcome": "fail"
       }
     ],
     "console_findings": [],

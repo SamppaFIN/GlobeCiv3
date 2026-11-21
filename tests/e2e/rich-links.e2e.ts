@@ -13,13 +13,17 @@ const offCentre = async (page: Page, tile: number) => {
 };
 const settled = (page: Page) => page.waitForFunction(() => !(window as any).globeLevels.state.flying, null, { timeout: 10_000 });
 
-/** Drag the map aside, so a link has somewhere to take the view back to. */
-async function dragAside(page: Page) {
+/**
+ * Drag the map so that a hex goes well off the middle (the grabbed ground stays under the
+ * pointer), so a link has somewhere to take the view back from.
+ */
+async function dragAside(page: Page, tile: number) {
   const size = page.viewportSize()!;
-  const [x, y] = [size.width / 2, size.height * 0.4];
+  const [x, y] = await onScreen(page, tile);
+  const [tx, ty] = [size.width / 2 - 150, size.height / 2 - 80];
   await page.mouse.move(x, y);
   await page.mouse.down();
-  for (let i = 1; i <= 10; i++) await page.mouse.move(x - i * 16, y - i * 10);
+  for (let i = 1; i <= 10; i++) await page.mouse.move(x + ((tx - x) * i) / 10, y + ((ty - y) * i) / 10);
   await page.mouse.up();
   await settled(page);
 }
@@ -65,7 +69,7 @@ test('coloured texts: a unit in the hex card and a city in the advisor log take 
   await expect(link).toBeVisible();
   await expect(link).toHaveClass(/rich-unit/);
   await page.screenshot({ path: testInfo.outputPath('tile-links.png') });
-  await dragAside(page);
+  await dragAside(page, target.tile);
   await expect(card).toBeVisible();
   expect(await offCentre(page, target.tile)).toBeGreaterThan(60);
   await link.click();
@@ -92,7 +96,7 @@ test('coloured texts: a unit in the hex card and a city in the advisor log take 
   await expect(advisor.locator('.advisor-log')).toContainText(`${city} rakentaa sotilaan rosvoja vastaan`);
   await page.screenshot({ path: testInfo.outputPath('advisor-links.png') });
   await advisor.getByRole('button', { name: 'Sulje' }).click();
-  await dragAside(page);
+  await dragAside(page, camp);
   expect(await offCentre(page, camp)).toBeGreaterThan(60);
   await page.getByRole('button', { name: 'Neuvonantaja: Vartija' }).click();
   await cityLink.click();
