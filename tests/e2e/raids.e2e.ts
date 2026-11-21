@@ -96,5 +96,8 @@ test('bandits march on the capital: the card stops the game, and the soldiers fi
   const notices: string[] = await page.evaluate(() => (window as any).globeDebug.notices().filter((n: string) => /rosvo/i.test(n)));
   testInfo.annotations.push({ type: 'raid', description: notices.join(' | ') });
   expect(notices.at(-1)).toMatch(/(Soturi torjui rosvon|Soturit torjuivat \d rosvoa|Rosvot ryöstivät kaupungin) · Aamuranta$/);
+  // The capital's chronicle tells the raid once, held or plundered as the notice said (STORY-106)
+  const raids = (await state(page)).cities[0].history.filter((e: { kind: string }) => e.kind === 'raid');
+  expect(raids).toEqual([expect.objectContaining({ kind: 'raid', held: !notices.at(-1)!.startsWith('Rosvot ryöstivät'), nomads: false })]);
   expect(errors).toEqual([]);
 });

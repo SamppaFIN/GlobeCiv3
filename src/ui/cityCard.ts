@@ -8,7 +8,7 @@
  * build and the buildings in the city (STORY-038).
  */
 import { FOCUS_NAMES, type Build, type Focus } from '../game/cities';
-import { renderRich, type Rich } from './richText';
+import { renderRich, type Rich, type RichLinks } from './richText';
 
 // Icons from design 8a: close, food (grain), production (hammer), trade (coin)
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
@@ -54,6 +54,8 @@ export interface CityView {
   buy: { name: string; price: number; can: boolean } | null;
   /** Names of the buildings in the city. */
   buildings: string[];
+  /** The city's chronicle, a paragraph each era (STORY-106): its founder, buildings and neighbours linked. */
+  story: Rich[];
   /**
    * A city of chains (STORY-088): its stock and site in a line ("Varasto: lankkuja 5 · Työmaa:
    * Saha, puuttuu 2 kiveä"), and its chain buildings to put on the site, built of planks and stone.
@@ -70,7 +72,7 @@ export interface CityCard {
   readonly visible: boolean;
 }
 
-export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(build: Build): void; buy(): void; setFocus(focus: Focus): void; openResearch(): void }): CityCard {
+export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(build: Build): void; buy(): void; setFocus(focus: Focus): void; openResearch(): void; links: RichLinks }): CityCard {
   const el = document.createElement('section');
   el.className = 'city-card';
   el.setAttribute('role', 'dialog');
@@ -103,6 +105,7 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
     </div>
     <span class="city-buildings"></span>
     <span class="city-chain"></span>
+    <details class="city-story"><summary class="city-build-label">Kertomus</summary><div class="city-story-text"></div></details>
     <div class="city-builds city-sites" role="radiogroup" aria-labelledby="city-sites-label">
       <span class="city-builds-head"><span id="city-sites-label" class="city-build-label">Työmaalle</span></span>
     </div>
@@ -121,10 +124,21 @@ export function createCityCard(root: HTMLElement, on: { close(): void; setBuild(
   q('.city-research').addEventListener('click', on.openResearch);
   el.querySelectorAll<HTMLInputElement>('input[name="city-focus"]').forEach(i => i.addEventListener('change', () => on.setFocus(i.value as Focus)));
   let last = '';
+  let lastStory = '';
   const update = (v: CityView) => {
     const key = JSON.stringify(v);
     if (key === last) return;
     last = key;
+    // The chronicle is drawn again only when it changed, so a link keeps its focus
+    const story = JSON.stringify(v.story);
+    if (story !== lastStory) {
+      lastStory = story;
+      q('.city-story-text').replaceChildren(...v.story.map(para => {
+        const el = document.createElement('p');
+        renderRich(el, para, on.links);
+        return el;
+      }));
+    }
     q('.city-kicker').textContent = v.kicker;
     q('.city-name').textContent = v.name;
     q('.city-size').textContent = `Koko ${v.size}`;

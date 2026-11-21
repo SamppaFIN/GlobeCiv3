@@ -51,6 +51,7 @@ import { ERA_NAMES, personOf, type Era, type Person } from '../game/persons';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { city as cityRef, plain, term, unit as unitRef, type Rich, type RichLinks } from '../ui/richText';
+import { marksPassed, narrate, record } from '../game/history';
 import { createOnboarding } from '../ui/onboarding';
 import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
@@ -791,8 +792,10 @@ function startPlay(startCity: number, saved?: SaveData) {
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
     if (newStart && game?.capital !== undefined) {
+      // The settler who founded the capital is named in its chronicle (STORY-106)
+      const founder = units.units.find(u => u.kind === 'settler')?.name ?? null;
       units.units.length = 0;
-      foundAt(game.capital);
+      foundAt(game.capital, founder);
       play.openCity = null;
       // A building first: the city's units come after it (Sami). The capital's buildings are
       // built of planks and stone from its stock, and the lumberjack's site starts (STORY-088)
@@ -919,12 +922,37 @@ function nextJob(u: Unit) {
   return jobIn(workedByCity()[i]) ?? jobIn(workedByCity(2)[i]);
 }
 
-function foundAt(tile: number) {
+function foundAt(tile: number, founder: string | null = null) {
   if (!play) return;
   const city = foundCity(play.cities, tile);
+  chronicleFounding(city, founder);
   moment('city', tile);
   reveal(tilesInRings(tile, CITY_RINGS));
   play.openCity = city.id;
+}
+
+/** The day an event goes into the chronicle: the day being played, in a frame of several. */
+const today = () => tickDay ?? clock.day;
+
+/**
+ * The founding in the city's chronicle (STORY-106): its founder, its land, the special resource
+ * known there, and the nearest city of the player's.
+ */
+function chronicleFounding(city: City, founder: string | null) {
+  const p = play!;
+  const terrain = terrainOf(city.tile);
+  const found = tileTypes.codes[city.tile] & 16 ? TERRAIN_RULES[terrain].resource : null;
+  const at = tileCenter(city.tile);
+  const near = p.cities.filter(c => c !== city).reduce<City | null>((best, c) => (!best || tileCenter(c.tile).distanceTo(at) < tileCenter(best.tile).distanceTo(at) ? c : best), null);
+  record(city, { kind: 'founded', day: today(), founder, terrain, resource: found && knownKind(found) ? RESOURCES[found].name : null, near: near && { name: near.name, tile: near.tile } });
+}
+
+/** The era turned (STORY-106): every city writes it down. Null until the game's first day. */
+let chronicleEra: Era | null = null;
+function chronicleEraDay() {
+  const era = eraNow();
+  if (chronicleEra !== null && era !== chronicleEra) for (const c of play!.cities) record(c, { kind: 'era', day: today(), era });
+  chronicleEra = era;
 }
 
 /**
@@ -960,6 +988,7 @@ function chainDay(c: City, citizens: number) {
   const { done } = buildDay(s);
   if (!done) return;
   c.buildings.push(done);
+  record(c, { kind: 'built', day: today(), building: done });
   moment('city', c.tile);
   discoveryCard.notice([cityRef(c.tile, c.name), ' rakensi: ', term('building', BUILDS[done].name)]);
 }
@@ -1006,11 +1035,16 @@ function cityDays() {
     play!.gold = paid.treasury;
     if (paid.sold.length) discoveryCard.notice(`Kulta loppui: ${c.name} myi ${paid.sold.map(b => BUILDS[b].name.toLowerCase()).join(' ja ')}`);
     if (c.size > size) {
+      // Sizes 3, 5 and 8 go into the chronicle, the first time (STORY-106)
+      for (const m of marksPassed(size, c.size)) if (!c.history?.some(e => e.kind === 'grew' && e.size === m)) record(c, { kind: 'grew', day: today(), size: m });
       discoveryCard.notice([cityRef(c.tile, c.name), ` kasvoi kokoon ${c.size}${cityRings(c.size) > cityRings(size) ? ', ja sen alue laajeni' : ''}`]);
       moment('city', c.tile);
     }
     if (!done) return;
-    if (isBuilding(done)) moment(isWonder(done) ? 'unlock' : 'city', c.tile);
+    if (isBuilding(done)) {
+      moment(isWonder(done) ? 'unlock' : 'city', c.tile);
+      record(c, { kind: 'built', day: today(), building: done });
+    }
     // A unit is named, a building a building (STORY-102, STORY-103)
     const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') ? play!.units.spawn(done, c.tile, world, c.id) : null;
     discoveryCard.notice([cityRef(c.tile, c.name), ` rakensi${isWonder(done) ? ' ihmeen' : ''}: `, made ? unitRef(made.id, made.name) : term('building', BUILDS[done].name)]);
@@ -2123,6 +2157,7 @@ const nearNative = (tile: number) => {
 };
 
 const cityCard = createCityCard(hud_root, {
+  links: richLinks,
   close: () => { if (play) play.openCity = null; },
   // Shields in store are kept: both builds are units, so Freeciv has no change penalty
   setFocus: (focus: Focus) => { if (play && play.openCity !== null) play.cities[play.openCity].focus = focus; },
@@ -2258,6 +2293,7 @@ function cityView(c: City, y: CityYield): CityView {
     research: researchLine(),
     buy: price ? { name: BUILDS[c.build].name, price, can: price <= (play?.gold ?? 0) } : null,
     buildings: c.buildings.map(b => BUILDS[b].name),
+    story: narrate(c, game?.seed ?? 0, eraNow(), terrainOf(c.tile)),
     kicker: `${c.capital ? 'Pääkaupunki' : 'Kaupunki'} · ${nameOf(2, regions.tileTable()[c.tile]).name}`,
     name: c.name,
     size: c.size,
@@ -3022,6 +3058,7 @@ const warWorld: WarWorld = {
       if (rc.city.size <= 1) return 'razed';
       const c = foundCity(p.cities, tile);
       Object.assign(c, { name: rc.city.name, size: rc.city.size - 1, buildings: [...rc.city.buildings] });
+      record(c, { kind: 'taken', day: today(), from: rc.rival.name });
       placeAll(c, ground);
       u.tile = tile;
       u.path = [];
@@ -3039,6 +3076,7 @@ const warWorld: WarWorld = {
     if (size <= 1) return 'razed';
     const c = foundCity(p.cities, tile);
     Object.assign(c, { name: n.name, size: size - 1, native: true });
+    record(c, { kind: 'taken', day: today(), from: null });
     u.tile = tile;
     u.path = [];
     reveal(tilesInRings(tile, CITY_RINGS));
@@ -3133,14 +3171,31 @@ function raidNotice(events: RaidEvent[], nomads = false): string {
 }
 
 /** A day of the band, then perhaps a new uprising against a city. */
+/** The band whose end goes into the chronicle, and whether it plundered (STORY-106). */
+let raidTally: { band: object; plundered: boolean; fought: boolean } | null = null;
+
 function raidDay() {
   if (!play || !game) return;
   const band = play.raids.band;
   const city = band && play.cities.find(c => c.tile === band.city);
+  // The best soldier stands at the gate: if it lives through the day, the chronicle names it
+  const guard = city ? soldiersIn(city.tile).reduce<Unit | null>((a, b) => (!a || defenseOf(b.kind) > defenseOf(a.kind) ? b : a), null) : null;
   const events = play.raids.day(raidWorld);
   if (city && events.length) {
     discoveryCard.notice([`${raidNotice(events, !!band.tribe)} · `, cityRef(city.tile, city.name)]);
     moment(events.includes('plundered') || events.includes('won') ? 'raid' : 'victory', city.tile);
+  }
+  if (band && city) {
+    if (raidTally?.band !== band) raidTally = { band, plundered: false, fought: false };
+    raidTally.plundered ||= events.includes('plundered');
+    raidTally.fought ||= events.length > 0;
+    // The band is gone: held or plundered, it is told once (a band that never reached the city is not)
+    if (!play.raids.band && raidTally.fought) {
+      const held = !raidTally.plundered;
+      const at = held && guard && play.units.units.includes(guard) ? { id: guard.id, name: guard.name } : null;
+      record(city, { kind: 'raid', day: today(), held, defender: at, nomads: !!band.tribe });
+    }
+    if (!play.raids.band) raidTally = null;
   }
   if (play.raids.band || !raidsOn || !play.cities.length || cityStage()) return;
   for (const t of tribesNow()) if (tribeRaids(game.seed, t.tribe, clock.day) && sendTribe(t)) return;
@@ -4273,10 +4328,13 @@ function updatePlay(dt: number) {
   for (let d = 0; d < days; d++) {
     tickDay = clock.day - (days - 1 - d);
     scouting = true;
+    // The founding settler's name goes into the chronicle before the settler becomes the city
+    const founder = play.units.founding ? (play.units.settler?.name ?? null) : null;
     const founded = play.units.day(world);
     scouting = false;
-    founded.forEach(foundAt);
+    founded.forEach(t => foundAt(t, founder));
     cityDays();
+    chronicleEraDay();
     rivalsDay();
     diplomacyDay();
     rivalWarDay();
