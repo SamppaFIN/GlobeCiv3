@@ -16,6 +16,11 @@ export class GameClock {
   paused = false;
   private carry = 0;
 
+  /** How far into the day the clock is, 0 to 1: the city level's carriers walk by it (STORY-101). */
+  get fraction(): number {
+    return Math.min(1, this.carry / DAY_SECONDS);
+  }
+
   /** Advance by wall-clock seconds; returns the number of days that passed. */
   advance(seconds: number): number {
     if (this.paused || seconds <= 0) return 0;
