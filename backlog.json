@@ -2697,7 +2697,7 @@
       "progress": 0,
       "linked": {},
       "acceptance_criteria": [
-        "Jokaisella rakennuksella, yksiköllä, keksinnöllä, resurssilla, tavaralla, neuvonantajalla ja aikakaudella on sääntötaulukoista syntyvä sivu, jossa on kuvaus, luvut ja lähde (Freeciv civ1, Freeserf tai oma).",
+        "Jokaisella rakennuksella, yksiköllä, keksinnöllä, resurssilla, tavaralla, neuvonantajalla ja aikakaudella on sääntötaulukoista syntyvä sivu, jossa on kuvaus ja luvut. Lähdettä ei näytetä sivulla, vaan lähteet pysyvät koodikommenteissa ja tiketeissä (Sami 2026-11-21).",
         "Sivujen viitteet ovat linkkejä olemassa oleville sivuille, Tietokirja aukeaa linkistä ja tasopaneelista, ja siinä on takaisin-nappi."
       ]
     },
