@@ -113,16 +113,14 @@ describe('planet advisors (STORY-057)', () => {
 });
 
 describe('the city level\'s own advisors (STORY-105)', () => {
-  const all: Build[] = ['warrior', 'settler', 'scout'];
-  it('nothing before the first building, then a scout that opens the city area; the Retkeilijä a second', () => {
-    expect(townAdvice('none', { available: all, built: false, scouts: 0 })).toBeNull();
-    expect(townAdvice('build', { available: all, built: false, scouts: 0 })).toEqual({ focus: 'production', build: null });
-    expect(townAdvice('feed', { available: all, built: true, scouts: 0 })).toEqual({ focus: 'food', build: 'scout' });
-    expect(townAdvice('feed', { available: all, built: true, scouts: 1 })!.build).toBeNull();
-    expect(townAdvice('roam', { available: all, built: true, scouts: 1 })).toEqual({ focus: 'balanced', build: 'scout' });
-    expect(townAdvice('roam', { available: all, built: true, scouts: 2 })!.build).toBeNull();
-    // The units open after the first building
-    expect(townAdvice('roam', { available: [], built: true, scouts: 0 })!.build).toBeNull();
+  it('set the focus and build no units: the units wait for the city area, which the ready settlement opens (STORY-089)', () => {
+    expect(townAdvice('none')).toBeNull();
+    expect(townAdvice('build')).toEqual({ focus: 'balanced', build: null });
+    expect(townAdvice('feed')).toEqual({ focus: 'food', build: null });
+    expect(townAdvice('roam')).toEqual({ focus: 'balanced', build: null });
+    // The Rakentaja turns to production once the settlement is ready: before, the city must grow
+    expect(townAdvice('build', true)).toEqual({ focus: 'production', build: null });
+    expect(townAdvice('feed', true)).toEqual({ focus: 'food', build: null });
   });
 });
 

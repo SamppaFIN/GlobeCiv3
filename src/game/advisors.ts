@@ -28,21 +28,22 @@ export const ADVISOR_LEVEL_NAMES: Record<AdvisorLevel, string> = { town: 'Kaupun
 
 /**
  * The city level's own three (STORY-105, own; Sami 2026-11-21: every level its advisors). They
- * run the capital of a new game: its chain sites whatever the level, and its builds until the
- * city area opens. Each builds a scout after the first building, as the scout opens the city area.
+ * run the capital of a new game: its chain sites whatever the level, and its focus until the
+ * city area opens, which the ready settlement does (STORY-089).
  *
- *   Rakentaja   production focus; the chain's order: the base, then the field, the mill and the bakery
+ *   Rakentaja   the chain's order: the base, then the field, the mill and the bakery; production
+ *               focus once the settlement is ready
  *   Ruokkija    food focus; after the base the field and the fishery, then the mill and the bakery
- *   Retkeilijä  balanced focus; a second scout after the first, to map the city area faster
+ *   Retkeilijä  balanced focus; the ready settlement sends two scouts instead of one (main.ts)
  */
 export type TownAdvisor = 'none' | 'build' | 'feed' | 'roam';
 export const TOWN_ADVISOR_LIST: readonly TownAdvisor[] = ['none', 'build', 'feed', 'roam'];
 
 export const TOWN_ADVISORS: Record<TownAdvisor, { name: string; does: string }> = {
   none: { name: 'Oma ohjaus', does: 'Valitset kaupungin rakennukset ja työmaat itse kaupunkikortista.' },
-  build: { name: 'Rakentaja', does: 'Metsuri, saha ja louhos ensin, sitten pelto, mylly ja leipomo. Kaupunki painottaa tuotantoa, ja tiedustelija avaa seuraavan kartan.' },
+  build: { name: 'Rakentaja', does: 'Metsuri, saha ja louhos ensin, sitten pelto, mylly ja leipomo. Kun kaupunki on valmis settlementti, se painottaa tuotantoa.' },
   feed: { name: 'Ruokkija', does: 'Perustan jälkeen pelto ja kalastamo, sitten mylly ja leipomo, jotta leipää ja kalaa riittää. Kaupunki painottaa ruokaa.' },
-  roam: { name: 'Retkeilijä', does: 'Tiedustelija heti ensimmäisen rakennuksen jälkeen ja toinen perään, jotta seuraava kartta aukeaa ja tulee tutuksi nopeasti.' },
+  roam: { name: 'Retkeilijä', does: 'Perusta ja ruokaketju tasapainoisella painotuksella. Kun kaupunki on valmis settlementti, se lähettää kaksi tiedustelijaa yhden sijaan, jotta seuraava kartta tulee tutuksi nopeasti.' },
 };
 
 /** A save from before STORY-105 had the city area's advisor run the city level too. */
@@ -118,15 +119,15 @@ export function chainAdvice(advisor: TownAdvisor, open: (b: ChainBuilding) => bo
 }
 
 /**
- * The capital's build while only the city level is open (STORY-070, STORY-105): nothing before
- * the first building, which is built of planks on its site, and then a scout, which opens the
- * city area; the Retkeilijä a second one.
+ * The capital's way while only the city level is open (STORY-105, STORY-089): its buildings are
+ * built of planks and stone on their sites, and its citizens grow toward a ready settlement; it
+ * builds no units, which wait for the city area. The advisor sets the focus; the Rakentaja's is
+ * production only once the settlement is ready (own: with it from the start a capital stood at
+ * size 2 with no food to spare, seed 42).
  */
-export function townAdvice(advisor: TownAdvisor, n: { available: Build[]; built: boolean; scouts: number }): { focus: Focus; build: Build | null } | null {
+export function townAdvice(advisor: TownAdvisor, ready = false): { focus: Focus; build: Build | null } | null {
   if (advisor === 'none') return null;
-  const focus: Focus = advisor === 'feed' ? 'food' : advisor === 'build' ? 'production' : 'balanced';
-  if (!n.built || !n.available.includes('scout')) return { focus, build: null };
-  return { focus, build: n.scouts < (advisor === 'roam' ? 2 : 1) ? 'scout' : null };
+  return { focus: advisor === 'feed' ? 'food' : advisor === 'build' && ready ? 'production' : 'balanced', build: null };
 }
 
 /** The area the Kartoittaja sends the scouts to: the least mapped one not yet all mapped. */

@@ -9,7 +9,7 @@ const ring4Mapped = (page: Page, tile: number) => page.evaluate(t => {
   return [...rings[4]].filter(id => !rings[3].has(id) && w.globeMap.isMapped(id)).length;
 }, tile);
 
-test('a new game flies down to the city level of a built capital; a building opens the units, and a scout the city area', async ({ page }, testInfo) => {
+test('a new game flies down to the city level of a built capital; the ready settlement opens the city area and sends its scouts', async ({ page }, testInfo) => {
   test.setTimeout(150_000);
   const errors: string[] = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -28,11 +28,11 @@ test('a new game flies down to the city level of a built capital; a building ope
   expect(s.units).toHaveLength(0);
   expect(s.openLevel).toBe(4);
   expect(await page.evaluate(() => (window as any).globeCamera.maxDist)).toBeLessThan(await page.evaluate(() => (window as any).globeLevels.state.frames[3] * 0.6));
-  // The city level's goal (STORY-087): a building, then a scout (Sami 2026-11-20)
-  await expect(page.locator('.hud-goal')).toHaveText('TavoiteRakenna rakennus ja tiedustelija+30 kultaa');
+  // The city level's goal (STORY-087): a ready settlement (STORY-089, Sami 2026-11-22)
+  await expect(page.locator('.hud-goal')).toHaveText('TavoiteTee kaupungista valmis settlementti+30 kultaa');
   // Only the city level shows: its three rings are mapped, the city area beyond them is not (STORY-017)
   expect(await ring4Mapped(page, s.cities[0].tile)).toBe(0);
-  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 2');
+  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3');
 
   // A varied site: three kinds of land or more, and exactly one special resource, within two rings
   const site = await page.evaluate(t => {
@@ -57,7 +57,7 @@ test('a new game flies down to the city level of a built capital; a building ope
   await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
   const governor = page.getByRole('dialog', { name: 'Neuvonantaja' });
 
-  // Before the first building the city builds no units: a building is under way
+  // The city level builds no units: they wait for the city area (STORY-089)
   await page.locator('.city-label', { hasText: s.cities[0].name }).click();
   // The label opens the city's quick panel first (STORY-098)
   await page.getByRole('group', { name: `Kaupunki ${s.cities[0].name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
@@ -67,32 +67,40 @@ test('a new game flies down to the city level of a built capital; a building ope
   const units = builds.getByRole('radio', { name: /Tiedustelija|Soturi|Uudisasukas/ });
   await expect(units.first()).toBeDisabled();
   for (const radio of await units.all()) await expect(radio).toBeDisabled();
-  await expect(card).toContainText('ensimmäisen rakennuksen jälkeen');
-  // The settler belongs to the city area: it waits for it even after the building
   await expect(card).toContainText('kun kaupunkialue avautuu');
+  await expect(card).not.toContainText('ensimmäisen rakennuksen jälkeen');
   // The building is the lumberjack, on its site of planks from the stock (STORY-088)
   expect((await state(page)).cities[0].chain.site.building).toBe('lumberjack');
   await card.getByRole('button', { name: 'Sulje' }).click();
 
-  // The Retkeilijä, the city level's own (STORY-105): its building, then a scout, which opens the city area
+  // The Retkeilijä, the city level's own (STORY-105): the base, then the chain of food and three citizens
   await page.getByRole('button', { name: /^Neuvonantaja: / }).click();
   await governor.getByRole('radio').filter({ hasText: 'Retkeilijä' }).click();
   await governor.getByRole('button', { name: 'Sulje' }).click();
   await page.evaluate(() => (window as any).globeDebug.fastForward(4));
-  // Pause in the frame the building is done: at 4x the scout can follow before a later check
+  // Pause in the frame the base stands: the goal's first step
   await page.waitForFunction(() => {
-    if (!((window as any).globeGame.state.cities[0].buildings.length > 0)) return false;
+    const b: string[] = (window as any).globeGame.state.cities[0].buildings;
+    if (!['lumberjack', 'sawmill', 'quarry'].every(x => b.includes(x))) return false;
     (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
     return true;
   }, null, { timeout: 60_000 });
-  await expect(page.locator('.hud-meter-value')).toHaveText('1 / 2');
+  await expect(page.locator('.hud-meter-value')).toHaveText(/^[12] \/ 3$/);
+  // The goal tells its steps, the base done
+  await page.locator('.hud-goal').click();
+  await expect(page.getByRole('status')).toContainText('Valmis settlementti avaa kaupunkialueen: perusta valmis');
+  expect((await state(page)).units).toHaveLength(0);
   await page.getByRole('button', { name: 'Jatka', exact: true }).click();
-  await page.waitForFunction(() => (window as any).globeGame.state.openLevel === 3, null, { timeout: 60_000 });
+  await page.waitForFunction(() => (window as any).globeGame.state.openLevel === 3, null, { timeout: 120_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
-  expect((await state(page)).units.map((u: { kind: string }) => u.kind)).toContain('scout');
+  // The ready settlement: the base, a chain of food and three citizens; its scouts set off, the Retkeilijä's two
+  const risen = await state(page);
+  expect(risen.cities[0].buildings).toEqual(expect.arrayContaining(['lumberjack', 'sawmill', 'quarry']));
+  expect(risen.cities[0].size).toBeGreaterThanOrEqual(3);
+  expect(risen.units.filter((u: { kind: string }) => u.kind === 'scout')).toHaveLength(2);
   // Every character has a given name from the seed (STORY-102)
   for (const u of (await state(page)).units) expect(u.name).toMatch(/^(Tiedustelija|Soturi|Uudisasukas) \p{Lu}\p{Ll}+/u);
-  await expect(page.getByRole('heading', { name: 'Kaupunkialue avautui, zoomaa ulos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Valmis settlementti: kaupunkialue avautui, zoomaa ulos' })).toBeVisible();
   // The scout shows the next level: the city area is mapped now
   expect(await ring4Mapped(page, s.cities[0].tile)).toBeGreaterThan(0);
   // No city sites were offered at the city level

@@ -2,7 +2,7 @@
  * progress.ts — which zoom levels the player has opened (STORY-026, STORY-087).
  *
  * A new game starts at the city level (STORY-070). Each level opens the next when its own
- * goal is reached (goals.ts): the city's first scout or settler opens the city area, three
+ * goal is reached (goals.ts): the capital as a ready settlement opens the city area, three
  * cities the province, four of the home state's provinces held the state, and all seven
  * (the home state conquered, STORY-016) the planet. Mapping opened the province and the
  * state until STORY-087; it still leads the scouts and the expeditions.
