@@ -1,0 +1,43 @@
+{
+  "id": "TICKET-IMPL-079",
+  "story": "STORY-103",
+  "plan": "PLAN-079",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/ui/richText.ts",
+    "src/ui/richText.test.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/tileCard.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/discoveryCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/rich-links.e2e.ts"
+  ],
+  "change_summary": "Uusi richText.ts (Ref, Segment, Rich, plain, renderRich, city, unit, term). Neuvonantajien lokit ovat Rich[]-listoja, ja neuvonantajakortti piirtää ne <ul>-listana linkkeineen. Ruudun kortin arvo voi olla Rich (kaupunki ja yksiköt linkkeinä). Ilmoitus ottaa Richin, piirtää värit ilman linkkejä ja kirjaa lokiin plain-tekstin. Kaupunkikortin neuvonantajarivi värittää henkilön. Valmiin yksikön ilmoitus nimeää yksikön. richLinks: kaupunki lentää ja avaa pikapaneelin, yksikkö tarkistetaan napautushetkellä, valitaan ja lennetään sen ruutuun; molemmat sulkevat avoimet kortit.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "PlayState.*Log: string[] → Rich[]",
+      "advise(text: string | Rich)",
+      "AdvisorView.log: Rich[]",
+      "createAdvisorCard(on.links)",
+      "TileView.rows.value: string | Rich",
+      "createTileCard(on.links?)",
+      "CityView.advisor: Rich | null",
+      "DiscoveryCard.notice(text: string | Rich)"
+    ],
+    "call_sites_found": [
+      "main.ts: 23 advise-kutsua, 41 ilmoitusta, tileView, areaView (regionView-rivit), cityView, diplomatian kortti",
+      "E2E: .advisor-log-, tile-rows- ja ilmoitustekstit"
+    ],
+    "call_sites_updated": [
+      "Merkkijonot kelpaavat edelleen kaikkialle; nimiä sisältävät yleisimmät kutsut muutettiin segmenteiksi. Aluepaneelin rivit muunnetaan plain-tekstiksi.",
+      "E2E-testejä ei muutettu: näkyvä teksti on sama, paitsi valmiin yksikön ilmoitus, jota mikään testi ei lukenut"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "6ac2e03",
+  "progress": 100,
+  "notes": "Kriteerin 1 muut viitetyypit ovat värillisiä span-elementtejä eivätkä vielä painikkeita, koska niillä ei ole kohdetta ennen Tietokirjaa (STORY-104). Kertomuksia ei vielä ole (STORY-106)."
+}

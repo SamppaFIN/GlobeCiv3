@@ -1,0 +1,46 @@
+{
+  "id": "PLAN-079",
+  "story": "STORY-103",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-21",
+  "approach": "Teksti on segmenttien lista (src/ui/richText.ts): pelkkää tekstiä tai viite kaupunkiin, yksikköön, henkilöön, rakennukseen, keksintöön, resurssiin tai aikakauteen. renderRich rakentaa elementit createElementillä ja textContentillä, joten tallennuksesta tuleva nimi pysyy tekstinä. Jokaisella tyypillä on tokeneista oma värinsä; kaupunki ja elävä yksikkö ovat alleviivattuja painikkeita, joiden saavutettava nimi kertoo tyypin. Neuvonantajien lokit, ruudun kortti ja kaupunkikortin neuvonantajarivi piirtävät segmentit; ilmoitukset saavat värit mutta eivät linkkejä, ja ilmoitusloki pysyy samana tekstinä. Suunnitelma: docs/design/hahmot-ja-tarinat.md (Utun katselmoima).",
+  "alternatives_considered": [
+    {
+      "name": "Merkintäkieli tekstin sisällä ({kaupunki:12})",
+      "pros": "Lokit pysyisivät merkkijonoina",
+      "cons": "Tallennuksen nimi voisi näyttää viitteeltä, ja jäsennin on hyökkäyspinta",
+      "rejected_because": "Utun katselmointi: segmentit ilman innerHTML:ää"
+    },
+    {
+      "name": "Kaikki viitteet painikkeiksi heti",
+      "pros": "Kriteerin 1 kirjaimellinen täyttö",
+      "cons": "Henkilöllä, rakennuksella, keksinnöllä, resurssilla ja aikakaudella ei ole vielä kohdetta, ja painike, joka ei vie minnekään, hämmentää",
+      "rejected_because": "Ne tulevat linkeiksi Tietokirjan (STORY-104) myötä"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/richText.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/tileCard.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/discoveryCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Henkilöt, rakennukset, keksinnöt, resurssit ja aikakaudet linkitetään Tietokirjaan STORY-104:ssä (avoin kysymys 20 ennen sitä)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "richText.ts: segmentit, plain ja renderRich",
+      "verify": "richText.test"
+    },
+    {
+      "step": 2,
+      "action": "Lokit, ilmoitukset, ruudun kortti ja kaupunkikortin neuvonantajarivi; linkkien kohteet main.ts:ssä",
+      "verify": "rich-links.e2e ja lokien, ilmoitusten ja korttien olemassa olevat E2E-testit"
+    }
+  ],
+  "status": "approved"
+}

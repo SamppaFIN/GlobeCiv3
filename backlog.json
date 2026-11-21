@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T12:11:52Z",
+    "generated_at": "2026-11-21T12:36:47Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "33dffca",
+    "git_commit": "6ac2e03",
     "git_branch": "main",
     "language": "fi"
   },
@@ -278,7 +278,7 @@
         "STORY-107",
         "STORY-104"
       ],
-      "progress": 33
+      "progress": 50
     }
   ],
   "stories": [
@@ -2670,9 +2670,13 @@
       "depends_on": [
         "STORY-102"
       ],
-      "status": "todo",
-      "progress": 0,
-      "linked": {},
+      "status": "review",
+      "progress": 90,
+      "linked": {
+        "plan": "PLAN-079",
+        "implementation": "TICKET-IMPL-079",
+        "testing": "TICKET-TEST-079"
+      },
       "acceptance_criteria": [
         "Ilmoitusten, korttien ja kertomusten viitteet (kaupunki, yksikkö, henkilö, rakennus, keksintö, resurssi, aikakausi) piirretään tyypin värillä ja alleviivattuina painikkeina, joiden saavutettava nimi kertoo tyypin.",
         "Kaupunkilinkki lentää kaupunkiin ja avaa pikapaneelin, yksikkölinkki lentää yksikön nykyiseen ruutuun ja valitsee sen (kohde tarkistetaan napautushetkellä), teksti rakennetaan segmenteistä ilman innerHTML:ää, ja tallennuksesta tuleva nimi tai rikkinäinen viite näkyy pelkkänä tekstinä. Ilmoitukset saavat värit mutta eivät linkkejä."
