@@ -52,7 +52,7 @@ import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_L
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { createCodexCard } from '../ui/codexCard';
 import { advanceRef, BUILD_PURPOSE, buildRef, CHAIN_PURPOSE, codexPage, personRef, resourceRef } from '../game/codex';
-import { city as cityRef, plain, unit as unitRef, type Rich, type RichLinks } from '../ui/richText';
+import { city as cityRef, plain, unit as unitRef, type Rich, type RichLinks, type Segment } from '../ui/richText';
 import { marksPassed, narrate, record } from '../game/history';
 import { along, ARRIVE_AT, MAX_CARRIERS, tripsOf, type Trip } from './carriers';
 import { defenseBonus, goldBonus, goodsBonus, scienceBonus, settleBonus, sightBonus, yieldBonus, type ActiveBonuses } from '../game/bonuses';
@@ -61,7 +61,7 @@ import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
 import { directionName, unitStatus, Units, type Mode, type SettlerTask, type Unit, type UnitKind, type World } from '../game/units';
 import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
-import { banditWins, defenseOf, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
+import { defenseOf, holdChance, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
 import { PulseLayer, type PulseKind } from './pulses';
@@ -73,7 +73,7 @@ import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceNa
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
-import { createDiscoveryCard } from '../ui/discoveryCard';
+import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
 import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
@@ -933,7 +933,9 @@ function foundAt(tile: number, founder: string | null = null) {
   chronicleFounding(city, founder);
   moment('city', tile);
   reveal(tilesInRings(tile, CITY_RINGS));
-  play.openCity = city.id;
+  // The first city opens its card; later ones are told, and their card waits for a tap (STORY-108, PLAYTEST-002)
+  if (play.cities.length === 1) play.openCity = city.id;
+  else discoveryCard.notice(['Uusi kaupunki: ', cityRef(city.tile, city.name)]);
 }
 
 /**
@@ -3252,6 +3254,19 @@ function raidNotice(events: RaidEvent[], nomads = false): string {
   ].filter(Boolean).join(' · ');
 }
 
+/**
+ * After a plunder, what would have held the city (STORY-108; PLAYTEST-002): a soldier, then a
+ * second one, a phalanx and walls, each with what it needs when it is not known yet.
+ */
+function raidLesson(c: City, hadSoldier: boolean): Segment[] {
+  const p = play!;
+  const helps: Segment[][] = [[hadSoldier ? 'toinen sotilas' : 'sotilas']];
+  if (!p.research.known.has('bronze')) helps.push([buildRef('phalanx', 'falangi'), ' (', advanceRef('bronze'), ')']);
+  else helps.push([buildRef('phalanx', 'falangi')]);
+  if (!hasWalls(c)) helps.push(p.research.known.has('masonry') ? [buildRef('walls', 'muuri')] : [buildRef('walls', 'muuri'), ' (', advanceRef('masonry'), ')']);
+  return ['. Puolustukseksi auttaa ', ...helps.flatMap((h, i) => [...(i === 0 ? [] : [i === helps.length - 1 ? ' tai ' : ', ']), ...h])];
+}
+
 /** A day of the band, then perhaps a new uprising against a city. */
 /** The band whose end goes into the chronicle, and whether it plundered (STORY-106). */
 let raidTally: { band: object; plundered: boolean; fought: boolean } | null = null;
@@ -3264,7 +3279,7 @@ function raidDay() {
   const guard = city ? soldiersIn(city.tile).reduce<Unit | null>((a, b) => (!a || defenseOf(b.kind) > defenseOf(a.kind) ? b : a), null) : null;
   const events = play.raids.day(raidWorld);
   if (city && events.length) {
-    discoveryCard.notice([`${raidNotice(events, !!band.tribe)} · `, cityRef(city.tile, city.name)]);
+    discoveryCard.notice([`${raidNotice(events, !!band.tribe)} · `, cityRef(city.tile, city.name), ...(events.includes('plundered') ? raidLesson(city, events.includes('won') || (raidTally?.band === band && raidTally.fought)) : [])]);
     moment(events.includes('plundered') || events.includes('won') ? 'raid' : 'victory', city.tile);
   }
   if (band && city) {
@@ -3301,16 +3316,43 @@ function startRaid(c: City): boolean {
   return true;
 }
 
-/** The card on a band's first sight: build a soldier, or trust the defence. */
+/**
+ * What a city can do against the band on its way (STORY-108): the chance it holds against the whole
+ * band now and with one soldier more, whether the soldier is ready before the band arrives, and
+ * what buying it costs.
+ */
+function raidPlan(c: City) {
+  const band = play!.raids.band!;
+  const bonus = defenseBonus(activeBonuses(), band.tribe ? 'nomads' : 'bandits', !!c.capital);
+  const defenses = soldiersIn(c.tile).map(u => defenseOf(u.kind) * bonus);
+  const soldier = bestSoldier();
+  const n = band.bandits.length;
+  const hold = (d: number[]) => holdChance(d, n, terrainOf(c.tile), hasWalls(c), band.attack);
+  const arrive = play!.raids.daysToCity(id => world.cost(id));
+  const ready = daysToBuild({ ...c, build: soldier, shields: c.build === soldier ? c.shields : 0 }, cityYields()[play!.cities.indexOf(c)]);
+  const inTime = ready !== null && Math.max(1, ready) <= arrive;
+  const price = buyCost({ ...c, build: soldier, shields: c.build === soldier ? c.shields : 0 });
+  return { soldier, n, arrive, ready, inTime, price, now: hold(defenses), withOne: hold([...defenses, defenseOf(soldier) * bonus]) };
+}
+const pct = (x: number) => `${Math.round(x * 100)} %`;
+/** What the raid card's buttons do, in their order. */
+let raidChoices: ('build' | 'buy' | 'later')[] = ['build', 'later'];
+
+/** The card on a band's first sight: build a soldier, buy one, or trust the defence. */
 function updateRaidAlert() {
   const band = play?.raids.band;
   if (!play || !band || !play.raidAlert) return;
   const lead = band.bandits[0].tile;
-  // The Vartija answers the card itself: the city builds a soldier (STORY-049)
+  // The Vartija answers the card itself: the city builds a soldier, and buys it when it would come too late (STORY-049, STORY-108)
   if (play.cityAdvisor === 'defend') {
     const c = play.cities.find(x => x.tile === band.city);
+    const plan = c && raidPlan(c);
     chooseRaid(0, 'city');
-    if (c) advise([cityRef(c.tile, c.name), ' rakentaa sotilaan rosvoja vastaan']);
+    if (c && plan) {
+      // Own rule: at half the treasury at most, as the Kasvattaja buys the calm
+      const bought = !plan.inTime && plan.price > 0 && plan.price * 2 <= play.gold && c.build === plan.soldier && dispatch({ kind: 'buy', city: c.tile }, 'city');
+      advise([cityRef(c.tile, c.name), bought ? ` osti sotilaan rosvoja vastaan (${plan.price} kultaa)` : ' rakentaa sotilaan rosvoja vastaan'], 'city');
+    }
     return;
   }
   if (!discoveryCard.visible) {
@@ -3318,18 +3360,26 @@ function updateRaidAlert() {
     moment('raid', lead);
     const c = play.cities.find(x => x.tile === band.city)!;
     const soldiers = soldiersIn(c.tile).length;
-    const soldier = bestSoldier();
-    const ready = daysToBuild({ ...c, build: soldier }, cityYields()[play.cities.indexOf(c)]);
-    const n = band.bandits.length;
+    const plan = raidPlan(c);
+    const [who, they] = band.tribe ? ['paimentolaisia', 'paimentolaiset'] : ['rosvoja', 'rosvot'];
+    const name = plan.soldier === 'phalanx' ? 'falangi' : 'soturi';
+    const Name = plan.soldier === 'phalanx' ? 'Falangi' : 'Soturi';
+    // The chances are for the whole band, fight after fight (STORY-108)
+    const keeps = (x: number) => `kaupunki kestää ${pct(x)}`;
+    const choices: { kind: 'build' | 'buy' | 'later'; option: { kind: ChoiceKind; title: string; effect: string } }[] = [
+      { kind: 'build', option: { kind: 'defend', title: `Rakenna ${name}`, effect: plan.ready === null ? 'Kaupungilla ei ole tuotantoa' : plan.inTime ? `Valmis ${Math.max(1, plan.ready)} pv, ennen ${who} · ${keeps(plan.withOne)}` : `Valmis vasta ${plan.ready} pv: ${they} ehtivät ensin` } },
+    ];
+    if (!plan.inTime && plan.price > 0 && plan.price <= play.gold) {
+      choices.push({ kind: 'buy', option: { kind: 'defend', title: `Osta ${name}`, effect: `${plan.price} kultaa, valmis huomenna · ${keeps(plan.withOne)}` } });
+    }
+    choices.push({ kind: 'later', option: { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? keeps(plan.now) : `Ilman sotilasta ${they} ryöstävät kaupungin` } });
+    raidChoices = choices.map(x => x.kind);
     discoveryCard.show({
       day: clock.day,
       kicker: `Uhka · ${c.name}`,
       title: band.tribe ? `${band.tribe} hyökkää` : 'Rosvoja liikkeellä',
-      body: `${band.tribe ? `${n} paimentolaista` : n === 1 ? 'Rosvo' : `${n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${play.raids.daysToCity(id => world.cost(id))} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} soturi${soldiers === 1 ? '' : 'a'}.` : 'Kaupungissa ei ole sotureita.'}`,
-      options: [
-        { kind: 'defend', title: 'Rakenna soturi', effect: ready === null ? 'Kaupungilla ei ole tuotantoa' : `Valmis ${Math.max(1, ready)} pv` },
-        { kind: 'later', title: 'Luota puolustukseen', effect: soldiers ? `Soturi voittaa ${band.tribe ? 'paimentolaisen' : 'rosvon'} ${Math.round((1 - banditWins(terrainOf(c.tile), hasWalls(c), raidWorld.defense(c.tile), band.attack)) * 100)} %:n todennäköisyydellä` : `Ilman soturia ${band.tribe ? 'paimentolaiset' : 'rosvot'} ryöstävät kaupungin` },
-      ],
+      body: `${band.tribe ? `${plan.n} paimentolaista` : plan.n === 1 ? 'Rosvo' : `${plan.n} rosvoa`} on matkalla kohti kaupunkia ja perillä noin ${plan.arrive} päivässä. ${soldiers ? `Kaupungissa on ${soldiers} ${soldiers === 1 ? 'sotilas' : 'sotilasta'}.` : 'Kaupungissa ei ole sotilaita.'} Jokainen ${plan.n === 1 ? 'hyökkääjä' : 'hyökkääjistä'} taistelee, kunnes se kaatuu tai kaupungissa ei ole enää sotilaita. ${Name} on ${plan.soldier === 'phalanx' ? 'paras puolustaja' : 'heikko puolustaja: falangi tai muuri auttaa'}.`,
+      options: choices.map(x => x.option),
       note: 'Ryöstö vie kaupungin varastot ja asukkaan.',
     });
     const seen = toScreen(tileCenter(lead));
@@ -3347,8 +3397,15 @@ function chooseRaid(index: number, by: Actor = 'player') {
   discoveryCard.hide();
   const band = play.raids.band;
   const c = band && play.cities.find(x => x.tile === band.city);
-  if (index !== 0 || !c || !dispatch({ kind: 'build', city: c.tile, build: bestSoldier() }, by)) return;
-  discoveryCard.notice([cityRef(c.tile, c.name), ` rakentaa ${c.build === 'phalanx' ? 'falangin' : 'soturin'}`]);
+  const choice = by === 'player' ? raidChoices[index] : index === 0 ? 'build' : 'later';
+  raidChoices = ['build', 'later'];
+  if (choice === 'later' || !c) return;
+  const soldier = bestSoldier();
+  const price = buyCost({ ...c, build: soldier, shields: c.build === soldier ? c.shields : 0 });
+  if (!dispatch({ kind: 'build', city: c.tile, build: soldier }, by)) return;
+  const name = c.build === 'phalanx' ? 'falangin' : 'soturin';
+  if (choice === 'buy' && dispatch({ kind: 'buy', city: c.tile }, by)) discoveryCard.notice([cityRef(c.tile, c.name), ` osti ${name} · ${price} kultaa`]);
+  else discoveryCard.notice([cityRef(c.tile, c.name), ` rakentaa ${name}`]);
 }
 
 // ─── Province and state levels (STORY-026) ────────
@@ -4811,6 +4868,12 @@ frameStartPlanet();
   },
   /** Bandits set off toward a city now (STORY-034). */
   raidNow: (city: number) => (play ? startRaid(play.cities[city]) : false),
+  /** What the threatened city can do against the band (STORY-108). */
+  raidPlan: () => {
+    const band = play?.raids.band;
+    const c = band && play!.cities.find(x => x.tile === band.city);
+    return c ? raidPlan(c) : null;
+  },
   setSiteOffers: (on: boolean) => { siteOffersOn = on; },
   /** Unmapped good city sites near the camp, nearest first (STORY-032). */
   goodSites: (count: number) => {

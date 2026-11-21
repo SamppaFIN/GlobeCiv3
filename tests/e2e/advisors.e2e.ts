@@ -52,7 +52,8 @@ test('advisors: the city area level has three to choose from, and the chosen one
   await page.getByRole('button', { name: 'Jatka' }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.cities[0].focus === 'production', null, { timeout: 30_000 });
   await page.evaluate(() => (window as any).globeDebug.raidNow(0));
-  await expect(card.locator('.advisor-log')).toContainText('Aamuranta rakentaa sotilaan rosvoja vastaan', { timeout: 30_000 });
+  // It builds the soldier, or buys it when it would come too late (STORY-108)
+  await expect(card.locator('.advisor-log')).toContainText(/Aamuranta (rakentaa|osti) sotilaan rosvoja vastaan/, { timeout: 30_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(page.getByRole('dialog', { name: 'Rosvoja liikkeellä' })).toHaveCount(0);
   expect((await state(page)).raidAlert).toBe(false);
