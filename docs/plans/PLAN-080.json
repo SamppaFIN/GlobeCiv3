@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-080",
+  "story": "STORY-106",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-21",
+  "approach": "Jokaisella kaupungilla on tapahtumaloki City.history (src/game/history.ts): perustaminen (perustajan nimi, maasto, tunnettu erikoisresurssi ja lähin oma kaupunki), rakennukset ja ihmeet, kasvu kokoihin 3, 5 ja 8, rosvot kerran joukkoa kohden (torjuttu portin sotilaan nimellä tai ryöstetty), aikakauden vaihtuminen ja valtaus entisen herran nimellä. Lokiin tallennetaan nimet merkkijonoina, joten sama loki antaa saman tekstin. 40 tapahtuman jälkeen vanhimmat perustamisen jälkeen yhdistetään alkuvuosiksi, mutta aikakaudet säilyvät, koska ne määräävät äänen. narrate(kaupunki, siemen, aikakausi, maasto) on puhdas funktio, joka kertoo lokin kappaleina, yksi kutakin aikakautta kohden, ja jokainen tapahtuma kerrotaan oman aikakautensa äänellä: varhaisaikana nuotiotarinoina ja rauta-ajalla kirjurin aikakirjana. Kerrontatapa valitaan siemenestä ja tapahtumasta. Kaupunkikortissa on Kertomus-osio. Tallennus pitää lokin valinnaisena kenttänä, ja se rakennetaan kenttä kentältä (sääntö 8 ja tietoturvasääntö 5). Suunnitelma: docs/design/hahmot-ja-tarinat.md.",
+  "alternatives_considered": [
+    {
+      "name": "Kertomus elävästä tilasta",
+      "pros": "Ei tallennettavaa lokia",
+      "cons": "Kaatunut yksikkö tai vaihtunut nimi muuttaisi menneisyyttä, ja sama peli antaisi eri tekstin",
+      "rejected_because": "Utun katselmointi: nimet merkkijonoina lokiin"
+    },
+    {
+      "name": "Lokin raja rajaa uudet tapahtumat pois",
+      "pros": "Yksinkertainen",
+      "cons": "Pitkässä pelissä kertomus jäisi alkuun",
+      "rejected_because": "Vanhimpien yhdistäminen pitää uusimmat ja perustamisen"
+    },
+    {
+      "name": "Taivutetut nimet suomen kieliopilla",
+      "pros": "Sujuvampi teksti",
+      "cons": "Rakennusten, yksiköiden ja maastojen taivutus vaatisi sanaston jokaiselle nimelle",
+      "rejected_because": "Pohjat kirjoitettiin niin, että nimet ovat nominatiivissa; maastoille on kaksi omaa paikallissijaa"
+    }
+  ],
+  "files_to_change": [
+    "src/game/history.ts",
+    "src/game/cities.ts",
+    "src/game/save.ts",
+    "src/game/personNames.ts",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Kaupungin menetystä ei kirjata, koska menetetty kaupunki poistuu pelaajan kaupungeista eikä sen korttia voi avata",
+    "Aikakauden ehto (Rautatyö) on edelleen oma, kunnes Sami päättää"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "history.ts: tapahtumatyypit, record yhdistämisineen, marksPassed ja narrate",
+      "verify": "history.test"
+    },
+    {
+      "step": 2,
+      "action": "Tallennuksen tarkistus",
+      "verify": "save.test: lokin edestakainen tallennus, rikkinäiset tapahtumat ja yli 40 hylätään, vanha tallennus ilman lokia"
+    },
+    {
+      "step": 3,
+      "action": "main.ts: tapahtumien kirjaus ja kaupunkikortin Kertomus-osio",
+      "verify": "chronicle.e2e ja raids.e2e"
+    }
+  ],
+  "status": "approved"
+}
