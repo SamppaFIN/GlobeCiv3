@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T12:36:47Z",
+    "generated_at": "2026-11-21T13:01:39Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "6ac2e03",
+    "git_commit": "92d3aee",
     "git_branch": "main",
     "language": "fi"
   },
@@ -278,7 +278,7 @@
         "STORY-107",
         "STORY-104"
       ],
-      "progress": 50
+      "progress": 67
     }
   ],
   "stories": [
@@ -2735,9 +2735,13 @@
         "STORY-102",
         "STORY-103"
       ],
-      "status": "todo",
-      "progress": 0,
-      "linked": {},
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-080",
+        "implementation": "TICKET-IMPL-080",
+        "testing": "TICKET-TEST-080"
+      },
       "acceptance_criteria": [
         "Kaupungin tapahtumat (perustaminen ja perustaja, ensimmäiset rakennukset, kasvu, rosvot, ihmeet, aikakausi, valtaus) kirjautuvat tallennettavaan lokiin, ja kaupunkikortti näyttää niistä kronikoitsijan kertomuksen, jonka sävy vaihtuu aikakauden mukana.",
         "Kertomuksessa on linkit perustajaan, rakennuksiin ja naapureihin, sama loki antaa saman tekstin, ja vanha tallennus saa kertomuksen siitä, mitä tiedetään."

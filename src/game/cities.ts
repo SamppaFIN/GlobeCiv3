@@ -19,6 +19,7 @@
  * One turn is one game day. Own choices: citizens work the tiles with the most
  * 2 × food + shields + trade, and a starving city shrinks with an empty food box.
  */
+import type { HistoryEvent } from './history';
 import { mealsReady, MEAL_FOOD, type ChainState } from './chains';
 import { GOVERNMENTS, governed, type Government } from './government';
 import { isAttacker, type Attacker } from './war';
@@ -237,6 +238,8 @@ export interface City {
    * +1. Other cities, the old start and saves from before keep the old rules.
    */
   chain?: ChainState;
+  /** What happened to the city, for its chronicle (STORY-106, history.ts); a save from before has none. */
+  history?: HistoryEvent[];
 }
 
 /** 1 when the building stands on its best ground (STORY-071, placement.ts). */

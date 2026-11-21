@@ -13,6 +13,7 @@ import { ATTACKERS, type Losses, type WarSave } from './war';
 import { RIVALS, type RivalSave, type RivalUnit } from './rivals';
 import { RESOURCE_BUILDING_LIST, type City, type Build, type Building, type Focus } from './cities';
 import { CHAIN_BUILDINGS, GOODS, type ChainState } from './chains';
+import { HISTORY_KINDS, HISTORY_MAX, type HistoryEvent } from './history';
 import type { Discovery, Yield } from './discoveries';
 import type { ImprovementKind } from './improvements';
 import type { Bandit } from './raids';
@@ -20,7 +21,8 @@ import type { AreaPlan, Mode, SettlerTask, StateLine, Unit, UnitKind } from './u
 import type { Progress } from './progress';
 import { ADVANCE_LIST, LUX_RATES, RESOURCE_KINDS, TAX_RATES, type Advance, type Study } from './science';
 import type { Relation, Ties } from './diplomacy';
-import type { ResourceKind } from './terrainTypes';
+import { TERRAINS, type ResourceKind } from './terrainTypes';
+import { ERAS } from './persons';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from './advisors';
 import { ACTORS, COMMAND_KINDS, type Command, type Logged } from './commands';
@@ -216,6 +218,27 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         site,
       };
     };
+    // A city's chronicle (STORY-106): each event rebuilt from its checked fields, by its kind
+    const day = (v: unknown) => int(v, 'history day', 0, MAX_INT);
+    const eventOf = (v: unknown): HistoryEvent => {
+      const e = obj(v, 'history event');
+      const kind = oneOf(e.kind, HISTORY_KINDS, 'history kind');
+      switch (kind) {
+        case 'founded': {
+          const near = orNull(e.near, w => { const n = obj(w, 'near'); return { name: str(n.name, 'near name'), tile: tile(n.tile) }; });
+          return { kind, day: day(e.day), founder: orNull(e.founder, f => str(f, 'founder')), terrain: oneOf(e.terrain, TERRAINS, 'terrain'), resource: orNull(e.resource, r => str(r, 'resource')), near };
+        }
+        case 'built': return { kind, day: day(e.day), building: oneOf(e.building, BUILDINGS, 'history building') };
+        case 'grew': return { kind, day: day(e.day), size: int(e.size, 'history size', 1, 1000) };
+        case 'raid': {
+          const defender = orNull(e.defender, w => { const d = obj(w, 'defender'); return { id: int(d.id, 'defender id', 0, MAX_INT), name: str(d.name, 'defender name') }; });
+          return { kind, day: day(e.day), held: bool(e.held, 'held'), defender, nomads: bool(e.nomads, 'nomads') };
+        }
+        case 'era': return { kind, day: day(e.day), era: oneOf(e.era, ERAS, 'era') };
+        case 'taken': return { kind, day: day(e.day), from: orNull(e.from, f => str(f, 'taken from')) };
+        case 'early': return { kind, until: day(e.until), count: int(e.count, 'early count', 2, MAX_INT) };
+      }
+    };
     // The player's cities and the rivals' (STORY-068)
     const city = (v: unknown): City => {
       const c = obj(v, 'city');
@@ -233,6 +256,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         ...(c.placed === undefined ? {} : { placed: Object.fromEntries(Object.entries(obj(c.placed, 'placed')).map(([b, t]) => [oneOf(b, BUILDINGS, 'placed building'), tile(t)])) }),
         // The production chains (STORY-088): a city without them keeps the old rules
         ...(c.chain === undefined ? {} : { chain: chain(c.chain) }),
+        // The chronicle (STORY-106): a save from before has none, and tells what is known
+        ...(c.history === undefined ? {} : { history: list(c.history, 'history', eventOf, HISTORY_MAX) }),
       };
     };
 

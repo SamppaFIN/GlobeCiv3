@@ -18,7 +18,7 @@ export const GIVEN_NAMES: readonly string[] = [
 ];
 
 /** An integer hash of the seed and an id (own, a multiply-xorshift mix). */
-function mix(seed: number, id: number): number {
+export function mix(seed: number, id: number): number {
   let h = Math.imul(seed ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(id + 0x632be5ab, 0xc2b2ae35);
   h ^= h >>> 15;
   h = Math.imul(h, 0x2c1b3c6d);

@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-080",
+  "story": "STORY-106",
+  "plan": "PLAN-080",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/history.ts",
+    "src/game/history.test.ts",
+    "src/game/cities.ts",
+    "src/game/save.ts",
+    "src/game/save.test.ts",
+    "src/game/personNames.ts",
+    "src/globe/main.ts",
+    "src/ui/cityCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/chronicle.e2e.ts",
+    "tests/e2e/raids.e2e.ts"
+  ],
+  "change_summary": "Uusi history.ts (HistoryEvent, record, marksPassed, narrate). City.history on valinnainen. main.ts kirjaa perustamisen (foundAt saa perustajan; uuden alun uudisasukkaan nimi otetaan talteen ennen poistoa), valtauksen, rakennukset kaupungin päivässä ja ketjujen työmaalla, kasvun, rosvojoukon lopputuloksen (raidTally) ja aikakauden vaihtumisen (chronicleEraDay). Kaupunkikortissa on details-elementti Kertomus, joka piirretään uudelleen vain, kun kertomus muuttuu. mix-funktio vietiin personNames.ts:stä.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "City.history",
+      "foundAt(tile, founder?)",
+      "CityView.story",
+      "createCityCard(on.links)",
+      "mix (export)"
+    ],
+    "call_sites_found": [
+      "foundAt: uusi alku, uudisasukkaan perustaminen ja globeDebug.foundHere",
+      "foundCity suoraan: kaksi valtauskohtaa",
+      "cityView",
+      "validateSave"
+    ],
+    "call_sites_updated": [
+      "Kaikki; globeDebug.foundHere kirjaa perustamisen ilman perustajaa",
+      "Olemassa olevia testejä ei muutettu; raids.e2e sai lisätarkistuksen"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "92d3aee",
+  "progress": 100,
+  "notes": "Tekstit ovat omia, ja ne on kirjoitettu nominatiivisille nimille. Kertomus on kaupunkikortissa suljettuna details-osiona, jotta kortti ei pitene."
+}

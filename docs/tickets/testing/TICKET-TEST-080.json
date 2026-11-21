@@ -1,0 +1,89 @@
+{
+  "id": "TICKET-TEST-080",
+  "story": "STORY-106",
+  "implementation_ticket": "TICKET-IMPL-080",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Kaupungeilla ei ollut historiaa, joten ne tuntuivat samanlaisilta.",
+    "files_changed": [
+      "src/game/history.ts",
+      "src/globe/main.ts",
+      "src/ui/cityCard.ts",
+      "src/game/save.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "history.test: yhdistäminen 40:ssä (perustaminen ja aikakausi säilyvät), koot 3, 5 ja 8, perustamisen kerronta viitteineen, sama loki antaa saman tekstin ja siemen vaihtaa kerrontaa, aikakausien äänet ja kappaleet, rakennus-, ihme-, puolustaja- ja aikakausiviitteet, valloitus ja vanha kaupunki",
+        "expected": "Kriteerit 1 ja 2",
+        "result": "7/7",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save.test: loki palaa samana, ylimääräiset kentät jäävät pois, tuntematon tyyppi, rakennus, negatiivinen päivä, liian pitkä nimi ja 41 tapahtumaa hylätään, vanha tallennus ilman lokia",
+        "expected": "Kriteeri 2 (vanha tallennus) ja tietoturvasääntö 5",
+        "result": "Vitest 270/270",
+        "outcome": "pass"
+      },
+      {
+        "steps": "chronicle.e2e: uusi peli, pääkaupungin kertomus nimeää perustajan, metsurin valmistuttua kertomus kasvaa, tallennuksen ja latauksen jälkeen teksti on sama, ja kaupungin nimilinkki vie pikapaneeliin",
+        "expected": "Kriteerit 1 ja 2",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "raids.e2e: rosvojoukon jälkeen pääkaupungin lokissa on yksi raid-tapahtuma, jonka lopputulos vastaa ilmoitusta",
+        "expected": "Kriteeri 1 (rosvot)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Aikakauden vaihtuminen, kasvu ja valtaus selaimessa",
+        "expected": "Kriteeri 1",
+        "result": "Kerronta testattu yksikkötesteissä, kirjausta selaimessa ei",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "city, save, conquest ja growth E2E",
+        "expected": "Ei regressiota",
+        "result": "Läpi (9/9)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaus: kaupunkikortin Kertomus",
+        "expected": "Perustaja, kaupunki, rakennus ja aikakausi värillisinä",
+        "result": "Tarkistettu silmämääräisesti (640×400)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/chronicle…/founding.png",
+      "test-results/chronicle…/lumberjack.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kaupungin kertomus kertoo sen historian ja kasvaa pelin mukana",
+        "checked": false
+      },
+      {
+        "item": "Tekstien sävy ja suomi kelpaavat",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

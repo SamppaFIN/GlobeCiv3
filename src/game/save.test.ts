@@ -116,6 +116,12 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.cities[0].chain = { stock: { plank: -1 }, work: {}, site: null }; })).toBeNull();
     expect(broken(s => { s.cities[0].chain = { stock: {}, work: { dragon: 1 }, site: null }; })).toBeNull();
     expect(broken(s => { s.cities[0].chain = { stock: {}, work: {}, site: { building: 'temple', planks: 0, stones: 0, days: 0 } }; })).toBeNull();
+    // The chronicle (STORY-106)
+    expect(broken(s => { s.cities[0].history = [{ kind: 'prophecy', day: 1 }]; })).toBeNull();
+    expect(broken(s => { s.cities[0].history = [{ kind: 'built', day: 1, building: 'dragon' }]; })).toBeNull();
+    expect(broken(s => { s.cities[0].history = [{ kind: 'grew', day: -1, size: 3 }]; })).toBeNull();
+    expect(broken(s => { s.cities[0].history = [{ kind: 'raid', day: 1, held: true, defender: { id: 1, name: 'x'.repeat(41) }, nomads: false }]; })).toBeNull();
+    expect(broken(s => { s.cities[0].history = Array.from({ length: 41 }, () => ({ kind: 'grew', day: 1, size: 3 })); })).toBeNull();
     expect(broken(s => { s.research.kinds = ['unicorns']; })).toBeNull();
     expect(broken(s => { s.ties[0].state = 'truce'; })).toBeNull();
     expect(broken(s => { s.ties[0].attitude = 101; })).toBeNull();
@@ -157,6 +163,25 @@ describe('saved game (STORY-036)', () => {
     mid.cities[0].buildings = ['lumberjack', 'sawmill'];
     mid.cities[0].chain = { stock: { log: 1, plank: 2, stone: 0 }, work: { lumberjack: 1 }, site: { building: 'quarry', planks: 1, stones: 0, days: 0 } };
     expect(validateSave(mid, LIMITS)).toEqual(mid);
+  });
+
+  it('a city\'s chronicle comes back as it was, rebuilt field by field, and a save from before has none (STORY-106)', () => {
+    const { data } = playedSave();
+    expect(validateSave(data, LIMITS)!.cities[0].history).toBeUndefined();
+    const told: any = JSON.parse(JSON.stringify(data));
+    told.cities[0].history = [
+      { kind: 'founded', day: 0, founder: 'Uudisasukas Aino', terrain: 'forest', resource: null, near: { name: 'Kuusela', tile: START_TILE } },
+      { kind: 'built', day: 4, building: 'temple' },
+      { kind: 'grew', day: 30, size: 3 },
+      { kind: 'raid', day: 63, held: true, defender: { id: 5, name: 'Soturi Kalervo' }, nomads: false },
+      { kind: 'era', day: 80, era: 'iron' },
+      { kind: 'taken', day: 81, from: null },
+      { kind: 'early', until: 20, count: 3 },
+    ];
+    expect(validateSave(told, LIMITS)).toEqual(told);
+    // Extra fields stay behind
+    told.cities[0].history[1].script = 'alert(1)';
+    expect(validateSave(told, LIMITS)!.cities[0].history![1]).toEqual({ kind: 'built', day: 4, building: 'temple' });
   });
 
   it('a save from before gold and buildings (STORY-038) gets the start gold and no buildings', () => {
