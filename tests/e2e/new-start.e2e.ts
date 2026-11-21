@@ -74,9 +74,9 @@ test('a new game flies down to the city level of a built capital; a building ope
   expect((await state(page)).cities[0].chain.site.building).toBe('lumberjack');
   await card.getByRole('button', { name: 'Sulje' }).click();
 
-  // The Kartoittaja: its building, then a scout, which opens the city area
-  await page.getByRole('button', { name: /Neuvonantaja/ }).click();
-  await governor.getByRole('radio').filter({ hasText: 'Kartoittaja' }).click();
+  // The Retkeilijä, the city level's own (STORY-105): its building, then a scout, which opens the city area
+  await page.getByRole('button', { name: /^Neuvonantaja: / }).click();
+  await governor.getByRole('radio').filter({ hasText: 'Retkeilijä' }).click();
   await governor.getByRole('button', { name: 'Sulje' }).click();
   await page.evaluate(() => (window as any).globeDebug.fastForward(4));
   // Pause in the frame the building is done: at 4x the scout can follow before a later check
@@ -98,6 +98,8 @@ test('a new game flies down to the city level of a built capital; a building ope
   // No city sites were offered at the city level
   expect((await state(page)).offered).toHaveLength(0);
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
+  // The city area has advisors of its own (STORY-105): its three come as it opens
+  await expect(page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkialuetta?' })).toBeVisible({ timeout: 20_000 });
   await page.waitForFunction(() => !(window as any).globeLevels.state.flying, null, { timeout: 15_000 });
   // Out at the city area round the capital: the land has sunk
   await page.waitForFunction(() => (window as any).globeDebug.cityLevel().relief === 0, null, { timeout: 15_000 });

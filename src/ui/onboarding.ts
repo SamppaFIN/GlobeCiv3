@@ -5,12 +5,15 @@
  * HUD that can be skipped. The same three-card choice comes with each level that opens. While
  * any of it shows the game stands still (main.ts).
  */
+import type { Person } from '../game/persons';
+import { portraitSvg } from './portraits';
 
 export interface PickView {
-  /** The level: "Kaupunki". */
+  /** The level and the era: "Kaupunki · Varhaisaika". */
   kicker: string;
   title: string;
-  options: { id: string; name: string; does: string }[];
+  /** The role, what it does, and the era's person in it with a face (STORY-105). */
+  options: { id: string; name: string; does: string; person?: Person | null }[];
 }
 
 export interface Onboarding {
@@ -103,8 +106,10 @@ export function createOnboarding(root: HTMLElement, on: { start(): void; pick(id
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'onboard-option';
-        b.innerHTML = '<span class="onboard-option-name"></span><span class="onboard-option-does"></span>';
+        // The face is our own drawing from constants (portraits.ts); every text goes in as text
+        b.innerHTML = `${o.person ? `<span class="advisor-face">${portraitSvg(o.person, 48)}</span>` : ''}<span class="onboard-option-text"><span class="onboard-option-name"></span><span class="onboard-option-person"></span><span class="onboard-option-does"></span></span>`;
         b.querySelector('.onboard-option-name')!.textContent = o.name;
+        b.querySelector('.onboard-option-person')!.textContent = o.person ? `${o.person.name} ${o.person.title}` : '';
         b.querySelector('.onboard-option-does')!.textContent = o.does;
         b.addEventListener('click', () => { card.hidden = true; on.pick(o.id); });
         list.appendChild(b);

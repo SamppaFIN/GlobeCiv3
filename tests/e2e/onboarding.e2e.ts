@@ -34,15 +34,19 @@ test('a new game greets, the player picks one of three advisors, a short tour sh
   expect(await dayAfterFrames(page, 30)).toBe(day);
   await page.screenshot({ path: testInfo.outputPath('welcome.png') });
 
-  // The city's three advisors as big cards, and Ohjaan itse below them
+  // The city level's own three advisors as big cards with this era's people and faces (STORY-105),
+  // and Ohjaan itse below them
   await welcome.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
   const pick = page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkiasi?' });
-  await expect(pick.locator('.onboard-option-name')).toHaveText(['Kasvattaja', 'Kartoittaja', 'Vartija']);
+  await expect(pick.locator('.onboard-option-name')).toHaveText(['Rakentaja', 'Ruokkija', 'Retkeilijä']);
+  await expect(pick.locator('.onboard-option-person')).toHaveText(['Kustaa Kirvesmies', 'Anni Leipämuori', 'Juho Polunpolkija']);
+  await expect(pick.locator('.onboard-option svg')).toHaveCount(3);
+  await expect(pick).toContainText('Kaupunki · Varhaisaika');
   await expect(pick.getByRole('button', { name: /^Ohjaan itse/ })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('pick.png') });
-  await pick.locator('.onboard-option').filter({ hasText: 'Kasvattaja' }).click();
+  await pick.locator('.onboard-option').filter({ hasText: 'Ruokkija' }).click();
   const s = await state(page);
-  expect(s.cityAdvisor).toBe('growth');
+  expect([s.townAdvisor, s.cityAdvisor]).toEqual(['feed', 'none']);
   // The choice is a command (STORY-086)
   expect(s.commands).toContainEqual({ day: expect.any(Number), by: 'player', kind: 'advise' });
 
@@ -65,7 +69,10 @@ test('a new game greets, the player picks one of three advisors, a short tour sh
   // Under an advisor only the essentials: the goal, the time and the advisor
   await page.getByRole('button', { name: 'Tauko' }).click();
   await expect(page.locator('.hud-goal')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Neuvonantaja: Kasvattaja' })).toBeVisible();
+  // The level's faces: the chosen one, and the two others to choose by a tap
+  await expect(page.getByRole('button', { name: 'Neuvonantaja: Ruokkija, Anni Leipämuori' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Neuvonantajat' }).getByRole('button')).toHaveCount(4);
+  await expect(page.getByRole('button', { name: /^Vaihda neuvonantajaksi Rakentaja/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' })).toBeHidden();
   await expect(page.locator('.hud-research')).toBeHidden();
   // The city card tells, and its builds wait for the player's own hand
@@ -73,16 +80,21 @@ test('a new game greets, the player picks one of three advisors, a short tour sh
   // The label opens the city's quick panel first (STORY-098)
   await page.getByRole('group', { name: `Kaupunki ${s.cities[0].name}: pikatoiminnot` }).getByRole('button', { name: 'Kaupunkikortti' }).click();
   const city = page.getByRole('dialog', { name: s.cities[0].name });
-  await expect(city.locator('.city-advisor')).toHaveText('Neuvonantaja Kasvattaja hoitaa painotuksen ja rakentamisen.');
+  await expect(city.locator('.city-advisor')).toHaveText('Neuvonantaja Ruokkija (Anni Leipämuori) hoitaa työmaat ja rakentamisen.');
   await expect(city.getByRole('radiogroup', { name: 'Rakenna' })).toBeHidden();
   await expect(city.getByRole('radiogroup', { name: 'Kansalaiset työstävät' })).toBeHidden();
   await page.screenshot({ path: testInfo.outputPath('city-advisor.png') });
   await city.getByRole('button', { name: 'Sulje' }).click();
 
+  // A face chooses another advisor: a command too
+  await page.getByRole('button', { name: /^Vaihda neuvonantajaksi Rakentaja/ }).click();
+  await expect(page.getByRole('button', { name: 'Neuvonantaja: Rakentaja, Kustaa Kirvesmies' })).toBeVisible();
+  expect((await state(page)).townAdvisor).toBe('build');
   // Ohjaan itse brings every menu out
-  await page.getByRole('button', { name: 'Neuvonantaja: Kasvattaja' }).click();
+  await page.getByRole('button', { name: 'Neuvonantaja: Rakentaja, Kustaa Kirvesmies' }).click();
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
   await expect(card.getByRole('radio')).toHaveCount(3);
+  await expect(card.locator('.advisor-person')).toHaveText(['Kustaa Kirvesmies', 'Anni Leipämuori', 'Juho Polunpolkija']);
   await card.getByRole('button', { name: /^Ohjaan itse/ }).click();
   await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
   await card.getByRole('button', { name: 'Sulje' }).click();
@@ -99,7 +111,7 @@ test('a continued game does not greet again', async ({ page }) => {
   const errors: string[] = [];
   await newGame(page, errors);
   await page.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
-  await page.locator('.onboard-option').filter({ hasText: 'Vartija' }).click();
+  await page.locator('.onboard-option').filter({ hasText: 'Rakentaja' }).click();
   await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
   expect(await page.evaluate(() => (window as any).globeDebug.saveNow())).toBe(true);
   const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
@@ -108,11 +120,11 @@ test('a continued game does not greet again', async ({ page }) => {
   await page.getByRole('button', { name: /^Jatka/ }).click();
   await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 15_000 });
   await expect(page.getByRole('dialog', { name: 'Sinä johdat, kansa rakentaa' })).toHaveCount(0);
-  expect((await state(page)).cityAdvisor).toBe('defend');
+  expect((await state(page)).townAdvisor).toBe('build');
   // A site the capital found may wait on its card (STORY-032); put off, the HUD shows the advisor kept
   const later = page.getByRole('button', { name: /^Myöhemmin/ });
   if (await later.isVisible()) await later.click();
-  await expect(page.getByRole('button', { name: 'Neuvonantaja: Vartija' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Neuvonantaja: Rakentaja/ })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -121,12 +133,14 @@ test('a level with advisors of its own offers its three once its rise card is cl
   const errors: string[] = [];
   await newGame(page, errors);
   await page.getByRole('button', { name: 'Valitse neuvonantaja' }).click();
-  await page.locator('.onboard-option').filter({ hasText: 'Kartoittaja' }).click();
+  await page.locator('.onboard-option').filter({ hasText: 'Retkeilijä' }).click();
   await page.getByRole('dialog', { name: 'Opastus' }).getByRole('button', { name: 'Ohita' }).click();
-  // The city area shares the city's advisor: its card only
+  // The city area has its own three now (STORY-105): after its card, they come
   await page.evaluate(() => (window as any).globeDebug.rise());
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
-  await expect(page.locator('.onboard-card:not([hidden])')).toHaveCount(0);
+  const area = page.getByRole('dialog', { name: 'Kuka hoitaa kaupunkialuetta?' });
+  await expect(area.locator('.onboard-option-name')).toHaveText(['Kasvattaja', 'Kartoittaja', 'Vartija']);
+  await area.locator('.onboard-option').filter({ hasText: 'Kartoittaja' }).click();
   // The province has its own: after its card, its three
   await page.evaluate(() => (window as any).globeDebug.rise());
   await expect(page.getByRole('heading', { name: 'Lääni avautui, zoomaa ulos' })).toBeVisible();
@@ -135,7 +149,7 @@ test('a level with advisors of its own offers its three once its rise card is cl
   await expect(pick.locator('.onboard-option-name')).toHaveText(['Asuttaja', 'Tutkimusmatkailija', 'Vartija']);
   await pick.locator('.onboard-option').filter({ hasText: 'Asuttaja' }).click();
   const s = await state(page);
-  expect([s.cityAdvisor, s.provinceAdvisor]).toEqual(['explore', 'settle']);
+  expect([s.townAdvisor, s.cityAdvisor, s.provinceAdvisor]).toEqual(['roam', 'explore', 'settle']);
   // No tour this time
   await expect(page.getByRole('dialog', { name: 'Opastus' })).toBeHidden();
   expect(errors).toEqual([]);

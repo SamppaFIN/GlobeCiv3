@@ -1,0 +1,61 @@
+{
+  "id": "PLAN-078",
+  "story": "STORY-105",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-21",
+  "approach": "Joka tasolla HUD näyttää tason kolmen neuvonantajan muotokuvat ja Ohjaan itse -käden; valitun napautus avaa neuvonantajakortin ja toisen napautus valitsee sen advise-komennolla. Puhelimella näkyy vain valittu, ja kortti sisältää muut. Jokaisella roolilla on aikakausittain oma henkilö (src/game/persons.ts: nimi ja arvonimi, Varhaisaika ja Rauta-aika, 30 henkilöä) ja oma SVG-muotokuva (src/ui/portraits.ts). Kaupunkitaso saa oman kolmikon (Rakentaja, Ruokkija, Retkeilijä, townAdvisor), joka hoitaa pääkaupungin työmaat ja rakentamisen kaupunkitasolla; kaupunkialue kysyy oman neuvonantajansa avautuessaan. Vanha tallennus saa townAdvisorin cityAdvisorista. Suunnitelma: docs/design/hahmot-ja-tarinat.md, jonka Utu katselmoi (kyllä muutoksin).",
+  "alternatives_considered": [
+    {
+      "name": "Yksi nappi, kolmikko kortissa",
+      "pros": "Ei vie tilaa",
+      "cons": "Sami valitsi kolme kuvanappia",
+      "rejected_because": "Samin valinta 2026-11-21; puhelimella kuitenkin vain valittu näkyy, koska kolme ja käsi eivät mahdu 28 %:n rajaan"
+    },
+    {
+      "name": "Kaupunkitaso jakaa kaupunkialueen kolmikon",
+      "pros": "Ei migraatiota",
+      "cons": "Joka tasolla oma kolmikko oli Samin toive, ja yhteinen neuvonantaja sekoitti kaupunkitason ja kaupunkialueen viestit",
+      "rejected_because": "Utun katselmointi ja Samin toive"
+    },
+    {
+      "name": "Muotokuvat Claude Designilta",
+      "pros": "Hienompi jälki",
+      "cons": "Erillinen kierros ennen kuin kuvat näkyvät",
+      "rejected_because": "Sami valitsi omat SVG-muotokuvat"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts",
+    "src/game/persons.ts",
+    "src/ui/portraits.ts",
+    "src/game/save.ts",
+    "src/game/commands.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/onboarding.ts",
+    "src/ui/hud.css"
+  ],
+  "open_questions": [
+    "Aikakauden ehto (Rautatyö avaa rauta-ajan) on oma, kunnes Sami päättää",
+    "Bonukset tulevat STORY-107:ssä"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Kaupunkitason kolmikko, townAdvice ja chainAdvice, tallennus ja migraatio, komennon taso town",
+      "verify": "advisors.test, save.test, commands.test"
+    },
+    {
+      "step": 2,
+      "action": "Henkilöt ja muotokuvat",
+      "verify": "persons.test: 30 henkilöä, nimet uniikit eivätkä yksiköiden, muotokuvat deterministiset ja erilaiset"
+    },
+    {
+      "step": 3,
+      "action": "HUD-napit, neuvonantajakortti ja valintakortit kasvoineen; kaupunkialueen oma valinta",
+      "verify": "onboarding, new-start, firsts, area-panel, advisors, province-, state-advisors, conquest, play (puhelin), chains, unlock, region-card ja city-label E2E; kuvakaappaukset työpöydältä ja puhelimelta"
+    }
+  ],
+  "status": "approved"
+}

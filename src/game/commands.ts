@@ -38,8 +38,8 @@ export type CommandKind = Command['kind'];
 export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
-export type Actor = 'player' | 'people' | 'city' | 'province' | 'state' | 'planet';
-export const ACTORS: readonly Actor[] = ['player', 'people', 'city', 'province', 'state', 'planet'];
+export type Actor = 'player' | 'people' | 'town' | 'city' | 'province' | 'state' | 'planet';
+export const ACTORS: readonly Actor[] = ['player', 'people', 'town', 'city', 'province', 'state', 'planet'];
 
 export interface Logged {
   day: number;

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T11:30:03Z",
+    "generated_at": "2026-11-21T12:11:52Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "87882b9",
+    "git_commit": "33dffca",
     "git_branch": "main",
     "language": "fi"
   },
@@ -278,7 +278,7 @@
         "STORY-107",
         "STORY-104"
       ],
-      "progress": 17
+      "progress": 33
     }
   ],
   "stories": [
@@ -2707,9 +2707,13 @@
       "depends_on": [
         "STORY-102"
       ],
-      "status": "todo",
-      "progress": 0,
-      "linked": {},
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-078",
+        "implementation": "TICKET-IMPL-078",
+        "testing": "TICKET-TEST-078"
+      },
       "acceptance_criteria": [
         "Joka tasolla (kaupunki, kaupunkialue, lääni, valtio, planeetta) on tason kolmen neuvonantajan muotokuvanapit ja Ohjaan itse; aktiivinen on korostettu ja vaihto on komento. Kaupunkitasolla on oma kolmikko (Rakentaja, Ruokkija, Retkeilijä), ja vanha tallennus saa sen cityAdvisorista.",
         "Jokaisella roolilla on aikakausittain oma henkilö (nimi, arvonimi ja oma SVG-muotokuva); Varhaisajalle ja Rauta-ajalle on 30 henkilöä, ja uusi aikakausi vaihtaa henkilöt.",

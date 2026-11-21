@@ -1,7 +1,7 @@
 import { newChain } from './chains';
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { type AdvisorLevel, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST } from './advisors';
+import { type AdvisorLevel, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST } from './advisors';
 import { neighbors, pointToTile } from '../globe/hexTiles';
 import { buy, buyCost, foundCity, type City } from './cities';
 import { CommandLog, execute, type Command, type CommandWorld } from './commands';
@@ -37,7 +37,7 @@ function world(): CommandWorld & { settled: number[]; founded: number[]; advisor
     settled,
     founded,
     advisors,
-    advise: (level: AdvisorLevel, advisor: string) => { if (!({ city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level] as readonly string[]).includes(advisor)) return false; advisors[level] = advisor; return true; },
+    advise: (level: AdvisorLevel, advisor: string) => { if (!({ town: TOWN_ADVISOR_LIST, city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level] as readonly string[]).includes(advisor)) return false; advisors[level] = advisor; return true; },
     // Only the marked site can be set out for, as the HUD's button
     found: (tile: number) => { if (tile !== FOREST) return false; founded.push(tile); return true; },
     settle: (tile: number) => { settled.push(tile); return true; },

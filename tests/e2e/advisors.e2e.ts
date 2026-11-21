@@ -32,7 +32,7 @@ test('advisors: the city area level has three to choose from, and the chosen one
   await open.click();
   const card = page.getByRole('dialog', { name: 'Neuvonantaja' });
   await expect(card).toBeVisible();
-  await expect(card.locator('.advisor-level')).toHaveText('Kaupunkialue');
+  await expect(card.locator('.advisor-level')).toHaveText(/^Kaupunkialue · (Varhaisaika|Rauta-aika)$/);
   const options = card.getByRole('radio');
   await expect(options).toHaveCount(3);
   await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
@@ -59,7 +59,7 @@ test('advisors: the city area level has three to choose from, and the chosen one
   await card.getByRole('button', { name: 'Sulje' }).click();
   await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' }).click();
   await page.getByRole('dialog', { name: 'Luettelo' }).locator('.list-row').filter({ hasText: 'Aamuranta' }).click();
-  await expect(page.getByRole('dialog', { name: 'Aamuranta' }).locator('.city-advisor')).toHaveText('Neuvonantaja Vartija hoitaa painotuksen ja rakentamisen.');
+  await expect(page.getByRole('dialog', { name: 'Aamuranta' }).locator('.city-advisor')).toHaveText('Neuvonantaja Vartija (Erkki Portinvartija) hoitaa painotuksen ja rakentamisen.');
   await page.screenshot({ path: testInfo.outputPath('city-advisor.png') });
   // Both acts went through the command log (STORY-086): the player's found and the Vartija's soldier
   const log = (await state(page)).commands;

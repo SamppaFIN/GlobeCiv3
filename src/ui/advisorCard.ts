@@ -5,12 +5,16 @@
  * city card; the game goes on.
  */
 
+import type { Person } from '../game/persons';
+import { portraitSvg } from './portraits';
+
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
 export interface AdvisorView {
-  /** The level the advisor runs: "Kaupunkialue". */
+  /** The level the advisor runs and the era: "Kaupunkialue · Varhaisaika". */
   level: string;
-  options: { id: string; name: string; does: string; selected: boolean }[];
+  /** The role, what it does, and the era's person in it (STORY-105). */
+  options: { id: string; name: string; does: string; selected: boolean; person?: Person | null }[];
   /** What the advisor did lately, the newest first. */
   log: string[];
 }
@@ -58,8 +62,11 @@ export function createAdvisorCard(root: HTMLElement, on: { close(): void; choose
       b.className = 'city-build';
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', String(o.selected));
-      b.innerHTML = '<span class="city-build-top"><span class="city-build-name"></span></span><span class="city-build-info"></span>';
+      // The face is our own drawing from constants (portraits.ts); every text goes in as text
+      b.innerHTML = `${o.person ? `<span class="advisor-face">${portraitSvg(o.person, 40)}</span>` : ''}<span class="advisor-option-text"><span class="city-build-top"><span class="city-build-name"></span><span class="city-build-cost advisor-person"></span></span><span class="city-build-info"></span></span>`;
+      b.classList.add('advisor-option');
       b.querySelector('.city-build-name')!.textContent = o.name;
+      b.querySelector('.advisor-person')!.textContent = o.person ? `${o.person.name} ${o.person.title}` : '';
       b.querySelector('.city-build-info')!.textContent = o.does;
       b.addEventListener('click', () => on.choose(o.id));
       options.appendChild(b);

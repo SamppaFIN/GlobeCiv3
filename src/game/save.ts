@@ -22,7 +22,7 @@ import { ADVANCE_LIST, LUX_RATES, RESOURCE_KINDS, TAX_RATES, type Advance, type 
 import type { Relation, Ties } from './diplomacy';
 import type { ResourceKind } from './terrainTypes';
 import { GOVERNMENT_LIST, type Government } from './government';
-import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor } from './advisors';
+import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from './advisors';
 import { ACTORS, COMMAND_KINDS, type Command, type Logged } from './commands';
 
 export const SAVE_VERSION = 1;
@@ -93,7 +93,9 @@ export interface SaveData {
   /** The government, and the day anarchy ends, or −1 (STORY-047); saves from before are under Despotism. */
   gov: Government;
   anarchyUntil: number;
-  /** The city-level advisor (STORY-049); saves from before have none. */
+  /** The city level's advisor (STORY-105); a save from before gets the one its city area's advisor stands for. */
+  townAdvisor: TownAdvisor;
+  /** The city area's advisor (STORY-049); saves from before have none. */
   cityAdvisor: CityAdvisor;
   /** The province-level advisor (STORY-050); saves from before have none. */
   provinceAdvisor: ProvinceAdvisor;
@@ -166,7 +168,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'buy': return { kind, city: tile(c.city) };
         case 'advise': {
           const level = oneOf(c.level, ADVISOR_LEVELS, 'advisor level');
-          const list: readonly string[] = { city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level];
+          const list: readonly string[] = { town: TOWN_ADVISOR_LIST, city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level];
           return { kind, level, advisor: oneOf(c.advisor, list, 'advisor') };
         }
       }
@@ -265,6 +267,11 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
 
     const p = obj(s.progress, 'progress');
     const r = obj(s.raids, 'raids');
+    const openLevel = oneOf(p.openLevel, [0, 1, 2, 3, 4] as const, 'open level');
+    // Before STORY-105 the city area's advisor ran the city level too: the city level's advisor is
+    // the one it stands for, and while only the city level is open the city area has none yet
+    const cityAdvisor = s.cityAdvisor === undefined ? 'none' : oneOf(s.cityAdvisor, CITY_ADVISOR_LIST, 'cityAdvisor');
+    const townAdvisor = s.townAdvisor === undefined ? TOWN_OF_CITY[cityAdvisor] : oneOf(s.townAdvisor, TOWN_ADVISOR_LIST, 'townAdvisor');
     return {
       version: SAVE_VERSION,
       savedAt: int(s.savedAt, 'saved at', 0, 1e14),
@@ -277,7 +284,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       units,
       selected: int(s.selected, 'selected', 0, 10_000),
       // Before STORY-016 the state level ended the meter: it goes on with the provinces held
-      progress: { openLevel: oneOf(p.openLevel, [0, 1, 2, 3, 4] as const, 'open level'), meter: p.openLevel === 1 && p.meter === 'done' ? 'conquest' : oneOf(p.meter, METERS, 'meter') },
+      progress: { openLevel, meter: p.openLevel === 1 && p.meter === 'done' ? 'conquest' : oneOf(p.meter, METERS, 'meter') },
       targetProvince: int(s.targetProvince, 'target province', -1, limits.cityAreas),
       // Finds waiting in a save from before STORY-052 open as ruins on load; their old choices are not read
       discoveries: list(s.discoveries, 'discoveries', v => {
@@ -355,7 +362,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       lux: s.lux === undefined ? 0 : oneOf(s.lux, LUX_RATES, 'lux'),
       gov: s.gov === undefined ? 'despotism' : oneOf(s.gov, GOVERNMENT_LIST, 'gov'),
       anarchyUntil: s.anarchyUntil === undefined ? -1 : int(s.anarchyUntil, 'anarchyUntil', -1),
-      cityAdvisor: s.cityAdvisor === undefined ? 'none' : oneOf(s.cityAdvisor, CITY_ADVISOR_LIST, 'cityAdvisor'),
+      townAdvisor,
+      cityAdvisor: s.townAdvisor === undefined && openLevel === 4 ? 'none' : cityAdvisor,
       provinceAdvisor: s.provinceAdvisor === undefined ? 'none' : oneOf(s.provinceAdvisor, PROVINCE_ADVISOR_LIST, 'provinceAdvisor'),
       stateAdvisor: s.stateAdvisor === undefined ? 'none' : oneOf(s.stateAdvisor, STATE_ADVISOR_LIST, 'stateAdvisor'),
       planetAdvisor: s.planetAdvisor === undefined ? 'none' : oneOf(s.planetAdvisor, PLANET_ADVISOR_LIST, 'planetAdvisor'),

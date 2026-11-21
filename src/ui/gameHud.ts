@@ -9,6 +9,8 @@
  */
 import { SPEEDS, type Speed } from '../game/clock';
 import { MODE_NAMES, TASK_NAMES, type Mode, type SettlerTask, type UnitKind } from '../game/units';
+import type { Person } from '../game/persons';
+import { ownHandSvg, portraitSvg } from './portraits';
 
 // Phosphor icons (MIT): play, pause, flag
 const PLAY = '<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z"/></svg>';
@@ -22,7 +24,17 @@ const SPARK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColo
 const LIST = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6 H20 M9 12 H20 M9 18 H20"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>';
 
 // A bust (own icon) for the advisor of the level (STORY-049)
-const ADVISOR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20 C5.5 15.5 8.5 13.5 12 13.5 C15.5 13.5 18.5 15.5 19.5 20"/></svg>';
+
+/** One of a level's advisors in the HUD (STORY-105). */
+export interface AdvisorButton {
+  id: string;
+  /** The role: "Kasvattaja", or "Oma ohjaus" for the player's own hand. */
+  role: string;
+  /** This era's person in the role; null for the own hand. */
+  person: Person | null;
+  does: string;
+  chosen: boolean;
+}
 
 export interface GameHudState {
   day: number;
@@ -49,6 +61,8 @@ export interface GameHudState {
   goal: { text: string; reward: number } | null;
   /** The advisor of the level in view, or null where the level has none (STORY-049). */
   advisor: string | null;
+  /** The level's advisor buttons (STORY-105): the three faces and the own hand; empty for none. */
+  advisors: AdvisorButton[];
   /** The player's own hand (STORY-096): the list shows only then (main.ts leaves out the unit and the research). */
   own: boolean;
 }
@@ -67,6 +81,8 @@ export interface GameHudHandlers {
   openList(): void;
   /** Open the advisor of the level in view (STORY-049). */
   openAdvisor(): void;
+  /** Choose another advisor of the level in view by its face (STORY-105). */
+  chooseAdvisor(id: string): void;
   /** Open the science card. */
   openResearch(): void;
   /** Tell how to reach the current goal. */
@@ -84,7 +100,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
           ${SPEEDS.map(s => `<label class="seg-opt"><input type="radio" name="hud-speed" value="${s}">${s}×</label>`).join('')}
         </div>
         <button class="btn btn-secondary hud-icon hud-city" type="button" aria-label="Luettelo: kaupungit, yksiköt, talous ja diplomatia">${LIST}</button>
-        <button class="btn btn-secondary hud-icon hud-advisor" type="button" hidden>${ADVISOR}</button>
+        <div class="hud-advisors" role="group" aria-label="Neuvonantajat" hidden></div>
         <div class="hud-spacer"></div>
         <div class="hud-day"><span class="hud-day-n"></span><span class="hud-day-label"></span></div>
       </div>
@@ -132,7 +148,29 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openList);
-  q<HTMLButtonElement>('.hud-advisor').addEventListener('click', on.openAdvisor);
+  // The level's advisors by their faces (STORY-105): the chosen one opens the card, another is chosen.
+  // A phone shows only the chosen one, and the card holds the others (hud.css).
+  const advisors = q<HTMLElement>('.hud-advisors');
+  let advisorsKey = '';
+  const drawAdvisors = (list: AdvisorButton[]) => {
+    const key = list.map(a => `${a.id}:${a.person?.id ?? ''}:${a.chosen}`).join(',');
+    if (key === advisorsKey) return;
+    advisorsKey = key;
+    advisors.replaceChildren();
+    for (const a of list) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `hud-advisor-face${a.chosen ? ' hud-advisor' : ''}${a.id === 'none' ? ' hud-advisor-own' : ''}`;
+      // Our own drawing from constants (portraits.ts); the names go into the label as text
+      b.innerHTML = a.person ? portraitSvg(a.person, 40) : ownHandSvg(40);
+      const who = a.person ? `, ${a.person.name} ${a.person.title}` : '';
+      b.setAttribute('aria-label', a.chosen ? `Neuvonantaja: ${a.role}${who}` : `Vaihda neuvonantajaksi ${a.role}${who}`);
+      b.setAttribute('aria-pressed', String(a.chosen));
+      b.title = `${a.role}${who}: ${a.does}`;
+      b.addEventListener('click', () => (a.chosen ? on.openAdvisor() : on.chooseAdvisor(a.id)));
+      advisors.appendChild(b);
+    }
+  };
   q<HTMLButtonElement>('.hud-research').addEventListener('click', on.openResearch);
   q<HTMLButtonElement>('.hud-goal').addEventListener('click', on.goalHint);
 
@@ -170,9 +208,8 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         research.classList.toggle('btn-secondary', !s.research.choose);
       }
       q<HTMLButtonElement>('.hud-city').hidden = !s.own;
-      const advisor = q<HTMLButtonElement>('.hud-advisor');
-      advisor.hidden = s.advisor === null;
-      advisor.setAttribute('aria-label', `Neuvonantaja: ${s.advisor ?? ''}`);
+      advisors.hidden = s.advisor === null || !s.advisors.length;
+      drawAdvisors(s.advisor === null ? [] : s.advisors);
       const bottom = q<HTMLElement>('.hud-bottom');
       bottom.hidden = !s.unit || s.level !== 3;
       if (!s.unit) return;
