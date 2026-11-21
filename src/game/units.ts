@@ -153,8 +153,11 @@ export class Units {
     };
   }
 
+  /** Rings more from the city area's advisor (STORY-107); set by the game each day, not saved. */
+  extraSight = 0;
+
   get sight(): number {
-    return SIGHT + (this.stateLine === 'research' ? 1 : 0);
+    return SIGHT + (this.stateLine === 'research' ? 1 : 0) + this.extraSight;
   }
 
   /**

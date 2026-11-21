@@ -392,8 +392,11 @@ export function shortfall(city: City, y: CityYield, support: Support): 'shield' 
   return null;
 }
 
-/** One day: the city grows or starves and builds. Returns what was completed, if anything. */
-export function cityDay(city: City, y: CityYield): Build | null {
+/**
+ * One day: the city grows or starves and builds. Returns what was completed, if anything.
+ * `settlerOff` is the province advisor's bonus: shields off a settler (STORY-107, own).
+ */
+export function cityDay(city: City, y: CityYield, settlerOff = 0): Build | null {
   city.food += y.surplus;
   if (city.food >= granary(city.size) && city.size >= sizeLimit(city)) {
     // At the limit the box holds no more (server/cityturn.c city_increase_size, aqueductloss 0)
@@ -411,10 +414,11 @@ export function cityDay(city: City, y: CityYield): Build | null {
   }
   if (city.build === 'coinage') return null;
   const build = BUILDS[city.build];
+  const cost = city.build === 'settler' ? Math.max(0, build.cost - settlerOff) : build.cost;
   city.shields += y.shield;
   // A build that costs a citizen waits until the city can spare one
-  if (city.shields < build.cost || city.size <= build.pop) return null;
-  city.shields -= build.cost;
+  if (city.shields < cost || city.size <= build.pop) return null;
+  city.shields -= cost;
   city.size -= build.pop;
   const done = city.build;
   // Own rule: after a soldier the city goes on to gold (STORY-039). In Freeciv the build

@@ -192,6 +192,21 @@ Bonus on voimassa, kun henkilö on tasonsa aktiivinen neuvonantaja. Jokainen luk
 koodissa merkitty omaksi. Kalibrointi tehdään pelitestillä, ja autopilotilla vasta
 kun se on olemassa (STORY-085 odottaa STORY-095:ää).
 
+**Toteutus (STORY-107, 2026-11-21):** jokaisella tasolla on omat kohteensa, joten
+kaksi tasoa ei koskaan kasvata samaa lukua:
+
+| Taso | Kohteet | Vaikutustyypit |
+|---|---|---|
+| Kaupunki | pääkaupunki, sen ketjut ja rosvot sen portilla | ruoka, tuotanto, kauppa, leipä, puolustus |
+| Kaupunkialue | muut kaupungit, rosvot niiden portilla ja tiedustelijat | ruoka, tuotanto, kauppa, näkö, puolustus |
+| Lääni | uudisasukkaat ja paimentolaiset | asutus, puolustus |
+| Valtio | kassa ja tutkimus | kulta, tiede |
+| Planeetta | kilpailijoiden hyökkäykset | puolustus |
+
+Henkilöiden luvut ovat tiedostossa `src/game/persons.ts` ja säännöt tiedostossa
+`src/game/bonuses.ts`. Uudisasukkaan alennus näkyy rakentamisessa, mutta kaupunkikortin
+valmistumisaika ja ostohinta laskevat yhä täydellä hinnalla.
+
 **Muotokuvat:** `src/ui/portraits.ts` kokoaa SVG:n osista: kasvon muoto, hiukset,
 parta ja silmät henkilön tunnisteesta, aikakauden vaatteet ja päähine sekä roolin
 esine (vasara, leipä, kartta, keihäs, kirja ja niin edelleen). Värit tulevat

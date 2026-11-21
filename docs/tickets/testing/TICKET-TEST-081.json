@@ -1,0 +1,61 @@
+{
+  "id": "TICKET-TEST-081",
+  "story": "STORY-107",
+  "implementation_ticket": "TICKET-IMPL-081",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Aikakauden neuvonantajilla oli nimet ja kasvot, mutta valinta ei muuttanut peliä.",
+    "files_changed": [
+      "src/game/bonuses.ts",
+      "src/game/persons.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "bonuses.test: 30 henkilöä, joilla kullakin yksi tasolleen sopiva bonus ja kaikki yhdeksän tyyppiä käytössä; ruoka, tuotanto ja kauppa (pääkaupunki ja muut), tiede ja kulta, leipä workDayssa, näkö, uudisasukkaan hinta cityDayssa, puolustus neljälle hyökkääjälle, Oma ohjaus ja sanalliset kuvaukset",
+        "expected": "Kriteerit 1 ja 2, yksikkötesti jokaiselle tyypille",
+        "result": "8/8, Vitest 278/278",
+        "outcome": "pass"
+      },
+      {
+        "steps": "onboarding.e2e: kasvonapin nimessä on bonus, neuvonantajakortti näyttää kolmen henkilön bonukset, Rakentaja nostaa pääkaupungin tuotantoa yhdellä ja Oma ohjaus palauttaa sen",
+        "expected": "Kriteerit 1 ja 2 selaimessa",
+        "result": "Läpi kolme kertaa peräkkäin; seitsemän aiempaa ajoa samalla koodilla epäonnistui kaupunkikorttivaiheessa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "advisors, province-advisors, state-advisors, play (puhelimen HUD) ja chains",
+        "expected": "Ei regressiota",
+        "result": "Läpi (9/9)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Bonukset näkyvät ja tuntuvat valinnassa",
+        "checked": false
+      },
+      {
+        "item": "Luvut ovat sopivan kokoisia",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

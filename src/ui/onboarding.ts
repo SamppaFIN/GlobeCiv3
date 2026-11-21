@@ -6,6 +6,7 @@
  * any of it shows the game stands still (main.ts).
  */
 import type { Person } from '../game/persons';
+import { describeBonus } from '../game/bonuses';
 import { portraitSvg } from './portraits';
 
 export interface PickView {
@@ -107,9 +108,11 @@ export function createOnboarding(root: HTMLElement, on: { start(): void; pick(id
         b.type = 'button';
         b.className = 'onboard-option';
         // The face is our own drawing from constants (portraits.ts); every text goes in as text
-        b.innerHTML = `${o.person ? `<span class="advisor-face">${portraitSvg(o.person, 48)}</span>` : ''}<span class="onboard-option-text"><span class="onboard-option-name"></span><span class="onboard-option-person"></span><span class="onboard-option-does"></span></span>`;
+        b.innerHTML = `${o.person ? `<span class="advisor-face">${portraitSvg(o.person, 48)}</span>` : ''}<span class="onboard-option-text"><span class="onboard-option-name"></span><span class="onboard-option-person"></span><span class="onboard-option-does"></span><span class="onboard-option-bonus advisor-bonus"></span></span>`;
         b.querySelector('.onboard-option-name')!.textContent = o.name;
         b.querySelector('.onboard-option-person')!.textContent = o.person ? `${o.person.name} ${o.person.title}` : '';
+        // What the person adds while chosen (STORY-107)
+        b.querySelector('.onboard-option-bonus')!.textContent = o.person ? `Bonus: ${describeBonus(o.person.level, o.person.bonus)}` : '';
         b.querySelector('.onboard-option-does')!.textContent = o.does;
         b.addEventListener('click', () => { card.hidden = true; on.pick(o.id); });
         list.appendChild(b);

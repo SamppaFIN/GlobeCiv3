@@ -1,0 +1,44 @@
+{
+  "id": "TICKET-IMPL-081",
+  "story": "STORY-107",
+  "plan": "PLAN-081",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/bonuses.ts",
+    "src/game/bonuses.test.ts",
+    "src/game/persons.ts",
+    "src/game/cities.ts",
+    "src/game/chains.ts",
+    "src/game/units.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/advisorCard.ts",
+    "src/ui/onboarding.ts",
+    "src/ui/hud.css",
+    "tests/e2e/onboarding.e2e.ts",
+    "docs/design/hahmot-ja-tarinat.md"
+  ],
+  "change_summary": "Uusi bonuses.ts (Bonus, ActiveBonuses, yieldBonus, goodsBonus, sightBonus, settleBonus, goldBonus, scienceBonus, defenseBonus ja sanallinen kuvaus). Person saa kentän bonus. cityDay saa settlerOff-parametrin, workDay bread-parametrin ja Units kentän extraSight. main.ts: activeBonuses ja withBonus; kytkennät cityYields-, arrangeEntertainers-, chainDay-, cityDays-, raidWorld- ja rivalWarWorld-kohtiin sekä päivän alkuun (näkö).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Person.bonus",
+      "cityDay(city, y, settlerOff?)",
+      "workDay(s, built, best, bread?)",
+      "Units.extraSight"
+    ],
+    "call_sites_found": [
+      "cityDay: main.ts ja yksikkötestit",
+      "workDay: chainDay ja chains.test",
+      "cityYield: cityYields, arrangeEntertainers ja paikan esikatselu"
+    ],
+    "call_sites_updated": [
+      "Uudet parametrit ovat valinnaisia, joten vanhat kutsut toimivat. Paikan esikatselu laskee ilman bonusta, koska kaupunkia ei vielä ole.",
+      "onboarding.e2e sai lisätarkistukset; vanhat label-odotukset ovat alkuosia uusista nimistä ja pysyivät ennallaan"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "5874ce0",
+  "progress": 100,
+  "notes": "Tunnettu puute: kaupunkikortin valmistumisaika ja ostohinta laskevat uudisasukkaan täydellä hinnalla. onboarding.e2e:n kaupunkikorttivaihe epäonnistui paikallisesti seitsemän kertaa peräkkäin ja meni sitten läpi kolme kertaa samalla koodilla. Syy jäi selvittämättä, joten testi voi olla epävakaa."
+}

@@ -101,8 +101,10 @@ export const waitsForBase = (built: readonly string[], b: ChainBuilding) => !BAS
  * best ground, a good a day. The buildings work in CHAIN_BUILDINGS' order, so a log felled
  * today may be sawn today. Returns the moves for the carriers (STORY-101).
  */
-export function workDay(s: ChainState, built: readonly ChainBuilding[], best: readonly ChainBuilding[]): Move[] {
+export function workDay(s: ChainState, built: readonly ChainBuilding[], best: readonly ChainBuilding[], bread = 0): Move[] {
   const moves: Move[] = [];
+  // The city level's advisor may bring bread of its own (STORY-107, own)
+  if (bread > 0) add(s, 'bread', bread);
   for (const b of CHAIN_BUILDINGS) {
     if (!built.includes(b)) continue;
     const rule = CHAIN_RULES[b];
