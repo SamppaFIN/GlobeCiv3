@@ -1,0 +1,93 @@
+{
+  "id": "TICKET-TEST-082",
+  "story": "STORY-101",
+  "implementation_ticket": "TICKET-IMPL-082",
+  "status": "in_progress",
+  "fix_summary": {
+    "problem_and_root_cause": "Tuotantoketjut siirsivät tavaraa vain luvuissa, eikä kaupunkitasolla näkynyt, että ketju toimii.",
+    "files_changed": [
+      "src/globe/carriers.ts",
+      "src/game/clock.ts",
+      "src/globe/main.ts"
+    ]
+  },
+  "ai_testing": {
+    "environment": "Paikallinen Linux-kontti ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1), siemen 42",
+    "tooling": "Vitest 5, Playwright, Chrome performance.now",
+    "cases": [
+      {
+        "steps": "carriers.test: siirrot kävelyiksi, siirto ilman paikkaa tai polkua ja raja 24, alku aamulla ja perillä ennen 0,85:tä, porrastus ja determinismi",
+        "expected": "Kriteerit 1 ja 2 logiikassa",
+        "result": "5/5, Vitest 283/283",
+        "outcome": "pass"
+      },
+      {
+        "steps": "carriers.e2e: uusi peli, kantaja ilmestyy kaupunkitasolle päivän siirrosta; carryTest(30) piirtää 24",
+        "expected": "Kriteerit 1 ja 2: näkyvät ja raja",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "carriers.e2e: sama siemen vähennetyllä liikkeellä samaan päivään",
+        "expected": "Ei kantajia, ja kaupungin päivä, ketju ja rakennukset samat",
+        "result": "0 kantajaa, tila sama",
+        "outcome": "pass"
+      },
+      {
+        "steps": "carryBench(2000): kantajien oma JS framessa 24 kantajalla",
+        "expected": "Alle 0,5 ms",
+        "result": "0,024–0,039 ms (neljä ajoa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "frameMs: pääsäikeen aika framen alusta render-kutsun loppuun 30 framessa kaupunkitasolla, 24 kantajaa ja 0 kantajaa",
+        "expected": "Alle 8 ms",
+        "result": "Mediaani 4,7–7,7 ms 24:llä ja 4,4–6,7 ms ilman; p95 10–13 ms 24:llä ja 8,6–11,9 ms ilman. Kontissa ei ole GPU:ta, joten render-kutsu sisältää SwiftShaderin työtä, ja p95 ylittää 8 ms jo ilman kantajia.",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Mittaus oikealla GPU:lla (Samin työpöytä tai S23 Ultra)",
+        "expected": "Pääsäie alle 8 ms framessa 24 kantajalla",
+        "result": "Ei ajettu: konttiin ei saa GPU:ta. Mittaus: ?seed=42, uusi peli, konsolissa globeDebug.carryTest(24), muutaman sekunnin päästä globeDebug.frameMs()",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Kuvakaappaus kaupunkitasolta keskellä päivää 24 kantajalla",
+        "expected": "Kantajat näkyvät maastossa, kuorma värillisenä",
+        "result": "Vaaleat kantajat ja värilliset kuormat erottuvat ruohosta ja metsästä varjoineen. Ylemmillä tasoilla kaupunkitaso on piilossa ja kantajia on 0 (walk piirtää vain, kun korkokuva on ylhäällä).",
+        "outcome": "pass"
+      },
+      {
+        "steps": "chains, city-level, new-start, placement ja feel",
+        "expected": "Ei regressiota",
+        "result": "Läpi; chains.e2e:n louhosvaihe epäonnistui kerran, ja sama vaihe epäonnistuu mainissa yhdessä kolmesta ajosta",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: carriers.png ja carriers-24.png (carriers.e2e)"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kantajat näkyvät ja kertovat ketjusta",
+        "checked": false
+      },
+      {
+        "item": "Pääsäie alle 8 ms oikealla laitteella",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

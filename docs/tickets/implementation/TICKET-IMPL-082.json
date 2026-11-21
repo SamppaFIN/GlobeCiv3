@@ -1,0 +1,33 @@
+{
+  "id": "TICKET-IMPL-082",
+  "story": "STORY-101",
+  "plan": "PLAN-082",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/globe/carriers.ts",
+    "src/globe/carriers.test.ts",
+    "src/game/clock.ts",
+    "src/globe/main.ts",
+    "tests/e2e/carriers.e2e.ts"
+  ],
+  "change_summary": "carriers.ts: MAX_CARRIERS 24, ARRIVE_AT 0,85, Trip, tripsOf ja along. Clock.fraction. main.ts: chainDay laskee carrierTrips-kävelyt ketjujen siirroista; kaupunkitasolla on carrierBody- ja carrierLoad-verkot (vaalea vartalo, kuorma tavaran värinen) ja walk, joka asettaa ne korkokuvalle ja kääntää kulkusuuntaan; updateCityLevel kutsuu sitä joka framessa kellon päivän osuudella, vähennetyllä liikkeellä tyhjällä listalla. Debug: carryTest, carryBench, dayPart, frames ja frameMs.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Clock.fraction (uusi)",
+      "chainDay (laskee kävelyt, tila ennallaan)",
+      "cityLevel.walk ja cityLevel.stats.carriers (uudet)"
+    ],
+    "call_sites_found": [
+      "chainDay: päivän silmukka",
+      "updateCityLevel: animate"
+    ],
+    "call_sites_updated": [
+      "Ei muutoksia kutsujiin; chainDayn workDay- ja buildDay-järjestys pysyi samana"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "932870f",
+  "progress": 100,
+  "notes": "Ensimmäinen versio vartalosta oli tummanruskea ja hukkui metsään, joten vartalo on vaalea ja 1,35 kertaa isompi. Oma ohjaus ei rakenna mitään ilman pelaajan valintaa, joten silloin päivässä on yksi kantaja (metsurilta keskustaan). chains.e2e:n louhosvaihe on epävakaa jo mainissa (yksi kolmesta ajosta saa kiveä 1, kun odotus on 0); syy jäi selvittämättä, eikä testiä muutettu."
+}

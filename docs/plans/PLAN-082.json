@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-082",
+  "story": "STORY-101",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-21",
+  "approach": "Uusi src/globe/carriers.ts tekee päivän siirroista kävelyt: tripsOf muuttaa ketjujen siirrot (workDay ja buildDay palauttavat ne jo) ruutupoluiksi, ja along kertoo, missä kohtaa polkua kantaja on päivän osuudella. Kello antaa päivän osuuden (Clock.fraction). chainDay laskee päivän kävelyt pääkaupungin ruutujen välille (keskusta, rakennusten sijoitetut ruudut ja työmaan ruutu, polku findPathilla), eikä se muuta tilaa. Kaupunkitaso piirtää enintään 24 kantajaa kahdella instanssoidulla verkolla (vartalo ja kuorma tavaran värisenä) korkokuvan päälle joka framessa, ja vähennetyllä liikkeellä kävelyt jätetään tyhjiksi. Kantajat ehtivät perille 0,85 päivässä, ja kukin lähtee hieman edellisen jälkeen.",
+  "alternatives_considered": [
+    {
+      "name": "Kantajat pelitilaan (kuten Freeserfissä tavara liikkuu oikeasti)",
+      "pros": "Matka ja ruuhka vaikuttaisivat peliin",
+      "cons": "Muuttaisi ketjujen tasapainon, tallennuksen ja determinismin; STORY-088 jakoi kantajat erilleen juuri tästä syystä",
+      "rejected_because": "Kriteeri 2: kantajat eivät vaikuta peliin"
+    },
+    {
+      "name": "Kantaja per tavarayksikkö",
+      "pros": "Tarkempi kuva",
+      "cons": "Kymmeniä kantajia päivässä, enemmän kuin 24",
+      "rejected_because": "Yksi kantaja per siirto ja raja 24"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/carriers.ts",
+    "src/game/clock.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Kävelyn ajoitus (0,85 päivää ja 0,04 päivän porrastus) ja kantajan koko ovat omia"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "carriers.ts ja Clock.fraction",
+      "verify": "carriers.test"
+    },
+    {
+      "step": 2,
+      "action": "Kävelyt chainDayssa ja piirto kaupunkitasolla",
+      "verify": "carriers.e2e ja kuvakaappaus"
+    },
+    {
+      "step": 3,
+      "action": "Mittaus 24 kantajalla",
+      "verify": "carryBench ja frameMs"
+    }
+  ],
+  "status": "approved"
+}

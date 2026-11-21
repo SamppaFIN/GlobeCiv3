@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T13:50:43Z",
+    "generated_at": "2026-11-21T21:25:58Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "5874ce0",
+    "git_commit": "932870f",
     "git_branch": "main",
     "language": "fi"
   },
@@ -237,7 +237,7 @@
         "STORY-090",
         "STORY-101"
       ],
-      "progress": 25
+      "progress": 50
     },
     {
       "id": "EPIC-011",
@@ -2631,9 +2631,13 @@
       "depends_on": [
         "STORY-088"
       ],
-      "status": "todo",
-      "progress": 0,
-      "linked": {},
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-082",
+        "implementation": "TICKET-IMPL-082",
+        "testing": "TICKET-TEST-082"
+      },
       "acceptance_criteria": [
         "Jokainen päivän siirto (tuottajalta keskustaan, keskustasta jalostajalle ja työmaalle) näkyy kaupunkitasolla kantajana, joka kävelee korkokuvaa pitkin tavara mukanaan ja ehtii perille saman päivän aikana pelin kellolla.",
         "Kantajia on enintään 24 kerrallaan yhdessä instanssoidussa verkossa, vähennetyllä liikkeellä niitä ei ole, ja kantajat eivät vaikuta peliin (sama siemen ja samat komennot antavat saman tilan).",

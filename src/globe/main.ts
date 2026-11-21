@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
-import { bestOf, isUp, placeAll, spots, standsOnTile, PLACE_RINGS, type Ground } from '../game/placement';
+import { bestOf, bestTile, isUp, placeAll, spots, standsOnTile, PLACE_RINGS, type Ground } from '../game/placement';
 import { CommandLog, execute, type Actor, type Command } from '../game/commands';
 import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
 import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
@@ -52,6 +52,7 @@ import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_L
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { city as cityRef, plain, term, unit as unitRef, type Rich, type RichLinks } from '../ui/richText';
 import { marksPassed, narrate, record } from '../game/history';
+import { along, ARRIVE_AT, MAX_CARRIERS, tripsOf, type Trip } from './carriers';
 import { defenseBonus, goldBonus, goodsBonus, scienceBonus, settleBonus, sightBonus, yieldBonus, type ActiveBonuses } from '../game/bonuses';
 import { createOnboarding } from '../ui/onboarding';
 import { goalCount, levelGoal, type LevelState } from '../game/goals';
@@ -71,7 +72,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard } from '../ui/discoveryCard';
-import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type ChainBuilding } from '../game/chains';
+import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type ChainBuilding, type Good } from '../game/chains';
 import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, RESOURCE_BUILDING_LIST, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
@@ -1004,12 +1005,25 @@ function arrangeEntertainers() {
  * A day of a city of chains (STORY-088), in a fixed order: the people eat the meals the day's
  * yield counted, the buildings work, and the site takes its materials and its builders' day.
  */
+/** The capital's carriers of the day (STORY-101): shown at the city level, they change nothing. */
+let carrierTrips: { city: number; trips: Trip[] } | null = null;
+
 function chainDay(c: City, citizens: number) {
   const s = c.chain!;
   eat(s, citizens);
   const built = c.buildings.filter(isChainBuilding);
-  workDay(s, built, built.filter(b => c.best?.includes(b)), c.capital ? goodsBonus(activeBonuses()) : 0);
-  const { done } = buildDay(s);
+  // Where the site stands, before it may finish today
+  const siteTile = s.site ? (c.placed?.[s.site.building] ?? bestTile(c, s.site.building, ground)) : null;
+  const work = workDay(s, built, built.filter(b => c.best?.includes(b)), c.capital ? goodsBonus(activeBonuses()) : 0);
+  const { done, moves } = buildDay(s);
+  // Each move walks from tile to tile: the centre is the city's tile, a building its own
+  carrierTrips = {
+    city: c.tile,
+    trips: tripsOf([...work, ...moves], at => (at === 'centre' ? c.tile : at === 'site' ? siteTile : (c.placed?.[at] ?? null)), (a, b) => {
+      const path = findPath(a, b, () => 1, 400);
+      return path ? [a, ...path] : null;
+    }),
+  };
   if (!done) return;
   c.buildings.push(done);
   record(c, { kind: 'built', day: today(), building: done });
@@ -1670,6 +1684,24 @@ const cityLevel = (() => {
   const v = new THREE.Vector3();
   const yawQ = new THREE.Quaternion();
   const Y = new THREE.Vector3(0, 1, 0);
+  // The carriers (STORY-101): a body and a load each, at most MAX_CARRIERS, in tile spacings
+  const S = RADIUS * TILE_ANGLE;
+  // A light smock so a carrier reads against grass and forest
+  const carrierBody = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.03 * S, 0.065 * S, 2, 6).translate(0, 0.065 * S, 0), flat(0xe6d8b8), MAX_CARRIERS);
+  const carrierLoad = new THREE.InstancedMesh(new THREE.BoxGeometry(0.065 * S, 0.045 * S, 0.065 * S).translate(0, 0.15 * S, 0), new THREE.MeshLambertMaterial({ flatShading: true }), MAX_CARRIERS);
+  for (const im of [carrierBody, carrierLoad]) {
+    im.count = 0;
+    im.castShadow = true;
+    im.frustumCulled = false;
+    group.add(im);
+  }
+  const GOOD_COLOR = Object.fromEntries(Object.entries({ log: 0x7a5232, plank: 0xc8a26a, stone: 0x9a968e, wheat: 0xe0c35a, flour: 0xf2efe6, bread: 0xb9773a, fish: 0x6f9fc0 })
+    .map(([g, hex]) => [g, new THREE.Color(hex)])) as Record<Good, THREE.Color>;
+  const legA = new THREE.Vector3();
+  const legB = new THREE.Vector3();
+  const local = new THREE.Vector3();
+  const inverseUp = new THREE.Quaternion();
+  const one = new THREE.Vector3();
 
   const clear = () => {
     for (const p of props) {
@@ -1893,9 +1925,46 @@ const cityLevel = (() => {
     relief,
     /** Height of the raised ground at a tile, for the units standing on it. */
     raise: (tile: number) => (terrain && relief.value > 0 ? terrain.heightAt(tile) * relief.value : 0),
+    /**
+     * The day's carriers at a part of the day (STORY-101): each walks its path over the risen
+     * ground, from tile centre to tile centre, and is gone once it has arrived.
+     */
+    walk(trips: readonly Trip[], dayPart: number) {
+      let n = 0;
+      if (terrain && relief.value > 0 && dayPart < ARRIVE_AT + 0.05) {
+        const at = (t: number, out: THREE.Vector3) => {
+          const c = tileCenter(t);
+          return out.copy(c).multiplyScalar(RADIUS * (1 + 2e-6)).sub(terrain!.origin).addScaledVector(c, terrain!.heightAt(t) * relief.value);
+        };
+        inverseUp.copy(up).invert();
+        const k = relief.value;
+        one.set(k, k, k);
+        for (let i = 0; i < Math.min(trips.length, MAX_CARRIERS); i++) {
+          const trip = trips[i];
+          const { leg, f } = along(trip.path.length, dayPart, i);
+          at(trip.path[leg], legA);
+          at(trip.path[leg + 1], legB);
+          // Facing the way it walks, in the city's own frame
+          local.subVectors(legB, legA).applyQuaternion(inverseUp);
+          q.copy(up).multiply(yawQ.setFromAxisAngle(Y, Math.atan2(-local.z, local.x)));
+          v.copy(legA).lerp(legB, f);
+          m.compose(v, q, one);
+          carrierBody.setMatrixAt(n, m);
+          carrierLoad.setMatrixAt(n, m);
+          carrierLoad.setColorAt(n, GOOD_COLOR[trip.good]);
+          n++;
+        }
+      }
+      carrierBody.count = carrierLoad.count = n;
+      if (n) {
+        carrierBody.instanceMatrix.needsUpdate = carrierLoad.instanceMatrix.needsUpdate = true;
+        if (carrierLoad.instanceColor) carrierLoad.instanceColor.needsUpdate = true;
+      }
+    },
+    get carriers() { return carrierBody.count; },
     get city() { return city; },
     get stats() {
-      return { city, relief: relief.value, triangles: mesh ? mesh.geometry.getAttribute('position').count / 3 : 0, props: props.map(p => (p.object instanceof THREE.InstancedMesh ? p.object.count : 1)).reduce((a, b) => a + b, 0) };
+      return { city, relief: relief.value, triangles: mesh ? mesh.geometry.getAttribute('position').count / 3 : 0, props: props.map(p => (p.object instanceof THREE.InstancedMesh ? p.object.count : 1)).reduce((a, b) => a + b, 0), carriers: carrierBody.count };
     },
     /** Build the ground of a city, once it has sunk from another. */
     build(c: City) {
@@ -1987,6 +2056,8 @@ function updateCityLevel(dt: number) {
   const next = reduceMotion() ? target : target > r ? Math.min(target, r + dt / RISE_SECONDS) : Math.max(target, r - dt / RISE_SECONDS);
   if (next !== r) cityLevel.setRelief(next);
   if (next > 0) cityLevel.light(tiles.sunDir.value);
+  // The carriers walk by the game's clock and stop with it; with reduced motion there are none
+  cityLevel.walk(!reduceMotion() && carrierTrips && carrierTrips.city === cityLevel.city ? carrierTrips.trips : [], clock.fraction);
 }
 
 // ─── Rival civilizations (STORY-068) ──────────────
@@ -4512,7 +4583,11 @@ const lightZ = new THREE.Vector3();
 const lightBasis = camera.matrixWorld;
 let lastFrame = performance.now();
 const bufferSize = new THREE.Vector2();
+/** The main thread's time in the last frames, ms, for measuring (STORY-101). */
+const frameMs: number[] = [];
+let framesDrawn = 0;
 function animate(now = performance.now()) {
+  const started = performance.now();
   requestAnimationFrame(animate);
   // Real elapsed time, not clamped: a 1 s flight must last 1 s even when frames are slow
   const dt = (now - lastFrame) / 1000;
@@ -4547,6 +4622,9 @@ function animate(now = performance.now()) {
   renderer.clearDepth();
   renderer.render(scene, camera);
   if (well.g > 0) renderer.render(glowScene, glowCamera);
+  frameMs.push(performance.now() - started);
+  framesDrawn++;
+  if (frameMs.length > 240) frameMs.shift();
 }
 animate();
 
@@ -4697,6 +4775,31 @@ frameStartPlanet();
   siteScore: (id: number) => world.siteScore(id),
   /** The card a tapped hex would show (STORY-055). */
   // The rows as plain text, as the tests read them; the card itself colours and links them (STORY-103)
+  /** The main thread's ms in the last frames (STORY-101). */
+  frameMs: () => [...frameMs],
+  /** How far into the day the clock is, 0 to 1 (STORY-101). */
+  dayPart: () => clock.fraction,
+  /** Frames drawn since the page opened (STORY-101). */
+  frames: () => framesDrawn,
+  /** Carriers for measuring: n walking from the city on view to tiles two rings out (STORY-101). */
+  carryTest: (n: number) => {
+    const c = play?.cities.find(x => x.tile === cityLevel.city);
+    if (!c) return 0;
+    const ring = tilesInRings(c.tile, 2).filter(t => t !== c.tile);
+    const goods: Good[] = ['log', 'plank', 'stone', 'wheat', 'flour', 'bread', 'fish'];
+    carrierTrips = {
+      city: c.tile,
+      trips: Array.from({ length: n }, (_, i) => ({ path: [c.tile, ...(findPath(c.tile, ring[i % ring.length], () => 1, 400) ?? [])], good: goods[i % goods.length] })).filter(t => t.path.length >= 2),
+    };
+    return carrierTrips.trips.length;
+  },
+  /** The JS time of one frame's carrier walk, ms, over `calls` frames of the day (STORY-101). */
+  carryBench: (calls: number) => {
+    const trips = carrierTrips?.trips ?? [];
+    const t = performance.now();
+    for (let i = 0; i < calls; i++) cityLevel.walk(trips, (i % 100) / 100 * ARRIVE_AT);
+    return (performance.now() - t) / calls;
+  },
   tileView: (id: number) => {
     if (!play) return null;
     const v = tileView(id);
