@@ -166,7 +166,7 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       return w.sendTo(cmd.tile);
     case 'focus': {
       const c = w.cities.find(x => x.tile === cmd.city);
-      if (!c) return false;
+      if (!c || c.focus === cmd.focus) return false;
       c.focus = cmd.focus;
       return true;
     }
