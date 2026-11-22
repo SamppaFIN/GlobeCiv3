@@ -40,8 +40,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Vihreä: GitHub Actions -ajo 45011210616 (merge dbcac67), Vitest, Playwright ja julkaisu Pagesiin (STORY-092 ja STORY-094 samassa ajossa; b0409f1:n ajo 45009948923 peruuntui uudemman pushin tieltä)",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

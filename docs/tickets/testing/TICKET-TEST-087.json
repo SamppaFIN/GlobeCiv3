@@ -52,8 +52,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Vihreä: GitHub Actions -ajo 45005717571 (merge c8634bb), Vitest, Playwright ja julkaisu Pagesiin",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
