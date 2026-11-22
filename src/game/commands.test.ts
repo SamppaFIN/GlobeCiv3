@@ -216,6 +216,8 @@ describe('commands', () => {
     expect(w.acts).toEqual(['mode 3 gather', 'task 4 improve', `pick ${HILL}`, 'skip', `flag ${FOREST}`, 'tax 70', 'lux 20', 'revolution', 'plan 12 settle', 'line research', 'aim 5', 'pact 1 alliance', 'trade 0 maps advance:alphabet']);
     expect(execute({ kind: 'focus', city: CENTRE, focus: 'production' }, w)).toBe(true);
     expect(w.cities[0].focus).toBe('production');
+    // The same focus again changes nothing, and a tile without a city has none
+    expect(execute({ kind: 'focus', city: CENTRE, focus: 'production' }, w)).toBe(false);
     expect(execute({ kind: 'focus', city: HILL, focus: 'food' }, w)).toBe(false);
   });
 

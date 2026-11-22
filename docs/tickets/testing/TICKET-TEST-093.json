@@ -68,10 +68,16 @@
         "outcome": "not_run"
       },
       {
-        "steps": "Utun katselmointi",
+        "steps": "Katselmoinnin korjausten jälkeen: Vitest kokonaan, tsc sekä science.e2e, city.e2e ja government.e2e",
+        "expected": "Ei regressiota",
+        "result": "54 tiedostoa ja 335 testiä läpi, tsc ilman virheitä, 4 E2E-testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Utun katselmointi (Sonnet, Anu ei käytettävissä)",
         "expected": "Hyväksytty",
-        "result": "Odottaa",
-        "outcome": "not_run"
+        "result": "Hyväksytty huomautuksin. Tuotantokoodissa ei vikaa: yksikään käsittelijä ei muuta tilaa ja palauta false. Löydökset ja korjaukset: (1) Riski: vartijatestin kenttälista päästi ohi esimerkiksi play.tax += 10, c.build =, c.buildings.push, areaPlans.set, units.units.splice, ties[0].state = ja usealle riville ketjutetun kutsun. Korjattu: testi kieltää minkä tahansa pelin kentän kirjoituksen play-nimellä näkymän omia kenttiä lukuun ottamatta, pelin asioiden kentät millä nimellä tahansa ja listojen muutokset, ja ketju luetaan rivinsä kanssa; Utun esimerkit ovat testin omissa esimerkeissä. Toisella nimellä tehty teko (const u = play.units; u.setMode) pääsee yhä ohi; sen estäisi vain näkymän luku-tyyppinen pelitila, joka jää myöhemmäksi. Utu kävi main.ts:n ja src/ui:n käsin läpi eikä löytänyt jäljellä olevia suoria tekoja. (2) Käytösmuutokset vanhaan koodiin (tehtävä vain uudisasukkaalle, verot listasta, diplomatia ja kauppa vain tavatulle ja kortin tarjoamin tunnistein, kohdevaltio avoin ja valloittamaton, alueen rajat, tavoitelääni avoimessa valtiossa ennen lippua): kaikki perusteltuja ja vastaavat kortin nappeja. (3) Sama vero, ylellisyys tai painotus uudelleen palautti true ja turvotti lokia: nyt false. (4) save.ts kunnossa; lisättiin negatiiviset tapaukset (yksikkö murtolukuna, kaupunki rajan ulkopuolella, valtio -1, kilpailija -1). Luku 49 on aluejaon vakio, kuten jo targetStaten tarkistuksessa. (5) Uusinnan testiin lisättiin käsittelijöiden kieltäytymiset Nodessa (muun kuin uudisasukkaan tehtävä, tuntematon yksikkö, tapaamaton kilpailija, tarjoamaton kaupan tavara, avaamaton kohdevaltio ja sama vero uudelleen), suorat tilan tarkistukset tekojen jälkeen, tehtävä improve ja moodi defend, ja rauhanehdotuksen tulos lukittiin (hyväksytty päivänä 75). Kullan, keksinnön ja resurssin vaihto sekä liitto ja sen purku uusitaan vain selaimessa (trade.e2e ja diplomacy.e2e), eivät Nodessa",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

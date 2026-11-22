@@ -684,12 +684,15 @@ function skipSite(): boolean {
   return true;
 }
 
+// The same rate again changes nothing, and stays out of the log (Utu's review)
 function setTax(tax: TaxRate): boolean {
+  if (play!.tax === tax) return false;
   play!.tax = tax;
   return true;
 }
 
 function setLux(lux: LuxRate): boolean {
+  if (play!.lux === lux) return false;
   play!.lux = lux;
   return true;
 }

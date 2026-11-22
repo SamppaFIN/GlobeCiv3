@@ -144,27 +144,41 @@ describe('the simulation\'s boundary (STORY-095)', () => {
  * game only through dispatch. These write the game's state directly; the debug hooks
  * (globeDebug) may, for the tests set up their games with them.
  */
+/** The view's own fields of the game: what is open and selected, not the game. */
+const VIEW_FIELDS = 'selected|flagTool|openCity|tileOpen|moving|diplomacyOpen|tradeOpen|advisorOpen|researchOpen|scienceOpen|scienceSelected|listOpen|listTab|hud|area';
+/** An assignment, an update or an increment, not a comparison or an arrow. */
+const WRITE = String.raw`\s*(?:[-+*/]?=(?![=>])|\+\+|--)`;
 const DIRECT_ACTS = [
+  // The units' and the game's own acts called
   /\.units\.(setMode|setTask|nextSite|setSite|setAreaPlan|setStateLine|sendTo|recruit|spawn|disband)\(/,
-  /\.units\.flag\s*=(?!=)/,
-  /\.(tax|lux|focus|gov|targetProvince|targetState|attitude|maps|since|anarchyUntil|plan)\s*=(?!=)/,
-  /\.(gold|bulbs)\s*(?:[-+*]?=)(?!=)/,
   /\b(setState|startRevolution|setTargetState|setStateLine|setAreaPlan)\(/,
-  /\bresearch\.(known|kinds)\.(add|delete|clear)\(/,
-  /\bresearch\.target\s*=(?!=)/,
+  // Any field of the game written but the view's own (Utu's review: a list of fields let others by)
+  new RegExp(String.raw`\bplay!?\??\.(?!(?:${VIEW_FIELDS})\b)[\w.!?\[\]]*${WRITE}`),
+  new RegExp(String.raw`\bp!?\.(?:gold|tax|lux|gov|targetProvince|targetState|anarchyUntil|cities|units|research|ties|rivals|raids|improvements)\b[\w.!?\[\]]*${WRITE}`),
+  // Fields of the game's things, on whatever name they go by (not an element's dataset)
+  new RegExp(String.raw`(?<!dataset)\.(?:build|buildings|size|state|food|shields|focus|entertainers|gold|bulbs|tax|lux|gov|attitude|maps|since|flag|mode|task|path|target|targetProvince|targetState|anarchyUntil|plan)${WRITE}`),
+  // The game's lists, sets and maps changed
+  /\.(?:buildings|improvements|areaPlans|units\.units|known|kinds|cities|rivals|ties|bandits)\.(?:push|splice|pop|shift|unshift|add|set|delete|clear)\(/,
 ];
 
-/** The lines of the view and the cards that act on the game directly, as path:line: text. */
+/**
+ * The lines of the view and the cards that act on the game directly, as path:line: text. A chain
+ * on the next lines (play.units\n  .setMode(…)) is read with its line. An act through another
+ * name (const u = play.units; u.setMode(…)) gets by: only a read-only view of the game's state
+ * would stop that (Utu's review, left for later).
+ */
 export function directActs(file: string, text: string): string[] {
   const open = text.indexOf('(window as any).globeDebug = {');
   const close = open < 0 ? -1 : text.indexOf('\n};', open);
   // The debug hooks blanked, their lines kept for the numbers
   const kept = open < 0 ? text : text.slice(0, open) + text.slice(open, close).replace(/[^\n]/g, ' ') + text.slice(close);
-  return codeLines(kept).filter(({ line }) => {
-    const code = line.replace(/(['"`])(?:\\.|(?!\1).)*\1/g, "''");
+  const lines = codeLines(kept).map(({ i, line }) => ({ i, line, code: line.replace(/(['"`])(?:\\.|(?!\1).)*\1/g, "''") }));
+  return lines.filter(({ code }, k) => {
     // A method of an interface only names it (a panel's setTargetState(): void)
     if (/^\s*\w+\??\([^)]*\)\s*:[^=]*;\s*$/.test(code)) return false;
-    return DIRECT_ACTS.some(re => re.test(code));
+    let chained = code;
+    for (let n = k + 1; n < lines.length && /^\s*\??\./.test(lines[n].code); n++) chained += lines[n].code.trim();
+    return DIRECT_ACTS.some(re => re.test(chained));
   }).map(({ i, line }) => `${file}:${i}: ${line.trim()}`);
 }
 
@@ -182,11 +196,26 @@ describe('the player\'s acts are commands (STORY-112)', () => {
       'if (play) play.tax = tax;',
       'p.gold -= item.amount;',
       'setState(t, "war", day, true);',
+      // Utu's review: these got by the first list
+      'play.tax += 10;',
+      "c.build = 'temple';",
+      'c.buildings.push(x);',
+      "play.units.areaPlans.set(1, 'settle');",
+      'play.units.units.splice(0, 1);',
+      "p.ties[0].state = 'war';",
+      'play.improvements.add(3);',
+      'play.units',
+      '  .setMode(u, mode);',
+      // Not acts: a comparison, an arrow, the view's own fields, an element and an interface's method
       'const same = play.tax === 50;',
+      'const f = play.cities.find(c => c.size > 2);',
+      'play.selected = 2;',
+      'p.textContent = text;',
+      'b.dataset.state = n.state;',
       '  setTargetState(): void;',
       '(window as any).globeDebug = {',
       '  setGold: (gold: number) => { play.gold = gold; },',
       '};',
-    ].join('\n'))).toEqual(['x.ts:1: play.units.setMode(u, mode);', 'x.ts:2: if (play) play.tax = tax;', 'x.ts:3: p.gold -= item.amount;', 'x.ts:4: setState(t, "war", day, true);']);
+    ].join('\n')).map(s => s.split(':')[1])).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
   });
 });

@@ -179,6 +179,10 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.commands[22].cmd.act = 'surrender'; })).toBeNull();
     expect(broken(s => { s.commands[23].cmd.give = 'gold:1000'; })).toBeNull();
     expect(broken(s => { s.commands[23].cmd.get = 'advance:fire'; })).toBeNull();
+    expect(broken(s => { s.commands[10].cmd.unit = 1.5; })).toBeNull();
+    expect(broken(s => { s.commands[15].cmd.city = TILE_COUNT; })).toBeNull();
+    expect(broken(s => { s.commands[21].cmd.state = -1; })).toBeNull();
+    expect(broken(s => { s.commands[22].cmd.rival = -1; })).toBeNull();
     // Only the checked fields are kept
     expect(broken(s => { s.commands[13].cmd.extra = 1; })!.commands![13].cmd).toEqual({ kind: 'skip' });
     // A rival's proposal waiting (STORY-095): one of the rivals, an alliance or peace

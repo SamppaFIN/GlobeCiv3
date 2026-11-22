@@ -44,6 +44,10 @@ describe('the player\'s own acts (STORY-112)', () => {
     const settler = s.units.units.find(u => u.kind === 'settler')!;
     give({ kind: 'mode', unit: scout.id, mode: 'gather' });
     give({ kind: 'task', unit: settler.id, task: 'found' });
+    expect([scout.mode, settler.task]).toEqual(['gather', 'found']);
+    // Only a settler has a task, and a unit not in the game has nothing (Utu's review)
+    expect(run.give({ kind: 'task', unit: scout.id, task: 'improve' })).toBe(false);
+    expect(run.give({ kind: 'mode', unit: 99_999, mode: 'defend' })).toBe(false);
     const site = s.units.currentSite()!;
     give({ kind: 'skip' });
     give({ kind: 'pick', tile: site });
@@ -54,9 +58,14 @@ describe('the player\'s own acts (STORY-112)', () => {
     give({ kind: 'lux', lux: 10 });
     give({ kind: 'plan', area: world.cityOf(capital.tile), plan: 'settle' });
     give({ kind: 'line', line: 'research' });
+    expect({ focus: capital.focus, tax: s.tax, lux: s.lux, line: s.units.stateLine, plan: s.units.areaPlans.get(world.cityOf(capital.tile)), flag: s.units.flag })
+      .toEqual({ focus: 'production', tax: 70, lux: 10, line: 'research', plan: 'settle', flag: site });
+    // The same rate again changes nothing, and stays out of the log
+    expect(run.give({ kind: 'tax', tax: 70 })).toBe(false);
     expect(run.until(70)).toBe(true);
-    give({ kind: 'mode', unit: scout.id, mode: 'explore' });
+    give({ kind: 'mode', unit: scout.id, mode: 'defend' });
     give({ kind: 'focus', city: capital.tile, focus: 'food' });
+    if (s.units.units.includes(settler)) give({ kind: 'task', unit: settler.id, task: 'improve' });
     // The province level by the player's own hand: a target province of the home state
     expect(run.until(130)).toBe(true);
     expect(s.progress.openLevel).toBeLessThanOrEqual(2);
@@ -87,7 +96,17 @@ describe('the player\'s own acts (STORY-112)', () => {
     setup(run);
     const capital = run.state.cities[0];
     const home = Math.floor(world.cityOf(capital.tile) / 49);
+    // Not met yet: no dealings (Utu's review)
+    expect(run.give({ kind: 'trade', rival: 1, give: 'maps', get: 'nothing' })).toBe(false);
+    expect(run.give({ kind: 'pact', rival: 1, act: 'alliance' })).toBe(false);
+    // Only what the card offers now: the player gives no kind of resource, and gets no advance it knows
+    expect(run.give({ kind: 'trade', rival: 0, give: 'resource:fish', get: 'nothing' })).toBe(false);
+    expect(run.give({ kind: 'trade', rival: 0, give: 'maps', get: 'advance:monarchy' })).toBe(false);
+    // A state not open is no target
+    expect(run.give({ kind: 'aim', state: (home + 181) % 362 })).toBe(false);
+    const gold = run.state.gold;
     expect(run.give({ kind: 'trade', rival: 0, give: 'maps', get: 'nothing' })).toBe(true);
+    expect({ maps: run.state.ties[0].maps, gold: run.state.gold }).toEqual({ maps: 60, gold });
     expect(run.give({ kind: 'revolution' })).toBe(true);
     expect(run.give({ kind: 'aim', state: home })).toBe(true);
     // The same target again changes nothing, and stays out of the log
@@ -97,11 +116,12 @@ describe('the player\'s own acts (STORY-112)', () => {
     expect(run.give({ kind: 'trade', rival: 0, give: 'nothing', get: 'maps' })).toBe(false);
     expect(run.give({ kind: 'pact', rival: 0, act: 'war' })).toBe(false);
     expect(run.until(75)).toBe(true);
-    const peace = run.give({ kind: 'pact', rival: 0, act: 'peace' });
+    // Ten days of war, not too hostile: peace is accepted (Utu's review: the outcome locked)
+    expect(run.give({ kind: 'pact', rival: 0, act: 'peace' })).toBe(true);
     expect(run.until(100)).toBe(true);
     // The advisors of the province level, asked for as it opens, come between
-    expect(playerKinds(run, 60).filter(k => k !== 'advise')).toEqual(['trade', 'revolution', 'aim', 'pact', ...(peace ? ['pact'] : [])]);
-    expect(run.state.ties[0].state).toBe(peace ? 'peace' : 'war');
+    expect(playerKinds(run, 60).filter(k => k !== 'advise')).toEqual(['trade', 'revolution', 'aim', 'pact', 'pact']);
+    expect(run.state.ties[0].state).toBe('peace');
 
     const { played, replayed: again } = replayed(run, 100, { 60: setup });
     expect(again.commands).toEqual(played.commands);
