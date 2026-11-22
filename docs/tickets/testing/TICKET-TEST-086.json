@@ -52,8 +52,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Vihreä: GitHub Actions -ajo 45002279262 (merge 1f12fe3), Vitest, Playwright ja julkaisu Pagesiin",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
