@@ -70,8 +70,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Vihreä: ajo 45045006876 (commit 7065ab4), Vitest 51 tiedostoa ja 314 testiä, Playwright 109 läpi (1,4 h), ja Pages-julkaisu onnistui",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
