@@ -49,6 +49,8 @@ function world(): CommandWorld & { settled: number[]; founded: number[]; advisor
       w.gold -= price;
       return true;
     },
+    // As the game's: a province of the home state, here 7 … 13 (STORY-111)
+    target: (province: number) => province >= 7 && province < 14,
   };
   return w;
 }
@@ -61,6 +63,12 @@ describe('commands', () => {
     expect(execute({ kind: 'advise', level: 'state', advisor: 'war' }, w)).toBe(true);
     expect(execute({ kind: 'advise', level: 'city', advisor: 'none' }, w)).toBe(true);
     expect(w.advisors).toEqual({ city: 'none', province: 'none', state: 'war', planet: 'none' });
+  });
+
+  it('a target is a province the game accepts (STORY-111)', () => {
+    const w = world();
+    expect(execute({ kind: 'target', province: 9 }, w)).toBe(true);
+    expect(execute({ kind: 'target', province: 20 }, w)).toBe(false);
   });
 
   it('buying pays what the build lacks, and a city with nothing to buy buys nothing (STORY-098)', () => {

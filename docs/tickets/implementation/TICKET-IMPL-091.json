@@ -1,0 +1,43 @@
+{
+  "id": "TICKET-IMPL-091",
+  "story": "STORY-111",
+  "plan": "PLAN-091",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/advisors.ts",
+    "src/game/units.ts",
+    "src/game/commands.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/game/advisors.test.ts",
+    "src/game/commands.test.ts",
+    "tests/e2e/province-goal.e2e.ts",
+    "backlog.json",
+    "CLAUDE.md"
+  ],
+  "change_summary": "advisors.ts: provinceGoalTarget (lähin kotivaltion lääni, jossa on maata, jota ei pidetä ja johon pääsee; tasapelit tunnisteella) ja läänin neuvonantajien kuvaukset. commands.ts: komento target ja CommandWorld.target; save.ts tarkistaa sen. units.ts: keepAlso, jonka läänit Vartija avaa tiedustelijoille. main.ts: targetAt, provinceGoal (vain kun lääni on ylin taso ja neuvonantaja valittu), goalLandTile ja sendToProvince tavoittamattomien merkinnällä, advisorDay asettaa Vartijan keepAlso, Asuttaja merkitsee tavoitteen parhaan alueen ja lähettää tiedustelijat, Tutkimusmatkailija kartoittaa tavoitteen kotiläänin jälkeen, ja noteSiteOffer tarjoaa paikan provinceSitella myös läänitasolla neuvonantajan kanssa; debug province() kertoo tavoitteen.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Command",
+      "COMMAND_KINDS",
+      "CommandWorld",
+      "execute",
+      "validateSave",
+      "Units.keepAlso",
+      "advisorDay",
+      "noteSiteOffer",
+      "provinceGoalTarget"
+    ],
+    "call_sites_found": [
+      "dispatch (main.ts) ja commands.testin maailma; scouttien allowed-rajaus units.ts:ssä; noteSiteOffer"
+    ],
+    "call_sites_updated": [
+      "dispatch saa target-toiminnon, commands.testin maailma samoin; tsc ilman virheitä"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "d10f007",
+  "progress": 100,
+  "notes": "Tavoite on läänitason järjestelmä: valtiotasolla Laajentaja jatkaa omalla tavoitteellaan kuten ennen. Tallennusmuoto ei rikkoudu: uusi komentolaji lisää vain sallitun arvon, ja targetProvince oli jo tallennuksessa."
+}

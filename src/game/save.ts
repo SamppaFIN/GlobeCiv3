@@ -168,6 +168,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'move': return { kind, city: tile(c.city), building: oneOf(c.building, BUILDINGS, 'building'), tile: tile(c.tile) };
         case 'study': return { kind, target: oneOf(c.target, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'study') };
         case 'buy': return { kind, city: tile(c.city) };
+        case 'target': return { kind, province: int(c.province, 'province', 0, Math.ceil(limits.cityAreas / 7) - 1) };
         case 'advise': {
           const level = oneOf(c.level, ADVISOR_LEVELS, 'advisor level');
           const list: readonly string[] = { town: TOWN_ADVISOR_LIST, city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level];

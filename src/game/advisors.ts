@@ -148,6 +148,11 @@ export function exploreTarget(shares: readonly (readonly [area: number, share: n
  *                       one, and a city near the province border builds walls
  * Each of the three has a worker built for a province with a strategic resource inside the
  * border and no road to it, one worker a province (STORY-093, own); the Vartija's soldier first.
+ * While the province is the top level, each serves its goal, four of the home state's provinces
+ * held (STORY-111, Sami 2026-11-22): the nearest province of the home state without a hold is the
+ * target. The Asuttaja sends the scouts there and marks its best mapped area Asuta, the
+ * Tutkimusmatkailija maps it once the home province is mapped, and the Vartija lets the scouts
+ * into the provinces held and the target.
  * The province advisor's builds and expeditions go before the city advisor's.
  */
 export type ProvinceAdvisor = 'none' | 'settle' | 'explore' | 'defend';
@@ -155,10 +160,19 @@ export const PROVINCE_ADVISOR_LIST: readonly ProvinceAdvisor[] = ['none', 'settl
 
 export const PROVINCE_ADVISORS: Record<ProvinceAdvisor, { name: string; does: string }> = {
   none: { name: 'Oma ohjaus', does: 'Hoidat läänin painotukset ja retkikunnat itse.' },
-  settle: { name: 'Asuttaja', does: 'Merkitsee läänin parhaat kartoitetut alueet asutettaviksi ja hyväksyy kaupunkipaikat itse. Pääkaupunki tekee uudisasukkaan, kun paikka odottaa. Läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
-  explore: { name: 'Tutkimusmatkailija', does: 'Poistaa Ohita-merkinnät ja lähettää retkikunnan lähimmälle alueelle, joka on alle 60 % kartoitettu: ensin läänissä, sitten valtiossa. Läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
-  defend: { name: 'Vartija', does: 'Tiedustelijat pysyvät läänissä. Kaupunki ilman sotilasta tekee sellaisen, ja läänin rajalla oleva kaupunki rakentaa muurin. Sotilaan jälkeen läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
+  settle: { name: 'Asuttaja', does: 'Merkitsee läänin parhaat kartoitetut alueet asutettaviksi ja hyväksyy kaupunkipaikat itse. Lähettää tiedustelijat lähimpään kotivaltion lääniin, jota ei vielä pidetä, ja asuttaa sen. Pääkaupunki tekee uudisasukkaan, kun paikka odottaa. Läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
+  explore: { name: 'Tutkimusmatkailija', does: 'Poistaa Ohita-merkinnät ja lähettää retkikunnan lähimmälle alueelle, joka on alle 60 % kartoitettu: ensin läänissä, sitten lähimmässä kotivaltion läänissä, jota ei vielä pidetä. Läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
+  defend: { name: 'Vartija', does: 'Tiedustelijat pysyvät hallussa olevissa lääneissä ja lähimmässä kotivaltion läänissä, jota ei vielä pidetä. Kaupunki ilman sotilasta tekee sellaisen, ja läänin rajalla oleva kaupunki rakentaa muurin. Sotilaan jälkeen läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
 };
+
+/**
+ * The province level's target (STORY-111): the nearest province of the home state with land and
+ * not held, leaving out those the scouts could not reach; ties by id. Null when none is left.
+ */
+export function provinceGoalTarget(provinces: readonly { province: number; held: boolean; land: boolean; reachable: boolean; distance: number }[]): number | null {
+  const open = provinces.filter(p => !p.held && p.land && p.reachable).sort((a, b) => a.distance - b.distance || a.province - b.province);
+  return open[0]?.province ?? null;
+}
 
 /** The areas the Asuttaja marks Asuta: the best of those without a city, mapped at least a quarter. */
 export function settleAreas(areas: readonly { area: number; hasCity: boolean; share: number; best: number }[], count = 2): number[] {

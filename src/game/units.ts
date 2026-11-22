@@ -102,6 +102,8 @@ export class Units {
   stateLine: StateLine = 'research';
   /** The province Vartija keeps the scouts in the home province (STORY-050); set each day, not saved. */
   keepHome = false;
+  /** Provinces the province Vartija lets the scouts into besides the home one (STORY-111); not saved, set each day. */
+  keepAlso: ReadonlySet<number> = new Set();
   /** States open to scouts, flags and city sites (STORY-016), or null for all; set by the game, not saved. */
   openStates: Set<number> | null = null;
   /**
@@ -389,7 +391,7 @@ export class Units {
     // Unmapped land, not in areas marked Ohita, and inside the home province with Puolustus or the province Vartija
     const allowed = (id: number) => {
       const city = world.cityOf(id);
-      return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince) && this.isOpen(id, world);
+      return this.areaPlans.get(city) !== 'skip' && ((this.stateLine !== 'defend' && !this.keepHome) || Math.floor(city / 7) === this.homeProvince || (this.keepHome && this.keepAlso.has(Math.floor(city / 7)))) && this.isOpen(id, world);
     };
     // The focus first, then anywhere (the nearest land could lie outside the home province for ever)
     const unmapped = (also: (id: number) => boolean) => nearestTile(u.tile, cost, id => !world.isMapped(id) && land(id) && allowed(id) && also(id));

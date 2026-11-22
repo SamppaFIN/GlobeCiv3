@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T16:38:38Z",
+    "generated_at": "2026-11-22T17:45:36Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "c022978",
+    "git_commit": "d10f007",
     "git_branch": "main",
     "language": "fi"
   },
@@ -251,7 +251,8 @@
         "STORY-091",
         "STORY-092",
         "STORY-093",
-        "STORY-094"
+        "STORY-094",
+        "STORY-111"
       ],
       "progress": 100
     },
@@ -2849,6 +2850,28 @@
         "plan": null,
         "implementation": null,
         "testing": null
+      }
+    },
+    {
+      "id": "STORY-111",
+      "epic": "EPIC-011",
+      "title": "Läänin neuvonantajat tähtäävät läänitason tavoitteeseen",
+      "type": "story",
+      "narrative": "Pelaajana haluan läänin neuvonantajan vievän kansan uusiin kotivaltion lääneihin, jotta läänitaso nousee valtiotasolle neuvonantajien varassa eikä jää jumiin.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-093"
+      ],
+      "acceptance_criteria": [
+        "Kun lääni on ylin auki oleva taso, Asuttaja, Tutkimusmatkailija ja Vartija tähtäävät kukin omalla tavallaan lähimpään kotivaltion lääniin, jota ei vielä pidetä, ja tavoitteen valinta on komento.",
+        "Autopilotti siemenellä 42 nousee valtiotasolle kaikilla kolmella läänin neuvonantajalla."
+      ],
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-091",
+        "implementation": "TICKET-IMPL-091",
+        "testing": "TICKET-TEST-091"
       }
     }
   ]

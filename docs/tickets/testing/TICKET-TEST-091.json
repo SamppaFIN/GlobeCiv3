@@ -1,0 +1,61 @@
+{
+  "id": "TICKET-TEST-091",
+  "story": "STORY-111",
+  "implementation_ticket": "TICKET-IMPL-091",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU), Chromium headless (Playwright 1.64) SwiftShaderilla, vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "province-goal.e2e mainilla (7065ab4) ennen korjausta",
+        "expected": "Toistaa vian",
+        "result": "Epäonnistuu: Tutkimusmatkailijan kanssa targetProvince pysyy -1, eli kukaan ei tähtää uuteen lääniin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: provinceGoalTarget (lähin, hallussa, ei maata, tavoittamaton, tasapeli) ja komento target",
+        "expected": "Kriteeri 1",
+        "result": "Läpi: 51 tiedostoa ja 316 testiä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "province-goal.e2e: oma ohjaus ei tähtää; Tutkimusmatkailija asettaa tavoitteeksi kotivaltion läänin, jota ei pidetä, komennolla target ja lähettää retkikunnan sinne; Vartija päästää tiedustelijat hallussa oleviin lääneihin ja tavoitteeseen; Asuttaja saa kartoitetusta tavoitteesta kaupunkipaikan",
+        "expected": "Kriteeri 1",
+        "result": "Läpi (48 s)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Autopilotti siemenellä 42 (Ruokkija, Kasvattaja ja läänin neuvonantaja), kahdesti jokaisella",
+        "expected": "Kriteeri 2: nousu valtiotasolle kaikilla kolmella",
+        "result": "6/6 nousi: läänistä valtioon Asuttaja 95 ja 113 päivää, Tutkimusmatkailija 111 ja 118, Vartija 81 ja 54. Ennen korjausta (STORY-093:n mittaus) 3/8 ajoa jäi jumiin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Liittyvät E2E-testit: province-goal, province, province-advisors, unlock, conquest, region-card, state-advisors, goals, opponents, firsts, city-states, war ja save",
+        "expected": "Ei regressiota",
+        "result": "21/21 läpi (21,9 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Läänitasolla neuvonantaja vie kansan uusiin lääneihin ymmärrettävästi",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

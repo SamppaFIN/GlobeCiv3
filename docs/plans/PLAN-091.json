@@ -1,0 +1,50 @@
+{
+  "id": "PLAN-091",
+  "story": "STORY-111",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Juurisyy (TICKET-TEST-090:n autopilotti): läänitason tavoite on neljä kotivaltion lääniä, mutta läänin neuvonantajat toimivat vain kotiläänissä (homeAreas), Vartija pitää tiedustelijat kotiläänissä, ja hiljaisen jakson kaupunkipaikka haetaan 12 renkaan päästä pääkaupungista (nearbySite). Uuteen lääniin laajeneminen jäi siis sattuman varaan, ja mainilla kaksi neljästä autopilottiajosta ei noussut valtiotasolle. Korjaus (Samin valinta 2026-11-22: kaikki kolme omalla tavallaan): kun lääni on ylin auki oleva taso ja läänin neuvonantaja on valittu, lähin kotivaltion lääni, jossa on maata ja jota ei pidetä, on tavoite. Tavoite valitaan komennolla target (sääntö 7), ja se pysyy, kunnes lääni on hallussa. Asuttaja merkitsee tavoitteen parhaan kartoitetun alueen asutettavaksi ja lähettää tiedustelijat tavoitteen keskimmäiselle maaruudulle, kunnes sellainen alue on. Tutkimusmatkailija lähettää retkikunnan kotiläänin jälkeen tavoitteeseen ennen muuta valtiota. Vartija päästää tiedustelijat hallussa oleviin lääneihin ja tavoitteeseen (Units.keepAlso, ei tallenneta, asetetaan päivittäin). Kaupunkipaikka tarjotaan läänitasolla neuvonantajan kanssa samoin kuin valtiotason valloituksessa (provinceSite: paras kartoitettu paikka lähimmässä lääniin, jota ei pidetä). Lääni, johon tiedustelijat eivät pääse maata pitkin, ohitetaan, kunnes hallussa olevat läänit muuttuvat.",
+  "alternatives_considered": [
+    {
+      "name": "Vain Asuttaja ja Tutkimusmatkailija tähtäävät",
+      "pros": "Vartija säilyttää luonteensa",
+      "cons": "Vartija jäisi jumiin, ja sen nousu jäisi kulttuurirajojen varaan",
+      "rejected_because": "Sami valitsi kaikki kolme"
+    },
+    {
+      "name": "Valtiotason Laajentajan tavoite käyttöön jo läänitasolla",
+      "pros": "Valmis koodi",
+      "cons": "Valtiotason järjestelmä läänitasolla rikkoo periaatteen kukin järjestelmä omalle tasolleen",
+      "rejected_because": "Läänin neuvonantajat palvelevat läänin omaa tavoitetta"
+    }
+  ],
+  "files_to_change": [
+    "src/game/advisors.ts",
+    "src/game/units.ts",
+    "src/game/commands.ts",
+    "src/game/save.ts",
+    "src/globe/main.ts",
+    "src/game/advisors.test.ts",
+    "src/game/commands.test.ts",
+    "tests/e2e/province-goal.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Testi, joka toistaa vian: läänitasolla neuvonantaja ei aseta tavoitetta",
+      "verify": "province-goal.e2e epäonnistuu mainilla (targetProvince -1)"
+    },
+    {
+      "step": 2,
+      "action": "provinceGoalTarget, komento target ja neuvonantajien tähtäys",
+      "verify": "advisors.test, commands.test ja province-goal.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Autopilotti siemenellä 42 kaikilla kolmella neuvonantajalla kahdesti",
+      "verify": "Kaikki ajot nousevat valtiotasolle"
+    }
+  ],
+  "status": "approved"
+}
