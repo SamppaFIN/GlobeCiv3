@@ -1,0 +1,46 @@
+{
+  "id": "PLAN-089",
+  "story": "STORY-094",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Vastustajat kuuluvat valtiotasolle (Samin pelisuunta 2026-11-19: kukin järjestelmä kuuluu omalle tasolleen). visibleNatives, visibleTribes ja visibleRivalCities palauttavat tyhjän ennen valtiotasoa, joten kaupunkivaltiot, paimentolaisleirit ja kilpailijoiden kaupungit eivät näy kartalla, sirussa, Kenraalin kohteina eivätkä diplomatiassa. Paimentolaiset ryöstävät ja kilpailijat sotivat vasta valtiotasolla (raidDay ja rivalWarDay); diplomatia ja kauppa olivat jo valtiotason (STORY-017). Rosvot kuuluvat edelleen kaupunkialueelle. Kun valtiotaso avautuu, meetOpponents paljastaa naapurivaltioiden kaupunkivaltiot ja paimentolaisleirit, ja nousukortti kertoo niiden määrän, kauempana kasvavat kilpailijat ja sen, että diplomatia, sota ja kauppa alkavat (design-briefin näkymä 7). Samin valinta 2026-11-22: planeettataso pysyy ennallaan, ja vain ydinsota näkyy lukittuna: planeetan paneelissa rivi 'Ydinsota: tulossa myöhemmin', ja valtion valtauksen kortti kertoo, että johtajien sota ja ydinaseet tulevat myöhemmin. Vanha alku (?classic) pitää vastustajat alusta asti.",
+  "alternatives_considered": [
+    {
+      "name": "Vastustajat näkyvät mutta eivät toimi ennen valtiotasoa",
+      "pros": "Kartta kertoo, mitä on tulossa",
+      "cons": "Näkyvä mutta passiivinen järjestelmä on juuri se sekavuus, josta PLAYTEST-002 kertoi",
+      "rejected_because": "Kukin järjestelmä kuuluu omalle tasolleen, ja esittelyhetki kertoo vastustajista valtiotasolla"
+    },
+    {
+      "name": "Planeettataso lukitaan kokonaan",
+      "pros": "Kriteerin sanamuoto",
+      "cons": "STORY-057:n toiminnot jäisivät piiloon",
+      "rejected_because": "Sami valitsi nykyisen planeetan ja lukitun ydinsodan"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts",
+    "src/game/goals.ts"
+  ],
+  "open_questions": [
+    "Paimentolaiset hyökkäävät nyt vasta valtiotasolla, joten kaupunkialueen ja läänin ainoa uhka on rosvot. Jos lääni tuntuu pelitestissä tyhjältä, paimentolaisten voi siirtää läänitasolle."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Näkyvyys ja toiminta valtiotasolle",
+      "verify": "opponents.e2e"
+    },
+    {
+      "step": 2,
+      "action": "Esittelykortti ja ydinsota tulossa myöhemmin",
+      "verify": "opponents.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Regressio",
+      "verify": "firsts, conquest ja city-states"
+    }
+  ],
+  "status": "approved"
+}

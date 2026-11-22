@@ -1,0 +1,67 @@
+{
+  "id": "TICKET-TEST-089",
+  "story": "STORY-094",
+  "implementation_ticket": "TICKET-IMPL-089",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "opponents.e2e: uusi peli nousee läänitasolle; naapureiden kaupunkivaltioiden ja kilpailijoiden kaupunkien ruudut kartoitetaan, mutta yhtään kaupunkivaltiota, leiriä tai kilpailijaa ei näy, eikä luettelossa ole diplomatiaa",
+        "expected": "Kriteeri 1: ei vastustajia ennen valtiotasoa",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "opponents.e2e: valtiotason kortti kertoo kaupunkivaltioiden ja paimentolaisheimojen määrän ja että diplomatia, sota ja kauppa alkavat; kaupunkivaltiot ja kaikki kartoitetut kilpailijoiden kaupungit näkyvät, ja diplomatia on luettelossa",
+        "expected": "Kriteeri 1 ja tavoite näkyy",
+        "result": "Läpi; kuvakaappaus state-opponents.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "opponents.e2e: valtion valtaus avaa planeetan, ja kortti kertoo johtajien sodan ja ydinaseiden tulevan myöhemmin",
+        "expected": "Kriteeri 2 (Samin valinta)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Paimentolaisten ryöstö ja kilpailijan sota ennen valtiotasoa",
+        "expected": "Eivät käynnisty",
+        "result": "Ei omaa testiä: ehto on näkyvyysfunktioiden lisäksi raidDayssa ja rivalWarDayssa (koodikatselmointi); paimentolaisten ryöstöpäivä riippuu siemenestä",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "firsts (4), conquest (3) ja city-states",
+        "expected": "Ei regressiota",
+        "result": "Kaikki läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: opponents.e2e state-opponents.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Vastustajien esittely valtiotasolla tuntuu selkeältä",
+        "checked": false
+      },
+      {
+        "item": "Lääni ei tunnu tyhjältä ilman paimentolaisia",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
