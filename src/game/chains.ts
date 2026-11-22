@@ -106,6 +106,16 @@ export function settlementSteps(built: readonly string[], size: number): { base:
 }
 export const settlementDone = (built: readonly string[], size: number) => Object.values(settlementSteps(built, size)).every(Boolean);
 
+/**
+ * The buildings a city founded in the city area starts with (STORY-091; Sami 2026-11-22, own):
+ * the base and the first chain of food whose every building has ground near it, bread before
+ * fish. A building with no ground near the city is left out, so such a city is not ready.
+ */
+export function settlementStart(fits: (b: ChainBuilding) => boolean): ChainBuilding[] {
+  const food = FOOD_CHAINS.find(chain => chain.every(fits)) ?? [];
+  return [...BASE, ...food].filter(fits);
+}
+
 /** Whether a chain building may be started: not built, no other site under way, the base first. */
 export const chainOpen = (s: ChainState, built: readonly string[], b: ChainBuilding) =>
   !built.includes(b) && (s.site === null || s.site.building === b) && (BASE.includes(b) || BASE.every(x => built.includes(x)));

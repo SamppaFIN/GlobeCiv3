@@ -172,8 +172,8 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   sawmill: { name: 'Saha', cost: 30, pop: 0 },
   quarry: { name: 'Louhos', cost: 30, pop: 0 },
   field: { name: 'Pelto', cost: 30, pop: 0 },
-  // The chain buildings of a new game's capital are built of planks and stone (STORY-088,
-  // chains.ts); the three only it has get no shield cost anywhere (CHAIN_ONLY)
+  // The chain buildings of a new game's cities are built of planks and stone (STORY-088,
+  // chains.ts); the three only they have get no shield cost anywhere (CHAIN_ONLY)
   lumberjack: { name: 'Metsuri', cost: 0, pop: 0 },
   mill: { name: 'Mylly', cost: 0, pop: 0 },
   bakery: { name: 'Leipomo', cost: 0, pop: 0 },
@@ -233,9 +233,10 @@ export interface City {
   /** Buildings on their best ground, which give a bonus (STORY-071); set by placeAll. */
   best?: Building[];
   /**
-   * The production chains (STORY-088): only a new game's capital has them, and its chain
-   * buildings are built of planks and stone and make goods instead of the terrain buildings'
-   * +1. Other cities, the old start and saves from before keep the old rules.
+   * The production chains (STORY-088): a new game's capital and the cities founded after it
+   * (STORY-091) have them, and their chain buildings are built of planks and stone and make
+   * goods instead of the terrain buildings' +1. Cities taken, the old start and saves from
+   * before keep the old rules.
    */
   chain?: ChainState;
   /** What happened to the city, for its chronicle (STORY-106, history.ts); a save from before has none. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BASE, buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_RULES, eat, GOODS, has, MAKE_DAYS, mealsReady, newChain, startSite, workDay, type ChainBuilding, type ChainState } from './chains';
-import { settlementDone, settlementSteps } from './chains';
+import { settlementDone, settlementStart, settlementSteps } from './chains';
 
 const total = (s: ChainState) => GOODS.reduce((n, g) => n + has(s, g), 0);
 /** Build a site to the end; the days it took. */
@@ -161,5 +161,22 @@ describe('the ready settlement (STORY-089)', () => {
     expect(settlementDone(['lumberjack', 'sawmill', 'quarry', 'fishery'], 3)).toBe(true);
     expect(settlementDone(['lumberjack', 'sawmill', 'quarry', 'fishery'], 2)).toBe(false);
     expect(settlementDone(['sawmill', 'quarry', 'fishery', 'field', 'mill', 'bakery'], 5)).toBe(false);
+  });
+});
+
+describe('a settlement founded in the city area (STORY-091)', () => {
+  const all = () => true;
+  it('starts with the base and a chain of food, bread before fish', () => {
+    expect(settlementStart(all)).toEqual(['lumberjack', 'sawmill', 'quarry', 'field', 'mill', 'bakery']);
+    // Without ground for a field, the fishery is the chain of food
+    expect(settlementStart(b => b !== 'field')).toEqual(['lumberjack', 'sawmill', 'quarry', 'fishery']);
+  });
+  it('leaves out what has no ground near the city, and is then not ready', () => {
+    const noForest = (b: ChainBuilding) => b !== 'lumberjack' && b !== 'field' && b !== 'fishery';
+    const start = settlementStart(noForest);
+    expect(start).toEqual(['sawmill', 'quarry']);
+    expect(settlementSteps(start, 3)).toEqual({ base: false, food: false, size: true });
+    // A city of size 1 with all of them is a settlement still growing
+    expect(settlementSteps(settlementStart(all), 1)).toEqual({ base: true, food: true, size: false });
   });
 });

@@ -74,7 +74,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
-import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, settlementDone, settlementSteps, SETTLEMENT_SIZE, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
+import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, settlementDone, settlementStart, settlementSteps, SETTLEMENT_SIZE, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
@@ -930,6 +930,14 @@ function nextJob(u: Unit) {
 function foundAt(tile: number, founder: string | null = null) {
   if (!play) return;
   const city = foundCity(play.cities, tile);
+  // A city founded in the city area of a new game starts as a settlement (STORY-091, Sami
+  // 2026-11-22): its base and a chain of food stand at once where the governor puts them, at
+  // size 1 as in Freeciv, and the city level's advisor keeps its chains going
+  if (play.cities.length > 1 && !classic && play.cities.some(c => c.chain)) {
+    city.chain = newChain();
+    city.buildings.push(...settlementStart(b => spots(city, b, ground).length > 0));
+    placeAll(city, ground);
+  }
   chronicleFounding(city, founder);
   moment('city', tile);
   reveal(tilesInRings(tile, CITY_RINGS));
@@ -1020,8 +1028,9 @@ function chainDay(c: City, citizens: number) {
   const siteTile = s.site ? (c.placed?.[s.site.building] ?? bestTile(c, s.site.building, ground)) : null;
   const work = workDay(s, built, built.filter(b => c.best?.includes(b)), c.capital ? goodsBonus(activeBonuses()) : 0);
   const { done, moves } = buildDay(s);
-  // Each move walks from tile to tile: the centre is the city's tile, a building its own
-  carrierTrips = {
+  // Each move walks from tile to tile: the centre is the city's tile, a building its own. Only
+  // the city whose level is shown walks them (STORY-091: more cities than the capital have chains)
+  if (c.tile === cityLevel.city) carrierTrips = {
     city: c.tile,
     trips: tripsOf([...work, ...moves], at => (at === 'centre' ? c.tile : at === 'site' ? siteTile : (c.placed?.[at] ?? null)), (a, b) => {
       const path = findPath(a, b, () => 1, 400);
