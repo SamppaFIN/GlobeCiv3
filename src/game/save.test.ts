@@ -56,7 +56,12 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       { day: 11, by: 'state', cmd: { kind: 'study', target: 'masonry' } },
       { day: 12, by: 'player', cmd: { kind: 'advise', level: 'province', advisor: 'settle' } },
       { day: 13, by: 'state', cmd: { kind: 'buy', city: 7 } },
+      // The answers to the cards the game stops for (STORY-095)
+      { day: 14, by: 'player', cmd: { kind: 'site', accept: false } },
+      { day: 15, by: 'city', cmd: { kind: 'raid', choice: 'buy' } },
+      { day: 16, by: 'player', cmd: { kind: 'treaty', accept: true } },
     ],
+    treaty: { rival: 0, kind: 'peace' },
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }
@@ -139,6 +144,13 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.commands[5].cmd.advisor = 'war'; })).toBeNull();
     expect(broken(s => { s.commands[5].cmd.level = 'galaxy'; })).toBeNull();
     expect(broken(s => { s.commands = {}; })).toBeNull();
+    expect(broken(s => { s.commands[7].cmd.accept = 'yes'; })).toBeNull();
+    expect(broken(s => { s.commands[8].cmd.choice = 'flee'; })).toBeNull();
+    // A rival's proposal waiting (STORY-095): one of the rivals, an alliance or peace
+    expect(broken(s => { s.treaty.rival = 1; })).toBeNull();
+    expect(broken(s => { s.treaty.kind = 'truce'; })).toBeNull();
+    expect(broken(s => { delete s.treaty; })!.treaty).toBeUndefined();
+    expect(broken(s => { s.treaty = null; })!.treaty).toBeUndefined();
     // A kind of resource is a study too (STORY-072)
     expect(broken(s => { s.research.target = 'gold'; })?.research.target).toBe('gold');
     expect(validateSave(null, LIMITS)).toBeNull();

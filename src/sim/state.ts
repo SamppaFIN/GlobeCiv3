@@ -17,8 +17,7 @@
  * - Notices only, not the game: cities told of their limit (atLimit) or disorder (unrest), the
  *   road a worker is building for (joiningOf, its status text) and a band's chronicle line
  *   (raidTally), the capital's carriers (carrierTrips, shown, changing nothing).
- * - Not yet here, to move with the day's systems (PLAN-092 phases B and C): the card a rival's
- *   proposal waits on (treaty) and the end of the game (over), and the day inside a frame of
+ * - Not yet here, to move with the day's systems (PLAN-092 phase C): the day inside a frame of
  *   several days (tickDay) and the units' sight finding ruins (scouting), which become arguments.
  */
 import type { CityAdvisor, PlanetAdvisor, ProvinceAdvisor, StateAdvisor, TownAdvisor } from '../game/advisors';
@@ -97,4 +96,24 @@ export interface GameState {
   firsts: Set<FirstKind>;
   /** The commands that took effect (STORY-086, rule 7). */
   commands: CommandLog;
+  /** A rival's proposal the game stopped for (STORY-076), and the end of the game: the last city fell. */
+  treaty: { rival: number; kind: 'alliance' | 'peace' } | null;
+  over: boolean;
+}
+
+/** A card the game stops for until its player answers it: a city site, a raid or a proposal, or the end. */
+export interface Decision {
+  /** The player who answers it: one player now, a game of several later (PLAN-092). */
+  player: number;
+  kind: 'site' | 'raid' | 'treaty' | 'over';
+}
+
+/** The decisions waiting, in the order their cards come: no day passes while there are any (STORY-095). */
+export function pending(s: GameState): Decision[] {
+  const out: Decision[] = [];
+  if (s.over) out.push({ player: 0, kind: 'over' });
+  if (s.treaty) out.push({ player: 0, kind: 'treaty' });
+  if (s.offers.length) out.push({ player: 0, kind: 'site' });
+  if (s.raidAlert) out.push({ player: 0, kind: 'raid' });
+  return out;
 }
