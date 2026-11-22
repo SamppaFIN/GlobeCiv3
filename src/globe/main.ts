@@ -4818,6 +4818,12 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
 /** Bulbs the people add a day to a study of a kind: one from each city (STORY-072, own). */
 const peopleStudy = () => (play?.research.target && isKind(play.research.target) ? play.cities.length : 0);
 
+/**
+ * Golden runs (STORY-095): a test steps the game a day at a time, with no clock, and the frames
+ * leave the game alone meanwhile, so the run does not depend on how fast the frames come.
+ */
+let stepMode = false;
+
 function updatePlay(dt: number) {
   tiles.knownResources.value = kindMask();
   if (!play) return;
@@ -4830,9 +4836,12 @@ function updatePlay(dt: number) {
     : meter === 'state' ? id => Math.floor(world.cityOf(id) / 49) === homeState()
     : held ? id => Math.floor(world.cityOf(id) / 49) === homeState() && !held.has(Math.floor(world.cityOf(id) / 7)) : null;
   play.units.noCity = nearForeign;
-  scanNatives(NATIVE_BUDGET_MS);
+  // A golden run finds the city-states whole before its day (STORY-095)
+  if (stepMode) while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
+  else scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
-  const days = play.offers.length || play.raidAlert || treaty || over || unlockCard.visible || onboarding.visible ? 0 : clock.advance(dt);
+  const blocked = play.offers.length || play.raidAlert || treaty || over || unlockCard.visible || onboarding.visible;
+  const days = blocked ? 0 : stepMode ? (clock.day++, 1) : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
     tickDay = clock.day - (days - 1 - d);
@@ -5017,7 +5026,7 @@ function animate(now = performance.now()) {
   tiles.sunDir.value.copy(lightX.multiplyScalar(-0.45)).addScaledVector(lightY, 0.55).addScaledVector(lightZ, 0.7).normalize();
   tiles.screenUp.value.copy(lightY);
   updateTileTypes(now);
-  updatePlay(dt);
+  if (!stepMode) updatePlay(dt);
   updateWar(dt);
   updateCityLevel(dt);
   // The canvas fills the window: its height without a layout read (STORY-062)
@@ -5120,6 +5129,22 @@ frameStartPlanet();
   /** Discoveries, site offers and raids all stop the game: off together, site offers or raids back on alone. */
   setDiscoveries: (on: boolean) => { discoveriesOn = on; siteOffersOn = on; raidsOn = on; },
   setRaids: (on: boolean) => { raidsOn = on; },
+  /** Golden runs (STORY-095): days only by step(), one at a time; step() tells whether a day passed. */
+  stepMode: (on: boolean) => { stepMode = on; lastFrame = performance.now(); },
+  step: () => {
+    const before = clock.day;
+    updatePlay(0);
+    return clock.day > before;
+  },
+  /** An advisor chosen as the player does, through the command (STORY-095). */
+  advise: (level: AdvisorLevel, advisor: string) => dispatch({ kind: 'advise', level, advisor }, 'player'),
+  /** The game's state for a golden run: the save without the wall clock and the clock's speed, and the notices. */
+  golden: () => {
+    const s = snapshot();
+    if (!s) return null;
+    const { savedAt: _at, speed: _speed, paused: _paused, ...rest } = s;
+    return { ...rest, notices: [...discoveryCard.log] };
+  },
   /** Long test games: a faster clock and the advisors of every level (STORY-060). */
   fastForward: (speed: number) => { clock.speed = speed as Speed; clock.paused = false; },
   setAdvisors: (a: { town?: TownAdvisor; city?: CityAdvisor; province?: ProvinceAdvisor; state?: StateAdvisor; planet?: PlanetAdvisor }) => {
