@@ -1,0 +1,48 @@
+{
+  "id": "PLAN-086",
+  "story": "STORY-091",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Samin valinta 2026-11-22: rakennukset valmiina, koko 1. Kun uuden pelin pääkaupungin jälkeen perustetaan kaupunki (foundAt, jota uudisasukas, pelaajan komento ja kuvernööri käyttävät), se saa heti ketjut: perustan (metsuri, saha ja louhos) ja ensimmäisen ruokaketjun, jonka jokaiselle rakennukselle on maata kaupungin lähellä, leivän ennen kalaa (chains.ts settlementStart). Kuvernööri sijoittaa rakennukset (placeAll), joten pelaaja ei sijoita niitä kaupunkialuetasolla. Koko on 1 kuten Freecivissä, ja kaupunki on valmis settlementti koossa 3 (STORY-089). Kaupunkitason neuvonantaja pitää ketjujen työmaat käynnissä kuten pääkaupungissa, ja kaupungin kaupunkitasolle voi sukeltaa. Vallatut kaupungit, vanha alku ja vanhat tallennukset jatkavat entisin säännöin. Kantajat kulkevat vain sen kaupungin ketjuissa, jonka kaupunkitaso on näkyvissä, koska kantajia piirretään yhdelle kaupungille kerrallaan.",
+  "alternatives_considered": [
+    {
+      "name": "Täysi settlementti koossa 3, uudisasukas maksaa kaksi asukasta",
+      "pros": "Vastaa kriteerin sanamuotoa",
+      "cons": "Oma hintasääntö ja Freecivin kasvun ohitus",
+      "rejected_because": "Sami valitsi rakennukset valmiina koossa 1"
+    },
+    {
+      "name": "Täysi settlementti koossa 3, hinta ennallaan",
+      "pros": "Yksinkertainen",
+      "cons": "Uudisasukas tuottaa kaksi asukasta tyhjästä, ja kaupungit lisääntyvät nopeasti",
+      "rejected_because": "Sami valitsi rakennukset valmiina koossa 1"
+    }
+  ],
+  "files_to_change": [
+    "src/game/chains.ts",
+    "src/game/cities.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Kaupunki, jonka lähellä ei ole metsää tai kenttää tai merta, saa vain ne rakennukset, joille on maata, eikä siitä tule valmista. Sami päättää, rajataanko kaupunkipaikat niin, että ketju mahtuu.",
+    "Design-briefin näkymä 5 (valmis settlementti erottuu kasvavasta ylemmältä tasolta) puuttuu vielä kartalta: tieto näkyy kaupunkikortissa."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "settlementStart ja yksikkötestit",
+      "verify": "chains.test"
+    },
+    {
+      "step": 2,
+      "action": "foundAt antaa ketjut ja rakennukset, ja kantajat rajataan näkyvään kaupunkiin",
+      "verify": "settlement.e2e ja carriers.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Regressio uuden alun testeissä",
+      "verify": "new-start, firsts, chronicle, placement, city-level, city-label, sites, list ja area-panel"
+    }
+  ],
+  "status": "approved"
+}
