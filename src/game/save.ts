@@ -25,7 +25,8 @@ import { TERRAINS, type ResourceKind } from './terrainTypes';
 import { ERAS } from './persons';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from './advisors';
-import { ACTORS, COMMAND_KINDS, RAID_CHOICES, type Command, type Logged } from './commands';
+import { ACTORS, COMMAND_KINDS, PACT_ACTS, RAID_CHOICES, type Command, type Logged } from './commands';
+import { TRADE_IDS } from './trade';
 
 export const SAVE_VERSION = 1;
 
@@ -161,6 +162,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
     if (s.version !== SAVE_VERSION) return fail('version');
     const tile = (v: unknown) => int(v, 'tile', 0, limits.tiles - 1);
     const tiles = (v: unknown, max?: number) => list(v, 'tiles', tile, max);
+    // A rival of the save's (STORY-068): its list is checked below
+    const rival = (v: unknown) => int(v, 'rival', 0, Array.isArray(s.rivals) ? s.rivals.length - 1 : -1);
     // A command is rebuilt from its checked fields only, by its kind (STORY-086)
     const commandOf = (v: unknown): Command => {
       const c = obj(v, 'command');
@@ -176,6 +179,21 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'site':
         case 'treaty': return { kind, accept: bool(c.accept, 'accept') };
         case 'raid': return { kind, choice: oneOf(c.choice, RAID_CHOICES, 'raid choice') };
+        // The player's other acts (STORY-112)
+        case 'mode': return { kind, unit: int(c.unit, 'unit'), mode: oneOf(c.mode, MODES, 'mode') };
+        case 'task': return { kind, unit: int(c.unit, 'unit'), task: oneOf(c.task, TASKS, 'task') };
+        case 'pick':
+        case 'flag': return { kind, tile: tile(c.tile) };
+        case 'skip':
+        case 'revolution': return { kind };
+        case 'focus': return { kind, city: tile(c.city), focus: oneOf(c.focus, FOCUSES, 'focus') };
+        case 'tax': return { kind, tax: oneOf(c.tax, TAX_RATES, 'tax') };
+        case 'lux': return { kind, lux: oneOf(c.lux, LUX_RATES, 'lux') };
+        case 'plan': return { kind, area: int(c.area, 'area', 0, limits.cityAreas - 1), plan: oneOf(c.plan, PLANS, 'plan') };
+        case 'line': return { kind, line: oneOf(c.line, LINES, 'line') };
+        case 'aim': return { kind, state: int(c.state, 'state', 0, Math.ceil(limits.cityAreas / 49) - 1) };
+        case 'pact': return { kind, rival: rival(c.rival), act: oneOf(c.act, PACT_ACTS, 'pact') };
+        case 'trade': return { kind, rival: rival(c.rival), give: oneOf(c.give, TRADE_IDS, 'trade item'), get: oneOf(c.get, TRADE_IDS, 'trade item') };
         case 'advise': {
           const level = oneOf(c.level, ADVISOR_LEVELS, 'advisor level');
           const list: readonly string[] = { town: TOWN_ADVISOR_LIST, city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level];

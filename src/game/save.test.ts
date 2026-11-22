@@ -60,6 +60,21 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       { day: 14, by: 'player', cmd: { kind: 'site', accept: false } },
       { day: 15, by: 'city', cmd: { kind: 'raid', choice: 'buy' } },
       { day: 16, by: 'player', cmd: { kind: 'treaty', accept: true } },
+      // The player's other acts (STORY-112), from index 10
+      { day: 17, by: 'player', cmd: { kind: 'mode', unit: 0, mode: 'gather' } },
+      { day: 17, by: 'player', cmd: { kind: 'task', unit: 1, task: 'improve' } },
+      { day: 17, by: 'player', cmd: { kind: 'pick', tile: START_TILE + 7 } },
+      { day: 17, by: 'player', cmd: { kind: 'skip' } },
+      { day: 18, by: 'player', cmd: { kind: 'flag', tile: START_TILE + 8 } },
+      { day: 18, by: 'player', cmd: { kind: 'focus', city: START_TILE, focus: 'production' } },
+      { day: 18, by: 'player', cmd: { kind: 'tax', tax: 70 } },
+      { day: 18, by: 'player', cmd: { kind: 'lux', lux: 20 } },
+      { day: 19, by: 'player', cmd: { kind: 'revolution' } },
+      { day: 19, by: 'player', cmd: { kind: 'plan', area: 40, plan: 'settle' } },
+      { day: 19, by: 'player', cmd: { kind: 'line', line: 'research' } },
+      { day: 19, by: 'player', cmd: { kind: 'aim', state: 7 } },
+      { day: 20, by: 'player', cmd: { kind: 'pact', rival: 0, act: 'peace' } },
+      { day: 20, by: 'player', cmd: { kind: 'trade', rival: 0, give: 'gold:25', get: 'advance:masonry' } },
     ],
     treaty: { rival: 0, kind: 'peace' },
     calmDays: 12,
@@ -147,6 +162,25 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.commands = {}; })).toBeNull();
     expect(broken(s => { s.commands[7].cmd.accept = 'yes'; })).toBeNull();
     expect(broken(s => { s.commands[8].cmd.choice = 'flee'; })).toBeNull();
+    // The player's other acts (STORY-112): every field checked by its kind
+    expect(broken(s => { s.commands[10].cmd.unit = -1; })).toBeNull();
+    expect(broken(s => { s.commands[10].cmd.mode = 'sleep'; })).toBeNull();
+    expect(broken(s => { s.commands[11].cmd.task = 'rule'; })).toBeNull();
+    expect(broken(s => { s.commands[12].cmd.tile = TILE_COUNT; })).toBeNull();
+    expect(broken(s => { s.commands[14].cmd.tile = 'here'; })).toBeNull();
+    expect(broken(s => { s.commands[15].cmd.focus = 'gold'; })).toBeNull();
+    expect(broken(s => { s.commands[16].cmd.tax = 100; })).toBeNull();
+    expect(broken(s => { s.commands[17].cmd.lux = 25; })).toBeNull();
+    expect(broken(s => { s.commands[19].cmd.area = 362 * 49; })).toBeNull();
+    expect(broken(s => { s.commands[19].cmd.plan = 'burn'; })).toBeNull();
+    expect(broken(s => { s.commands[20].cmd.line = 'conquer'; })).toBeNull();
+    expect(broken(s => { s.commands[21].cmd.state = 362; })).toBeNull();
+    expect(broken(s => { s.commands[22].cmd.rival = 1; })).toBeNull();
+    expect(broken(s => { s.commands[22].cmd.act = 'surrender'; })).toBeNull();
+    expect(broken(s => { s.commands[23].cmd.give = 'gold:1000'; })).toBeNull();
+    expect(broken(s => { s.commands[23].cmd.get = 'advance:fire'; })).toBeNull();
+    // Only the checked fields are kept
+    expect(broken(s => { s.commands[13].cmd.extra = 1; })!.commands![13].cmd).toEqual({ kind: 'skip' });
     // A rival's proposal waiting (STORY-095): one of the rivals, an alliance or peace
     expect(broken(s => { s.treaty.rival = 1; })).toBeNull();
     expect(broken(s => { s.treaty.kind = 'truce'; })).toBeNull();

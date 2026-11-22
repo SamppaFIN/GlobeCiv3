@@ -21,7 +21,7 @@ const heights = new Map<number, number>([[CENTRE, 0.2], [HILL, 0.7], [MOUNTAIN, 
 const ground = { terrainOf: (t: number) => terrains.get(t) ?? 'grassland', heightOf: (t: number) => heights.get(t) ?? 0.2 };
 
 /** A fresh game state: one city with a temple, research from scratch, coal found on the map. */
-type TestWorld = CommandWorld & { settled: number[]; founded: number[]; advisors: Record<string, string>; gold: number; waiting: Set<string>; answers: string[] };
+type TestWorld = CommandWorld & { settled: number[]; founded: number[]; advisors: Record<string, string>; gold: number; waiting: Set<string>; answers: string[]; acts: string[] };
 function world(): TestWorld {
   const c: City = foundCity([], CENTRE);
   c.buildings = ['temple'];
@@ -31,6 +31,9 @@ function world(): TestWorld {
   const advisors: Record<string, string> = { city: 'none', province: 'none', state: 'none', planet: 'none' };
   const waiting = new Set<string>();
   const answers: string[] = [];
+  /** The player's other acts as they reach the game (STORY-112): the game's own rules are tested in Node (tests/sim). */
+  const acts: string[] = [];
+  const act = (...what: unknown[]) => { acts.push(what.join(' ')); return true; };
   /** A card's answer takes effect while its card waits, and the card is gone after (STORY-095). */
   const answer = (card: string, what: string) => { if (!waiting.delete(card)) return false; answers.push(`${card} ${what}`); return true; };
   const w: TestWorld = {
@@ -61,6 +64,20 @@ function world(): TestWorld {
     answerSite: (accept: boolean) => answer('site', String(accept)),
     answerRaid: choice => answer('raid', choice),
     answerTreaty: (accept: boolean) => answer('treaty', String(accept)),
+    acts,
+    setMode: (unit, mode) => act('mode', unit, mode),
+    setTask: (unit, task) => act('task', unit, task),
+    pickSite: tile => act('pick', tile),
+    skipSite: () => act('skip'),
+    sendTo: tile => act('flag', tile),
+    setTax: tax => act('tax', tax),
+    setLux: lux => act('lux', lux),
+    revolution: () => act('revolution'),
+    setPlan: (area, plan) => act('plan', area, plan),
+    setLine: line => act('line', line),
+    aim: state => act('aim', state),
+    pact: (rival, how) => act('pact', rival, how),
+    trade: (rival, give, get) => act('trade', rival, give, get),
   };
   return w;
 }
@@ -176,6 +193,37 @@ describe('commands', () => {
     // The granary needs pottery, so that command changed nothing and is not in the log
     expect(a.log.map(e => e.cmd.kind)).toEqual(['found', 'study', 'move', 'build', 'settle', 'move']);
     expect(a.cities[0]).toMatchObject({ build: 'settler', placed: { temple: LOW } });
+  });
+
+  it('the player\'s other acts reach the game with their fields, and a city\'s focus is set on it (STORY-112)', () => {
+    const w = world();
+    const cmds: Command[] = [
+      { kind: 'mode', unit: 3, mode: 'gather' },
+      { kind: 'task', unit: 4, task: 'improve' },
+      { kind: 'pick', tile: HILL },
+      { kind: 'skip' },
+      { kind: 'flag', tile: FOREST },
+      { kind: 'tax', tax: 70 },
+      { kind: 'lux', lux: 20 },
+      { kind: 'revolution' },
+      { kind: 'plan', area: 12, plan: 'settle' },
+      { kind: 'line', line: 'research' },
+      { kind: 'aim', state: 5 },
+      { kind: 'pact', rival: 1, act: 'alliance' },
+      { kind: 'trade', rival: 0, give: 'maps', get: 'advance:alphabet' },
+    ];
+    expect(cmds.map(c => execute(c, w))).toEqual(cmds.map(() => true));
+    expect(w.acts).toEqual(['mode 3 gather', 'task 4 improve', `pick ${HILL}`, 'skip', `flag ${FOREST}`, 'tax 70', 'lux 20', 'revolution', 'plan 12 settle', 'line research', 'aim 5', 'pact 1 alliance', 'trade 0 maps advance:alphabet']);
+    expect(execute({ kind: 'focus', city: CENTRE, focus: 'production' }, w)).toBe(true);
+    expect(w.cities[0].focus).toBe('production');
+    expect(execute({ kind: 'focus', city: HILL, focus: 'food' }, w)).toBe(false);
+  });
+
+  it('a rate the research card does not offer changes nothing (STORY-112)', () => {
+    const w = world();
+    expect(execute({ kind: 'tax', tax: 40 as 30 }, w)).toBe(false);
+    expect(execute({ kind: 'lux', lux: 5 as 0 }, w)).toBe(false);
+    expect(w.acts).toEqual([]);
   });
 
   it('the log keeps its own copies', () => {

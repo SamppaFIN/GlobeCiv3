@@ -138,3 +138,55 @@ describe('the simulation\'s boundary (STORY-095)', () => {
     ].join('\n')).sort()).toEqual(['x.ts: THREE.Mesh', 'x.ts: THREE.MeshBasicMaterial', 'x.ts: THREE.Scene']);
   });
 });
+
+/**
+ * The player's acts are commands (STORY-112, project rule 7): the view and its cards change the
+ * game only through dispatch. These write the game's state directly; the debug hooks
+ * (globeDebug) may, for the tests set up their games with them.
+ */
+const DIRECT_ACTS = [
+  /\.units\.(setMode|setTask|nextSite|setSite|setAreaPlan|setStateLine|sendTo|recruit|spawn|disband)\(/,
+  /\.units\.flag\s*=(?!=)/,
+  /\.(tax|lux|focus|gov|targetProvince|targetState|attitude|maps|since|anarchyUntil|plan)\s*=(?!=)/,
+  /\.(gold|bulbs)\s*(?:[-+*]?=)(?!=)/,
+  /\b(setState|startRevolution|setTargetState|setStateLine|setAreaPlan)\(/,
+  /\bresearch\.(known|kinds)\.(add|delete|clear)\(/,
+  /\bresearch\.target\s*=(?!=)/,
+];
+
+/** The lines of the view and the cards that act on the game directly, as path:line: text. */
+export function directActs(file: string, text: string): string[] {
+  const open = text.indexOf('(window as any).globeDebug = {');
+  const close = open < 0 ? -1 : text.indexOf('\n};', open);
+  // The debug hooks blanked, their lines kept for the numbers
+  const kept = open < 0 ? text : text.slice(0, open) + text.slice(open, close).replace(/[^\n]/g, ' ') + text.slice(close);
+  return codeLines(kept).filter(({ line }) => {
+    const code = line.replace(/(['"`])(?:\\.|(?!\1).)*\1/g, "''");
+    // A method of an interface only names it (a panel's setTargetState(): void)
+    if (/^\s*\w+\??\([^)]*\)\s*:[^=]*;\s*$/.test(code)) return false;
+    return DIRECT_ACTS.some(re => re.test(code));
+  }).map(({ i, line }) => `${file}:${i}: ${line.trim()}`);
+}
+
+describe('the player\'s acts are commands (STORY-112)', () => {
+  const VIEW = Object.keys(sources).filter(f => (f === '../globe/main.ts' || f.startsWith('../ui/')) && !f.endsWith('.test.ts'));
+
+  it('the view and the cards change the game only through commands', () => {
+    expect(VIEW.length).toBeGreaterThan(10);
+    expect(VIEW.flatMap(f => directActs(f, sources[f]))).toEqual([]);
+  });
+
+  it('the check sees a direct act, and not one in the debug hooks', () => {
+    expect(directActs('x.ts', [
+      'play.units.setMode(u, mode);',
+      'if (play) play.tax = tax;',
+      'p.gold -= item.amount;',
+      'setState(t, "war", day, true);',
+      'const same = play.tax === 50;',
+      '  setTargetState(): void;',
+      '(window as any).globeDebug = {',
+      '  setGold: (gold: number) => { play.gold = gold; },',
+      '};',
+    ].join('\n'))).toEqual(['x.ts:1: play.units.setMode(u, mode);', 'x.ts:2: if (play) play.tax = tax;', 'x.ts:3: p.gold -= item.amount;', 'x.ts:4: setState(t, "war", day, true);']);
+  });
+});
