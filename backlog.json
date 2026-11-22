@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T09:03:37Z",
+    "generated_at": "2026-11-22T09:56:06Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "2cd3f84",
+    "git_commit": "fbd6534",
     "git_branch": "main",
     "language": "fi"
   },
@@ -252,7 +252,7 @@
         "STORY-093",
         "STORY-094"
       ],
-      "progress": 25
+      "progress": 50
     },
     {
       "id": "EPIC-012",
@@ -2441,15 +2441,15 @@
         "STORY-091"
       ],
       "acceptance_criteria": [
-        "Kaupunkialueen tavoite (kaupungit ja kartoitus) näkyy, ja nousu avaa läänitason.",
+        "Kaupunkialueen tavoite, kolme valmista settlementtiä (Sami 2026-11-22), näkyy, ja nousu avaa läänitason.",
         "Kartoittaja ja Vartija jatkavat pelaajan noustua, ja autopilotti pääsee nousuun siemenellä 42."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-088",
+        "implementation": "TICKET-IMPL-088",
+        "testing": "TICKET-TEST-088"
       }
     },
     {

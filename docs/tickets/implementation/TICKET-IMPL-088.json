@@ -1,0 +1,39 @@
+{
+  "id": "TICKET-IMPL-088",
+  "story": "STORY-092",
+  "plan": "PLAN-088",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/chains.ts",
+    "src/game/chains.test.ts",
+    "src/game/goals.ts",
+    "src/game/goals.test.ts",
+    "src/game/progress.test.ts",
+    "src/globe/main.ts",
+    "tests/e2e/area-goal.e2e.ts",
+    "tests/e2e/goals.e2e.ts",
+    "tests/e2e/unlock.e2e.ts",
+    "tests/e2e/play.e2e.ts",
+    "tests/e2e/onboarding.e2e.ts"
+  ],
+  "change_summary": "chains.ts: readySettlements(cities). goals.ts: LevelState.settlements, tason 3 tavoite 'Kolme valmista settlementtiä' ja nousukortin otsikko. main.ts: levelState laskee valmiit settlementit, settlementsHint kertoo valmiit, kasvavat ja uudisasukkaat, ja debug rise käyttää uutta kenttää.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "LevelState.cities → settlements",
+      "levelGoal(3)",
+      "goalHint"
+    ],
+    "call_sites_found": [
+      "levelState: meterOf, advance ja debug rise",
+      "goals.e2e, unlock.e2e, play.e2e ja onboarding.e2e odottivat vanhaa tekstiä"
+    ],
+    "call_sites_updated": [
+      "Kaikki; E2E-testit päivitettiin uuteen sääntöön (sanottu ääneen): tavoitteen teksti, mittarin yksikkö, vihje ja nousukortin otsikko. Vanhassa alussa kaupungit lasketaan kuten ennen, joten testien kulku ei muuttunut."
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "fbd6534",
+  "progress": 100,
+  "notes": "Tallennusmuoto ei muuttunut: tavoite lasketaan kaupungeista. Mittauksessa pääkaupunki pieneni koon 1:een, kun se rakensi uudisasukkaita, eikä se silloin ole valmis; muut kaupungit kasvavat sen tilalle."
+}
