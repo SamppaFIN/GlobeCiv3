@@ -1,0 +1,90 @@
+{
+  "id": "PLAN-090",
+  "story": "STORY-093",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Läänitaso saa oman Civ III -pelinsä kolmesta osasta, jotka kaikki näkyvät ja toimivat vasta, kun lääni on auki (kukin järjestelmä kuuluu omalle tasolleen, päätös 2026-11-19). Lähde on tarkistettu (avoin kysymys 15): Freeciv, github.com/freeciv/freeciv commit fb460e6 (2026-11-21), data/civ2civ3, lisenssi GPL-2.0-or-later, joka sopii GPL v3:een, ja lainaamme vain luvut. Tärkein löydös: Freecivissä kulttuuri ei siirrä rajoja. civ2civ3:n raja on kaupungin koon funktio (game.ruleset [borders]: radius_sq_city = 5, size_effect = 1), ja kulttuuri (History-efektit) vaikuttaa vain vakoilun kestoon, lahjontaan ja pisteisiin. Siksi kriteerin 1 'kulttuuri laajentaa rajoja Freeciv civ2civ3:n lukujen mukaan' toteutetaan näin: rajan pohja ja kulttuuripisteet ovat civ2civ3:n lukuja, ja kulttuurin vaikutus rajaan on oma sääntö Civ III:n mekaniikalla. Kriteeri tarkennetaan tämän mukaiseksi Samin hyväksynnällä.\n\n1. KULTTUURI JA RAJAT (src/game/culture.ts, uusi). Kaupunki kerää kulttuuria päivittäin rakennuksistaan civ2civ3:n History-luvuin (effects.ruleset): pääkaupunki (Palace) 1, temppeli 1, kirjasto 1, areena (Colosseum) 2, Kolossi 2, Riippuvat puutarhat 2 ja Suuri muuri 3. Korkoa ei ole (history_interest_pml = 0), joten kertymä on lineaarinen, ja yksi Freecivin vuoro on yksi päivä kuten muissakin luvuissa. Kaupungin raja on rengasmäärä floor(sqrt(5 + koko + floor(kulttuuri / 20))) enintään 5 rengasta: radius_sq 5 + koko × 1 on civ2civ3:n, ja neliöetäisyys muunnetaan heksarenkaiksi neliöjuurella (sovitus pallon heksaruudukkoon). Kulttuurin osuus (20 kulttuuria nostaa radius_sq:ta yhdellä) ja 5 renkaan katto ovat omia, ja ne kalibroidaan autopilotilla. Raja kattaa aina kaupungin työalueen (cityRings: 1, 2 tai 3 rengasta, STORY-039), koska floor(sqrt(5 + koko)) ≥ cityRings(koko) kaikilla koilla, ja raja on porrasmainen: koko 1 antaa jo kaksi rengasta. Muunnos on sovitus, ja se kirjataan koodikommenttiin. Rajat ovat johdettua dataa eivätkä tilaa (sääntö 3; Freeciv pitää rajat tilana): tileOwner(kaupungit) palauttaa jokaiselle rajan ruudulle omistajan puhtaana funktiona, ja päällekkäisessä kohdassa voittaa kaupunki, jonka radius_sq on suurin, sitten pienin kaupungin tunniste (deterministinen). Kaupungin työalue on aina sen omaa (civ2civ3:n radius_sq_city_permanent = -3 sallisi uloimpien työruutujen menetyksen; oma yksinkertaistus, koska kilpailevia rajoja ei vielä ole). Nyt omistajia on yksi, pelaaja, mutta sama funktio ottaa myöhemmin kilpailijoiden ja kaupunkivaltioiden kaupungit valtiotasolla ja moninpelissä ilman tietomallin vaihtoa (Utun katselmointi). Kulttuuri kertyy koko pelin ajan (yksi luku kaupunkia kohden), mutta näkyy ja vaikuttaa vasta läänitasolla, joten läänin avautuessa rajat 'ponnahtavat' esiin nousukortin kanssa. Läänitasolla kartalle piirretään pelaajan alueen ulkoraja yhtenä viivana (unitLayerin rajakoodi, yhdisteen reunat, rakennetaan vain muutoksessa), ja kaupunkialuetason työalueen viivat pysyvät ennallaan. Kaupunkikortti ja tasopaneeli (STORY-098) kertovat kulttuurin (yhteensä ja päivässä) ja rajan renkaat; kaupungin kertomus (STORY-106) saa rivin, kun raja laajenee.\n\n2. YHDISTETYT RESURSSIT (src/game/connection.ts, uusi). Strategisia resursseja ovat hevoset, hiili ja öljy (oma valinta Civ III:n mekaniikalla; civ2civ3:ssa strategisia resursseja ei ole). Strateginen resurssi on yhdistetty, kun sen laji on tunnettu (STORY-072), ruutu on pelaajan rajojen sisällä ja siitä kulkee yhtenäinen tieketju pelaajan kaupunkiin (kaupungin keskusruudussa on tie, STORY-040; haku leveyssuunnassa tieruutujen verkossa). Yhteys lasketaan uudelleen vain, kun jokin muuttuu (tie valmistuu, kaupunki perustetaan tai menetetään, raja muuttuu tai laji tulee tunnetuksi), ei joka päivä. Yhdistetty laji hyödyttää koko lääniä, jossa resurssiruutu on (myös kun tie vie toisen läänin kaupunkiin): jokainen sen läänin kaupunki, jolla ei ole lajin omaa rakennusta, saa lajin rakennuksen päivätuoton, eli hevoset +1, hiili +2 ja öljy +3 tuotantoa (STORY-073:n omat luvut, kalibroidaan). Sama laji lasketaan läänissä kerran, vaikka ruutuja olisi monta. Kaupunkialueen resurssirakennukset (talli, paja ja öljylähde) toimivat kuten ennen. Näin läänitason tuotto syntyy vain yhdistettynä, eikä alemman tason peli muutu, ja kriteeri 1 tarkennetaan muotoon 'strateginen resurssi antaa läänitason tuoton vasta yhdistettynä' (vaihtoehto kysytään Samilta).\n\n3. TYÖLÄISET. Uusi yksikkö Työläinen: Freeciv civ2civ3 Workers, 20 tuotantoa, ei asukasta, ylläpito 1 tuotanto nykyisellä civ1-ylläpitosäännöllä (STORY-028), ei keksintövaatimusta. Rakennettavissa vain, kun lääni on auki. Läänin neuvonantaja (Asuttaja, Tutkimusmatkailija ja Vartija; Ohjaan itse jättää sen pelaajalle) rakennuttaa työläisen sen läänin kaupungissa, jossa on rajojen sisällä yhdistämätön strateginen resurssi ja jossa ei vielä ole työläistä (oma: yksi työläinen lääniä kohden). Työläinen toimii itse kuten Kehitä-uudisasukas: se hakee lähimmän yhdistämättömän resurssin, laskee polun findPathilla resurssista lähimpään kaupunkiin ja rakentaa tien polun tieruutuihin Freecivin civ1-päivillä (improvements.ts, tie 2–6 päivää maaston mukaan). Kohteiksi kelpaavat vain resurssit, joihin polku löytyy maata pitkin; resurssi, johon polkua ei löytynyt, merkitään eikä sitä yritetä uudelleen ennen kuin raja tai kaupungit muuttuvat (jumiutumissuoja kuten STORY-088:ssa, eikä findPathia ajeta joka päivä). Tasakohdat ratkaistaan ruututunnisteella. Kun yhdistettävää ei ole, se tekee Kehitä-töitä (bestJob) lähimmän kaupungin ympärillä. Kun työläinen kaatuu tai sen kaupunki menetetään, kesken jäänyt tie jää kesken, ja neuvonantaja rakennuttaa uuden samoin säännöin. Työläinen kuuluu civ1-ylläpidon kolmeen ilmaiseen yksikköön kuten muutkin. Työläinen näkyy luettelossa, sillä on nimi (STORY-102) ja tila 'rakentaa tietä Hiilelle (2/5)'.\n\n4. TAVOITE JA NOUSU (kriteeri 2). Läänitason tavoite 'Pidä neljä kotivaltion lääniä' pysyy (STORY-087), ja nousu avaa valtiotason kuten nyt. Vihje kertoo myös rajoista ja yhdistämisestä. Ehdotus (oma, kysytään Samilta): lääni on hallussa myös, kun pelaajan raja kattaa siitä vähintään 10 maaruutua, vaikka siinä ei olisi kaupunkia. Ensimmäinen versio 'puolet läänin maasta' olisi ollut käytännössä kuollut sääntö, koska yksi viiden renkaan raja on 91 ruutua ja läänissä on satoja maaruutuja (Utun katselmointi). Näin naapurilääniin kasvava raja tuo sen hallintaan, ja kulttuuri on toinen tie tavoitteeseen. Ehto vain lisää hallussa olevia läänejä (STORY-016:n ja STORY-058:n säännöt pysyvät), joten nousu ei hidastu, mutta se voi nopeuttaa sekä läänitason nousua että kotivaltion valtausta (seitsemän lääniä), mikä mitataan vaiheessa 6. Raja ratkaisee myös, mitkä resurssit voi yhdistää. Läänin avautumiskortti (opens.text tasolla 3) kertoo rajoista ja työläisistä.\n\n5. MAAHERRAN HOVI siirtyy omaan storyynsä (ehdotus Samille). Pelissä ei ole vielä hukkaa eikä korruptiota (STORY-047: 'Korruptio puuttuu vielä'), joten hovilla ei olisi mitään vähennettävää. civ2civ3:n hukka on koko pelin tasapainomuutos: kauppaa menee hallitusmuodon mukaan 20 % (itsevaltius) tai 10 % (monarkia) ja tuotantoa 10 % tai 20 %, ja lisäksi 1 % ruutua kohden lähimpään hallintokeskukseen, varhaisaikana 2 % (Output_Waste_By_Distance 100 ja _ancient 100). Palatsi ja kakkospalatsi (Ecclesiastical Palace, 140 tuotantoa, vaatii teologian) puolittavat sen omassa kaupungissaan ja toimivat hallintokeskuksina, ja oikeustalo (60, ylläpito 1) puolittaa kaupan ja tuotannon hukan. Pallon valtiossa kaupunkien etäisyys pääkaupunkiin on kymmeniä ruutuja, joten 2 %/ruutu veisi kaukaisilta kaupungeilta suurimman osan tuotosta. Se kannattaa tehdä omana storynaan autopilottimittauksen kanssa, eikä STORY-093:n kriteereissä ole hovia.\n\nTALLENNUS (sääntö 8): City.culture on uusi kenttä, jonka puuttuminen täydennetään nollalla, ja yksikkölaji 'worker' hyväksytään validoinnissa; rakenne ei rikkoudu, joten SAVE_VERSION pysyy, ja vanhan tallennuksen lataus testataan. KOMENNOT (sääntö 7): työläisen rakennuttaminen kulkee nykyisenä rakennuskomentona, ja työläisen tietyö on simulaatiota kuten Kehitä-uudisasukkaan työ. Vanha alku (?classic) ja vanhat tallennukset saavat läänitason järjestelmät, kun lääni on auki, kuten kaikki muutkin.\n\nKATSELMOINTI: Anu ei ollut käytettävissä (Fable 5.2 vaatii käyttökrediittejä), joten Utu katselmoi suunnitelman 2026-11-22 kuten STORY-088:ssa. Tuomio oli 'kyllä muutoksin', ja muutokset ovat tässä versiossa: hallinta rajoilla absoluuttisella ruutumäärällä, rajat johdettuna omistajafunktiona, lajikohtainen läänitason tuotto, työläisen jumiutumissuoja ja muutoksesta laskettava yhteys sekä tie ja yhdistäminen Node-autopilotilla E2E:n sijaan. Utu tarkisti lainatut civ2civ3-luvut lähteestä, ja ne täsmäävät.",
+  "alternatives_considered": [
+    {
+      "name": "Raja kasvaa vain koosta civ2civ3:n tapaan, ja kulttuuri vain näytetään",
+      "pros": "Kaikki luvut Freecivistä, ei omaa sääntöä",
+      "cons": "Kriteeri pyytää kulttuurin laajentavan rajoja, ja ilman vaikutusta kulttuuri on merkityksetön luku",
+      "rejected_because": "Civ III:n kulttuurirajat ovat läänitason ydin (tasot-ja-aikakaudet.md)"
+    },
+    {
+      "name": "Strategisen resurssin rakennus (talli, paja, öljylähde) tuottaa vasta tiellä yhdistettynä",
+      "pros": "Kriteerin kirjaimellinen luenta ja Civ III:n tapa",
+      "cons": "Muuttaa kaupunkialuetason sääntöä takautuvasti: läänin avautuessa olemassa olevat tallit voisivat lakata tuottamasta, ja kaupunkialueella ei ole työläisiä",
+      "rejected_because": "Suositus on lisätä läänitasolle oma tuotto eikä ottaa alemmalta pois, mutta valinta on Samin"
+    },
+    {
+      "name": "Maaherran hovi ja civ2civ3:n hukka samassa storyssa",
+      "pros": "Kaikki suunnitelman läänitason MVP-rivit yhdellä kertaa",
+      "cons": "Hukka koskee jokaista kaupunkia ja tasoa, vaatii oman kalibroinnin ja kasvattaa jo L-kokoista storya; teologiaa ei vielä ole pelissä",
+      "rejected_because": "Ehdotus on oma story, Sami päättää"
+    },
+    {
+      "name": "Lääni hallussa vain, kun raja kattaa puolet sen maasta, tai lisäävänä ehtona puolet maasta",
+      "pros": "Kulttuuri ja kasvu ovat nousun ehto",
+      "cons": "Pakottavana hidastaa nousua ja valtion valtausta, ja lisäävänä se ei toteudu juuri koskaan: yksi viiden renkaan raja on 91 ruutua, kun läänissä on satoja maaruutuja",
+      "rejected_because": "Absoluuttinen ruutumäärä (10 maaruutua) antaa kulttuurille merkityksen eikä hidasta tahtia (Utun katselmointi)"
+    }
+  ],
+  "files_to_change": [
+    "src/game/culture.ts (uusi)",
+    "src/game/connection.ts (uusi)",
+    "src/game/cities.ts",
+    "src/game/units.ts",
+    "src/game/advisors.ts",
+    "src/game/goals.ts",
+    "src/game/conquest.ts",
+    "src/game/save.ts",
+    "src/game/history.ts",
+    "src/globe/unitLayer.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/game/culture.test.ts, connection.test.ts, save.test.ts, advisors.test.ts, conquest.test.ts",
+    "tests/e2e/province.e2e.ts (uusi)"
+  ],
+  "open_questions": [
+    "Sami: kriteerin 1 tarkennus. Freecivissä kulttuuri ei siirrä rajoja, joten rajan pohja (radius_sq 5 + koko) ja kulttuuripisteet ovat civ2civ3:n lukuja ja kulttuurin vaikutus rajaan on oma sääntö, ja strateginen resurssi antaa läänitason tuoton vasta yhdistettynä. Hyväksytkö tarkennuksen?",
+    "Sami: yhdistetyn resurssin sääntö. Suositus: läänitason oma tuotto (jokainen läänin kaupunki saa lajin rakennuksen tuoton: hevoset +1, hiili +2, öljy +3 tuotantoa), resurssirakennukset ennallaan. Vaihtoehto: talli, paja ja öljylähde tuottavat vasta yhdistettyinä.",
+    "Sami: lääni hallussa myös, kun rajasi kattaa siitä vähintään 10 maaruutua, vai pysyykö sääntö 'kaupunki läänissä' sellaisenaan?",
+    "Sami: maaherran hovi ja hukka omaksi storyksi (STORY-110) MVP:n jälkeen vai MVP:hen? MVP:ssä on jo 24 storya (avoin kysymys 19). Siirron jälkeen tasot-ja-aikakaudet.md:n läänirivi päivitetään.",
+    "Paimentolaiset ovat valtiotasolla (STORY-094), joten läänitasolla ei ole vastustajaa, eikä kaupunkivaltioiden ja kilpailijoiden rajoja vielä lasketa. tileOwner ottaa ne valtiotasolla, kun Sami haluaa kilpailevat rajat.",
+    "Kulttuurin 20 pistettä radius_sq:ta kohden, 5 renkaan katto, 10 maaruudun hallintaraja ja yhdistetyn lajin tuotto ovat omia lukuja. Ne kalibroidaan autopilotilla siemenellä 42: pääkaupungin raja kasvaa läänitasolla kulttuurista ainakin kerran ennen valtiotason avautumista, eikä kotivaltion valtaus nopeudu yli neljänneksellä."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "culture.ts: kulttuurin päivätuotto rakennuksista (civ2civ3 History), borderRings(koko, kulttuuri), tileOwner deterministisellä voittajalla ja läänin rajan kattamat maaruudut. City.culture ja vanhan tallennuksen täydennys nollalla.",
+      "verify": "culture.test.ts ja save.test.ts: luvut, raja ⊇ työalue kaikilla koilla 1–30, katto 5, päällekkäiset rajat ja tasapeli tunnisteella, vanhan tallennuksen kulttuuri 0 ja raja pohjassa"
+    },
+    {
+      "step": 2,
+      "action": "connection.ts: tieverkon haku kaupungeista, yhdistetyt strategiset lajit lääneittäin ja läänin tuotto kaupungeille; uudelleenlaskenta vain muutoksesta. Kytketään päivän laskentaan vasta, kun lääni on auki.",
+      "verify": "connection.test.ts: katkennut tie ei yhdistä, rajan ulkopuolinen ei yhdistä, tuntematon laji ei yhdistä, resurssi kaupungin keskusruudussa, tie toisen läänin kaupunkiin (hyöty resurssiruudun läänille), sama laji kerran läänissä"
+    },
+    {
+      "step": 3,
+      "action": "Työläinen: yksikkölaji, rakennus (20, ei asukasta, ylläpito civ1-säännöin), neuvonantajan rakennutus yksi lääniä kohden, tienrakennus polulle, tavoittamattoman resurssin merkintä, Kehitä-työt muuten, kuolema ja kaupungin menetys. Luettelo, nimi ja tila. Tallennus ja validointi.",
+      "verify": "advisors.test.ts, units-testi ja save.test.ts; Node-autopilotti siemenellä 42: työläinen yhdistää resurssin ja läänin kaupungit saavat tuoton, saaren resurssi ei jumita"
+    },
+    {
+      "step": 4,
+      "action": "Läänitason näkymä: alueen ulkoraja kartalla, kulttuuri ja yhdistetyt resurssit tasopaneelissa ja kaupunkikortissa, kertomuksen rivi ja avautumiskortin teksti.",
+      "verify": "province.e2e: tallennusfikstuuri tai debug-asetelma (siemen 42, lääni auki), waitForFunction tilaan eikä kiinteää odotusta (sääntö 5), konsoli tyhjä; kuvakaappaukset kolmella zoom-tasolla (planeetta, lääni, kaupunkialue)"
+    },
+    {
+      "step": 5,
+      "action": "Tavoite: vihje, ja Samin valinnan mukaan lääni hallussa myös rajoilla (10 maaruutua). Nousu avaa valtiotason.",
+      "verify": "goals.test.ts ja conquest.test.ts; province.e2e: läänin tavoite näkyy ja nousu avaa valtiotason"
+    },
+    {
+      "step": 6,
+      "action": "Kalibrointi ja mittaus: autopilotti siemenellä 42 (läänin avautumisesta valtion avautumiseen ja kotivaltion valtaukseen ennen ja jälkeen), framen JS-aika läänitasolla myöhäisessä pelissä (raja 8 ms) ja regressio (STORY-094:n opponents, conquest ja unlock).",
+      "verify": "Mittaus kirjataan TICKET-TEST-090:een laitteen ja menetelmän kanssa; koko E2E-sarja ja CI vihreä"
+    }
+  ],
+  "status": "draft"
+}
