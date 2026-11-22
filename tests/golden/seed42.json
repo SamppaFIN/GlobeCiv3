@@ -1,8 +1,8 @@
 {
   "feed": {
     "50": {
-      "sha256": "99c7b7a1306b87857f007d343fd1ae33d58137fa7bb0fb44c93b71568906c894",
-      "play": "904e9b3a478db5c5da86548486f03c4d40b9c307b47d8ebef32d2f825394cd36",
+      "sha256": "59836b287bc42c3be2a9584ff4b096226c870b3783660322b9e5859b60f4029c",
+      "play": "a0119c545d2bbedf46a9d2650c79b2517e2c19f892609e61fca47c6cc102c6da",
       "day": 50,
       "cities": 2,
       "open": 3,
@@ -10,8 +10,8 @@
       "units": 3
     },
     "100": {
-      "sha256": "824b61b156ac864bcba2373601de9ad37bad706b6088ccbab816ca8a16b4d21d",
-      "play": "1ec5d6d5e2a94e451cc04c5c721bda376bf25396347042c37e86fca63818da6a",
+      "sha256": "d03a4b947c2bd997301f612c3df75d16a36ce80dd8707d96305993f8ec5c390d",
+      "play": "90c9aa4e4b027cc28002cb51d8336509f9f5ded54d5caf204273042ed042a541",
       "day": 100,
       "cities": 4,
       "open": 3,
@@ -19,8 +19,8 @@
       "units": 11
     },
     "200": {
-      "sha256": "aed203d22e4b69ad56181c7b61d21d46ef7e3fbf720b32ae23a6b33d0d3ae924",
-      "play": "b122fe0485b91661588b3c99fecb55f19819efebda1489e0ccd306f34c5d8990",
+      "sha256": "677fcfc9774ff28b57333fb29aa58dcfcb49a4b9f80308ddf59e5e43d66f19a0",
+      "play": "6f91f11cb4929e2c4a68344cd48adbed2773778da04094345b33640f599af424",
       "day": 200,
       "cities": 8,
       "open": 1,
@@ -39,8 +39,8 @@
       "units": 1
     },
     "100": {
-      "sha256": "744ea47bb34d3751461716546728f25809e21b0133b1aefef76e1519ac4257a1",
-      "play": "be9320084fe59cc0fdf10c4b5e03a6135de27994fa393968e76abff939d7f4bc",
+      "sha256": "23a58dc72bf00d03e19609530984fa38203d6e54bad12a59e48f4ccf7af714c5",
+      "play": "67e31f0f852a9062e3cd958b9d4514a375a83a94ebe175bb37f7c6a5e8f18241",
       "day": 100,
       "cities": 2,
       "open": 3,
@@ -48,8 +48,8 @@
       "units": 9
     },
     "200": {
-      "sha256": "74a6af08706b6c03050339544ae2cfa70c30756b08ad1658cdc0bc79508c8cbe",
-      "play": "852740cef9aafde8f33ce2114f84100f186101c018b07743fd44bff4c4084c14",
+      "sha256": "51b3560f0ed77fb2dccec6c292c0b409e14d1bf62f6a2c8646715626d508c687",
+      "play": "c2c0c602b67f950a105bc98c241e46c693989f09e285c41d6662900a262106de",
       "day": 200,
       "cities": 5,
       "open": 2,
@@ -68,8 +68,8 @@
       "units": 0
     },
     "100": {
-      "sha256": "fc4af2a810cb0337518edb404cdad42f6ed6e41188b76abf8d35da1724f71d94",
-      "play": "78150352972173d937ed39b5ec5c0fc91410754d7c8c4585f9e3c102acc74330",
+      "sha256": "0d1ce5625096cb1fd6948821bc51cc48249cfec4421af1e5ce7e51e401f8d23b",
+      "play": "74e242bf5d2e0b55a753c406a4800e012adea895a1bdbaca2fa13eee8ce8d9e4",
       "day": 100,
       "cities": 3,
       "open": 3,
@@ -77,8 +77,8 @@
       "units": 5
     },
     "200": {
-      "sha256": "85999ab46bd1477bf74461b9e342f725c930f1960da8e6ad79829f155ef6ab1e",
-      "play": "16617b2f5334c44c3ed1d7faa91a7f35d4e92dc1e6108f59a3452ed0fbbcade0",
+      "sha256": "7c18de6ca85f7430e2546394f46b74fe0ee973dec86fed4a0e1e52af713fcbe7",
+      "play": "96f26f8e76dc77ab06044c8b5ffb5b019bb654253d1937475736d2658151a296",
       "day": 200,
       "cities": 5,
       "open": 2,

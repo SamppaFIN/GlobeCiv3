@@ -3,7 +3,8 @@
  *
  * An act that changes the game is a Command: founding a city or offering a site for one,
  * choosing what a city builds (in a city of chains a chain building starts a site, STORY-088),
- * moving a building and choosing a study. The game runs every one of them through
+ * moving a building and choosing a study, and the answers to the cards the game stops for
+ * (STORY-095). The game runs every one of them through
  * execute(), and the ones that took effect go into the CommandLog with their day and
  * actor. The log is saved, so a game can later be replayed and, with a server, shared.
  * What follows from the rules by itself (growth, a building placed when it is done, the
@@ -34,10 +35,20 @@ export type Command =
   /** The city on the tile buys what it builds, out of the treasury (STORY-038, STORY-098). */
   | { kind: 'buy'; city: number }
   /** The realm aims at this province: the province level's goal (STORY-111). */
-  | { kind: 'target'; province: number };
+  | { kind: 'target'; province: number }
+  /** The answer to the site the game stopped for (STORY-032): settle it, or later (STORY-095). */
+  | { kind: 'site'; accept: boolean }
+  /** The answer to the raid the game stopped for (STORY-034, STORY-108): build a soldier, buy one, or trust the defence. */
+  | { kind: 'raid'; choice: RaidChoice }
+  /** The answer to a rival's proposal (STORY-076): yes or no. */
+  | { kind: 'treaty'; accept: boolean };
+
+/** What a raid card's buttons do (STORY-108). */
+export type RaidChoice = 'build' | 'buy' | 'later';
+export const RAID_CHOICES: readonly RaidChoice[] = ['build', 'buy', 'later'];
 
 export type CommandKind = Command['kind'];
-export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy', 'target'];
+export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy', 'target', 'site', 'raid', 'treaty'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
 export type Actor = 'player' | 'people' | 'town' | 'city' | 'province' | 'state' | 'planet';
@@ -64,6 +75,10 @@ export interface CommandWorld {
   buy(tile: number): boolean;
   /** Aim at a province; false when it is no province to aim at (STORY-111). */
   target(province: number): boolean;
+  /** Answer the card the game stopped for; false when no such card waits (STORY-095). */
+  answerSite(accept: boolean): boolean;
+  answerRaid(choice: RaidChoice): boolean;
+  answerTreaty(accept: boolean): boolean;
 }
 
 /**
@@ -81,6 +96,12 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       return w.buy(cmd.city);
     case 'target':
       return w.target(cmd.province);
+    case 'site':
+      return w.answerSite(cmd.accept);
+    case 'raid':
+      return w.answerRaid(cmd.choice);
+    case 'treaty':
+      return w.answerTreaty(cmd.accept);
     case 'settle':
       return w.settle(cmd.tile);
     case 'build': {

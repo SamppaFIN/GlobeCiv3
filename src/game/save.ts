@@ -25,7 +25,7 @@ import { TERRAINS, type ResourceKind } from './terrainTypes';
 import { ERAS } from './persons';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from './advisors';
-import { ACTORS, COMMAND_KINDS, type Command, type Logged } from './commands';
+import { ACTORS, COMMAND_KINDS, RAID_CHOICES, type Command, type Logged } from './commands';
 
 export const SAVE_VERSION = 1;
 
@@ -110,6 +110,8 @@ export interface SaveData {
   targetState: number;
   /** The commands that took effect (STORY-086); saves from before have none. */
   commands?: Logged[];
+  /** A rival's proposal the game stopped for (STORY-095); saves from before have none. */
+  treaty?: { rival: number; kind: 'alliance' | 'peace' };
 }
 
 /** Ranges the save is checked against. */
@@ -169,6 +171,9 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'study': return { kind, target: oneOf(c.target, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'study') };
         case 'buy': return { kind, city: tile(c.city) };
         case 'target': return { kind, province: int(c.province, 'province', 0, Math.ceil(limits.cityAreas / 7) - 1) };
+        case 'site':
+        case 'treaty': return { kind, accept: bool(c.accept, 'accept') };
+        case 'raid': return { kind, choice: oneOf(c.choice, RAID_CHOICES, 'raid choice') };
         case 'advise': {
           const level = oneOf(c.level, ADVISOR_LEVELS, 'advisor level');
           const list: readonly string[] = { town: TOWN_ADVISOR_LIST, city: CITY_ADVISOR_LIST, province: PROVINCE_ADVISOR_LIST, state: STATE_ADVISOR_LIST, planet: PLANET_ADVISOR_LIST }[level];
@@ -398,6 +403,9 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       planetAdvisor: s.planetAdvisor === undefined ? 'none' : oneOf(s.planetAdvisor, PLANET_ADVISOR_LIST, 'planetAdvisor'),
       firsts: s.firsts === undefined ? [] : list(s.firsts, 'firsts', v => oneOf(v, FIRST_KINDS, 'first'), FIRST_KINDS.length),
       targetState: s.targetState === undefined ? -1 : int(s.targetState, 'target state', -1, Math.ceil(limits.cityAreas / 49)),
+      ...(s.treaty === undefined || s.treaty === null ? {} : (t => ({
+        treaty: { rival: int(t.rival, 'treaty rival', 0, Array.isArray(s.rivals) ? s.rivals.length - 1 : -1), kind: oneOf(t.kind, ['alliance', 'peace'] as const, 'treaty kind') },
+      }))(obj(s.treaty, 'treaty'))),
       ...(s.commands === undefined ? {} : {
         commands: list(s.commands, 'commands', v => {
           const e = obj(v, 'logged');

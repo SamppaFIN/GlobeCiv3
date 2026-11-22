@@ -81,8 +81,19 @@ test('a rival met has a diplomacy card: its ties and attitude, war, peace and an
   const day = await page.evaluate(() => (window as any).globeGame.state.day);
   await expect(proposal).toContainText('Rauhassa asenne palaa vähitellen kohti varautunutta.');
   await page.screenshot({ path: testInfo.outputPath('peace-proposal.png') });
+  // The proposal is saved waiting and comes back with the game (STORY-095)
+  await page.evaluate(() => (window as any).globeDebug.fastForward(4));
+  expect(await page.evaluate(() => (window as any).globeDebug.saveNow())).toBe(true);
+  const ready1 = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  await page.reload();
+  await ready1;
+  await page.getByRole('button', { name: 'Jatka' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 15_000 });
+  await expect(proposal).toBeVisible();
   await proposal.getByRole('button', { name: /Tee rauha/ }).click();
   await expect.poll(async () => (await ties(page))[0].state).toBe('peace');
+  // The answer is a command (STORY-095)
+  expect((await page.evaluate(() => (window as any).globeDebug.golden().commands)).at(-1)).toMatchObject({ by: 'player', cmd: { kind: 'treaty', accept: true } });
   expect((await ties(page))[0].since).toBeGreaterThanOrEqual(day);
 
   // The ties are saved (a save takes the speeds 1, 2 and 4)

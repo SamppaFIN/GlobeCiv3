@@ -21,14 +21,21 @@ const heights = new Map<number, number>([[CENTRE, 0.2], [HILL, 0.7], [MOUNTAIN, 
 const ground = { terrainOf: (t: number) => terrains.get(t) ?? 'grassland', heightOf: (t: number) => heights.get(t) ?? 0.2 };
 
 /** A fresh game state: one city with a temple, research from scratch, coal found on the map. */
-function world(): CommandWorld & { settled: number[]; founded: number[]; advisors: Record<string, string>; gold: number } {
+type TestWorld = CommandWorld & { settled: number[]; founded: number[]; advisors: Record<string, string>; gold: number; waiting: Set<string>; answers: string[] };
+function world(): TestWorld {
   const c: City = foundCity([], CENTRE);
   c.buildings = ['temple'];
   placeAll(c, ground);
   const settled: number[] = [];
   const founded: number[] = [];
   const advisors: Record<string, string> = { city: 'none', province: 'none', state: 'none', planet: 'none' };
-  const w: CommandWorld & { settled: number[]; founded: number[]; advisors: Record<string, string>; gold: number } = {
+  const waiting = new Set<string>();
+  const answers: string[] = [];
+  /** A card's answer takes effect while its card waits, and the card is gone after (STORY-095). */
+  const answer = (card: string, what: string) => { if (!waiting.delete(card)) return false; answers.push(`${card} ${what}`); return true; };
+  const w: TestWorld = {
+    waiting,
+    answers,
     gold: 100,
     cities: [c],
     research: new Research({ known: [], target: null, bulbs: 0, kinds: [] }),
@@ -51,6 +58,9 @@ function world(): CommandWorld & { settled: number[]; founded: number[]; advisor
     },
     // As the game's: a province of the home state, here 7 … 13 (STORY-111)
     target: (province: number) => province >= 7 && province < 14,
+    answerSite: (accept: boolean) => answer('site', String(accept)),
+    answerRaid: choice => answer('raid', choice),
+    answerTreaty: (accept: boolean) => answer('treaty', String(accept)),
   };
   return w;
 }
@@ -63,6 +73,20 @@ describe('commands', () => {
     expect(execute({ kind: 'advise', level: 'state', advisor: 'war' }, w)).toBe(true);
     expect(execute({ kind: 'advise', level: 'city', advisor: 'none' }, w)).toBe(true);
     expect(w.advisors).toEqual({ city: 'none', province: 'none', state: 'war', planet: 'none' });
+  });
+
+  it('a card\'s answer takes effect only while the card waits, once (STORY-095)', () => {
+    const w = world();
+    expect(execute({ kind: 'site', accept: true }, w)).toBe(false);
+    w.waiting.add('site');
+    w.waiting.add('raid');
+    expect(execute({ kind: 'raid', choice: 'buy' }, w)).toBe(true);
+    expect(execute({ kind: 'raid', choice: 'later' }, w)).toBe(false);
+    expect(execute({ kind: 'site', accept: false }, w)).toBe(true);
+    expect(execute({ kind: 'treaty', accept: true }, w)).toBe(false);
+    w.waiting.add('treaty');
+    expect(execute({ kind: 'treaty', accept: true }, w)).toBe(true);
+    expect(w.answers).toEqual(['raid buy', 'site false', 'treaty true']);
   });
 
   it('a target is a province the game accepts (STORY-111)', () => {

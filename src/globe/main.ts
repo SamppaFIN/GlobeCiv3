@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
 import { bestOf, bestTile, isUp, placeAll, spots, standsOnTile, PLACE_RINGS, type Ground } from '../game/placement';
-import { CommandLog, execute, type Actor, type Command } from '../game/commands';
+import { CommandLog, execute, type Actor, type Command, type CommandWorld, type RaidChoice } from '../game/commands';
 import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation } from '../game/diplomacy';
 import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
 import { createTradeCard, type TradeView } from '../ui/tradeCard';
@@ -70,7 +70,7 @@ import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
 import { PulseLayer, type PulseKind } from './pulses';
 import { SAVE_VERSION, validateSave, type FirstKind, type SaveData } from '../game/save';
-import type { GameState } from '../sim/state';
+import { pending, type GameState } from '../sim/state';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance, startProgress, UNLOCK_SHARE } from '../game/progress';
@@ -554,7 +554,7 @@ function continueGame() {
 
 /** The game as it is now, for the save slot; null outside play. */
 function snapshot(): SaveData | null {
-  if (!play || !game || screen !== 'playing' || over) return null;
+  if (!play || !game || screen !== 'playing' || play.over) return null;
   const mapped: number[] = [];
   mapState.mapped.forEach((m, id) => { if (m) mapped.push(id); });
   return {
@@ -567,6 +567,7 @@ function snapshot(): SaveData | null {
     improvements: play.improvements.entries(), raids: play.raids.save(), war: play.war.save(), rivals: play.rivals.map(r => r.save()), raidAlert: play.raidAlert, gold: play.gold,
     research: play.research.save(), tax: play.tax, lux: play.lux, gov: play.gov, anarchyUntil: play.anarchyUntil, townAdvisor: play.townAdvisor, cityAdvisor: play.cityAdvisor, provinceAdvisor: play.provinceAdvisor, stateAdvisor: play.stateAdvisor, planetAdvisor: play.planetAdvisor, targetState: play.targetState, firsts: [...play.firsts],
     commands: play.commands.save(),
+    ...(play.treaty ? { treaty: { ...play.treaty } } : {}),
   };
 }
 
@@ -757,7 +758,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     chooseAdvisor: (id: string) => { dispatch({ kind: 'advise', level: advisorLevel(), advisor: id }, 'player'); },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, scienceOpen: false, scienceSelected: null, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, scienceOpen: false, scienceSelected: null, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), treaty: null, over: false, area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -788,6 +789,8 @@ function startPlay(startCity: number, saved?: SaveData) {
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? play.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
     research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, townAdvisor: saved.townAdvisor, townLog: [], cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []),
     commands: new CommandLog(saved.commands ?? []),
+    // A proposal waiting when the game was saved waits again (STORY-095)
+    treaty: saved.treaty && saved.treaty.rival < play.rivals.length ? { ...saved.treaty } : null,
   });
   clock.day = saved.day;
   clock.speed = saved.speed;
@@ -1235,14 +1238,21 @@ function siteYield(tile: number) {
 }
 
 /** The card's choice on a site: build there (index 0) or later. */
-function chooseSite(index: number) {
+function chooseSite(index: number, by: Actor = 'player') {
   if (!play) return;
-  const o = play.offers.shift();
   discoveryCard.hide();
-  if (!o || index !== 0) return;
   // The offer's card selects the settler; from the hex card it stays unselected, so that taps open hexes
   const settler = idleSettler();
-  if (dispatch({ kind: 'settle', tile: o.tile }, 'player') && settler) play.selected = play.units.units.indexOf(settler);
+  if (dispatch({ kind: 'site', accept: index === 0 }, by) && index === 0 && settler) play.selected = play.units.units.indexOf(settler);
+}
+
+/** The answer to the site the game stopped for (the site command): settle it, or keep it for later. */
+function answerSite(accept: boolean): boolean {
+  if (!play) return false;
+  const o = play.offers.shift();
+  if (!o) return false;
+  if (accept) settleAt(o.tile);
+  return true;
 }
 
 /** A city on a site: a free settler goes there, or the capital builds one for it (the settle command). */
@@ -1276,9 +1286,11 @@ function targetAt(province: number): boolean {
 }
 
 /** Every act of the player and the advisors goes through here and into the log (STORY-086, rule 7). */
+/** What the commands act on (STORY-086). */
+const commandWorld = (): CommandWorld => ({ cities: play!.cities, research: play!.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt, answerSite, answerRaid, answerTreaty });
 function dispatch(cmd: Command, by: Actor): boolean {
   if (!play) return false;
-  const done = execute(cmd, { cities: play.cities, research: play.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt });
+  const done = execute(cmd, commandWorld());
   if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
   return done;
 }
@@ -3300,7 +3312,7 @@ function updateSiteOffer() {
   }
   // The Asuttaja takes the site itself (STORY-050)
   if (play.provinceAdvisor === 'settle') {
-    chooseSite(0);
+    chooseSite(0, 'province');
     advise(`kaupunkipaikka hyväksytty: ${nameOf(2, regions.tileTable()[o.tile]).name}`, 'province');
     return;
   }
@@ -3668,19 +3680,26 @@ function updateRaidAlert() {
 
 function chooseRaid(index: number, by: Actor = 'player') {
   if (!play) return;
-  play.raidAlert = false;
   discoveryCard.hide();
-  const band = play.raids.band;
-  const c = band && play.cities.find(x => x.tile === band.city);
   const choice = by === 'player' ? raidChoices[index] : index === 0 ? 'build' : 'later';
   raidChoices = ['build', 'later'];
-  if (choice === 'later' || !c) return;
+  dispatch({ kind: 'raid', choice }, by);
+}
+
+/** The answer to the raid the game stopped for (the raid command): build a soldier, buy one, or trust the defence. */
+function answerRaid(choice: RaidChoice): boolean {
+  if (!play || !play.raidAlert) return false;
+  play.raidAlert = false;
+  const band = play.raids.band;
+  const c = band && play.cities.find(x => x.tile === band.city);
+  if (choice === 'later' || !c) return true;
   const soldier = bestSoldier();
   const price = buyCost({ ...c, build: soldier, shields: c.build === soldier ? c.shields : 0 });
-  if (!dispatch({ kind: 'build', city: c.tile, build: soldier }, by)) return;
+  if (!execute({ kind: 'build', city: c.tile, build: soldier }, commandWorld())) return true;
   const name = c.build === 'phalanx' ? 'falangin' : 'soturin';
-  if (choice === 'buy' && dispatch({ kind: 'buy', city: c.tile }, by)) discoveryCard.notice([cityRef(c.tile, c.name), ` osti ${name} · ${price} kultaa`]);
+  if (choice === 'buy' && execute({ kind: 'buy', city: c.tile }, commandWorld())) discoveryCard.notice([cityRef(c.tile, c.name), ` osti ${name} · ${price} kultaa`]);
   else discoveryCard.notice([cityRef(c.tile, c.name), ` rakentaa ${name}`]);
+  return true;
 }
 
 // ─── Province and state levels (STORY-026) ────────
@@ -4241,7 +4260,7 @@ function diplomacyDay() {
       setState(t, 'war', clock.day);
       discoveryCard.notice(`${r.name} julisti sodan!`);
       moment('raid', (near[0] ?? p.cities[0])?.tile ?? pointToTile(rig.target));
-    } else if (move && !treaty && !discoveryCard.visible) offerTreaty(k, move);
+    } else if (move && !p.treaty && !discoveryCard.visible) offerTreaty(k, move);
   });
 }
 
@@ -4349,9 +4368,8 @@ function loseCity(c: City, to: Rival | null) {
 }
 
 /** The game is over: the player's last city fell. */
-let over = false;
 function gameOver(by: Rival | null) {
-  over = true;
+  play!.over = true;
   shownCard = 'over';
   discoveryCard.show({
     day: clock.day,
@@ -4363,15 +4381,20 @@ function gameOver(by: Rival | null) {
   });
 }
 
-/** A rival's proposal waiting on the card: an alliance or peace. */
-let treaty: { rival: number; kind: 'alliance' | 'peace' } | null = null;
-
+/** A rival proposes an alliance or peace: the game stops for the answer (STORY-076). */
 function offerTreaty(k: number, kind: 'alliance' | 'peace') {
-  const p = play!;
+  play!.ties[k].offered = clock.day;
+  play!.treaty = { rival: k, kind };
+  updateTreatyCard();
+}
+
+/** The card of a proposal waiting, also one saved waiting (STORY-095). */
+function updateTreatyCard() {
+  const p = play;
+  if (!p?.treaty || discoveryCard.visible) return;
+  const { rival: k, kind } = p.treaty;
   const r = p.rivals[k];
   const t = p.ties[k];
-  t.offered = clock.day;
-  treaty = { rival: k, kind };
   shownCard = 'treaty';
   discoveryCard.show({
     day: clock.day,
@@ -4388,14 +4411,20 @@ function offerTreaty(k: number, kind: 'alliance' | 'peace') {
 
 function chooseTreaty(index: number) {
   discoveryCard.hide();
-  const offer = treaty;
-  treaty = null;
-  if (!play || !offer) return;
+  dispatch({ kind: 'treaty', accept: index === 0 }, 'player');
+}
+
+/** The answer to a rival's proposal (the treaty command). */
+function answerTreaty(accept: boolean): boolean {
+  const offer = play?.treaty;
+  if (!play || !offer) return false;
+  play.treaty = null;
   const r = play.rivals[offer.rival];
-  if (index === 0) {
-    setState(play.ties[offer.rival], offer.kind, clock.day);
+  if (accept) {
+    setState(play.ties[offer.rival], offer.kind, tickDay ?? clock.day);
     discoveryCard.notice(offer.kind === 'alliance' ? `Liitto: ${r.name}` : `Rauha: ${r.name}`);
   } else discoveryCard.notice(`Kieltäydyitte: ${r.name}`);
+  return true;
 }
 
 function openDiplomacy(k: number) {
@@ -4806,7 +4835,7 @@ function updatePlay(dt: number) {
   play.units.noCity = nearForeign;
   scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
-  const blocked = play.offers.length || play.raidAlert || treaty || over || unlockCard.visible || onboarding.visible;
+  const blocked = pending(play).length || unlockCard.visible || onboarding.visible;
   const days = blocked ? 0 : stepMode ? (clock.day++, 1) : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
@@ -4829,13 +4858,14 @@ function updatePlay(dt: number) {
     rivalWarDay();
     raidDay();
     advisorDay();
-    if (play.offers.length || play.raidAlert || treaty || over) {
+    if (pending(play).length) {
       clock.day -= days - d - 1;
       break;
     }
   }
   tickDay = null;
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
+  updateTreatyCard();
   updateSiteOffer();
   updateCityLabels();
   updateListCard();
@@ -5149,7 +5179,7 @@ frameStartPlanet();
   rivalWar: (k: number) => ({ ...play!.rivals[k].war.save(), enemy: play!.rivals[k].enemy, army: play!.rivals[k].army().length }),
   setRivalCitySize: (k: number, i: number, size: number) => { play!.rivals[k].cities[i].size = size; },
   aimAt: (state: number) => setTargetState(state, null),
-  over: () => over,
+  over: () => play?.over ?? false,
   /** The ties with the rivals, and their attitude set by hand (STORY-076). */
   ties: () => (play ? play.ties.map((t, k) => ({ ...t, name: play!.rivals[k].name })) : []),
   setAttitude: (k: number, a: number) => { if (play?.ties[k]) play.ties[k].attitude = a; },
