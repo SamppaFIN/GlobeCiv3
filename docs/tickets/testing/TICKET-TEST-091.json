@@ -40,8 +40,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Vihreä: ajo 45051258960 (merge e85b449), Vitest 51 tiedostoa ja 316 testiä, Playwright 110 läpi (1,5 h), ja Pages-julkaisu onnistui",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

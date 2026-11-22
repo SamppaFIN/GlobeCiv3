@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T17:57:00Z",
+    "generated_at": "2026-11-22T20:37:20Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "e85b449",
+    "git_commit": "f591d06",
     "git_branch": "main",
     "language": "fi"
   },
@@ -226,7 +226,7 @@
         "STORY-099",
         "STORY-108"
       ],
-      "progress": 67
+      "progress": 70
     },
     {
       "id": "EPIC-010",
@@ -2515,12 +2515,12 @@
         "Haut, jotka nyt jaetaan framejen kesken (kaupunkivaltioiden haku), valmistuvat ennen päivää, jota ne koskevat, joten ruudunpäivitys ei vaikuta peliin.",
         "Vitest ajaa siemenen 42 pelin Nodessa neuvonantajien varassa ja toistaa sen tallennuksen komentolokista identtiseen tilaan (STORY-086:n uusintakriteeri neuvonantajien pelille; pelaajan teot STORY-112:ssa)."
       ],
-      "status": "in_progress",
-      "progress": 5,
+      "status": "review",
+      "progress": 100,
       "linked": {
         "plan": "PLAN-092",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-092",
+        "testing": "TICKET-TEST-092"
       }
     },
     {

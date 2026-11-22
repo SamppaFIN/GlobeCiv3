@@ -1,0 +1,72 @@
+{
+  "id": "TICKET-IMPL-092",
+  "story": "STORY-095",
+  "plan": "PLAN-092",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/sim/state.ts",
+    "src/sim/events.ts",
+    "src/sim/game.ts",
+    "src/sim/world.ts",
+    "src/sim/run.ts",
+    "src/sim/boundary.test.ts",
+    "src/globe/main.ts",
+    "src/game/commands.ts",
+    "src/game/save.ts",
+    "src/game/advisors.ts",
+    "src/game/relief.ts",
+    "src/game/rich.ts",
+    "src/game/history.ts",
+    "src/game/codex.ts",
+    "src/globe/cityView.ts",
+    "src/ui/richText.ts",
+    "src/ui/levelUi.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.test.ts",
+    "tests/e2e/golden.e2e.ts",
+    "tests/e2e/diplomacy.e2e.ts",
+    "tests/golden/seed42.json",
+    "tests/golden/hash.ts",
+    "tests/sim/run.test.ts"
+  ],
+  "change_summary": "Vaihe 0: testikoukku (stepMode, step, advise, golden), joka ajaa päiviä synkronisesti ilman kelloa, ja kultainen ajo tests/e2e/golden.e2e.ts siemenellä 42 kolmella neuvonantajayhdistelmällä päivinä 50, 100 ja 200. A: GameState omaksi tyypikseen (src/sim/state.ts), ja Play laajentaa sitä näkymän tilalla. Moduulin globaalit luokiteltiin. E: päivä odottaa kaupunkivaltioiden hakua (finishScans), ja haun tulos riippuu vain siemenestä: kaupunki, joka oli paikalla ensin, piilottaa kaupunkivaltion (shadowNatives päivän alussa). Kilpailijan pääkaupunki väistää yhä kaupunkeja. B: korttien vastaukset ovat komentoja site, raid ja treaty. Asuttajan paikat kirjataan nyt läänin eikä pelaajan nimiin, ja sisäiset komennot eivät kirjaudu kahdesti. Tarjous (treaty) ja pelin loppu (over) ovat tilassa, pending() listaa odottavat päätökset pelaajan mukaan, ja odottava tarjous tallentuu taaksepäin yhteensopivana kenttänä. C ja D: päivän laskenta noin 2100 riviä siirrettiin main.ts:stä src/sim/game.ts:ään sellaisenaan. Siihen kuuluvat yksiköt, kaupungit ja ketjut, kertomukset, kilpailijat, diplomatia ja sota, rosvot, kaupunkivaltiot ja paimentolaiset, neuvonantajat, neuvonantajien omat vastaukset kortteihin (advisorsAnswer), tason nousu (riseCheck, rise) ja pelin alku (startGame, resetGame). Näkymän kosketukset korvattiin tapahtumilla (src/sim/events.ts: notice, moment, revealed, carriers, firstCity, cityLost, treaty, over, rise, sent), jotka main.ts piirtää. Korkeudet ja rikas teksti siirtyivät näkymän moduuleista src/game/relief.ts:ään ja src/game/rich.ts:ään. Tason kortin sulkeminen kysyy uuden tason neuvonantajat heti (createUnlockCard onClose), joten väliin ei kulu päivää. G: src/sim/world.ts (maailma ilman näkymää) ja src/sim/run.ts (Run.play ja Run.replay: uusi peli kuten selaimessa, päivät yksi kerrallaan, kortit neuvonantajan tavalla tai komentolokista). saveState ja opponentsNow ovat simulaatiossa, ja selaimen snapshot lisää vain kellon, nopeuden ja valitun yksikön.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Play",
+      "GameState",
+      "pending",
+      "Command",
+      "COMMAND_KINDS",
+      "RAID_CHOICES",
+      "CommandWorld",
+      "validateSave (treaty, site, raid, treaty-komennot)",
+      "scanNatives",
+      "nativeGone",
+      "shadowNatives",
+      "finishScans",
+      "simulateDay",
+      "prepareDay",
+      "advisorsAnswer",
+      "riseCheck",
+      "rise",
+      "startGame",
+      "resetGame",
+      "saveState",
+      "createUnlockCard",
+      "advisorOfLevel",
+      "groundHeight",
+      "Rich-tyypit"
+    ],
+    "call_sites_found": [
+      "Siirretyn koodin 181 lauseen viittaukset main.ts:ään selvitettiin TypeScript-tarkistimella (riippuvuusanalyysi /home/claude/scripts/tsdeps.js). main.ts käyttää siirretyistä noin 100:aa, ja ne tuodaan src/sim/game.ts:stä. Siirretty koodi viittasi main.ts:ään 12 nimellä (discoveryCard, moment, cityLevel, rig, play, game, clock, classic, regions, tileTypes, mapState, tiles). Ne korvattiin sidonnalla (bind) ja tapahtumilla."
+    ],
+    "call_sites_updated": [
+      "Kaikki: tsc ilman virheitä. Kultaiset tilat pysyivät tavulleen samoina vaiheissa A ja E sekä C:n siirrossa. B:ssä ja D:ssä ne muuttuivat vain kirjatuilta osin, ja ne kirjoitettiin uudelleen."
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "f591d06",
+  "progress": 100,
+  "notes": "Käytösmuutokset, jotka kirjattiin ja jotka näkyvät kultaisessa tilassa: (1) Komentoloki: korttien vastaukset ovat site-, raid- ja treaty-komentoja, ja Asuttajan paikat ovat läänin nimissä. (2) Uuden tason neuvonantajakortti tulee heti tason kortin sulkemisen jälkeen. Ennen väliin kului päivä, ja neuvonantajan valinta kirjautui päivää myöhemmin. (3) Kultaisen ajon korttisääntö (testi) osti tai rakensi falangin kuten soturin, koska aiemmin falangin kohdalla luotettiin puolustukseen. Tämä on testin oma sääntö, ja se oli väärin. Kultaisessa tilassa näkymättömät muutokset: neuvonantajien omat vastaukset ja nousu tulevat päivän lopussa, joten usean päivän frame ei enää aja niiden ohi. Tarjouskortin ehto !discoveryCard.visible poistui diplomatian päivästä, koska kortti ei voi näkyä päivän aikana. Kaupunkivaltio, jonka vieressä oli kaupunki jo ennen hakua, piiloutuu, kun ennen paikalle valittiin toinen. Siemenellä 42 tämä ei muuttanut yhtään kaupunkivaltiota. Rajat: simulaatio on moduulisingleton, joten prosessissa on yksi peli kerrallaan. Moninpelin palvelin tarvitsee sen instanssiksi, mutta rajapinta (bind, startGame, simulateDay) on valmis siihen. Pelaajan omat teot (moodit, lippu, verot, vallankumous, painotukset, diplomatia ja kauppa) ovat yhä suoria muutoksia (STORY-112). game.ts on yksi tiedosto, eikä suunnitelman jakoa useisiin moduuleihin tehty, koska kriteerit eivät sitä vaadi."
+}

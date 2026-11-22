@@ -1,0 +1,117 @@
+{
+  "id": "TICKET-TEST-092",
+  "story": "STORY-095",
+  "implementation_ticket": "TICKET-IMPL-092",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU), Chromium headless (Playwright 1.64) SwiftShaderilla, vite preview; Node 22 (Vitest 5); siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "Kultainen ajo vanhasta koodista (b1ba64e) kahdesti peräkkäin",
+        "expected": "Vaihe 0: sama tila",
+        "result": "Sama tila kaikilla kolmella yhdistelmällä päivinä 50, 100 ja 200",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kultainen tila jokaisen vaiheen jälkeen: A, E, C:n siirto",
+        "expected": "Pelin käytös ei muutu (kriteeri 1)",
+        "result": "Tavulleen sama kuin vanhan koodin tila, myös kaupunkivaltiot (19) ja paimentolaisleirit (5), jotka lisättiin vertailuun ja ajettiin vanhalla koodilla worktreessä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kultainen tila vaiheiden B ja D jälkeen kenttä kentältä vanhaan verrattuna",
+        "expected": "Vain kirjatut muutokset",
+        "result": "B: vain komentoloki (site, raid ja treaty, Asuttajan paikat läänin nimissä). D: vain komentoloki (neuvonantajakortti päivää aiemmin) ja roam-ajon päivän 71 rosvokortti (testin falangisääntö korjattu). Valittu yksikkö palautettiin ennalleen (sent-tapahtuma frame-päivien jälkeen)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "golden.e2e: päivänä 100 tallennettu ja jatkettu feed-peli",
+        "expected": "Kriteeri 2: kaupunkivaltiot ja paimentolaiset eivät riipu haun hetkestä",
+        "result": "Ladatun pelin kaupunkivaltiot ja leirit ovat samat, ja päivänä 200 tila on sama kuin keskeytyksettä pelatun (ilman ilmoituksia ja latauksen täyttämää oletusta entertainers 0)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ensimmäisen päivän odotus haulle elävässä pelissä (frameilla, ei askeltilassa)",
+        "expected": "Mittaus (koodaussääntö 6)",
+        "result": "Opastus ohitettu heti: 200 ms kerran. 4 s opastusta: 28 ms (headless Chromium, 2 vCPU)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "tests/sim/run.test.ts: Run.play siemenellä 42 kolmella yhdistelmällä Nodessa",
+        "expected": "Kriteeri 3: Node ajaa pelin",
+        "result": "Kaikki yhdeksän tilaa (päivät 50, 100 ja 200) ovat samat kuin selaimen kultaiset (sim-tiiviste ilman ilmoituksia ja valittua yksikköä). Koko tiedosto 6,8 s",
+        "outcome": "pass"
+      },
+      {
+        "steps": "tests/sim/run.test.ts: feed-peli päivään 200, tallennuksen komentoloki validateSaven läpi ja Run.replay",
+        "expected": "Kriteeri 3: uusinta tallennuksen komentolokista identtiseen tilaan",
+        "result": "Sama tila ja samat komennot (myös neuvonantajien ja kansan)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "src/sim/boundary.test.ts ja sen tarkistus: world.ts:hen lisätty väliaikainen ui-importti",
+        "expected": "Kriteeri 1: ei DOMia eikä renderöintiä",
+        "result": "Läpi. Väliaikainen import ../ui/levelUi pudotti molemmat testit (ui-moduuli ja document-rivit), ja poistettuna testit menevät taas läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest kokonaan",
+        "expected": "Ei regressiota",
+        "result": "53 tiedostoa ja 323 testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "commands.test (vastaukset vain kortin odottaessa, kerran) ja save.test (uudet komennot ja treaty, virheelliset hylätään, vanha tallennus ilman treatyä latautuu)",
+        "expected": "Tietoturvasääntö 5 ja sääntö 8",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "diplomacy.e2e laajennettu: tarjous tallennetaan odottamaan, ladataan, kortti palaa ja vastaus on komento",
+        "expected": "Odottava päätös on simulaation tilaa",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E-osajoukot paikallisesti: city-states, opponents, nomads, rivals, conquest, save, war, rival-war, sites, play (E); diplomacy, raids, defence, site-card, firsts, province-advisors (B); unlock, raids, defence, province-advisors, new-start, onboarding, carriers (D); play, city, chains, province, war, rival-war, fog, settlement, conquest, chronicle, diplomacy, save, rich-links, notices, sites, opponents (C+D+G)",
+        "expected": "Ei regressiota",
+        "result": "Kaikki läpi. chains.e2e epäonnistui kerran kuormitettuna (louhoksen kivi ehti syntyä, kun tsc kilpaili prosessorista) ja meni läpi yksin. Sama tunnettu vaihtelu on kirjattu aiemmin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Utun katselmointi toteutuksesta",
+        "expected": "Hyväksytty",
+        "result": "Odottaa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Peli toimii Pagesissa kuten ennen (aloitus, kaupunkitaso, nousut, kortit, tallennus ja jatkaminen)",
+        "checked": false
+      },
+      {
+        "item": "Neuvonantajien valinta tulee heti tason kortin jälkeen",
+        "checked": false
+      },
+      {
+        "item": "Riittääkö neuvonantajien uusinta STORY-086:n hyväksyntään (avoin kysymys 17)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
