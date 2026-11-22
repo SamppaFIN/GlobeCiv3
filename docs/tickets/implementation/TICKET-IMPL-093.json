@@ -1,0 +1,52 @@
+{
+  "id": "TICKET-IMPL-093",
+  "story": "STORY-112",
+  "plan": "PLAN-093",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/commands.ts",
+    "src/game/trade.ts",
+    "src/game/science.ts",
+    "src/game/save.ts",
+    "src/sim/game.ts",
+    "src/globe/main.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.test.ts",
+    "src/sim/boundary.test.ts",
+    "tests/sim/acts.test.ts",
+    "tests/e2e/trade.e2e.ts",
+    "tests/e2e/diplomacy.e2e.ts",
+    "docs/plans/PLAN-093.json",
+    "backlog.json",
+    "CLAUDE.md"
+  ],
+  "change_summary": "commands.ts: komennot mode ja task (yksikön tunnisteella), pick ja skip (kaupunkipaikka), flag (lippu, retkikunta ja tavoiteläänin suunta), focus, tax, lux, revolution, plan, line, aim, pact (sota, liiton purku, liitto- ja rauhanehdotus) ja trade (tavaroiden tunnisteet), CommandWorldin uudet toiminnot ja PACT_ACTS. sim/game.ts: käsittelijät samoin säännöin kuin näkymän napeilla oli; kaupan tavarat (tradeItems), punninta (weighTrade) ja vaihto sekä diplomatian teot siirtyivät main.ts:stä simulaatioon. Teko, joka ei muuta mitään (hylätty ehdotus tai vaihto, sama kohdevaltio uudelleen), palauttaa false eikä mene lokiin. Uudet tarkistukset käsittelijöissä: tehtävä vain uudisasukkaalle, kohdevaltio vain avoin ja valloittamaton valtio, alue ja kilpailija rajojen sisällä, kaupan tavara vain kortin nykyisistä. trade.ts: tradeId ja TRADE_IDS. science.ts: LuxRate. save.ts: jokainen uusi komento rakennetaan tarkistetuista kentistä (tietoturvasääntö 5). main.ts: HUD, kaupunkikortti, tutkimuskortti, tasopaneelit, lipputyökalu, kaupunkipaikan napautus, diplomatiakortti ja kauppakortti lähettävät komennot; pelaajan tavoitelääni on target ja sen perään flag läänin keskelle kuten ennen.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Command",
+      "COMMAND_KINDS",
+      "CommandWorld",
+      "execute",
+      "validateSave",
+      "dispatch (commandWorld)",
+      "tradeItems",
+      "weighTrade",
+      "offerTrade",
+      "diplomacyCard.action",
+      "levelPanels",
+      "tapPlay",
+      "createGameHud-kutsut"
+    ],
+    "call_sites_found": [
+      "Vartijatesti löysi ennen muutosta main.ts:stä 26 suoraa pelitilan muutosta (rivit 634, 635, 638, 1494, 1822–1824, 2073–2075, 2078, 2083–2084, 2252, 2288, 2546–2554 ja 2649–2663) ja yhden väärän osuman (levelUi.ts:n rajapinnan setTargetState(): void), src/ui:sta ei muita"
+    ],
+    "call_sites_updated": [
+      "Kaikki 26 lähettävät komennon; commands.testin maailma sai uudet toiminnot; tsc ilman virheitä"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "62c479a",
+  "progress": 100,
+  "notes": "Tallennuksen rakenne ei muutu (uudet komentolajit ovat vain uusia sallittuja arvoja), joten SAVE_VERSION pysyy (sääntö 8). Kultainen tila pysyi ennallaan. Rajaus: ydinsotakokeilu (?planet, STORY-097) on oma kokeilunsa eikä tallennu, ja globeDebugin koukut saavat yhä muuttaa tilaa suoraan, koska testit valmistelevat pelinsä niillä. Neuvonantajien omat suorat muutokset (vero, linja ja kohdevaltio) jäivät ennalleen, koska uusinta laskee ne uudelleen. Kartoituksen ja nousun avaamat pelin alun paljastukset ovat simulaatiota, eivät pelaajan tekoja."
+}

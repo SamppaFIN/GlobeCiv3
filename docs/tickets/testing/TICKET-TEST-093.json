@@ -1,0 +1,95 @@
+{
+  "id": "TICKET-TEST-093",
+  "story": "STORY-112",
+  "implementation_ticket": "TICKET-IMPL-093",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU), Chromium headless (Playwright 1.64) SwiftShaderilla, vite preview; Node 22 (Vitest 5); siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "Vartijatesti (boundary.test.ts) ennen muutosta",
+        "expected": "Kriteeri 1: haku löytää pelaajan suorat teot",
+        "result": "Kaatui ja listasi 26 riviä main.ts:stä: moodi ja tehtävä, paikan ohitus ja valinta, lippu ja retkikunta, painotus, vero ja ylellisyys, vallankumous, alueen painotus, valtion linja, kohdevaltio ja -lääni, diplomatia ja kauppa. Korttien valinnat olivat jo komentoja (STORY-095). Lista vastaa kriteerin listaa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vartijatesti muutoksen jälkeen ja sen omat esimerkit",
+        "expected": "Näkymä ja kortit muuttavat peliä vain komennoilla",
+        "result": "Läpi. Esimerkit: suora setMode, sijoitus play.tax, p.gold -= ja setState löytyvät, vertailu, rajapinnan metodi ja globeDebug-lohko eivät",
+        "outcome": "pass"
+      },
+      {
+        "steps": "save.test: uudet komennot ja jokaisen kentän virheellinen arvo",
+        "expected": "Kriteeri 1: ladattu komento tarkistetaan (tietoturvasääntö 5)",
+        "result": "Läpi: 14 uutta komentoa latautuu, ja 17 virheellistä arvoa (yksikkö, moodi, tehtävä, ruutu, painotus, vero, ylellisyys, alue, linja, valtio, kilpailija, teko ja kaupan tavarat) hylkää tallennuksen. Ylimääräinen kenttä ei jää komentoon",
+        "outcome": "pass"
+      },
+      {
+        "steps": "commands.test: uudet komennot ja kortin tarjoamaton vero tai ylellisyys",
+        "expected": "Komento välittyy kentittäin, ja väärä arvo ei muuta mitään",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "tests/sim/acts.test.ts: siemen 42 Nodessa, pelaaja ottaa kaupunkialueen, läänin ja valtion omaan ohjaukseen ja tekee itse moodin, tehtävän, ohituksen, paikan valinnan, lipun, painotukset, verot, alueen painotuksen, linjan ja tavoiteläänin päivinä 45–220; tallennus validateSaven läpi ja uusinta päivään 260",
+        "expected": "Kriteeri 2: uusinta tallennuksen komentolokista identtiseen tilaan",
+        "result": "Samat komennot ja sama tila (sim-tiiviste)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "tests/sim/acts.test.ts: kauppa, vallankumous, kohdevaltio, sota ja rauhanehdotus päivinä 60–75; sama valmistelu (kilpailija tavattu, Monarkia tunnettu, kohdevaltio tyhjä) päivänä 60 pelissä ja uusinnassa",
+        "expected": "Teot, jotka eivät ehdi lyhyessä pelissä, toistuvat myös",
+        "result": "Samat komennot ja sama tila. Sama kohdevaltio uudelleen, kauppa sodassa ja toinen sodanjulistus palauttavat false eivätkä ole lokissa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest kokonaan ja tsc",
+        "expected": "Ei regressiota",
+        "result": "54 tiedostoa ja 335 testiä läpi, tsc ilman virheitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "trade.e2e ja diplomacy.e2e laajennettu",
+        "expected": "Kortin teot ovat lokissa, hylätyt eivät",
+        "result": "Läpi: kaksi hyväksyttyä vaihtoa ovat player-komentoja, ja diplomatiasta lokissa ovat liitto, liiton purku ja sota, mutta eivät hylättyä liittoa ja rauhaa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E-osajoukko paikallisesti: diplomacy, trade, play, city, province, levels, government, science, sites, conquest, golden, province-goal, state-advisors ja advisors",
+        "expected": "Ei regressiota, kultainen tila ennallaan",
+        "result": "Kaikki läpi. province.e2e epäonnistui kerran ajossa, jota edelsi aikakatkaistu Playwright-ajo: toinen lääni ehti yhdistää saman hiilen ennen tarkistusta. Yksin ajettuna läpi. Testi on ajoitusherkkä (tarkistus tehdään usean pelipäivän framen jälkeen), mutta ei koske tämän storyn polkuja; kirjataan vaihteluksi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Utun katselmointi",
+        "expected": "Hyväksytty",
+        "result": "Odottaa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Pelaajan teot toimivat Pagesissa kuten ennen (moodit, lippu, painotukset, verot, vallankumous, tasopaneelit, diplomatia ja kauppa)",
+        "checked": false
+      },
+      {
+        "item": "Riittääkö STORY-086:n hyväksyntään nyt, kun sekä neuvonantajien että pelaajan pelit uusiutuvat (avoin kysymys 17)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
