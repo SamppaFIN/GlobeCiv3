@@ -32,7 +32,7 @@ import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
-import { ADVANCES, LUX_RATES, NEEDS, Research, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type Study } from '../game/science';
+import { ADVANCES, ADVANCE_LIST, LUX_RATES, NEEDS, Research, RESOURCE_KINDS, isKind, opensFrom, studyName, treeLayout, type Advance, type Study } from '../game/science';
 import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
@@ -51,6 +51,8 @@ import { ERA_NAMES, personOf, type Era, type Person } from '../game/persons';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { createCodexCard } from '../ui/codexCard';
+import { createScienceTree, type NodeState, type TreeView } from '../ui/scienceTree';
+import { ADVANCE_LORE } from '../game/advanceLore';
 import { advanceRef, BUILD_PURPOSE, buildRef, CHAIN_PURPOSE, codexPage, personRef, resourceRef } from '../game/codex';
 import { city as cityRef, plain, unit as unitRef, type Rich, type RichLinks, type Segment } from '../ui/richText';
 import { marksPassed, narrate, record } from '../game/history';
@@ -681,6 +683,9 @@ interface Play {
   planetLog: Rich[];
   targetState: number;
   researchOpen: boolean;
+  /** The science tree is open, and the advance on show; null shows the one under study (STORY-109). */
+  scienceOpen: boolean;
+  scienceSelected: Advance | null;
   /** The list of cities and units is open, and which tab (STORY-042). */
   listOpen: boolean;
   listTab: ListTab;
@@ -772,6 +777,11 @@ function startPlay(startCity: number, saved?: SaveData) {
       rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
     },
     openResearch: () => { if (play) play.researchOpen = true; },
+    openScience: () => {
+      if (!play) return;
+      play.scienceOpen = true;
+      play.scienceSelected = null;
+    },
     goalHint: () => { const g = play && levelGoal(play.progress.openLevel); if (g) discoveryCard.notice(g.level === 4 ? settlementHint() : g.hint); },
     openList: () => {
       if (!play) return;
@@ -791,7 +801,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     chooseAdvisor: (id: string) => { dispatch({ kind: 'advise', level: advisorLevel(), advisor: id }, 'player'); },
   });
   // The first scout is selected, as in the design
-  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
+  play = { units, selected: 1, flagTool: false, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], openCity: null, offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, tileOpen: null, moving: null, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), diplomacyOpen: null, tradeOpen: null, townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorOpen: false, advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), researchOpen: false, scienceOpen: false, scienceSelected: null, listOpen: false, listTab: 'cities', hud, commands: new CommandLog(), area: createAreaPanel(hud.element.querySelector<HTMLElement>('.hud-meter-row')!, hud.element.querySelector<HTMLElement>('.hud-top')!, areaAction) };
   rescanKinds();
   if (!saved) {
     // The new start (STORY-070): the capital stands already, and its first units come later
@@ -2877,6 +2887,54 @@ const researchCard = createResearchCard(hud_root, {
   revolution: () => { startRevolution(); },
 });
 
+// The science tree (STORY-109): the advances by what they need, each with its picture, what it
+// is, what it does in the game and a saying of its time
+const TREE_LAYOUT = treeLayout();
+const scienceTree = createScienceTree(hud_root, {
+  close: () => { if (play) play.scienceOpen = false; },
+  select: (a: Advance) => { if (play) play.scienceSelected = a; },
+  choose: (a: Advance) => {
+    if (dispatch({ kind: 'study', target: a }, 'player')) discoveryCard.notice(['Tutkitaan: ', advanceRef(a)]);
+  },
+  links: richLinks,
+});
+
+function scienceView(): TreeView {
+  const r = play!.research;
+  const open = r.available(foundKinds);
+  const stateOf = (a: Advance): NodeState => (r.known.has(a) ? 'known' : r.target === a ? 'target' : open.includes(a) ? 'open' : 'locked');
+  const perDay = scienceRates().science + peopleStudy();
+  const firstOpen = open.find((s): s is Advance => !isKind(s));
+  const sel = play!.scienceSelected ?? (r.target && !isKind(r.target) ? r.target : firstOpen ?? ADVANCE_LIST[0]);
+  const state = stateOf(sel);
+  const page = codexPage(`advance/${sel}`, knownKind)!;
+  const days = state === 'target' && perDay > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / perDay)) : null;
+  const missing = ADVANCES[sel].needs.filter(n => !r.known.has(n)).map(n => ADVANCES[n].name);
+  const kinds = ADVANCES[sel].from && !ADVANCES[sel].from!.some(k => r.kinds.has(k)) ? ADVANCES[sel].from!.map(k => studyName(k, knownKind(k))) : [];
+  const status = state === 'known' ? 'Tunnettu'
+    : state === 'target' ? `Tutkitaan ${Math.min(r.bulbs, r.cost)} / ${r.cost}${days ? ` · valmis ${days} pv` : ''}`
+    : state === 'open' ? `Voi tutkia · ${r.costOf(sel)} tiedettä`
+    : `Vaatii ensin: ${[...missing, ...(kinds.length ? [`resurssin ${kinds.join(' tai ')}`] : [])].join(', ')}`;
+  return {
+    rates: `Tiedettä +${perDay}/pv · tunnetaan ${r.known.size} / ${ADVANCE_LIST.length}`,
+    nodes: TREE_LAYOUT.map(n => ({
+      ...n, name: ADVANCES[n.advance].name, state: stateOf(n.advance), needs: ADVANCES[n.advance].needs,
+      progress: r.target === n.advance && r.cost ? Math.min(1, r.bulbs / r.cost) : null,
+    })),
+    selected: { advance: sel, name: ADVANCES[sel].name, state, status, what: ADVANCE_LORE[sel].what, effect: page.text, facts: page.facts, quote: ADVANCE_LORE[sel].quote },
+  };
+}
+
+function updateScienceTree() {
+  if (!play || !play.scienceOpen) {
+    if (scienceTree.visible) scienceTree.hide();
+    return;
+  }
+  const view = scienceView();
+  if (scienceTree.visible) scienceTree.update(view);
+  else scienceTree.show(view);
+}
+
 /** A revolution to Monarchy once it is known: some days of anarchy first (STORY-047). */
 function startRevolution(): boolean {
   if (!play || !game || play.gov !== 'despotism' || !play.research.known.has('monarchy')) return false;
@@ -4517,6 +4575,7 @@ function updatePlay(dt: number) {
   updateListCard();
   updateCityCard();
   updateResearchCard();
+  updateScienceTree();
   updateAdvisorCard();
   updateTileCard();
   updateDiplomacyCard();
@@ -4535,6 +4594,7 @@ function updatePlay(dt: number) {
     advisor: levelAdvisor(advisorLevel()).name,
     advisors: advisorButtons(advisorLevel()),
     own: ownHand(),
+    science: play.cities.length > 0,
     research: !play.cities.length || play.researchOpen || !ownHand() ? null
       : play.research.target ? { text: `Tiede · ${studyName(play.research.target)} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
       : play.research.available(foundKinds).length ? { text: 'Valitse tutkimus', choose: true } : null,
