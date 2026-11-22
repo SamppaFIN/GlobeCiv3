@@ -57,12 +57,12 @@ const arriveWithChips = (page: Page, level: number) => page.evaluate(l => new Pr
   requestAnimationFrame(step);
 }), level);
 
-test('three cities open the province level: the goal on the meter, its gold, and a card that stops the game (STORY-087)', async ({ page }, testInfo) => {
+test('three ready settlements open the province level (STORY-092; the old start\'s cities count as they stand): the goal on the meter, its gold, and a card that stops the game (STORY-087)', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
-  // The city area's goal on the meter; mapping all of the home province opens nothing
-  await expect(page.locator('.hud-goal')).toHaveText('TavoitePerusta kolme kaupunkia+60 kultaa');
-  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3 kaupunkia');
+  // The city area's goal on the meter; mapping all of the home province opens nothing (the old start: its cities count as they stand)
+  await expect(page.locator('.hud-goal')).toHaveText('TavoiteKolme valmista settlementtiä+60 kultaa');
+  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3 valmiina');
   await page.evaluate(() => {
     const w = window as any;
     const home = Math.floor(w.globeGame.state.startCity / 7);
@@ -73,18 +73,18 @@ test('three cities open the province level: the goal on the meter, its gold, and
   });
   expect(await foundIn(page)).not.toBeNull();
   expect(await foundIn(page)).not.toBeNull();
-  await expect(page.locator('.hud-meter-value')).toHaveText('2 / 3 kaupunkia');
+  await expect(page.locator('.hud-meter-value')).toHaveText('2 / 3 valmiina');
   await expect(page.getByRole('dialog')).toBeHidden();
   expect((await state(page)).openLevel).toBe(3);
 
   const gold = (await state(page)).gold;
   expect(await foundIn(page)).not.toBeNull();
-  const card = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Lääni avautui, zoomaa ulos' }) });
+  const card = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos' }) });
   await expect(card).toBeVisible();
   await expect(card).toContainText('Uusi tavoite: Pidä neljä kotivaltion lääniä (1 / 4).');
   const s = await state(page);
   expect([s.openLevel, s.gold, s.goal]).toEqual([2, gold + 60, 'Pidä neljä kotivaltion lääniä']);
-  await expect(page.getByRole('status')).toHaveText('Tavoite saavutettu: Perusta kolme kaupunkia · +60 kultaa');
+  await expect(page.getByRole('status')).toHaveText('Tavoite saavutettu: Kolme valmista settlementtiä · +60 kultaa');
   // The card stops the game: even running, no day passes while it is open
   await page.getByRole('button', { name: 'Jatka', exact: true }).click();
   expect(await dayAfterFrames(page, 30)).toBe(s.day);

@@ -16,11 +16,11 @@ test('one goal at a time: the level\'s own, its hint on a tap, its count on the 
 
   // The city area's goal, its hint, and its count on the meter
   const goal = page.locator('.hud-goal');
-  await expect(goal).toHaveText('TavoitePerusta kolme kaupunkia+60 kultaa');
-  await expect(page.locator('.hud-meter-name')).toHaveText('Kaupungit');
-  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3 kaupunkia');
+  await expect(goal).toHaveText('TavoiteKolme valmista settlementtiä+60 kultaa');
+  await expect(page.locator('.hud-meter-name')).toHaveText('Settlementit');
+  await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3 valmiina');
   await goal.click();
-  await expect(page.getByRole('status')).toHaveText(/^Tiedustelija ehdottaa hyviä paikkoja/);
+  await expect(page.getByRole('status')).toHaveText(/^Valmiita settlementtejä 0 \/ 3 · uudisasukkaita 1: perusta niillä kaupunkeja\.$/);
   await page.screenshot({ path: testInfo.outputPath('goal.png') });
 
   // The settler founds the first city: the count goes up, and nothing else is a goal
@@ -35,8 +35,8 @@ test('one goal at a time: the level\'s own, its hint on a tap, its count on the 
   await page.waitForFunction(() => (window as any).globeGame.state.cities.length === 1, null, { timeout: 60_000 });
   await page.getByRole('button', { name: 'Tauko' }).click();
   await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
-  await expect(page.locator('.hud-meter-value')).toHaveText('1 / 3 kaupunkia');
-  await expect(goal).toContainText('Perusta kolme kaupunkia');
+  await expect(page.locator('.hud-meter-value')).toHaveText('1 / 3 valmiina');
+  await expect(goal).toContainText('Kolme valmista settlementtiä');
 
   // Two more: the goal is reached, its gold paid, and the province's goal is next
   const gold = (await page.evaluate(() => (window as any).globeGame.state)).gold;
@@ -46,8 +46,8 @@ test('one goal at a time: the level\'s own, its hint on a tap, its count on the 
     w.globeDebug.foundIn(home);
     w.globeDebug.foundIn(home);
   });
-  await expect(page.getByRole('heading', { name: 'Lääni avautui, zoomaa ulos' })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('Tavoite saavutettu: Perusta kolme kaupunkia · +60 kultaa');
+  await expect(page.getByRole('heading', { name: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos' })).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Tavoite saavutettu: Kolme valmista settlementtiä · +60 kultaa');
   expect((await page.evaluate(() => (window as any).globeGame.state)).gold).toBe(gold + 60);
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
   await expect(goal).toHaveText('TavoitePidä neljä kotivaltion lääniä+80 kultaa');

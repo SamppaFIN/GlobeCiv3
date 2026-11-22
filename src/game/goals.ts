@@ -1,7 +1,7 @@
 /**
  * goals.ts — each level's own goal, which is also how the player rises to the next level
  * (STORY-087; Sami 2026-11-19). A level rises on the finished output of the level below:
- * the city as a ready settlement (STORY-089), the city area on its cities, the province on the home
+ * the city as a ready settlement (STORY-089), the city area on three of them (STORY-092), the province on the home
  * state's provinces held and the state on all seven. One goal shows at a time, with its
  * progress on the meter. Own design: the goals, the counts and the gold (the counts and the
  * gold are those of the goal chain of STORY-041 and STORY-056 that this replaces).
@@ -11,7 +11,11 @@
 export interface LevelState {
   /** The capital's steps to a ready settlement, of three: the base, a chain of food, three citizens (STORY-089). */
   settlement: number;
-  cities: number;
+  /**
+   * The cities that are ready settlements (STORY-092; Sami 2026-11-22): a city of chains once it
+   * is (chains.ts settlementDone), one of the old rules as it stands.
+   */
+  settlements: number;
   /** The home state's provinces held, of seven; one without land counts (STORY-016, STORY-058). */
   provinces: number;
 }
@@ -41,10 +45,10 @@ export const LEVEL_GOALS: readonly LevelGoal[] = [
     opens: { title: 'Valmis settlementti: kaupunkialue avautui, zoomaa ulos', text: 'Kaupunkisi on valmis settlementti, ja sen ensimmäinen tiedustelija lähti matkaan. Kaupunkialueella tiedustelijat kartoittavat maata ja uudisasukkaat perustavat kaupunkeja.' },
   },
   {
-    level: 3, name: 'Kaupungit', text: 'Perusta kolme kaupunkia', reward: 60, need: 3, unit: 'kaupunkia',
-    hint: 'Tiedustelija ehdottaa hyviä paikkoja, tai rakenna uudisasukas ja valitse Asuta. Kolme kaupunkia avaa läänin.',
-    count: s => s.cities,
-    opens: { title: 'Lääni avautui, zoomaa ulos', text: 'Läänissä ohjaat kaupunkialueita: tutki, asuta tai ohita, ja lähetä retkikunta kauemmas.' },
+    level: 3, name: 'Settlementit', text: 'Kolme valmista settlementtiä', reward: 60, need: 3, unit: 'valmiina',
+    hint: 'Perusta kaupunkeja uudisasukkailla ja kasvata ne valmiiksi settlementeiksi: kaupunki saa perustan ja ruokaketjun heti, ja kolmas asukas tekee siitä valmiin. Kolme valmista avaa läänin.',
+    count: s => s.settlements,
+    opens: { title: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos', text: 'Läänissä ohjaat kaupunkialueita: tutki, asuta tai ohita, ja lähetä retkikunta kauemmas.' },
   },
   {
     level: 2, name: 'Läänit', text: 'Pidä neljä kotivaltion lääniä', reward: 80, need: 4, unit: 'hallussa',
