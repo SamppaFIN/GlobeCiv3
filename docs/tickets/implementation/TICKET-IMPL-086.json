@@ -1,0 +1,33 @@
+{
+  "id": "TICKET-IMPL-086",
+  "story": "STORY-091",
+  "plan": "PLAN-086",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/chains.ts",
+    "src/game/chains.test.ts",
+    "src/game/cities.ts",
+    "src/globe/main.ts",
+    "tests/e2e/settlement.e2e.ts"
+  ],
+  "change_summary": "chains.ts: settlementStart(fits) palauttaa perustan ja ensimmäisen mahtuvan ruokaketjun. main.ts: foundAt antaa myöhemmälle kaupungille uuden pelin ketjut, rakennukset ja sijoittelun; chainDay laskee kantajien reitit vain kaupungille, jonka kaupunkitaso on näkyvissä. cities.ts: kommentit kertovat, että myös perustetuilla kaupungeilla on ketjut.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "foundAt",
+      "chainDay (carrierTrips)"
+    ],
+    "call_sites_found": [
+      "foundAt: uuden alun pääkaupunki, units.dayn perustamiset, debug foundHere ja foundIn",
+      "carrierTrips: cityLevel.walk ja debug carryTest"
+    ],
+    "call_sites_updated": [
+      "Pääkaupunki ohitetaan (ensimmäinen kaupunki), ja sen ketju luodaan kuten ennen",
+      "Vallattu kaupunki (take) ei kulje foundAtin kautta, joten se jatkaa entisin säännöin"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "04fa627",
+  "progress": 100,
+  "notes": "Tallennusmuoto ei muuttunut: ketju tallennetaan ja tarkistetaan jo kaupunkikohtaisesti (save.ts, STORY-088). Siemenellä 42 pääkaupungin lähelle perustettu kaupunki (ruutu 424532) sai metsurin, sahan, louhoksen, pellon, myllyn ja leipomon."
+}

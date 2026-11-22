@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-21T23:50:35Z",
+    "generated_at": "2026-11-22T08:19:20Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "9dab56b",
+    "git_commit": "04fa627",
     "git_branch": "main",
     "language": "fi"
   },
@@ -245,14 +245,14 @@
       "title": "Ylemmät tasot: Civ I, Civ III ja Civ V",
       "icon": "🏛️",
       "description": "Kaupunkialue asuttaa valmiita settlementtejä (Civ I), lääni kasvattaa kulttuurirajoja (Civ III), ja valtio kokoaa vastustajat, diplomatian, sodan ja kaupan (Civ V).",
-      "status": "todo",
+      "status": "in_progress",
       "stories": [
         "STORY-091",
         "STORY-092",
         "STORY-093",
         "STORY-094"
       ],
-      "progress": 0
+      "progress": 25
     },
     {
       "id": "EPIC-012",
@@ -2417,15 +2417,15 @@
         "STORY-089"
       ],
       "acceptance_criteria": [
-        "Kaupunkialueella perustettu kaupunki alkaa valmiina settlementtinä kuvernöörin hoidossa, eikä rakennuksia sijoiteta tällä tasolla.",
+        "Kaupunkialueella perustettu kaupunki alkaa settlementtinä, jonka perusta ja ruokaketju ovat valmiina kuvernöörin sijoittamina, koossa 1 (Sami 2026-11-22), ja kaupunkitason neuvonantaja hoitaa sen ketjut. Rakennuksia ei sijoiteta kaupunkialuetasolla.",
         "Kaupunkitasolle voi silti sukeltaa."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-086",
+        "implementation": "TICKET-IMPL-086",
+        "testing": "TICKET-TEST-086"
       }
     },
     {
