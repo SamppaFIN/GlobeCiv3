@@ -6,10 +6,12 @@
  * A Run answers the cards as an advisor would, as the browser's golden runs do
  * (tests/e2e/golden.e2e.ts): a site is settled, a raid is met with a soldier bought when it
  * would come too late, a proposal is declined, and the advisors of a level that opens are those
- * chosen at the start. A replay answers them from a game's command log instead, and must come
- * to the same state.
+ * chosen at the start. A replay gives the player's commands of a game's log instead, each on its
+ * day before the step that follows it, the answers to the cards among them, and must come to the
+ * same state; the advisors and the people give theirs again.
  *
- * The simulation holds one game at a time: a new Run takes it over from the one before.
+ * The simulation holds one game at a time: a new Run takes it over from the one before, and the
+ * old one then refuses to go on.
  */
 import { GameClock } from '../game/clock';
 import { advisorOfLevel, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from '../game/advisors';
@@ -20,30 +22,35 @@ import { FAIR_SITE } from '../game/sites';
 import { chooseStartSite } from '../game/start';
 import type { Rich } from '../game/rich';
 import { quietEvents } from './events';
-import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, saveState, setGame, simulateDay, startGame, terrainOf, world } from './game';
+import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, setGame, simulateDay, startGame, stateOf, terrainOf, world } from './game';
 import { pending, type GameState } from './state';
 import { createWorld } from './world';
 
 /** The advisor of every level, chosen at the start: the city level's first, as the welcome asks. */
 export interface Advisors { town: TownAdvisor; city: CityAdvisor; province: ProvinceAdvisor; state: StateAdvisor; planet: PlanetAdvisor }
 
-/** What answers the cards: the next command for the player to give, or null when none would; risen is the level whose card was just closed. */
-type Answer = (run: Run, risen: number | null) => Command | null;
-
 export class Run {
+  /** The run the simulation holds now. */
+  private static current: Run | null = null;
   readonly clock = new GameClock();
   /** The notices told, in order. */
   readonly notices: (string | Rich)[] = [];
   readonly state: GameState;
+  readonly seed: number;
+  /** Why a run stopped short of its day, if it did. */
+  error: string | null = null;
   /** A level that opened, whose card waits to be closed: then its advisors are asked for. */
   private risen: number | null = null;
+  /** The advisors that answer the cards, or (null) a replay of the player's commands of a log, and the next of them. */
+  private readonly advisors: Advisors | null;
+  private readonly log: readonly Logged[];
+  private next = 0;
 
-  readonly seed: number;
-  private readonly answer: Answer;
-
-  private constructor(seed: number, answer: Answer, start: (run: Run) => void) {
+  private constructor(seed: number, advisors: Advisors | null, log: readonly Logged[]) {
     this.seed = seed;
-    this.answer = answer;
+    this.advisors = advisors;
+    this.log = log;
+    Run.current = this;
     const w = createWorld();
     const events = { ...quietEvents(this.notices), rise: (opened: number) => { this.risen = opened; } };
     bind({ ...w, clock: this.clock, events, classic: false });
@@ -58,32 +65,23 @@ export class Run {
     reveal(withNeighbors(site.tile));
     reveal(tilesInRings(site.tile, CITY_LEVEL_RINGS));
     this.state = startGame(site.city, undefined, {});
-    start(this);
   }
 
   /** A new game of a seed under advisors chosen at the start, as the player chooses them. */
   static play(seed: number, advisors: Advisors): Run {
-    return new Run(seed, (run, risen) => run.advisorsWay(advisors, risen), run => {
-      for (const level of ['town', 'city', 'province', 'state', 'planet'] as const) run.give({ kind: 'advise', level, advisor: advisors[level] });
-    });
+    const run = new Run(seed, advisors, []);
+    for (const level of ['town', 'city', 'province', 'state', 'planet'] as const) run.give({ kind: 'advise', level, advisor: advisors[level] });
+    return run;
   }
 
-  /**
-   * A game played again from its command log: the player's commands at their days and in their
-   * order, the answers to the cards among them; the advisors and the people give theirs again.
-   */
+  /** A game played again from its command log: the player's commands, the answers to the cards among them. */
   static replay(seed: number, log: readonly Logged[]): Run {
-    const own = log.filter(e => e.by === 'player');
-    let next = 0;
-    const take = (run: Run) => (next < own.length && own[next].day === run.clock.day ? own[next++].cmd : null);
-    return new Run(seed, take, run => {
-      // The choices made before the first day
-      for (let cmd = take(run); cmd; cmd = take(run)) run.give(cmd);
-    });
+    return new Run(seed, null, log.filter(e => e.by === 'player'));
   }
 
   /** A command from the player: false when it did not take effect. */
   give(cmd: Command): boolean {
+    this.live();
     return dispatch(cmd, 'player');
   }
 
@@ -92,6 +90,7 @@ export class Run {
    * advisor answers itself, and a level's rise due. Returns whether a day passed.
    */
   step(): boolean {
+    this.live();
     prepareDay();
     const blocked = pending(this.state).length > 0 || this.risen !== null;
     if (!blocked) {
@@ -103,28 +102,60 @@ export class Run {
     return !blocked;
   }
 
-  /** Answer what waits: a level's card closed (its advisors asked for), else the card the game stopped for. */
+  /** Answer what waits as an advisor would: a level's card closed (its advisors asked for), else the card the game stopped for. */
   decide(): boolean {
     const risen = this.risen;
     this.risen = null;
-    const cmd = this.answer(this, risen);
-    return cmd !== null && this.give(cmd);
+    const cmd = this.advisors && this.advisorsWay(this.advisors, risen);
+    return !!cmd && this.give(cmd);
   }
 
-  /** Play until a day: false when the game ended or a card waits that nothing answers. */
+  /** Play until a day: false when the game ended, a card waits that nothing answers, or a replay went its own way. */
   until(day: number): boolean {
     let stuck = 0;
     while (this.clock.day < day) {
       if (this.state.over) return false;
-      if (this.step()) { stuck = 0; continue; }
-      if (!this.decide() || ++stuck > 20) return false;
+      if (this.advisors === null && !this.replayToday()) return false;
+      if (this.step()) {
+        stuck = 0;
+        continue;
+      }
+      const answered = this.advisors ? this.decide() : this.next < this.log.length && this.log[this.next].day === this.clock.day;
+      if (!answered || ++stuck > 20) {
+        this.error ??= `day ${this.clock.day}: ${this.risen !== null ? 'a level opened' : pending(this.state).map(d => d.kind).join(', ')} waits, and nothing answers it`;
+        return false;
+      }
     }
     return true;
   }
 
-  /** The game's state as the save keeps it, and the city-states and tribes found anew. */
+  /** The game's state as the save keeps it (also when the game ended), and the city-states and tribes found anew. */
   snapshot() {
-    return { ...saveState()!, ...opponentsNow() };
+    this.live();
+    return { ...stateOf()!, ...opponentsNow() };
+  }
+
+  /** The simulation is this run's still. */
+  private live() {
+    if (Run.current !== this) throw new Error('another run holds the simulation now');
+  }
+
+  /** A replay's commands of today, in their order, before the next step; false when the log fell behind the game. */
+  private replayToday(): boolean {
+    for (; this.next < this.log.length && this.log[this.next].day <= this.clock.day; this.next++) {
+      const e = this.log[this.next];
+      if (e.day < this.clock.day) {
+        this.error = `the log's command of day ${e.day} (${e.cmd.kind}) came after the game had gone on to day ${this.clock.day}`;
+        return false;
+      }
+      if (!this.give(e.cmd)) {
+        this.error = `the log's command of day ${e.day} (${e.cmd.kind}) did not take effect`;
+        return false;
+      }
+      // The advisors asked for close the card of the level that opened
+      if (e.cmd.kind === 'advise') this.risen = null;
+    }
+    return true;
   }
 
   /** What an advisor would answer: the advisor of the level that just opened, or the card waiting. */

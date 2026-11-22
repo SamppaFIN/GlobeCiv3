@@ -12,12 +12,24 @@ const sources = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k.starts
 /** Modules of the simulation: these and what they import. */
 const ROOTS = ['state', 'events', 'game', 'world', 'run'].map(n => `../sim/${n}.ts`);
 
+/**
+ * Every import of a text: static ones of values and types (from '…' or from "…", over several
+ * lines too), re-exports, side-effect imports (import './x') and dynamic ones (import('./x')).
+ */
+const IMPORT = /^\s*(?:import|export)\s[^;]*?\bfrom\s*(['"])([^'"]+)\1|^\s*import\s*(['"])([^'"]+)\3|\bimport\s*\(\s*(['"])([^'"]+)\5\s*\)/gm;
+
+/** What a text imports, as written. */
+export function specifiersOf(text: string): string[] {
+  return [...text.matchAll(IMPORT)].map(m => m[2] ?? m[4] ?? m[6]);
+}
+
 /** Relative imports of a module, values and types alike, as keys of `sources`. */
 function importsOf(file: string): string[] {
   const dir = file.slice(0, file.lastIndexOf('/'));
   const out: string[] = [];
-  for (const m of sources[file].matchAll(/^\s*(?:import|export)\s[^;]*?from\s+'(\.[^']+)'/gm)) {
-    const parts = `${dir}/${m[1]}`.split('/');
+  for (const spec of specifiersOf(sources[file])) {
+    if (!spec.startsWith('.')) continue;
+    const parts = `${dir}/${spec.replace(/\.ts$/, '')}`.split('/');
     const path: string[] = [];
     for (const p of parts) {
       if (p === '..' && path.length && path[path.length - 1] !== '..') path.pop();
@@ -44,6 +56,41 @@ function reached(): Set<string> {
 /** The only modules of the view's folder it may use: the world's maths. */
 const GLOBE_ALLOWED = ['hexTiles', 'regions', 'terrain', 'cubeSphere', 'regionLayout', 'hexGrid'].map(n => `../globe/${n}.ts`);
 
+/** The only packages it may import. */
+const PACKAGES = ['three'];
+
+/** What of Three.js it may use: vector maths, and the icosahedron the hex grid's nodes come from. */
+const THREE_ALLOWED = ['Vector3', 'Matrix3', 'IcosahedronGeometry'];
+
+/** Globals of the page, the browser and drawing it must not touch. */
+const PAGE = /\b(document|window|navigator|localStorage|sessionStorage|indexedDB|requestAnimationFrame|cancelAnimationFrame|fetch|XMLHttpRequest|WebSocket|Worker|HTML\w*Element|Element|Node(?:List)?|Event(?:Target)?|CanvasRenderingContext2D|OffscreenCanvas|WebGL\w*|Image|Audio)\b/;
+
+/** A text's lines without comments, numbered from 1. */
+function codeLines(text: string): { i: number; line: string }[] {
+  return text.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' ')).split('\n')
+    .map((line, i) => ({ i: i + 1, line: line.replace(/\/\/.*$/, '') }));
+}
+
+/** Lines of a text that touch the page, as path:line: text. */
+export function pageHits(file: string, text: string): string[] {
+  // Text in quotes may name them (the game's own words, keys of saves)
+  return codeLines(text).filter(({ line }) => PAGE.test(line.replace(/(['"`])(?:\\.|(?!\1).)*\1/g, "''")))
+    .map(({ i, line }) => `${file}:${i}: ${line.trim()}`);
+}
+
+/** What of Three.js a text uses, as THREE.Name or by name from 'three', besides what it may. */
+export function threeHits(file: string, text: string): string[] {
+  const used = new Set<string>();
+  for (const { line } of codeLines(text)) for (const m of line.matchAll(/\bTHREE\.(\w+)/g)) used.add(m[1]);
+  for (const m of text.matchAll(/^\s*import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*(['"])three\2/gm)) {
+    for (const name of m[1].split(',')) {
+      const n = name.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0];
+      if (n) used.add(n);
+    }
+  }
+  return [...used].filter(n => !THREE_ALLOWED.includes(n)).map(n => `${file}: THREE.${n}`);
+}
+
 describe('the simulation\'s boundary (STORY-095)', () => {
   it('imports nothing of the user interface, and of the view only the world\'s maths', () => {
     const files = [...reached()];
@@ -52,11 +99,42 @@ describe('the simulation\'s boundary (STORY-095)', () => {
     expect(files.length).toBeGreaterThan(20);
   });
 
-  it('touches no page and draws nothing: no document, window or storage, no renderer, scene, mesh or material', () => {
-    const bad = /\b(document|window|localStorage|indexedDB|requestAnimationFrame)\b|WebGLRenderer|THREE\.(Scene|Mesh|\w*Material|DataTexture|Texture)\b/;
-    const hits = [...reached()].flatMap(f => sources[f].split('\n').map((line, i) => ({ f, i: i + 1, line })))
-      // comments may name them
-      .filter(({ line }) => !/^\s*(\/\/|\*|\/\*)/.test(line) && bad.test(line.replace(/\/\/.*$/, '')));
-    expect(hits.map(h => `${h.f}:${h.i}: ${h.line.trim()}`)).toEqual([]);
+  it('imports no package but Three.js', () => {
+    const files = [...reached()];
+    expect(files.flatMap(f => specifiersOf(sources[f]).filter(s => !s.startsWith('.') && !PACKAGES.includes(s)).map(s => `${f}: ${s}`))).toEqual([]);
+  });
+
+  it('touches no page: no document, window, navigator, storage, network, worker or element', () => {
+    expect([...reached()].flatMap(f => pageHits(f, sources[f]))).toEqual([]);
+  });
+
+  it('draws nothing: of Three.js only vector maths and the hex grid\'s icosahedron', () => {
+    expect([...reached()].flatMap(f => threeHits(f, sources[f]))).toEqual([]);
+  });
+
+  it('the checks see what they look for, whichever way it is written', () => {
+    expect(specifiersOf([
+      "import { a } from './a';",
+      'import type { B } from "../b";',
+      'import {\n  c,\n  d,\n} from \'./cd\';',
+      "import './side';",
+      "export * from './again';",
+      "const m = await import('../ui/late');",
+      "import * as THREE from 'three';",
+    ].join('\n'))).toEqual(['./a', '../b', './cd', './side', './again', '../ui/late', 'three']);
+    expect(pageHits('x.ts', [
+      'const w = navigator.userAgent;',
+      'const el: HTMLElement | null = null;',
+      'new Worker(url);',
+      'await fetch(url);',
+      '// window in a comment',
+      '/* document\n in a block comment */',
+      "notice('the window of the hall');",
+    ].join('\n'))).toEqual(['x.ts:1: const w = navigator.userAgent;', 'x.ts:2: const el: HTMLElement | null = null;', 'x.ts:3: new Worker(url);', 'x.ts:4: await fetch(url);']);
+    expect(threeHits('x.ts', [
+      "import { Scene, Vector3, type Mesh as M } from 'three';",
+      'const m = new THREE.MeshBasicMaterial();',
+      'const v = new THREE.Vector3();',
+    ].join('\n')).sort()).toEqual(['x.ts: THREE.Mesh', 'x.ts: THREE.MeshBasicMaterial', 'x.ts: THREE.Scene']);
   });
 });

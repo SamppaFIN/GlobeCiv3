@@ -62,6 +62,7 @@ function playedSave(): { data: SaveData; units: Units; map: MapState } {
       { day: 16, by: 'player', cmd: { kind: 'treaty', accept: true } },
     ],
     treaty: { rival: 0, kind: 'peace' },
+    calmDays: 12,
   };
   return { data: JSON.parse(JSON.stringify(data)), units, map };
 }
@@ -151,6 +152,10 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.treaty.kind = 'truce'; })).toBeNull();
     expect(broken(s => { delete s.treaty; })!.treaty).toBeUndefined();
     expect(broken(s => { s.treaty = null; })!.treaty).toBeUndefined();
+    // The calm days (STORY-095): a count, missing in older saves
+    expect(broken(s => { s.calmDays = -1; })).toBeNull();
+    expect(broken(s => { s.calmDays = 1.5; })).toBeNull();
+    expect('calmDays' in broken(s => { delete s.calmDays; })!).toBe(false);
     // A kind of resource is a study too (STORY-072)
     expect(broken(s => { s.research.target = 'gold'; })?.research.target).toBe('gold');
     expect(validateSave(null, LIMITS)).toBeNull();
