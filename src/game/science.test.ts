@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { pointToTile } from '../globe/hexTiles';
 import { BUILDS, cityGold, cityScience, foundCity, UPKEEP } from './cities';
-import { advanceCost, opensFrom, studyName, NEEDS, Research, RESOURCE_KINDS, STUDY_COST, splitTrade } from './science';
+import { advanceCost, opensFrom, studyName, treeLayout, ADVANCES, ADVANCE_LIST, NEEDS, Research, RESOURCE_KINDS, STUDY_COST, splitTrade } from './science';
+import { ADVANCE_LORE } from './advanceLore';
 
 const START = pointToTile(new THREE.Vector3(0.4, 0.3, 0.866).normalize());
 
@@ -79,5 +80,40 @@ describe('science (STORY-040, Freeciv civ1)', () => {
   it('the old start and saves from before STORY-072 know every kind', () => {
     expect([...new Research().kinds]).toEqual(RESOURCE_KINDS);
     expect([...new Research({ known: [], target: null, bulbs: 0 }).kinds]).toEqual(RESOURCE_KINDS);
+  });
+});
+
+describe('the science tree (STORY-109)', () => {
+  it('puts every advance once, after what it needs, in rows without gaps', () => {
+    const layout = treeLayout();
+    expect(layout.map(n => n.advance).sort()).toEqual([...ADVANCE_LIST].sort());
+    const at = new Map(layout.map(n => [n.advance, n]));
+    for (const n of layout) for (const need of ADVANCES[n.advance].needs) expect(at.get(need)!.col).toBeLessThan(n.col);
+    // A column's depth is the longest chain: Monarchy needs Code of Laws, which needs the Alphabet
+    expect(at.get('alphabet')!.col).toBe(0);
+    expect(at.get('law')!.col).toBe(1);
+    expect(at.get('monarchy')!.col).toBe(2);
+    for (const c of new Set(layout.map(n => n.col))) {
+      const rows = layout.filter(n => n.col === c).map(n => n.row).sort((a, b) => a - b);
+      expect(rows).toEqual(rows.map((_, i) => i));
+    }
+    // The same every time
+    expect(treeLayout()).toEqual(layout);
+  });
+  it('orders the first column by what each leads to, those leading nowhere last', () => {
+    const first = treeLayout().filter(n => n.col === 0).sort((a, b) => a.row - b.row).map(n => n.advance);
+    const leads = (a: string) => ADVANCE_LIST.some(n => (ADVANCES[n].needs as string[]).includes(a));
+    const lastLeading = first.map(leads).lastIndexOf(true);
+    expect(first.slice(lastLeading + 1).every(a => !leads(a))).toBe(true);
+    expect(first.slice(0, lastLeading + 1).every(leads)).toBe(true);
+  });
+  it('gives every advance what it is and a saying with who said it and where', () => {
+    for (const a of ADVANCE_LIST) {
+      const l = ADVANCE_LORE[a];
+      expect(l.what.length, a).toBeGreaterThan(40);
+      expect(l.quote.text.length, a).toBeGreaterThan(10);
+      expect(l.quote.who, a).not.toBe('');
+      expect(l.quote.where, a).not.toBe('');
+    }
   });
 });

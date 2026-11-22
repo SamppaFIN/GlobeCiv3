@@ -1,0 +1,58 @@
+{
+  "id": "PLAN-087",
+  "story": "STORY-109",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Samin pyyntö 2026-11-22: tieteelle oma nappi ja sivu, josta näkee koko tiedepuun, ja jokaisessa tieteessä kuva, selitys siitä, mitä se tekee, ja historiallinen lausahdus. science.ts:n treeLayout asettaa keksinnöt sarakkeisiin pisimmän vaatimusketjun mukaan ja järjestää rivit kahdella painopistekierroksella, jotta viivat risteävät vähän (oma). advanceLore.ts:ssä on jokaiselle keksinnölle oma selitys ja aito lausahdus tekijänoikeudesta vapaasta teoksesta omana suomennoksena; lähteet ja käytetyt englanninkieliset käännökset ovat kommentissa. advanceArt.ts piirtää jokaiselle oman SVG-kuvan Kartografi-värein. scienceTree.ts näyttää valitun keksinnön ylhäällä (kuva, tila, selitys, pelivaikutus Tietokirjan sivulta linkkeineen, faktat ja lausahdus) ja puun alla, leveällä näytöllä rinnakkain. Tutkittavissa olevan voi valita study-komennolla. Yläpaneelin nappi näkyy, kun on kaupunki. Puhelimella yläpaneelin ylärivi ei mahtunut napin kanssa, joten päivä siirtyy paneelin yläkulmaan välilehdeksi.",
+  "alternatives_considered": [
+    {
+      "name": "Tiedepuu luettelon välilehtenä",
+      "pros": "Ei uutta nappia yläriville",
+      "cons": "Luettelo näkyy vain omassa ohjauksessa, eikä se ole oma nappi",
+      "rejected_because": "Sami pyysi omaa nappia"
+    },
+    {
+      "name": "Lausahdukset esikuvapeleistä",
+      "pros": "Tuttu tunnelma",
+      "cons": "Esikuvapelien valinnat ja tekstit ovat suojattuja (sääntö 4)",
+      "rejected_because": "Vain aidot, tekijänoikeudesta vapaat lähteet omana suomennoksena"
+    },
+    {
+      "name": "Nappi mittaririville puhelimella",
+      "pros": "Yläriviin ei kosketa",
+      "cons": "44 px:n nappi kasvattaisi riviä 16 px ja yläpaneelia kohti STORY-025:n 28 %:n rajaa",
+      "rejected_because": "Päivän välilehti ei vie korkeutta paneelista"
+    }
+  ],
+  "files_to_change": [
+    "src/game/science.ts",
+    "src/game/advanceLore.ts",
+    "src/ui/advanceArt.ts",
+    "src/ui/scienceTree.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Lausahdusten suomennokset ovat Enkin omia; Sami voi vaihtaa sanamuotoja tai lausahduksia.",
+    "Index.html:n kieli on lang=\"en\", vaikka peli on suomeksi: ruudunlukija lukee suomen englannin äänellä (STORY-100:n yhteydessä)."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "treeLayout ja keksintöjen selitykset ja lausahdukset",
+      "verify": "science.test"
+    },
+    {
+      "step": 2,
+      "action": "Kuvat, sivu, nappi ja komento",
+      "verify": "science-tree.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Puhelimen yläpaneeli ja regressio",
+      "verify": "science-tree.e2e (puhelin), play, onboarding, area-panel, save, city, list, codex, science, rich-links ja advisors"
+    }
+  ],
+  "status": "approved"
+}

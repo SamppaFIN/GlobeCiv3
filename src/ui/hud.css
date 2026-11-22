@@ -131,6 +131,18 @@
 .hud-day { display: flex; flex-direction: column; align-items: flex-end; padding-right: 4px; }
 .hud-day-n { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .hud-day-label { font-size: 11px; color: var(--c-muted); }
+/* A phone (STORY-109): the day sits on the panel's top corner like a tab, so the top row has room
+   for the science tree's button beside the list */
+@media (max-width: 599px) {
+  .hud-top > .hud-row:first-child { gap: 6px; }
+  .hud-top .hud-day {
+    position: absolute; right: 8px; bottom: 100%; flex-direction: row; align-items: baseline; gap: 6px;
+    padding: 3px 10px 2px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: var(--c-hud);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .hud-top .hud-day-n { font-size: 13px; }
+}
+@media (max-width: 379px) { .hud-top > .hud-row:first-child { gap: 4px; } }
 .hud-meter-row { gap: 10px; padding: 0 4px; }
 .hud-meter-name { font-size: 12px; color: #cfd3e5; }
 .hud-meter { flex: 1; height: 4px; border-radius: 2px; background: #3f424d; position: relative; }
@@ -359,6 +371,55 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .codex-facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; margin: 0; font-size: 13px; line-height: 1.5; }
 .codex-facts dt { color: var(--c-muted); }
 .codex-facts dd { margin: 0; }
+
+/* The science tree (STORY-109): the advance on show above the tree; side by side when wide */
+.city-card.science-card { z-index: 1; max-width: 760px; max-height: 86dvh; }
+.science-card #science-title:focus { outline: none; }
+.science-rates { font-size: 13px; color: var(--c-muted); }
+.science-body { display: flex; flex-direction: column; gap: 16px; }
+.science-detail { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--radius-md); background: var(--c-bg); }
+.science-detail[hidden] { display: none; }
+.science-detail-head { display: flex; align-items: center; gap: 14px; }
+.science-art svg { display: block; }
+.science-detail-titles { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.science-detail[data-state="known"] .science-status { color: var(--ink); }
+.science-detail[data-state="locked"] .science-status { color: var(--c-muted); }
+.science-name { margin: 0; font-size: 20px; font-weight: 500; line-height: 1.2; }
+.science-what, .science-effect { margin: 0; font-size: 14px; line-height: 1.5; }
+.science-quote { margin: 2px 0 0; padding: 6px 0 6px 12px; border-left: 2px solid var(--ink); }
+.science-quote-text { margin: 0; font-size: 14px; font-style: italic; line-height: 1.5; }
+.science-quote-who { margin-top: 4px; font-size: 12px; color: var(--c-muted); }
+.science-choose { min-height: var(--touch-target); align-self: flex-start; }
+.science-choose[hidden] { display: none; }
+.science-scroll { overflow-x: auto; padding-bottom: 4px; }
+.science-tree { position: relative; margin: 0 auto; }
+.science-lines { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
+.science-line { fill: none; stroke: color-mix(in srgb, var(--c-text) 22%, transparent); stroke-width: 1.5; }
+.science-line-known { stroke: color-mix(in srgb, var(--ink) 70%, transparent); }
+.science-line-target { stroke: var(--c-accent-light); stroke-width: 2; }
+.science-node {
+  position: absolute; display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 6px 7px;
+  border: 1px solid #3f424d; border-radius: var(--radius-md); background: var(--c-bg); color: inherit; font: inherit;
+  text-align: left; cursor: pointer; overflow: hidden;
+}
+.science-node-top { display: flex; align-items: center; gap: 6px; }
+.science-node-art svg { display: block; }
+.science-node-state { font-size: 11px; line-height: 1.2; color: var(--c-muted); }
+.science-node-name { font-size: 12px; font-weight: 500; line-height: 1.2; hyphens: manual; }
+.science-node-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--c-accent-light); }
+.science-node[data-state="known"] { border-color: color-mix(in srgb, var(--ink) 55%, transparent); }
+.science-node[data-state="known"] .science-node-state { color: var(--ink); }
+.science-node[data-state="open"] { border-color: var(--c-accent); }
+.science-node[data-state="open"] .science-node-state { color: var(--c-accent-text); }
+.science-node[data-state="target"] { border-color: var(--c-accent-light); }
+.science-node[data-state="locked"] .science-node-name, .science-node[data-state="locked"] .science-node-art { opacity: 0.55; }
+.science-node[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--c-accent-light); }
+.science-node:focus-visible { outline: 2px solid var(--c-accent-light); outline-offset: 2px; }
+@media (min-width: 760px) {
+  .science-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  .science-detail { position: sticky; top: 0; }
+}
+@media (prefers-reduced-motion: no-preference) { .science-node-bar { transition: width 0.3s ease; } }
 
 /* City card (STORY-028, design 8a) */
 .city-card {

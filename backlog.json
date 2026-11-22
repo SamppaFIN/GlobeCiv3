@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T08:19:20Z",
+    "generated_at": "2026-11-22T09:03:37Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "04fa627",
+    "git_commit": "2cd3f84",
     "git_branch": "main",
     "language": "fi"
   },
@@ -277,7 +277,8 @@
         "STORY-103",
         "STORY-106",
         "STORY-107",
-        "STORY-104"
+        "STORY-104",
+        "STORY-109"
       ],
       "progress": 100
     }
@@ -2802,6 +2803,30 @@
         "Ryöstön jälkeen ilmoitus kertoo, mikä olisi auttanut: sotilas tai toinen sotilas, falangi ja muuri, ja tarvittava keksintö, jos sitä ei vielä tunneta.",
         "Ensimmäisen jälkeen perustettu kaupunki ei avaa korttiaan itsestään, vaan ilmoitus kertoo uudesta kaupungista linkillä."
       ]
+    },
+    {
+      "id": "STORY-109",
+      "epic": "EPIC-013",
+      "title": "Tiedepuu",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä koko tiedepuun omasta napista ja jokaisesta keksinnöstä kuvan, selityksen ja historiallisen lausahduksen, jotta tiede tuntuu osalta sivilisaation tarinaa.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-040",
+        "STORY-104"
+      ],
+      "acceptance_criteria": [
+        "Yläpaneelissa on oma Tiedepuu-nappi, kun pelaajalla on kaupunki, ja se avaa sivun, jossa kaikki keksinnöt ovat sarakkeissa sen mukaan, mitä ne vaativat, ja vaatimuksista kulkee viiva.",
+        "Jokaisella keksinnöllä on oma kuva, selitys siitä, mitä se on ja mitä se pelissä tekee, ja aito historiallinen lausahdus tekijöineen ja teoksineen. Lähteet ja suomennoksen tausta kirjataan koodikommenttiin.",
+        "Tutkittavissa olevan keksinnön voi valita sivulta tutkittavaksi komentona, ja sivu toimii puhelimella: sarakkeet mahtuvat leveyteen, ja kohteet ovat vähintään 44 px."
+      ],
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-087",
+        "implementation": "TICKET-IMPL-087",
+        "testing": "TICKET-TEST-087"
+      }
     }
   ]
 }

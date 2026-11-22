@@ -24,6 +24,9 @@ const SPARK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColo
 // A list (own icon) for the list of cities and units (STORY-042)
 const LIST = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6 H20 M9 12 H20 M9 18 H20"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></svg>';
 
+// A small tree of three advances (own icon) for the science tree (STORY-109)
+const TREE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="6" r="2.2"/><circle cx="5" cy="18" r="2.2"/><circle cx="19" cy="12" r="2.4"/><path d="M7.2 6 C12 6 12 12 16.6 12 M7.2 18 C12 18 12 12 16.6 12"/></svg>';
+
 // A bust (own icon) for the advisor of the level (STORY-049)
 
 /** One of a level's advisors in the HUD (STORY-105). */
@@ -66,6 +69,8 @@ export interface GameHudState {
   advisors: AdvisorButton[];
   /** The player's own hand (STORY-096): the list shows only then (main.ts leaves out the unit and the research). */
   own: boolean;
+  /** The science tree's button (STORY-109): there is a city, so there is science. */
+  science: boolean;
 }
 
 export interface GameHudHandlers {
@@ -86,6 +91,8 @@ export interface GameHudHandlers {
   chooseAdvisor(id: string): void;
   /** Open the science card. */
   openResearch(): void;
+  /** Open the science tree (STORY-109). */
+  openScience(): void;
   /** Tell how to reach the current goal. */
   goalHint(): void;
 }
@@ -101,6 +108,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
           ${SPEEDS.map(s => `<label class="seg-opt"><input type="radio" name="hud-speed" value="${s}">${s}×</label>`).join('')}
         </div>
         <button class="btn btn-secondary hud-icon hud-city" type="button" aria-label="Luettelo: kaupungit, yksiköt, talous ja diplomatia">${LIST}</button>
+        <button class="btn btn-secondary hud-icon hud-science" type="button" aria-label="Tiedepuu" title="Tiedepuu" hidden>${TREE}</button>
         <div class="hud-advisors" role="group" aria-label="Neuvonantajat" hidden></div>
         <div class="hud-spacer"></div>
         <div class="hud-day"><span class="hud-day-n"></span><span class="hud-day-label"></span></div>
@@ -149,6 +157,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openList);
+  q<HTMLButtonElement>('.hud-science').addEventListener('click', on.openScience);
   // The level's advisors by their faces (STORY-105): the chosen one opens the card, another is chosen.
   // A phone shows only the chosen one, and the card holds the others (hud.css).
   const advisors = q<HTMLElement>('.hud-advisors');
@@ -210,6 +219,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         research.classList.toggle('btn-secondary', !s.research.choose);
       }
       q<HTMLButtonElement>('.hud-city').hidden = !s.own;
+      q<HTMLButtonElement>('.hud-science').hidden = !s.science;
       advisors.hidden = s.advisor === null || !s.advisors.length;
       drawAdvisors(s.advisor === null ? [] : s.advisors);
       const bottom = q<HTMLElement>('.hud-bottom');

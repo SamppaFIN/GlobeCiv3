@@ -51,6 +51,40 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[]; from?: 
 };
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 
+/**
+ * The science tree's layout (STORY-109): each advance in the column of its depth, the longest
+ * chain of needs before it, and in a row of its column. A column after the first is ordered by
+ * the rows of the needs, and the first by the rows of the advances it leads to, those leading
+ * nowhere last, so that few lines cross (own, a barycentre ordering in two passes).
+ */
+export function treeLayout(): { advance: Advance; col: number; row: number }[] {
+  const depth = new Map<Advance, number>();
+  const deep = (a: Advance): number => {
+    if (!depth.has(a)) depth.set(a, ADVANCES[a].needs.length ? 1 + Math.max(...ADVANCES[a].needs.map(deep)) : 0);
+    return depth.get(a)!;
+  };
+  const cols: Advance[][] = [];
+  for (const a of ADVANCE_LIST) (cols[deep(a)] ??= []).push(a);
+  const row = new Map<Advance, number>();
+  const place = (col: Advance[]) => col.forEach((a, i) => row.set(a, i));
+  const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length;
+  // A stable sort by keys taken before it
+  const order = (col: Advance[], key: (a: Advance) => number) => {
+    const keys = new Map(col.map(a => [a, key(a)]));
+    col.sort((a, b) => keys.get(a)! - keys.get(b)!);
+    place(col);
+  };
+  const down = () => cols.slice(1).forEach(col => order(col, a => mean(ADVANCES[a].needs.map(n => row.get(n)!))));
+  place(cols[0]);
+  down();
+  order(cols[0], a => {
+    const next = ADVANCE_LIST.filter(n => ADVANCES[n].needs.includes(a) && row.has(n));
+    return next.length ? mean(next.map(n => row.get(n)!)) : 1000 + row.get(a)!;
+  });
+  down();
+  return cols.flatMap((col, c) => col.map(a => ({ advance: a, col: c, row: row.get(a)! })));
+}
+
 /** The kinds of special resource, one on each terrain. */
 export const RESOURCE_KINDS = Object.keys(RESOURCES) as ResourceKind[];
 export const isKind = (s: Study): s is ResourceKind => s in RESOURCES;
