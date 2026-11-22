@@ -24,10 +24,12 @@ export type HistoryEvent =
   | { kind: 'raid'; day: number; held: boolean; defender: { id: number; name: string } | null; nomads: boolean }
   | { kind: 'era'; day: number; era: Era }
   | { kind: 'taken'; day: number; from: string | null }
+  /** The city's border reached more rings at the province level (STORY-093). */
+  | { kind: 'border'; day: number; rings: number }
   /** The oldest events folded together, when the log is full. */
   | { kind: 'early'; until: number; count: number };
 
-export const HISTORY_KINDS = ['founded', 'built', 'grew', 'raid', 'era', 'taken', 'early'] as const;
+export const HISTORY_KINDS = ['founded', 'built', 'grew', 'raid', 'era', 'taken', 'early', 'border'] as const;
 /** The most events a city keeps (own); the oldest after the founding are folded into one. */
 export const HISTORY_MAX = 40;
 /** The sizes worth a line (own). */
@@ -81,6 +83,7 @@ const VOICES: Record<Era, Record<string, readonly string[]>> = {
     heldAlone: ['Päivänä {d} {r} tulivat, mutta kaupunki torjui heidät.'],
     plundered: ['Päivänä {d} {r} ryöstivät aitat, ja kaupunki muisti sen pitkään.', 'Päivän {d} ryöstöstä puhuttiin vielä lastenlastenkin aikaan.'],
     taken: ['Päivänä {d} kaupunki valloitettiin, ja sen portit avautuivat uudelle valtakunnalle.'],
+    border: ['Päivänä {d} kaupungin maine kantoi kauemmas, ja sen rajat ulottuivat {n} päivämatkan päähän.', 'Kerrotaan, että päivänä {d} kaupungin lauluja laulettiin jo {n} päivämatkan päässä, ja sinne asti ulottui sen maa.'],
     early: ['Alkuvuosilta muistetaan {n} tapahtumaa, joiden yksityiskohdat ovat hämärtyneet.'],
   },
   iron: {
@@ -92,6 +95,7 @@ const VOICES: Record<Era, Record<string, readonly string[]>> = {
     heldAlone: ['Päivänä {d} {r} torjuttiin.'],
     plundered: ['Päivänä {d} {r} ryöstivät varastot. Menetykset on kirjattu.'],
     taken: ['Päivänä {d} kaupunki liitettiin valtakuntaan valloituksella.'],
+    border: ['Päivänä {d} kaupungin raja merkittiin {n} päivämatkan päähän.', 'Kirjattu päivälle {d}: kaupungin maa ulottuu nyt {n} päivämatkan päähän.'],
     early: ['Alkuvuosien {n} tapahtumaa on tiivistetty, koska vanhimmat kirjat ovat haalistuneet.'],
   },
 };
@@ -102,6 +106,8 @@ const ERA_OPENING: Record<Era, readonly string[]> = {
 const ERA_NOW: Record<Era, Segment> = { early: eraRef('early', 'varhaisaikaa'), iron: eraRef('iron', 'rauta-aikaa') };
 /** The songs count in words. */
 const IN_WORDS: Record<number, string> = { 3: 'kolme', 5: 'viisi', 8: 'kahdeksan' };
+/** Days of walking to the border, in the genitive both voices use. */
+const DAYS_AWAY: Record<number, string> = { 1: 'yhden', 2: 'kahden', 3: 'kolmen', 4: 'neljän', 5: 'viiden' };
 
 /** A unit's name as told mid-sentence: "Soturi Aino" → "soturi Aino". */
 const midName = (name: string) => name.replace(/^(Uudisasukas|Soturi|Falangi|Tiedustelija|Ratsumies|Miekkamies|Sotavaunut|Katapultti) /, (_, k: string) => `${k.toLowerCase()} `);
@@ -178,6 +184,9 @@ export function narrate(city: Pick<City, 'id' | 'name' | 'tile' | 'buildings' | 
         break;
       case 'early':
         say(fill(pick(v.early, seed, city.id, e), { n: String(e.count) }));
+        break;
+      case 'border':
+        say(fill(pick(v.border, seed, city.id, e), { d: String(e.day), n: DAYS_AWAY[e.rings] ?? String(e.rings) }));
         break;
     }
   });

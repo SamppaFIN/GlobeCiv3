@@ -16,7 +16,7 @@ export interface LevelState {
    * is (chains.ts settlementDone), one of the old rules as it stands.
    */
   settlements: number;
-  /** The home state's provinces held, of seven; one without land counts (STORY-016, STORY-058). */
+  /** The home state's provinces held, of seven: by a city, a border at the province level (STORY-093), or without land (STORY-016, STORY-058). */
   provinces: number;
 }
 
@@ -48,11 +48,11 @@ export const LEVEL_GOALS: readonly LevelGoal[] = [
     level: 3, name: 'Settlementit', text: 'Kolme valmista settlementtiä', reward: 60, need: 3, unit: 'valmiina',
     hint: 'Perusta kaupunkeja uudisasukkailla ja kasvata ne valmiiksi settlementeiksi: kaupunki saa perustan ja ruokaketjun heti, ja kolmas asukas tekee siitä valmiin. Kolme valmista avaa läänin.',
     count: s => s.settlements,
-    opens: { title: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos', text: 'Läänissä ohjaat kaupunkialueita: tutki, asuta tai ohita, ja lähetä retkikunta kauemmas.' },
+    opens: { title: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos', text: 'Läänissä ohjaat kaupunkialueita: tutki, asuta tai ohita, ja lähetä retkikunta kauemmas. Kaupunkien rajat kasvavat kulttuurista, ja työläiset yhdistävät hevoset, hiilen ja öljyn tiellä koko läänin hyödyksi.' },
   },
   {
     level: 2, name: 'Läänit', text: 'Pidä neljä kotivaltion lääniä', reward: 80, need: 4, unit: 'hallussa',
-    hint: 'Lääni on hallussa, kun siinä on kaupunkisi. Asuttaja ja retkikunnat vievät uudisasukkaat uusiin lääneihin.',
+    hint: 'Lääni on hallussa, kun siinä on kaupunkisi tai rajasi kattavat siitä kymmenen maaruutua. Asuttaja ja retkikunnat vievät uudisasukkaat uusiin lääneihin, ja temppelit, kirjastot ja areenat kasvattavat kulttuurilla rajoja.',
     count: s => s.provinces,
     opens: { title: 'Valtio avautui, zoomaa ulos', text: 'Valtiossa valitset linjan ja tavoiteläänin, ja valtion neuvonantaja hoitaa tieteen ja verot.' },
   },

@@ -22,7 +22,7 @@ describe('Tietokirja (STORY-104)', () => {
       ...ADVISOR_LEVELS.flatMap(l => ROLES[l].map(r => `advisor/${l}/${r}`)), ...ERAS.map(e => `era/${e}`),
     ];
     expect(codexKeys()).toEqual(['index', ...keys]);
-    expect(keys.length).toBe(28 + 8 + 15 + 11 + 7 + 15 + 2);
+    expect(keys.length).toBe(28 + 9 + 15 + 11 + 7 + 15 + 2);
     for (const key of codexKeys()) {
       const p = codexPage(key)!;
       expect(p.key, key).toBe(key);

@@ -26,7 +26,9 @@ import { projectionErrorPx } from './precision';
 import { MapState, withNeighbors } from '../game/mapping';
 import { paintMapped } from './fogMap';
 import { GameClock, type Speed } from '../game/clock';
-import { findPath, tilesInRings } from '../game/pathfinding';
+import { findPath, nearestTile, tilesInRings } from '../game/pathfinding';
+import { borderRings, cultureGain, heldByBorder, HOLD_BY_BORDER, provinceCover, tileOwner, type BorderSource } from '../game/culture';
+import { CONNECTED_SHIELD, connectedKinds, connectedShields, isStrategic, roadNetwork, strategicTiles, unconnected, type StrategicKind, type StrategicTile } from '../game/connection';
 import { FAIR_SITE, feedsCity, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
 import { createTileYields } from '../ui/tileYields';
@@ -62,7 +64,7 @@ import { createOnboarding } from '../ui/onboarding';
 import { goalCount, levelGoal, type LevelState } from '../game/goals';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
 import { directionName, unitStatus, Units, type Mode, type SettlerTask, type Unit, type UnitKind, type World } from '../game/units';
-import { bestJob, Improvements, IMPROVEMENT_NAMES } from '../game/improvements';
+import { bestJob, Improvements, IMPROVEMENT_NAMES, workDays, type Job } from '../game/improvements';
 import { defenseOf, holdChance, raidRoll, raidStart, Raids, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
@@ -739,16 +741,25 @@ const world: World = {
   // A city site is as good as the food, shields and trade within two rings (food counts twice);
   // one that cannot feed its first citizen is no site (STORY-065)
   siteScore: id => (feedsCity(id, (t, centre) => terrainYield(t, centre).food) ? tilesInRings(id, 2).reduce((sum, t) => sum + siteValue(t), 0) : 0),
-  nextJob: u => nextJob(u),
+  // A worker joins strategic resources first (STORY-093), then improves land as a settler does
+  nextJob: u => (u.kind === 'worker' && play ? workerJob(u) ?? nextJob(u) : nextJob(u)),
+  joining: u => (u.job?.kind === 'road' && joiningOf.has(u.id) ? RESOURCES[joiningOf.get(u.id)!].name : null),
   improve: (tile, kind) => {
     if (!play) return;
     play.improvements.add(tile, kind);
+    if (kind === 'road') roadVersion++;
     moment('improve', tile);
     discoveryCard.notice(`${IMPROVEMENT_NAMES[kind]} valmis · ${TERRAIN_RULES[terrainOf(tile)].name.toLowerCase()}`);
   },
 };
 
 function startPlay(startCity: number, saved?: SaveData) {
+  // The province level's joins are worked out anew for this game (STORY-093)
+  roadVersion++;
+  bordersCache = null;
+  joinsCache = null;
+  unreachable.clear();
+  joiningOf.clear();
   // A state with land: 10 of its 49 city areas or more centred on land (a sample, not a scan)
   const hasLand = (state: number) => Array.from({ length: 49 }, (_, k) => pointToTile(regions.centers[2][state * 49 + k])).filter(t => Number.isFinite(world.cost(t))).length >= 10;
   rivalStartStates = rivalStarts(game!.seed, Math.floor(startCity / 49), regions.neighbors, hasLand);
@@ -974,7 +985,9 @@ function activeBonuses(): ActiveBonuses {
 /** A city's yield with its level's advisor's bonus: the capital the city level's, the others the city area's. */
 function withBonus(y: CityYield, c: City, active: ActiveBonuses): CityYield {
   const b = yieldBonus(active, c.capital);
-  return { ...y, food: y.food + b.food, shield: y.shield + b.shield, trade: y.trade + b.trade, surplus: y.surplus + b.food };
+  // The strategic kinds joined by road in the city's province (STORY-093)
+  const joined = joinedShields(c);
+  return { ...y, food: y.food + b.food, shield: y.shield + b.shield + joined, trade: y.trade + b.trade, surplus: y.surplus + b.food };
 }
 
 /** The day an event goes into the chronicle: the day being played, in a frame of several. */
@@ -1083,9 +1096,18 @@ function cityDays() {
       yields = cityYields();
     }
     const size = c.size;
+    const rings = borderRings(c.size, c.culture ?? 0);
     const done = cityDay(c, yields[i], settleBonus(activeBonuses()));
     // The chains' day (STORY-088): today's meals, which the yield counted, then the goods and the site
     if (c.chain) chainDay(c, size);
+    // Culture gathers all game; the border it widens is the province level's, and told there (STORY-093)
+    c.culture = (c.culture ?? 0) + cultureGain(c);
+    const wider = borderRings(c.size, c.culture);
+    if (provinceStage() && wider > rings) {
+      record(c, { kind: 'border', day: today(), rings: wider });
+      discoveryCard.notice([cityRef(c.tile, c.name), ` laajensi rajojaan: ${wider} ruudun päähän`]);
+      moment('city', c.tile);
+    }
     // A full box at the size limit: said once (STORY-054)
     if (c.size >= sizeLimit(c) && c.food >= granary(c.size) && !atLimit.has(c.id)) {
       atLimit.add(c.id);
@@ -1107,7 +1129,7 @@ function cityDays() {
       record(c, { kind: 'built', day: today(), building: done });
     }
     // A unit is named, a building a building (STORY-102, STORY-103)
-    const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout') ? play!.units.spawn(done, c.tile, world, c.id) : null;
+    const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout' || done === 'worker') ? play!.units.spawn(done, c.tile, world, c.id) : null;
     discoveryCard.notice([cityRef(c.tile, c.name), ` rakensi${isWonder(done) ? ' ihmeen' : ''}: `, made ? unitRef(made.id, made.name) : buildRef(done)]);
     if (isResourceBuilding(done)) rewardOf(c, done);
   });
@@ -2413,7 +2435,8 @@ function cityView(c: City, y: CityYield): CityView {
     yields: [y.surplus, y.shield, y.trade],
     // A terrain building only where its terrain is (STORY-070)
     chain: chainView(c),
-    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind)) && !(isResourceBuilding(kind) && !resourceNear(c, kind)) && !shieldless(c, kind)).map(kind => {
+    // The worker is the province level's, and not shown below it (STORY-093)
+    builds: (Object.keys(BUILDS) as Build[]).filter(kind => !(kind === 'worker' && !provinceStage()) && !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && !(isTerrainBuilding(kind) && !terrainNear(c, kind)) && !(isResourceBuilding(kind) && !resourceNear(c, kind)) && !shieldless(c, kind)).map(kind => {
       const b = BUILDS[kind];
       const ready = daysToBuild({ ...c, build: kind }, y);
       const need = NEEDS[kind];
@@ -2471,7 +2494,7 @@ const shieldless = (c: City, kind: Build) => (c.chain ? isChainBuilding(kind) : 
 /** Builds a city may start: known, not built, and no wonder another city has. */
 const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !shieldless(c, kind) && !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
-  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()) && !(kind === 'settler' && cityStage()));
+  && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()) && !(kind === 'settler' && cityStage()) && !(kind === 'worker' && !provinceStage()));
 /** Units the cities build: once the city area is open; a new game's city level has none (STORY-089, Sami 2026-11-22). */
 const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
 const unitsOpen = () => !play || play.progress.openLevel < 4;
@@ -2479,6 +2502,146 @@ const unitsOpen = () => !play || play.progress.openLevel < 4;
 const cityStage = () => !!play && !classic && play.progress.openLevel === 4;
 /** The state level is open, where diplomacy, war and trade belong (STORY-017); always in the old start. */
 const stateStage = () => classic || (!!play && play.progress.openLevel <= 1);
+/** The province level is open, where culture borders, roads to resources and workers belong (STORY-093). */
+const provinceStage = () => !!play && play.progress.openLevel <= 2;
+
+// ─── The province level (STORY-093, PLAN-090) ─────
+// Culture widens the cities' borders (culture.ts), a border of ten land tiles holds a province,
+// and a strategic resource inside the border joined to a city by road serves its province
+// (connection.ts); workers build the roads. All of it is worked out from the cities and roads.
+
+/** Province of a tile. */
+const provinceOfTile = (t: number) => Math.floor(regions.tileTable()[t] / 7);
+/** Changes when a road is built or a game starts, for the joins below. */
+let roadVersion = 0;
+/** The player's border, worked out when a city's tile, size or rings change. */
+let bordersCache: { key: string; owned: Map<number, BorderSource>; tiles: number[]; held: number[] } | null = null;
+function bordersNow() {
+  const p = play!;
+  const key = p.cities.map(c => `${c.tile}:${c.size}:${borderRings(c.size, c.culture ?? 0)}`).join(',');
+  if (bordersCache?.key !== key) {
+    const owned = tileOwner(p.cities.map(c => ({ id: c.id, tile: c.tile, size: c.size, culture: c.culture ?? 0, owner: 0 })));
+    const cover = provinceCover(owned, 0, provinceOfTile, t => Number.isFinite(world.cost(t)));
+    bordersCache = { key, owned, tiles: [...owned.keys()], held: heldByBorder(cover) };
+  }
+  return bordersCache;
+}
+/** Land tiles of the border in a province. */
+const borderLandIn = (province: number) => {
+  let n = 0;
+  for (const t of bordersNow().owned.keys()) if (provinceOfTile(t) === province && Number.isFinite(world.cost(t))) n++;
+  return n;
+};
+/** Strategic resources inside the border, the road network and the kinds joined in each province. */
+let joinsCache: { key: string; network: Set<number>; kinds: Map<number, Set<StrategicKind>>; waiting: StrategicTile[] } | null = null;
+function joinsNow() {
+  const p = play!;
+  const borders = bordersNow();
+  const key = `${borders.key}|${roadVersion}|${kindMask()}|${mapState.count}`;
+  if (joinsCache?.key !== key) {
+    const network = roadNetwork(p.cities.map(c => c.tile), t => p.improvements.has(t, 'road'), neighbors);
+    const known = (t: number) => {
+      if (!mapState.isMapped(t)) return null;
+      terrainOf(t);
+      const k = kindAt(t);
+      return k && knownKind(k) ? k : null;
+    };
+    const resources = strategicTiles(borders.owned.keys(), known, provinceOfTile);
+    joinsCache = { key, network, kinds: connectedKinds(resources, network), waiting: unconnected(resources, network) };
+  }
+  return joinsCache;
+}
+/** Shields a city gets from the kinds joined in its province, at the province level. */
+const joinedShields = (c: City) => (provinceStage() ? connectedShields(joinsNow().kinds.get(provinceOfTile(c.tile)), c.buildings) : 0);
+
+/** Resources no road can reach by land; tried again when the border changes (STORY-093, as STORY-088's guard). */
+const unreachable = new Set<number>();
+let unreachableKey = '';
+/** The strategic resource each worker's road is for, by unit id; not saved, the status falls back to Kehittää. */
+const joiningOf = new Map<number, StrategicKind>();
+/** Land cost for a worker's road: a road goes over land only. */
+const landCost = (id: number) => world.cost(id);
+
+/**
+ * A worker's next job (STORY-093): a road from a strategic resource waiting in its province
+ * (then anywhere in the border) to the nearest tile of the road network, built from the network
+ * outwards; the nearest resource first, ties by tile. With none, it improves land as a settler.
+ */
+function workerJob(u: Unit): Job | null {
+  const p = play!;
+  const joins = joinsNow();
+  if (unreachableKey !== bordersNow().key) {
+    unreachable.clear();
+    unreachableKey = bordersNow().key;
+  }
+  const home = p.cities.find(c => c.id === u.home);
+  const province = provinceOfTile(home ? home.tile : u.tile);
+  const at = tileCenter(u.tile);
+  const busy = new Set(p.units.units.flatMap(o => (o !== u && o.job ? [o.job.tile] : [])));
+  const order = joins.waiting
+    .filter(r => !unreachable.has(r.tile))
+    .map(r => ({ r, own: r.province === province ? 0 : 1, far: tileCenter(r.tile).angleTo(at) }))
+    .sort((a, b) => a.own - b.own || a.far - b.far || a.r.tile - b.r.tile);
+  for (const { r } of order) {
+    const joint = nearestTile(r.tile, landCost, t => joins.network.has(t));
+    const path = joint === null ? null : findPath(r.tile, joint, landCost);
+    if (!path) {
+      unreachable.add(r.tile);
+      continue;
+    }
+    // The tiles from the resource to the joint, the joint itself already on the network
+    const line = [r.tile, ...path.slice(0, -1)];
+    const todo = [...line].reverse().find(t => !p.improvements.has(t, 'road') && !busy.has(t));
+    if (todo === undefined) continue;
+    joiningOf.set(u.id, r.kind);
+    return { tile: todo, kind: 'road', days: workDays('road', terrainOf(todo)) };
+  }
+  joiningOf.delete(u.id);
+  return null;
+}
+
+/** A strategic resource tile's join, for its hex card. */
+function joinLine(tile: number, kind: StrategicKind): string {
+  if (!bordersNow().owned.has(tile)) return 'rajojen ulkopuolella: raja ei vielä ulotu tänne';
+  if (joinsNow().network.has(tile)) return `yhdistetty tiellä: läänin kaupungit +${CONNECTED_SHIELD[kind]} tuotantoa`;
+  return unreachable.has(tile) ? 'ei yhdistetty: maata pitkin ei pääse kaupunkiin' : 'ei yhdistetty: työläinen rakentaa tien';
+}
+
+/** The province's rows at the province level (STORY-093): culture, joined kinds and workers. */
+function provinceRows(province: number): { label: string; value: string }[] {
+  const p = play!;
+  const cities = p.cities.filter(c => provinceOfTile(c.tile) === province);
+  const joins = joinsNow();
+  const joined = [...(joins.kinds.get(province) ?? [])].map(k => `${RESOURCES[k].name} +${CONNECTED_SHIELD[k]}`);
+  const waiting = joins.waiting.filter(r => r.province === province).length;
+  const workers = p.units.units.filter(u => u.kind === 'worker' && provinceOfTile(u.tile) === province).length;
+  return [
+    ...(cities.length ? [{ label: 'Kulttuuri', value: `${cities.reduce((s, c) => s + (c.culture ?? 0), 0)} · +${cities.reduce((s, c) => s + cultureGain(c), 0)} päivässä` }] : []),
+    { label: 'Yhdistetyt', value: joined.length ? `${joined.join(', ')} tuotantoa joka kaupunkiin` : waiting ? 'ei vielä: resurssi odottaa tietä' : 'ei strategisia resursseja rajojen sisällä' },
+    ...(waiting && joined.length ? [{ label: 'Odottaa tietä', value: `${waiting} resurssia` }] : []),
+    ...(workers ? [{ label: 'Työläiset', value: String(workers) }] : []),
+  ];
+}
+
+/** Each province's city that builds its worker: one with a resource waiting and no worker yet (own). */
+function workerBuilders(): Set<number> {
+  const p = play!;
+  const out = new Set<number>();
+  if (!provinceStage()) return out;
+  const waiting = new Set(joinsNow().waiting.filter(r => !unreachable.has(r.tile)).map(r => r.province));
+  const homeProvince = (u: Unit) => {
+    const home = p.cities.find(c => c.id === u.home);
+    return provinceOfTile(home ? home.tile : u.tile);
+  };
+  const served = new Set(p.units.units.filter(u => u.kind === 'worker').map(homeProvince));
+  for (const c of p.cities) {
+    const prov = provinceOfTile(c.tile);
+    if (!waiting.has(prov) || served.has(prov)) continue;
+    served.add(prov);
+    out.add(c.id);
+  }
+  return out;
+}
 /** A resource building needs a known tile of its kind in the city's area (STORY-073). */
 const resourceNear = (c: City, b: ResourceBuilding) => tilesInRings(c.tile, cityRings(c.size)).some(t => ground.resourceOf!(t) === RESOURCE_BUILDINGS[b].kind);
 /** A terrain building needs its terrain within the city's two rings. */
@@ -2509,6 +2672,8 @@ function advisorDay() {
   if (p.stateAdvisor === 'war') warDay();
   const yields = cityYields();
   if (p.stateAdvisor !== 'none') stateAdvisorDay(p.stateAdvisor, yields);
+  // The cities that build their province's worker (STORY-093)
+  const builders = workerBuilders();
   p.cities.forEach((c, i) => {
     const soldiers = soldiersIn(c.tile).length;
     const available = startable(c);
@@ -2522,7 +2687,7 @@ function advisorDay() {
     });
     if (advice && c.focus !== advice.focus) c.focus = advice.focus;
     const border = tilesInRings(c.tile, 3).some(t => Math.floor(world.cityOf(t) / 7) !== home);
-    const ordered = provinceBuild(p.provinceAdvisor, { soldiers, border, available, soldier: bestSoldier(), walls: hasWalls(c) });
+    const ordered = provinceBuild(p.provinceAdvisor, { soldiers, border, available, soldier: bestSoldier(), walls: hasWalls(c), worker: builders.has(c.id) });
     // The state's campaign goes first (STORY-064), then the province's builds
     const war = p.stateAdvisor === 'war' ? warBuild(c, available) : null;
     const build = war ?? ordered ?? advice?.build ?? null;
@@ -3536,7 +3701,8 @@ const homeState = () => Math.floor((game?.startCity ?? 0) / 49);
 /** Provinces held, states conquered and states open, from the cities (conquest.ts). */
 function conquestNow(): Conquest {
   const table = regions.tileTable();
-  return conquest(play ? play.cities.map(c => table[c.tile]) : [], homeState(), regions.neighbors, provinceHasLand);
+  // At the province level a border holds a province too (STORY-093)
+  return conquest(play ? play.cities.map(c => table[c.tile]) : [], homeState(), regions.neighbors, provinceHasLand, play && provinceStage() ? bordersNow().held : []);
 }
 
 /** Whether a province has land, found once (STORY-058: a province without land counts as held). */
@@ -3888,7 +4054,11 @@ function regionView(ref: RegionRef): TileView {
     rows.push({ label: 'Tila', value: status + (p.targetState === ref.id ? ' · kohdevaltio' : '') });
     rows.push({ label: 'Läänit', value: `${heldIn(won, ref.id)} / 7 hallussa` });
   } else if (ref.level === 1) {
-    rows.push({ label: 'Tila', value: !provinceHasLand(ref.id) ? 'ei maata, lasketaan hallussa olevaksi' : won.held.has(ref.id) ? 'hallussa: kaupunki läänissä' : 'ei hallussa' });
+    // A city holds a province, and at the province level a border too (STORY-093)
+    const byCity = p.cities.some(c => provinceOfTile(c.tile) === ref.id);
+    const land = provinceStage() ? borderLandIn(ref.id) : 0;
+    rows.push({ label: 'Tila', value: !provinceHasLand(ref.id) ? 'ei maata, lasketaan hallussa olevaksi' : byCity ? 'hallussa: kaupunki läänissä' : won.held.has(ref.id) ? `hallussa: rajasi kattavat ${land} maaruutua` : land ? `ei hallussa: rajasi kattavat ${land} / ${HOLD_BY_BORDER} maaruutua` : 'ei hallussa' });
+    if (provinceStage()) provinceRows(ref.id).forEach(r => rows.push(r));
   } else {
     rows.push({ label: 'Painotus', value: AREA_PLAN_NAMES[p.units.areaPlans.get(ref.id) ?? 'explore'] });
   }
@@ -3957,6 +4127,8 @@ function tileView(id: number): TileView {
     { label: 'Tuottaa', value: `ruokaa ${y.food} · tuotantoa ${y.shield} · kauppaa ${y.trade} päivässä` },
     ...(kind ? [{ label: 'Erikoisresurssi', value: `${RESOURCES[kind].name} (${plus(RESOURCES[kind])})` }]
       : found ? [{ label: 'Erikoisresurssi', value: `tuntematon: tutkimus ${studyName(found)} paljastaa sen ja sen tuoton` }] : []),
+    // A strategic resource at the province level: joined by road, waiting, or outside the border (STORY-093)
+    ...(kind && isStrategic(kind) && provinceStage() ? [{ label: 'Yhteys', value: joinLine(id, kind) }] : []),
     { label: 'Parannukset', value: city ? 'kaupungin keskus: kastelu ja tie' : done.length ? done.join(', ') : 'ei' },
     ...(bonus ? [{ label: 'Löytö', value: plus(bonus) }] : []),
     ...(tribe ? [{ label: 'Paimentolaiset', value: tribeLine(tribe) }] : []),
@@ -4661,6 +4833,8 @@ function updatePlay(dt: number) {
     improvements: play.improvements.entries(),
     bandits: play.raids.band?.bandits ?? [],
     areas: play.cities.map(c => ({ centre: c.tile, rings: cityRings(c.size) })),
+    // The border, at the province level of the view once the province is open (STORY-093)
+    territory: viewLevel === 2 && provinceStage() ? bordersNow().tiles : [],
     spacing: tileSpacing(),
   }, camera.position);
   updateLevels();
@@ -4923,6 +5097,31 @@ frameStartPlanet();
   /** The city level's distance for a city: the camera there sees it rise. */
   cityLevelDist: () => cityViewDist(),
   /** The rivals: start states, cities and units (STORY-068). */
+  /** The province level (STORY-093): the border, the provinces it holds, the joins, the workers and the cities' culture. */
+  province: () => {
+    if (!play) return null;
+    const joins = joinsNow();
+    return {
+      open: provinceStage(), owned: bordersNow().tiles.length, byBorder: bordersNow().held,
+      joined: [...joins.kinds].map(([province, kinds]) => ({ province, kinds: [...kinds] })),
+      waiting: joins.waiting.map(r => ({ ...r })), unreachable: [...unreachable],
+      workers: play.units.units.filter(u => u.kind === 'worker').map(u => ({ name: u.name, tile: u.tile, home: u.home, job: u.job && { ...u.job }, joining: joiningOf.get(u.id) ?? null })),
+      cities: play.cities.map(c => ({ tile: c.tile, size: c.size, culture: c.culture ?? 0, gain: cultureGain(c), rings: borderRings(c.size, c.culture ?? 0), shields: joinedShields(c), province: provinceOfTile(c.tile) })),
+      builders: [...workerBuilders()],
+      territoryEdges: unitLayer.territoryEdges,
+    };
+  },
+  setCulture: (city: number, culture: number) => { if (play) play.cities[city].culture = culture; },
+  addRoad: (tile: number) => { if (play) { play.improvements.add(tile, 'road'); roadVersion++; } },
+  /** Tiles with a strategic resource, known or not, within rings of a city, nearest first (STORY-093). */
+  strategicAround: (city: number, rings: number) => {
+    if (!play) return [];
+    return tilesInRings(play.cities[city].tile, rings).flatMap(t => {
+      terrainOf(t);
+      const k = kindAt(t);
+      return k && isStrategic(k) ? [{ tile: t, kind: k }] : [];
+    });
+  },
   /** The opponents shown on the map and in play (STORY-094): none before the state level. */
   opponentsShown: () => ({ natives: visibleNatives().length, camps: visibleTribes().length, rivals: visibleRivalCities().length }),
   rivals: () => (play ? play.rivals.map((r, k) => ({ id: r.id, name: r.name, start: rivalStartStates[k], cities: r.cities.map(c => ({ name: c.name, tile: c.tile, size: c.size, build: c.build })), units: r.units.map(u => u.kind) })) : []),

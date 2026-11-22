@@ -120,6 +120,7 @@ describe('saved game (STORY-036)', () => {
     expect(broken(s => { s.cities[0].history = [{ kind: 'prophecy', day: 1 }]; })).toBeNull();
     expect(broken(s => { s.cities[0].history = [{ kind: 'built', day: 1, building: 'dragon' }]; })).toBeNull();
     expect(broken(s => { s.cities[0].history = [{ kind: 'grew', day: -1, size: 3 }]; })).toBeNull();
+    expect(broken(s => { s.cities[0].history = [{ kind: 'border', day: 1, rings: 6 }]; })).toBeNull();
     expect(broken(s => { s.cities[0].history = [{ kind: 'raid', day: 1, held: true, defender: { id: 1, name: 'x'.repeat(41) }, nomads: false }]; })).toBeNull();
     expect(broken(s => { s.cities[0].history = Array.from({ length: 41 }, () => ({ kind: 'grew', day: 1, size: 3 })); })).toBeNull();
     expect(broken(s => { s.research.kinds = ['unicorns']; })).toBeNull();
@@ -165,6 +166,31 @@ describe('saved game (STORY-036)', () => {
     expect(validateSave(mid, LIMITS)).toEqual(mid);
   });
 
+  it('a worker comes back with its road, and goes on as before (STORY-093)', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    const worker = units.spawn('worker', START_TILE, world, 0);
+    worker.job = { tile: START_TILE + 1, kind: 'road', days: 2, left: 2 };
+    const { data } = playedSave();
+    const withWorker: any = JSON.parse(JSON.stringify({ ...data, units: units.save() }));
+    const back = validateSave(withWorker, LIMITS)!;
+    expect(back).toEqual(withWorker);
+    const again = new Units(START_TILE, world, back.units);
+    expect(again.units.find(u => u.kind === 'worker')).toMatchObject({ name: 'Työläinen 1', task: 'improve', home: 0, job: { kind: 'road', left: 2 } });
+  });
+
+  it('a city\'s culture comes back, and a save from before has none, so its border starts from the size (STORY-093)', () => {
+    const { data } = playedSave();
+    expect(validateSave(data, LIMITS)!.cities[0].culture).toBeUndefined();
+    const grown: any = JSON.parse(JSON.stringify(data));
+    grown.cities[0].culture = 37;
+    expect(validateSave(grown, LIMITS)).toEqual(grown);
+    for (const bad of [-1, 1.5, '37']) {
+      grown.cities[0].culture = bad;
+      expect(validateSave(grown, LIMITS)).toBeNull();
+    }
+  });
+
   it('a city\'s chronicle comes back as it was, rebuilt field by field, and a save from before has none (STORY-106)', () => {
     const { data } = playedSave();
     expect(validateSave(data, LIMITS)!.cities[0].history).toBeUndefined();
@@ -177,6 +203,7 @@ describe('saved game (STORY-036)', () => {
       { kind: 'era', day: 80, era: 'iron' },
       { kind: 'taken', day: 81, from: null },
       { kind: 'early', until: 20, count: 3 },
+      { kind: 'border', day: 90, rings: 3 },
     ];
     expect(validateSave(told, LIMITS)).toEqual(told);
     // Extra fields stay behind

@@ -31,7 +31,7 @@ const rivalCss = (k: number) => `rgb(${oklchToSrgb(...(RIVALS[k].color as unknow
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'rival0' | 'rival1' | 'rival2' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'worker' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'rival0' | 'rival1' | 'rival2' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -153,6 +153,12 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
     if (kind === 'scout') {
       g.beginPath(); g.moveTo(92, 26); g.lineTo(84, 116); g.stroke();
     }
+    if (kind === 'worker') {
+      // A spade over the shoulder (STORY-093): the handle, and the blade at the foot
+      g.beginPath(); g.moveTo(100, 18); g.lineTo(86, 100); g.stroke();
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.moveTo(76, 98); g.lineTo(96, 102); g.lineTo(92, 122); g.lineTo(74, 118); g.closePath(); g.fill();
+    }
     if (kind === 'phalanx') {
       // A long spear and a big round shield
       g.beginPath(); g.moveTo(100, 2); g.lineTo(90, 116); g.stroke();
@@ -208,6 +214,8 @@ export interface UnitView {
   bandits: readonly Bandit[];
   /** Cities' areas: the centre tile and the rings around it (STORY-039). */
   areas: readonly { centre: number; rings: number }[];
+  /** The player's border at the province level, its tiles (STORY-093); empty elsewhere. */
+  territory?: readonly number[];
   /** Distance between tile centres in world units, for sizes. */
   spacing: number;
 }
@@ -228,6 +236,9 @@ export class UnitLayer {
   private lastRoads = '';
   private readonly borders = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(ACCENT_LIGHT), depthTest: false, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
   private lastBorders = '';
+  /** The border's outline at the province level (STORY-093): wider, as its tiles are small on the screen. */
+  private readonly territory = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: new THREE.Color(ACCENT), depthTest: false, transparent: true, opacity: 0.85, side: THREE.DoubleSide }));
+  private lastTerritory: readonly number[] | null = null;
   private readonly ring: THREE.Sprite;
   private readonly flag: THREE.Sprite;
   private readonly paths = new THREE.Group();
@@ -239,19 +250,20 @@ export class UnitLayer {
   constructor(radius: number) {
     this.radius = radius;
     this.textures = {
-      scout: figureTexture('scout'), settler: figureTexture('settler'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
+      scout: figureTexture('scout'), settler: figureTexture('settler'), worker: figureTexture('worker'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
       horseman: figureTexture('horseman'), swordsman: figureTexture('swordsman'), chariot: figureTexture('chariot'), catapult: figureTexture('catapult'),
       city: figureTexture('city'), native: figureTexture('native'), camp: figureTexture('camp'), rival0: figureTexture('rival0'), rival1: figureTexture('rival1'), rival2: figureTexture('rival2'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),
     };
     this.roads.renderOrder = 6;
     this.borders.renderOrder = 5;
+    this.territory.renderOrder = 5;
     this.ring = sprite(this.textures.ring, 10);
     this.ring.center.set(0.5, 0.5);
     this.flag = sprite(this.textures.flag, 11);
     this.site = new THREE.LineLoop(new THREE.BufferGeometry(), this.dashed);
     this.site.renderOrder = 9;
-    this.group.add(this.borders, this.roads, this.paths, this.site, this.ring, this.flag);
+    this.group.add(this.borders, this.territory, this.roads, this.paths, this.site, this.ring, this.flag);
   }
 
   /** World position of a tile centre, lifted a little. */
@@ -363,6 +375,7 @@ export class UnitLayer {
    * corner is where three tiles meet, the normalised sum of their centres.
    */
   private updateBorders(view: UnitView): void {
+    this.updateTerritory(view);
     const key = JSON.stringify([view.areas, view.spacing.toPrecision(3)]);
     if (key === this.lastBorders) return;
     this.lastBorders = key;
@@ -370,28 +383,50 @@ export class UnitLayer {
     this.borders.geometry = new THREE.BufferGeometry();
     if (!view.areas.length) return;
     const origin = this.at(view.areas[0].centre);
-    const half = view.spacing * 0.025;
     const pts: number[] = [];
-    const corner = (a: number, b: number, c: number) =>
-      tileCenter(a).add(tileCenter(b)).add(tileCenter(c)).normalize().multiplyScalar(this.radius * (1 + 2e-6)).sub(origin);
-    for (const area of view.areas) {
-      const inside = new Set(tilesInRings(area.centre, area.rings));
-      for (const t of inside) {
-        const around = neighbors(t);
-        for (const n of around) {
-          if (inside.has(n)) continue;
-          const common = neighbors(n).filter(m => around.includes(m));
-          if (common.length !== 2) continue;
-          const p = corner(t, n, common[0]);
-          const q = corner(t, n, common[1]);
-          const side = q.clone().sub(p).cross(p.clone().add(origin)).normalize().multiplyScalar(half);
-          const [p1, p2, q1, q2] = [p.clone().add(side), p.clone().sub(side), q.clone().add(side), q.clone().sub(side)];
-          for (const v of [p1, p2, q1, q1, p2, q2]) pts.push(v.x, v.y, v.z);
-        }
-      }
-    }
+    for (const area of view.areas) this.outline(new Set(tilesInRings(area.centre, area.rings)), view.spacing * 0.025, origin, pts);
     this.borders.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
     this.borders.position.copy(origin);
+  }
+
+  /** Edges drawn of the border's outline, for the tests. */
+  get territoryEdges(): number {
+    return (this.territory.geometry.getAttribute('position')?.count ?? 0) / 6;
+  }
+
+  /** The outline of the player's border (STORY-093), built again only when it changes. */
+  private updateTerritory(view: UnitView): void {
+    // The game gives the same list until the border changes
+    const tiles = view.territory ?? [];
+    if (tiles === this.lastTerritory || (!tiles.length && !this.lastTerritory?.length)) return;
+    this.lastTerritory = tiles;
+    this.territory.geometry.dispose();
+    this.territory.geometry = new THREE.BufferGeometry();
+    if (!tiles.length) return;
+    const origin = this.at(tiles[0]);
+    const pts: number[] = [];
+    this.outline(new Set(tiles), view.spacing * 0.09, origin, pts);
+    this.territory.geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    this.territory.position.copy(origin);
+  }
+
+  /** Quads along the edges between a set's tiles and the tiles outside it, half wide each side. */
+  private outline(inside: ReadonlySet<number>, half: number, origin: THREE.Vector3, pts: number[]): void {
+    const corner = (a: number, b: number, c: number) =>
+      tileCenter(a).add(tileCenter(b)).add(tileCenter(c)).normalize().multiplyScalar(this.radius * (1 + 2e-6)).sub(origin);
+    for (const t of inside) {
+      const around = neighbors(t);
+      for (const n of around) {
+        if (inside.has(n)) continue;
+        const common = neighbors(n).filter(m => around.includes(m));
+        if (common.length !== 2) continue;
+        const p = corner(t, n, common[0]);
+        const q = corner(t, n, common[1]);
+        const side = q.clone().sub(p).cross(p.clone().add(origin)).normalize().multiplyScalar(half);
+        const [p1, p2, q1, q2] = [p.clone().add(side), p.clone().sub(side), q.clone().add(side), q.clone().sub(side)];
+        for (const v of [p1, p2, q1, q1, p2, q2]) pts.push(v.x, v.y, v.z);
+      }
+    }
   }
 
   /** Irrigation and mine marks at the lower right of their tiles, and the road ribbons. */

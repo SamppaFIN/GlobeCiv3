@@ -37,6 +37,7 @@ export const BUILD_PURPOSE: Record<Build, string> = {
   coinage: 'Kaupunki kasvaa rauhassa, ja kassa karttuu',
   phalanx: 'Puolustaa kaupunkia, kaksi kertaa soturia vahvempi',
   scout: 'Kartoittaa maata, ja ensimmäinen avaa seuraavan kartan',
+  worker: 'Rakentaa tien strategiselle resurssille, jotta se hyödyttää koko lääniä, ja kehittää maata',
   fishery: 'Rannalle: +1 ruoka päivässä',
   sawmill: 'Metsän reunaan: +1 tuotanto päivässä',
   quarry: 'Kukkulalle tai vuorelle: +1 tuotanto päivässä, vuorella +2',
@@ -83,7 +84,7 @@ export type KnownKind = (k: ResourceKind) => boolean;
 const ALL_KNOWN: KnownKind = () => true;
 
 /** The unit kinds a city builds. */
-export const UNIT_KINDS: readonly Build[] = ['warrior', 'phalanx', 'scout', 'settler', ...ATTACKERS];
+export const UNIT_KINDS: readonly Build[] = ['warrior', 'phalanx', 'scout', 'settler', 'worker', ...ATTACKERS];
 
 const ROLE_NAMES: Record<AdvisorLevel, Record<string, { name: string; does: string }>> = { town: TOWN_ADVISORS, city: CITY_ADVISORS, province: PROVINCE_ADVISORS, state: STATE_ADVISORS, planet: PLANET_ADVISORS };
 

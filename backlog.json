@@ -176,7 +176,8 @@
         "STORY-075",
         "STORY-076",
         "STORY-077",
-        "STORY-078"
+        "STORY-078",
+        "STORY-110"
       ],
       "progress": 100
     },
@@ -2463,13 +2464,13 @@
         "STORY-092"
       ],
       "acceptance_criteria": [
-        "Kulttuuri laajentaa rajoja Freeciv civ2civ3:n lukujen mukaan, ja strateginen resurssi tuottaa vasta yhdistettynä.",
+        "Rajan pohja (radius_sq 5 + koko) ja kulttuuripisteet tulevat Freeciv civ2civ3:sta, kulttuuri laajentaa rajoja omalla säännöllä, ja strateginen resurssi antaa läänitason tuoton vasta yhdistettynä.",
         "Läänin tavoite näkyy, ja nousu avaa valtiotason."
       ],
-      "status": "todo",
+      "status": "in_progress",
       "progress": 0,
       "linked": {
-        "plan": null,
+        "plan": "PLAN-090",
         "implementation": null,
         "testing": null
       }
@@ -2826,6 +2827,28 @@
         "plan": "PLAN-087",
         "implementation": "TICKET-IMPL-087",
         "testing": "TICKET-TEST-087"
+      }
+    },
+    {
+      "id": "STORY-110",
+      "epic": "EPIC-006",
+      "title": "Maaherran hovi ja hukka",
+      "type": "story",
+      "narrative": "Pelaajana haluan kaukaisten kaupunkien menettävän osan tuotostaan ja maaherran hovin hillitsevän sitä, jotta valtakunnan laajuudella on hinta ja läänin hallinnolla merkitys.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-093"
+      ],
+      "acceptance_criteria": [
+        "Kauppa ja tuotanto hukkuvat Freeciv civ2civ3:n luvuin hallitusmuodon ja lähimmän hallintokeskuksen etäisyyden mukaan, ja hukka näkyy kaupunkikortissa.",
+        "Maaherran hovi (civ2civ3:n kakkospalatsi) on hallintokeskus ja puolittaa hukan kaupungissaan, ja autopilotti siemenellä 42 mittaa vaikutuksen nousuaikoihin ennen ja jälkeen."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
       }
     }
   ]

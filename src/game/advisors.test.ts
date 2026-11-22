@@ -68,6 +68,18 @@ describe('province advisors', () => {
     expect(provinceBuild('defend', { ...n, soldiers: 1, walls: true })).toBeNull();
     expect(provinceBuild('settle', n)).toBeNull();
   });
+
+  it('every province advisor has the province\'s worker built, the Vartija after its soldier (STORY-093)', () => {
+    const n = { soldiers: 0, border: false, available: ['walls', 'worker'] as Build[], soldier: 'warrior' as const, walls: false, worker: true };
+    expect(provinceBuild('settle', n)).toBe('worker');
+    expect(provinceBuild('explore', n)).toBe('worker');
+    expect(provinceBuild('defend', n)).toBe('warrior');
+    expect(provinceBuild('defend', { ...n, soldiers: 1 })).toBe('worker');
+    expect(provinceBuild('none', n)).toBeNull();
+    // Not the one to build it, or not open yet
+    expect(provinceBuild('settle', { ...n, worker: false })).toBeNull();
+    expect(provinceBuild('settle', { ...n, available: ['walls'] })).toBeNull();
+  });
 });
 
 describe('state advisors', () => {

@@ -231,6 +231,31 @@ describe('improving settlers (STORY-033)', () => {
   });
 });
 
+describe('workers (STORY-093)', () => {
+  it('build the road the world gives them, say what it joins, and never choose city sites', () => {
+    const world = makeWorld();
+    const units = new Units(START_TILE, world);
+    const target = tilesInRings(START_TILE, 1).find(id => id !== START_TILE && Number.isFinite(world.cost(id)))!;
+    const jobs = [{ tile: target, kind: 'road' as const, days: 2 }];
+    const done: [number, string][] = [];
+    world.nextJob = u => (u.kind === 'worker' ? jobs.shift() ?? null : null);
+    world.improve = (tile, kind) => { done.push([tile, kind]); };
+    world.joining = u => (u.job?.kind === 'road' ? 'Hiili' : null);
+    const worker = units.spawn('worker', START_TILE, world, 0);
+    expect([worker.kind, worker.task, worker.home, worker.name]).toEqual(['worker', 'improve', 0, 'Työläinen 1']);
+    const statuses: string[] = [];
+    for (let d = 0; d < 6; d++) {
+      units.day(world);
+      statuses.push(unitStatus(units, worker, world, () => 'Ruohomaa'));
+    }
+    expect(done).toEqual([[target, 'road']]);
+    expect(statuses).toContain('Yhdistää: Hiili · tie, 1 pv');
+    expect(statuses.at(-1)).toBe('Kehittää · ei työtä lähellä');
+    // The settler of the start is still the one choosing sites
+    expect(units.settler?.kind).toBe('settler');
+  });
+});
+
 describe('sea travel (STORY-059)', () => {
   it('a scout sent to an island reaches it only when units can go by sea', () => {
     const base = makeWorld();

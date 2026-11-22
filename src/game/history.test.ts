@@ -81,6 +81,14 @@ describe('the chronicle (STORY-106)', () => {
     expect(text(narrate(town([{ kind: 'taken', day: 200, from: null }]), 1, 'iron', 'hills'))).toContain('itsenäinen kaupunkivaltio');
   });
 
+  it('tells a border reaching further in its era\'s voice, in days of walking (STORY-093)', () => {
+    const early = text(narrate(town([founded, { kind: 'border', day: 140, rings: 3 }]), 1, 'early', 'forest'));
+    expect(early).toMatch(/päivänä 140|Päivänä 140/);
+    expect(early).toContain('kolmen päivämatkan');
+    const iron = text(narrate(town([founded, { kind: 'era', day: 100, era: 'iron' }, { kind: 'border', day: 150, rings: 4 }]), 1, 'iron', 'forest'));
+    expect(iron).toContain('neljän päivämatkan');
+  });
+
   it('tells an old city what is known: its name, land and buildings', () => {
     const story = narrate(town(), 42, 'early', 'hills');
     expect(text(story)).toContain('Aamuranta on vanha kaupunki kukkuloilla. Kaupungin alkuvuosista ei ole kirjoitettu.');

@@ -32,4 +32,13 @@ describe('conquest', () => {
     const more = conquest([...[0, 1, 2, 3, 4, 5, 6], ...[7, 8, 9, 10, 11, 12, 13]].map(areaIn), 0, neighbors);
     expect([...more.open].sort()).toEqual([0, 1, 2, 3]);
   });
+
+  it('a border holds a province without a city, and conquers with the cities (STORY-093)', () => {
+    const c = conquest([0, 1, 2, 3, 4, 5].map(areaIn), 0, neighbors, () => true, [6]);
+    expect(heldIn(c, 0)).toBe(7);
+    expect([...c.conquered]).toEqual([0]);
+    // A border in another state holds its province, and that state is counted
+    const far = conquest([areaIn(0)], 0, neighbors, () => true, [9]);
+    expect([...far.held].sort((a, b) => a - b)).toEqual([0, 9]);
+  });
 });
