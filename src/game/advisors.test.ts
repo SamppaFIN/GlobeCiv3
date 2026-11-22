@@ -1,6 +1,6 @@
 import type { ChainBuilding } from './chains';
 import { describe, expect, it } from 'vitest';
-import { chainAdvice, planetTarget, townAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
+import { chainAdvice, planetTarget, provinceGoalTarget, townAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
 
@@ -148,5 +148,15 @@ describe('governors in a city of chains (STORY-088)', () => {
     expect(chainAdvice('feed', open)).toBe('fishery');
     // No shore: the fishery is not open
     expect(chainAdvice('feed', b => open(b) && b !== 'fishery')).toBe('mill');
+  });
+});
+
+describe('the province level\'s goal (STORY-111)', () => {
+  it('is the nearest province of the home state not held, with land, that the scouts can reach', () => {
+    const p = (province: number, distance: number, o: Partial<{ held: boolean; land: boolean; reachable: boolean }> = {}) => ({ province, distance, held: false, land: true, reachable: true, ...o });
+    expect(provinceGoalTarget([p(7, 0.3), p(8, 0.1, { held: true }), p(9, 0.2), p(10, 0.05, { land: false }), p(11, 0.01, { reachable: false })])).toBe(9);
+    // Ties by id, and none left
+    expect(provinceGoalTarget([p(13, 0.2), p(12, 0.2)])).toBe(12);
+    expect(provinceGoalTarget([p(7, 0.1, { held: true }), p(8, 0.1, { land: false })])).toBeNull();
   });
 });

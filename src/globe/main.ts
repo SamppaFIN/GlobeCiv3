@@ -50,7 +50,7 @@ import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_MOVE_DAYS
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, MAX_ARMY, isAttacker, warRoll, War, type WarEvent, type WarWorld } from '../game/war';
 import { ADVISOR_LEVELS, ADVISOR_LEVEL_NAMES, chainAdvice, PLANET_ADVISORS, PLANET_ADVISOR_LIST, planetTarget, townAdvice, TOWN_ADVISORS, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
 import { ERA_NAMES, personOf, type Era, type Person } from '../game/persons';
-import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
+import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, provinceGoalTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { createCodexCard } from '../ui/codexCard';
 import { createScienceTree, type NodeState, type TreeView } from '../ui/scienceTree';
@@ -1207,10 +1207,12 @@ function noteSiteOffer(fresh: number[]) {
   const site = play.units.settler ? play.units.currentSite() : null;
   const taken = [...play.cities.map(c => c.tile), ...play.offered, ...(site !== null ? [site] : []), ...(play.pendingSite !== null ? [play.pendingSite] : [])];
   const isLand = (id: number) => Number.isFinite(world.cost(id));
-  // Good sites come from freshly mapped land; after a quiet while, or in the conquest, the best known one
+  // Good sites come from freshly mapped land; after a quiet while, or in the conquest, the best known one.
+  // The province advisors aim at the province level's goal too: the nearest province not held (STORY-111)
   const quiet = play.cities.length > 0 && clock.day - play.lastOfferDay >= QUIET_DAYS;
+  const aiming = play.progress.meter === 'conquest' || (play.progress.meter === 'state' && play.provinceAdvisor !== 'none');
   const tile = fresh.find(id => play!.units.isOpen(id, world) && goodSite(id, world.siteScore, isLand, taken) && !nearForeign(id))
-    ?? (play.progress.meter === 'conquest' ? provinceSite(taken) : quiet ? nearbySite(taken) : undefined);
+    ?? (aiming ? provinceSite(taken) ?? (quiet ? nearbySite(taken) : undefined) : quiet ? nearbySite(taken) : undefined);
   if (tile === undefined) return;
   play.offered.push(tile);
   play.lastOfferDay = clock.day;
@@ -1320,10 +1322,17 @@ function foundSite(tile: number): boolean {
   return true;
 }
 
+/** The realm aims at a province of an open state (STORY-111). */
+function targetAt(province: number): boolean {
+  if (!play || province < 0 || province >= regions.centers[1].length || !conquestNow().open.has(Math.floor(province / 7))) return false;
+  play.targetProvince = province;
+  return true;
+}
+
 /** Every act of the player and the advisors goes through here and into the log (STORY-086, rule 7). */
 function dispatch(cmd: Command, by: Actor): boolean {
   if (!play) return false;
-  const done = execute(cmd, { cities: play.cities, research: play.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt });
+  const done = execute(cmd, { cities: play.cities, research: play.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt });
   if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
   return done;
 }
@@ -2660,10 +2669,70 @@ const bestSite = (area: number) => {
   return Math.max(0, ...tilesOfArea.get(area)!.filter(t => mapState.isMapped(t) && Number.isFinite(world.cost(t))).map(world.siteScore));
 };
 
+/** Provinces the scouts could not reach by land, tried again when the holdings change (STORY-111). */
+const goalUnreachable = new Set<number>();
+let goalHeldKey = '';
+
+/**
+ * The province level's target while it is the top level (STORY-111, Sami 2026-11-22): the
+ * nearest province of the home state not held, kept until it is held; null when the player
+ * runs the province or none is left.
+ */
+function provinceGoal(): number | null {
+  const p = play!;
+  if (p.progress.openLevel !== 2 || p.provinceAdvisor === 'none') return null;
+  const won = conquestNow();
+  const key = [...won.held].sort((a, b) => a - b).join(',');
+  if (key !== goalHeldKey) {
+    goalUnreachable.clear();
+    goalHeldKey = key;
+  }
+  const home = homeState();
+  const keep = p.targetProvince >= 0 && Math.floor(p.targetProvince / 7) === home && !won.held.has(p.targetProvince) && !goalUnreachable.has(p.targetProvince);
+  if (keep) return p.targetProvince;
+  const from = tileCenter(p.units.camp);
+  const target = provinceGoalTarget(Array.from({ length: 7 }, (_, k) => home * 7 + k).map(province => ({
+    province, held: won.held.has(province), land: provinceHasLand(province), reachable: !goalUnreachable.has(province), distance: from.angleTo(regions.centers[1][province]),
+  })));
+  if (target === null || !dispatch({ kind: 'target', province: target }, 'province')) return null;
+  advise(`tavoitelääni: ${nameOf(1, target).name}`, 'province');
+  return target;
+}
+
+/** The land tile of a province nearest its centre, for the scouts to set off to (STORY-111). */
+function goalLandTile(province: number): number | null {
+  const centre = regions.centers[1][province];
+  let best: number | null = null, near = Infinity;
+  for (let k = 0; k < 7; k++) {
+    const area = province * 7 + k;
+    if (!tilesOfArea.has(area)) tilesOfArea.set(area, cityTiles(regions, area));
+    for (const t of tilesOfArea.get(area)!) {
+      if (!Number.isFinite(world.cost(t))) continue;
+      const d = tileCenter(t).angleTo(centre);
+      if (d < near || (d === near && t < best!)) { near = d; best = t; }
+    }
+  }
+  return best;
+}
+
+/** Send the scouts to a province; a province they cannot reach by land is left out until the holdings change. */
+function sendToProvince(province: number): boolean {
+  const land = goalLandTile(province);
+  const path = land === null ? null : findPath(play!.units.camp, land, id => world.cost(id));
+  if (land === null || !path || !play!.units.sendTo(land, world)) {
+    goalUnreachable.add(province);
+    return false;
+  }
+  return true;
+}
+
 function advisorDay() {
   const p = play;
   if (!p) return;
   p.units.keepHome = p.provinceAdvisor === 'defend';
+  // The province level's goal (STORY-111): its advisors aim at the nearest province not held
+  const goal = provinceGoal();
+  p.units.keepAlso = p.provinceAdvisor === 'defend' && goal !== null ? new Set([...conquestNow().held, goal]) : new Set();
   if (p.planetAdvisor !== 'none') planetAdvisorDay();
   if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
   const home = p.units.homeProvince;
@@ -2708,18 +2777,22 @@ function advisorDay() {
   if (p.provinceAdvisor === 'settle') {
     const withCity = new Set(p.cities.map(c => world.cityOf(c.tile)));
     const chosen = settleAreas(homeAreas.map(area => ({ area, hasCity: withCity.has(area), share: areaShare(area), best: bestSite(area) })));
-    for (const area of homeAreas) {
-      const plan = chosen.includes(area) ? 'settle' : 'explore';
+    // The target province's best mapped area too, and the scouts go there while none is (STORY-111)
+    const goalAreas = goal === null ? [] : Array.from({ length: 7 }, (_, k) => goal * 7 + k);
+    const aimed = settleAreas(goalAreas.map(area => ({ area, hasCity: withCity.has(area), share: areaShare(area), best: bestSite(area) })), 1);
+    for (const area of [...homeAreas, ...goalAreas]) {
+      const plan = chosen.includes(area) || aimed.includes(area) ? 'settle' : 'explore';
       if ((p.units.areaPlans.get(area) ?? 'explore') === plan) continue;
       p.units.setAreaPlan(area, plan, world);
       if (plan === 'settle') advise(`${nameOf(2, area).name} asutettavaksi`, 'province');
     }
+    if (goal !== null && !aimed.length && p.units.flag === null && sendToProvince(goal)) advise(`tiedustelijat kohti tavoitelääniä: ${nameOf(1, goal).name}`, 'province');
   }
   if (p.provinceAdvisor === 'explore') {
     for (const area of homeAreas) if (p.units.areaPlans.get(area) === 'skip') p.units.setAreaPlan(area, 'explore', world);
     if (p.units.flag === null) {
-      // The home province first, then the home state
-      const areas = provinceShare(home) < UNLOCK_SHARE ? homeAreas : Array.from({ length: 49 }, (_, k) => Math.floor(home / 7) * 49 + k);
+      // The home province first, then the target province (STORY-111), then the home state
+      const areas = provinceShare(home) < UNLOCK_SHARE ? homeAreas : goal !== null && provinceShare(goal) < UNLOCK_SHARE ? Array.from({ length: 7 }, (_, k) => goal * 7 + k) : Array.from({ length: 49 }, (_, k) => Math.floor(home / 7) * 49 + k);
       const from = tileCenter(p.units.camp);
       const target = expeditionTarget(areas.map(area => ({ area, share: areaShare(area), distance: from.angleTo(regions.centers[2][area]) })), UNLOCK_SHARE);
       if (target !== null && p.units.sendTo(pointToTile(regions.centers[2][target]), world)) advise(`retkikunta kohti: ${nameOf(2, target).name}`, 'province');
@@ -5109,6 +5182,8 @@ frameStartPlanet();
       cities: play.cities.map(c => ({ tile: c.tile, size: c.size, culture: c.culture ?? 0, gain: cultureGain(c), rings: borderRings(c.size, c.culture ?? 0), shields: joinedShields(c), province: provinceOfTile(c.tile) })),
       builders: [...workerBuilders()],
       territoryEdges: unitLayer.territoryEdges,
+      // The province level's goal (STORY-111)
+      target: play.targetProvince, keepAlso: [...play.units.keepAlso], held: [...conquestNow().held], homeState: homeState(),
     };
   },
   setCulture: (city: number, culture: number) => { if (play) play.cities[city].culture = culture; },

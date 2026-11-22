@@ -32,10 +32,12 @@ export type Command =
   /** A level's advisor (STORY-096): one of its three, or 'none' for the player's own hand. */
   | { kind: 'advise'; level: AdvisorLevel; advisor: string }
   /** The city on the tile buys what it builds, out of the treasury (STORY-038, STORY-098). */
-  | { kind: 'buy'; city: number };
+  | { kind: 'buy'; city: number }
+  /** The realm aims at this province: the province level's goal (STORY-111). */
+  | { kind: 'target'; province: number };
 
 export type CommandKind = Command['kind'];
-export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy'];
+export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy', 'target'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
 export type Actor = 'player' | 'people' | 'town' | 'city' | 'province' | 'state' | 'planet';
@@ -60,6 +62,8 @@ export interface CommandWorld {
   advise(level: AdvisorLevel, advisor: string): boolean;
   /** Buy what the city on the tile builds; false when there is nothing to buy or too little gold. */
   buy(tile: number): boolean;
+  /** Aim at a province; false when it is no province to aim at (STORY-111). */
+  target(province: number): boolean;
 }
 
 /**
@@ -75,6 +79,8 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       return w.advise(cmd.level, cmd.advisor);
     case 'buy':
       return w.buy(cmd.city);
+    case 'target':
+      return w.target(cmd.province);
     case 'settle':
       return w.settle(cmd.tile);
     case 'build': {

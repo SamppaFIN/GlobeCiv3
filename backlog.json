@@ -251,7 +251,8 @@
         "STORY-091",
         "STORY-092",
         "STORY-093",
-        "STORY-094"
+        "STORY-094",
+        "STORY-111"
       ],
       "progress": 100
     },
@@ -2844,6 +2845,28 @@
         "Maaherran hovi (civ2civ3:n kakkospalatsi) on hallintokeskus ja puolittaa hukan kaupungissaan, ja autopilotti siemenellä 42 mittaa vaikutuksen nousuaikoihin ennen ja jälkeen."
       ],
       "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-111",
+      "epic": "EPIC-011",
+      "title": "Läänin neuvonantajat tähtäävät läänitason tavoitteeseen",
+      "type": "story",
+      "narrative": "Pelaajana haluan läänin neuvonantajan vievän kansan uusiin kotivaltion lääneihin, jotta läänitaso nousee valtiotasolle neuvonantajien varassa eikä jää jumiin.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-093"
+      ],
+      "acceptance_criteria": [
+        "Kun lääni on ylin auki oleva taso, Asuttaja, Tutkimusmatkailija ja Vartija tähtäävät kukin omalla tavallaan lähimpään kotivaltion lääniin, jota ei vielä pidetä, ja tavoitteen valinta on komento.",
+        "Autopilotti siemenellä 42 nousee valtiotasolle kaikilla kolmella läänin neuvonantajalla."
+      ],
+      "status": "in_progress",
       "progress": 0,
       "linked": {
         "plan": null,
