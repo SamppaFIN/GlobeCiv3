@@ -1,0 +1,101 @@
+{
+  "id": "TICKET-TEST-090",
+  "story": "STORY-093",
+  "implementation_ticket": "TICKET-IMPL-090",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU), Chromium headless (Playwright 1.64) SwiftShaderilla, vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "Vitest: culture.test (6), connection.test (4) sekä uudet tapaukset advisors-, units-, save-, history-, conquest- ja codex-testeissä",
+        "expected": "Kriteeri 1: civ2civ3-luvut (History, radius_sq 5 + koko, rajan vahvuus), oma kulttuuriaskel, raja kattaa aina työalueen, katkennut tie, rajan ulkopuolinen ja tuntematon laji eivät yhdistä, tuotto resurssiruudun läänille ja laji kerran, työläisen tallennus ja kertomuksen rivi",
+        "result": "Läpi: 51 tiedostoa ja 314 testiä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "province.e2e (siemen 42): uusi peli nousee läänitasolle; koon 1 pääkaupungin raja on kaksi rengasta (19 ruutua); tunnettu hiili rajojen sisällä odottaa tietä, läänin neuvonantaja rakennuttaa työläisen, ja työläinen rakentaa tien, jonka jälkeen pääkaupunki saa +2 tuotantoa ja ruudun kortti, läänin kortti ja ilmoitus kertovat yhteydestä",
+        "expected": "Kriteeri 1: strateginen resurssi antaa läänitason tuoton vasta yhdistettynä",
+        "result": "Läpi (1,2 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "province.e2e: kulttuuri päivää vaille seuraavaa rengasta; päivän jälkeen raja on rengasta laajempi, ilmoitus 'laajensi rajojaan' ja kertomuksen rivi; laaja raja pitää naapurilääniä hallussa ('hallussa: rajasi kattavat N maaruutua')",
+        "expected": "Kriteeri 1: kulttuuri laajentaa rajoja; lääni hallussa rajoilla (Samin valinta)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "province.e2e: läänin tavoite näkyy mittarissa (N / 4 hallussa), ulkoraja piirtyy läänitasolla (reunoja > 0) eikä kaupunkialueella (0), ja nousu avaa valtiotason; konsolissa ei virheitä",
+        "expected": "Kriteeri 2",
+        "result": "Läpi; kuvakaappaus province-border.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset täydellä resoluutiolla (deviceScaleFactor 1, 1280×800): läänitaso koon 6 ja 300 kulttuurin pääkaupungilla, ja kaupunkitaso",
+        "expected": "Ulkoraja näkyy läänitasolla selvänä viivana eikä kaupunkitasolla",
+        "result": "Läänitasolla viiden renkaan raja näkyy aksenttivärisenä heksaviivana, kaupunkitasolla näkyy vain työalueen raja. Planeettatasoa ei kuvattu erikseen: ulkoraja piirretään vain läänitasolla, ja province.e2e varmistaa sen puuttumisen muualla",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Laskennan kustannus selaimessa: 11 kaupunkia koossa 8 ja suurella kulttuurilla (642 rajaruutua, 14 rajoilla hallittua lääniä); province()-kutsu välimuistista ja uudelleenlaskennan jälkeen",
+        "expected": "Pääsäikeen budjetti 8 ms (osio 8)",
+        "result": "Uudelleenlaskenta (rajat, tieverkko, resurssit ja työläisten rakentajat) mediaani 1,0 ms ja enintään 1,9 ms, välimuistista 0,1 ms. Uudelleenlaskenta tehdään vain, kun kaupungin koko tai rengas, tie, tunnettu laji tai kartoitus muuttuu, ei joka framessa. Mitattu paikallisessa Linux-kontissa (2 vCPU) headless Chromiumilla ja SwiftShaderilla performance.now()-ajoin; oikealla laitteella mittaamatta",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Autopilotti siemenellä 42 (Ruokkija, Kasvattaja ja läänissä Asuttaja tai Vartija, nopeus 4×), kaksi ajoa kummallakin ennen (main 500c94f) ja jälkeen",
+        "expected": "Pääkaupungin raja kasvaa kulttuurista ennen valtiotason avautumista",
+        "result": "Jälkeen: pääkaupungin raja kasvoi kulttuurista 9–23 päivää läänin avautumisen jälkeen kaikissa neljässä ajossa, hiili yhdistettiin kolmessa ajossa 8–54 päivässä, ja yhdessä ajossa lääni tuli hallintaan rajoilla ja nosti valtiotason (Vartija, päivä 366)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Autopilotti: läänin avautumisesta valtiotason avautumiseen ennen ja jälkeen",
+        "expected": "Nousu ei nopeudu yli neljänneksellä",
+        "result": "Ei pääteltävissä: ajojen hajonta on suurempi kuin vaikutus. Ennen: Asuttaja 155 päivää ja jumi (ei valtiotasoa päivään 906), Vartija 94 ja jumi (902). Jälkeen: Asuttaja 138 ja 278, Vartija jumi (909) ja 99. Läänin avautumispäivä vaihteli molemmissa 91–289. Kotivaltion valtausta (seitsemän lääniä) ei mitattu",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Löydös autopilotista (ennestään): läänin tavoite voi jäädä kolmeen kotivaltion lääniin",
+        "expected": "Nousu tapahtuu neuvonantajien varassa",
+        "result": "Mainilla kaksi neljästä ajosta ei noussut valtiotasolle, ja tällä haaralla yksi neljästä. Kaupunkeja syntyi 17–23, mutta ne jäivät samoihin lääneihin, ja useimmat jäivät kokoon 1. Ei tämän storyn aiheuttama; nostettu Samille",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Koko E2E-sarja paikallisesti (109 testiä, 1,8 h)",
+        "expected": "Ei regressiota",
+        "result": "106 läpi. advisors.e2e epäonnistuu samoin mainilla (paikallisen koneen hitaus: Rautatyö ehtii valmistua, CI:ssä vihreä), start.e2e:148 ja feel.e2e:57 ylittivät 30 s:n rajan raskaassa ajossa ja menivät läpi yksin (start 17–20 s, mainilla 16–18 s). buildings.e2e ja city.e2e laskivat rakennusvaihtoehdot, ja ne korjattiin piilottamalla työläinen ennen läänitasoa, testejä ei muutettu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: province.e2e province-border.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Läänitason raja ja kulttuuri tuntuvat omalta peliltään",
+        "checked": false
+      },
+      {
+        "item": "Työläinen ja yhdistetty resurssi ovat ymmärrettäviä läänin kortista",
+        "checked": false
+      },
+      {
+        "item": "Kulttuurin tahti (20 pistettä renkaan askeleeseen) tuntuu sopivalta",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

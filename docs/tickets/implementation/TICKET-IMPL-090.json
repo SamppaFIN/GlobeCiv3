@@ -1,0 +1,62 @@
+{
+  "id": "TICKET-IMPL-090",
+  "story": "STORY-093",
+  "plan": "PLAN-090",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/culture.ts (uusi)",
+    "src/game/connection.ts (uusi)",
+    "src/game/cities.ts",
+    "src/game/units.ts",
+    "src/game/advisors.ts",
+    "src/game/goals.ts",
+    "src/game/conquest.ts",
+    "src/game/save.ts",
+    "src/game/history.ts",
+    "src/game/codex.ts",
+    "src/globe/unitLayer.ts",
+    "src/globe/main.ts",
+    "src/game/culture.test.ts",
+    "src/game/connection.test.ts",
+    "src/game/advisors.test.ts",
+    "src/game/units.test.ts",
+    "src/game/save.test.ts",
+    "src/game/history.test.ts",
+    "src/game/conquest.test.ts",
+    "src/game/codex.test.ts",
+    "tests/e2e/province.e2e.ts",
+    "docs/design/tasot-ja-aikakaudet.md"
+  ],
+  "change_summary": "culture.ts: kulttuurin päivätuotto (civ2civ3 History), borderRings (radius_sq 5 + koko + kulttuuri/20, enintään 5 rengasta), ringsAround, tileOwner Freecivin vahvuudella (koko + 2)² / etäisyys² ja pienemmällä tunnisteella, provinceCover ja heldByBorder (10 maaruutua). connection.ts: strategiset lajit (hevoset, hiili, öljy), roadNetwork, strategicTiles, connectedKinds, unconnected ja connectedShields (talli 1, paja 2, öljylähde 3). Uusi yksikkö Työläinen (civ2civ3 Workers 20, ei asukasta) omalla hahmollaan; se rakentaa tien resurssista lähimpään tieverkon ruutuun verkosta ulospäin ja tekee muuten Kehitä-töitä; tavoittamaton resurssi merkitään, kunnes raja muuttuu. Läänin neuvonantajat rakennuttavat työläisen yhteen läänin kaupunkiin, kun rajojen sisällä odottaa resurssi (Vartija sotilaan jälkeen). main.ts: provinceStage, välimuistit bordersNow ja joinsNow (laskenta vain muutoksesta), joinedShields withBonusissa, kulttuuri kertyy päivittäin ja rajan kasvu kirjataan kertomukseen ja ilmoitukseen läänitasolla, conquest saa rajoilla hallitut läänit, läänin kortin rivit Tila, Kulttuuri, Yhdistetyt ja Työläiset, ruudun kortin rivi Yhteys, alueen ulkoraja unitLayerissa läänitasolla, työläinen lukittuna 'kun lääni avautuu' ja debug-koukut. goals.ts: läänin vihje ja avautumiskortti kertovat rajoista ja työläisistä. history.ts: tapahtuma border kahdella äänellä. save.ts: City.culture, yksikkölaji worker, rakennus worker ja tapahtuma border; SAVE_VERSION pysyy.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Build",
+      "UnitKind",
+      "BUILDS",
+      "provinceBuild",
+      "conquest",
+      "withBonus",
+      "cityDays",
+      "startable",
+      "regionView",
+      "tileView",
+      "unitStatus",
+      "Units.spawn",
+      "Units.day",
+      "HISTORY_KINDS",
+      "validateSave",
+      "UnitLayer.updateBorders"
+    ],
+    "call_sites_found": [
+      "Kaikki Record<Build>- ja Record<UnitKind>-taulut (tsc), codexin yksikkösivut, tallennuksen listat, unitLayerin hahmot"
+    ],
+    "call_sites_updated": [
+      "tsc ilman virheitä; provinceBuild ja conquest saavat uuden parametrin oletusarvolla, joten vanhat kutsut toimivat ennallaan"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "c022978",
+  "progress": 100,
+  "notes": "Kaikki uusi toimii vasta, kun lääni on auki (provinceStage), ja kulttuuri kertyy piilossa koko pelin ajan. Rajat ovat johdettua dataa eivätkä tallennu (sääntö 3), ja tileOwner ottaa myöhemmin kilpailijoiden kaupungit. Työläisen tie, joka kulkee resurssille, ei tallenna kohdettaan; latauksen jälkeen tila näyttää Kehittää, kunnes seuraava työ alkaa. Testimuutos sanottu ääneen: codex.test laskee yksikkölajeja, ja luku nousi 8:sta 9:ään, koska työläinen on uusi laji."
+}

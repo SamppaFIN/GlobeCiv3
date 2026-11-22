@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T10:11:21Z",
+    "generated_at": "2026-11-22T16:38:38Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "8292c4b",
+    "git_commit": "c022978",
     "git_branch": "main",
     "language": "fi"
   },
@@ -179,7 +179,7 @@
         "STORY-078",
         "STORY-110"
       ],
-      "progress": 100
+      "progress": 98
     },
     {
       "id": "EPIC-007",
@@ -253,7 +253,7 @@
         "STORY-093",
         "STORY-094"
       ],
-      "progress": 75
+      "progress": 100
     },
     {
       "id": "EPIC-012",
@@ -2467,12 +2467,12 @@
         "Rajan pohja (radius_sq 5 + koko) ja kulttuuripisteet tulevat Freeciv civ2civ3:sta, kulttuuri laajentaa rajoja omalla säännöllä, ja strateginen resurssi antaa läänitason tuoton vasta yhdistettynä.",
         "Läänin tavoite näkyy, ja nousu avaa valtiotason."
       ],
-      "status": "in_progress",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
         "plan": "PLAN-090",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-090",
+        "testing": "TICKET-TEST-090"
       }
     },
     {
