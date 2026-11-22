@@ -12,17 +12,9 @@
  * A term with a page (STORY-104) opens that page of the Tietokirja (codex.ts).
  */
 
-export type RefKind = 'city' | 'unit' | 'person' | 'building' | 'unittype' | 'advance' | 'resource' | 'good' | 'era';
-/** The kinds that are terms of the Tietokirja. */
-export type TermKind = Exclude<RefKind, 'city' | 'unit'>;
+import type { RefKind, Rich } from '../game/rich';
 
-export type Ref =
-  | { ref: 'city'; tile: number; name: string }
-  | { ref: 'unit'; id: number; name: string }
-  | { ref: TermKind; name: string; page?: string };
-
-export type Segment = string | Ref;
-export type Rich = readonly Segment[];
+export { city, plain, term, unit, type Ref, type RefKind, type Rich, type Segment, type TermKind } from '../game/rich';
 
 /** The kinds in words, for a link's accessible name. */
 const KIND_WORDS: Record<RefKind, string> = { city: 'kaupunki', unit: 'yksikkö', person: 'henkilö', building: 'rakennus', unittype: 'yksikkötyyppi', advance: 'keksintö', resource: 'resurssi', good: 'tavara', era: 'aikakausi' };
@@ -37,14 +29,6 @@ export interface RichLinks {
   /** Open a page of the Tietokirja (STORY-104). */
   page?(key: string): void;
 }
-
-/** The text without its colours: for the notice log, the tests and the tab title. */
-export const plain = (r: Rich | string): string => (typeof r === 'string' ? r : r.map(s => (typeof s === 'string' ? s : s.name)).join(''));
-
-/** Shorthands for writing texts. */
-export const city = (tile: number, name: string): Ref => ({ ref: 'city', tile, name });
-export const unit = (id: number, name: string): Ref => ({ ref: 'unit', id, name });
-export const term = (ref: TermKind, name: string, page?: string): Ref => (page ? { ref, name, page } : { ref, name });
 
 /**
  * Draw a text into an element, in place of what it held. With `links` a city is a button and a

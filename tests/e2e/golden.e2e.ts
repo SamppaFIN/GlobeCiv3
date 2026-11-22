@@ -1,12 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
-import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { playOf, sha, simOf } from '../golden/hash';
 
 /**
  * Golden runs (STORY-095): seed 42 under three sets of advisors, a day at a time with no
  * clock, the cards decided as an advisor would. The state on days 50, 100 and 200 must stay
  * the same byte for byte while the day's simulation moves out of the browser. GOLDEN_WRITE=1
- * writes tests/golden/seed42.json anew; every run leaves the states in test-results/golden.
+ * writes tests/golden/seed42.json anew; every run leaves the states in test-results/golden. The
+ * same games run in Node come to the same states (src/sim/run.test.ts).
  */
 const FILE = 'tests/golden/seed42.json';
 const DAYS = [50, 100, 200];
@@ -17,22 +18,8 @@ const COMBOS = {
 } as const;
 type Combo = (typeof COMBOS)[keyof typeof COMBOS];
 
-/** Per run and day: the whole state, the state without the notices (not saved), and a summary. */
-type Golden = Record<string, Record<string, { sha256: string; play: string; day: number; cities: number; open: number; gold: number; units: number }>>;
-
-/** JSON with every object's keys sorted, so the order fields are built in does not count. */
-function canonical(v: unknown): string {
-  if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
-  if (v && typeof v === 'object') return `{${Object.keys(v).sort().filter(k => (v as Record<string, unknown>)[k] !== undefined).map(k => `${JSON.stringify(k)}:${canonical((v as Record<string, unknown>)[k])}`).join(',')}}`;
-  return JSON.stringify(v);
-}
-const sha = (v: unknown) => createHash('sha256').update(canonical(v)).digest('hex');
-/** The game without the notices, which are not saved, and without the defaults a load fills in (a city's entertainers). */
-function playOf(s: Record<string, unknown>): unknown {
-  const strip = (v: unknown): unknown => (Array.isArray(v) ? v.map(strip) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k, x]) => !(k === 'entertainers' && x === 0)).map(([k, x]) => [k, strip(x)])) : v);
-  const { notices: _notices, ...rest } = s;
-  return strip(rest);
-}
+/** Per run and day: the whole state, the state without the notices (not saved), the game's own state (also without the view's selected unit, as a run in Node has it), and a summary. */
+type Golden = Record<string, Record<string, { sha256: string; play: string; sim: string; day: number; cities: number; open: number; gold: number; units: number }>>;
 
 const golden: Golden = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : {};
 const write = process.env.GOLDEN_WRITE === '1';
@@ -78,7 +65,7 @@ async function playUntil(page: Page, until: number, combo: Combo) {
         const role = roles[titleOf(dlg)];
         if (role && press(new RegExp(`^${role}`))) return true;
       }
-      for (const re of [/^Rakenna kaupunki/, /^Lähetä/, /^Osta soturi/, /^Rakenna soturi/, /^Luota/, /^Jatka$/, /^Myöhemmin/, /^Sulje$/]) if (press(re)) return true;
+      for (const re of [/^Rakenna kaupunki/, /^Lähetä/, /^Osta (soturi|falangi)/, /^Rakenna (soturi|falangi)/, /^Luota/, /^Kieltäydy/, /^Jatka$/, /^Myöhemmin/, /^Sulje$/]) if (press(re)) return true;
       return false;
     };
     let stuck = 0;
@@ -103,7 +90,7 @@ for (const [name, combo] of Object.entries(COMBOS)) {
       const s = await playUntil(page, day, combo);
       writeFileSync(`test-results/golden/${name}-${day}.json`, JSON.stringify(s, null, 1));
       const sum = s as { day: number; cities: unknown[]; progress: { openLevel: number }; gold: number; units: { units: unknown[] } };
-      got[day] = { sha256: sha(s), play: sha(playOf(s)), day: sum.day, cities: sum.cities.length, open: sum.progress.openLevel, gold: sum.gold, units: sum.units.units.length };
+      got[day] = { sha256: sha(s), play: sha(playOf(s)), sim: sha(simOf(s)), day: sum.day, cities: sum.cities.length, open: sum.progress.openLevel, gold: sum.gold, units: sum.units.units.length };
     }
     if (write) {
       const all: Golden = existsSync(FILE) ? JSON.parse(readFileSync(FILE, 'utf8')) : {};
