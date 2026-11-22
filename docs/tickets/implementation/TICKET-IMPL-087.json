@@ -1,0 +1,38 @@
+{
+  "id": "TICKET-IMPL-087",
+  "story": "STORY-109",
+  "plan": "PLAN-087",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/science.ts",
+    "src/game/science.test.ts",
+    "src/game/advanceLore.ts",
+    "src/ui/advanceArt.ts",
+    "src/ui/scienceTree.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/science-tree.e2e.ts"
+  ],
+  "change_summary": "science.ts: treeLayout(). advanceLore.ts: ADVANCE_LORE (selitys ja lausahdus jokaiselle 15 keksinnölle, lähteet kommentissa). advanceArt.ts: advanceSvg(a, size), omat piirrokset. scienceTree.ts: createScienceTree, solmut sarakkeissa, viivat SVG:nä, valitun keksinnön kuva, tila, selitys, pelivaikutus, faktat, lausahdus ja Tutki tätä -nappi; Esc sulkee, ja valinnan jälkeen kohdistus siirtyy solmuun. gameHud.ts: Tiedepuu-nappi (oma kuvake) ja tila science. main.ts: play.scienceOpen ja scienceSelected, scienceView ja updateScienceTree, valinta study-komentona. hud.css: tiedepuun tyylit ja puhelimella päivä paneelin kulmaan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "GameHudState.science",
+      "GameHudHandlers.openScience",
+      ".hud-day puhelimella"
+    ],
+    "call_sites_found": [
+      "createGameHud: main.ts",
+      "hud-day: play.e2e, save.e2e, city.e2e"
+    ],
+    "call_sites_updated": [
+      "main.ts antaa uudet kentät",
+      "Päivän teksti ja elementti pysyvät samoina; vain sijainti puhelimella muuttui"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "2cd3f84",
+  "progress": 100,
+  "notes": "Tallennus ei muuttunut: puun tila on vain näkymän tilaa. Lausahdukset ja niiden lähteet: Herodotos 5.58, Platon Faidros 275a, Hesiodos Työt ja päivät 25 ja 150–151, Plinius vanhempi 34.138, Thukydides 2.43, Suetonius Augustus 28.3, Aristoteles NE 1133b, Hammurabin lakikokoelman johdanto, Homeros Ilias 2.204, Vitruvius 1.3.2, Ptolemaios Maantiede 1.1, Ksenofon Ratsastustaidosta 11.6, Boethius 2.2 ja Proklos Eukleides-kommentaari 68."
+}

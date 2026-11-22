@@ -1,0 +1,83 @@
+{
+  "id": "TICKET-TEST-087",
+  "story": "STORY-109",
+  "implementation_ticket": "TICKET-IMPL-087",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42, 1280 × 800 ja puhelin 390 × 844",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "science.test: treeLayout sijoittaa jokaisen keksinnön kerran vaatimustensa jälkeen, rivit ilman aukkoja, sama joka kerta; ensimmäisen sarakkeen jatkottomat viimeisinä; jokaisella keksinnöllä selitys ja lausahdus",
+        "expected": "Kriteerit 1 ja 2 (logiikka)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "science-tree.e2e: uusi peli, Tiedepuu-nappi, 15 solmua kuvineen ja 11 viivaa; Aakkoset näkyy: Voi tutkia · 10 tiedettä, kuva, selitys, pelivaikutus ja Herodotoksen lausahdus",
+        "expected": "Kriteerit 1 ja 2",
+        "result": "Läpi; kuvakaappaus science-tree.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "science-tree.e2e: Kirjoitus kertoo vaatimuksen eikä tarjoa nappia, Ratsastus resurssin; pelivaikutuksen linkki avaa Tietokirjan puun päälle",
+        "expected": "Sivu kertoo, mitä puuttuu",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "science-tree.e2e: Tutki tätä valitsee Aakkoset pelaajan study-komentona, solmu kertoo Tutkitaan 0 %, ja tunnettu keksintö valaisee neljä viivaa; Esc sulkee",
+        "expected": "Kriteeri 3 (valinta)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "science-tree.e2e puhelimella 390 × 844: yläpaneelin ylärivi mahtuu omassa ohjauksessa, päivä näkyy, puun sarakkeet mahtuvat leveyteen, solmut vähintään 44 px eikä yksikään nimi leikkaudu",
+        "expected": "Kriteeri 3 (puhelin)",
+        "result": "Läpi; ylärivi mitattu myös 360 ja 412 px leveydellä (328/328, 358/358 ja 380/380 px); ilman siirtoa ylärivi oli 415 px",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvat 112 px:n arkilla kaikista 15 keksinnöstä",
+        "expected": "Jokainen tunnistettava ja Kartografi-värein",
+        "result": "Katsottu kuvakaappauksesta",
+        "outcome": "pass"
+      },
+      {
+        "steps": "play, onboarding, area-panel, save, city, list, codex, science, rich-links ja advisors",
+        "expected": "Ei regressiota",
+        "result": "Kaikki läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: science-tree.e2e science-tree.png, science-tree-phone.png ja science-tree-phone-tree.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tiedepuu löytyy ja on selkeä puhelimella",
+        "checked": false
+      },
+      {
+        "item": "Kuvat ja lausahdukset sopivat peliin",
+        "checked": false
+      },
+      {
+        "item": "Päivä paneelin kulmassa puhelimella käy",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}
