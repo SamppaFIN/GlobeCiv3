@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T17:45:36Z",
+    "generated_at": "2026-11-22T17:57:00Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "d10f007",
+    "git_commit": "e85b449",
     "git_branch": "main",
     "language": "fi"
   },
@@ -217,6 +217,7 @@
       "stories": [
         "STORY-086",
         "STORY-095",
+        "STORY-112",
         "STORY-087",
         "STORY-017",
         "STORY-014",
@@ -2510,14 +2511,14 @@
         "STORY-086"
       ],
       "acceptance_criteria": [
-        "Päivän laskenta (yksiköt, kaupungit, kilpailijat, diplomatia, rosvot ja neuvonantajat) on moduulissa, joka ei tuo Three.js:ää eikä DOMia, ja selainpeli kutsuu sitä. Pelin käytös ei muutu, ja selaintestit pysyvät vihreinä.",
+        "Päivän laskenta (yksiköt, kaupungit, kilpailijat, diplomatia, rosvot ja neuvonantajat) on moduulissa, joka ei tuo DOMia eikä Three.js:n renderöintiä (Vector3-matematiikka maailmamallin kautta sallitaan, ja importtitesti valvoo rajaa), ja selainpeli kutsuu sitä. Pelin käytös ei muutu, ja selaintestit pysyvät vihreinä.",
         "Haut, jotka nyt jaetaan framejen kesken (kaupunkivaltioiden haku), valmistuvat ennen päivää, jota ne koskevat, joten ruudunpäivitys ei vaikuta peliin.",
-        "Vitest ajaa siemenen 42 pelin Nodessa ja toistaa sen tallennuksen komentolokista identtiseen tilaan (STORY-086:n uusintakriteeri)."
+        "Vitest ajaa siemenen 42 pelin Nodessa neuvonantajien varassa ja toistaa sen tallennuksen komentolokista identtiseen tilaan (STORY-086:n uusintakriteeri neuvonantajien pelille; pelaajan teot STORY-112:ssa)."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "in_progress",
+      "progress": 5,
       "linked": {
-        "plan": null,
+        "plan": "PLAN-092",
         "implementation": null,
         "testing": null
       }
@@ -2872,6 +2873,28 @@
         "plan": "PLAN-091",
         "implementation": "TICKET-IMPL-091",
         "testing": "TICKET-TEST-091"
+      }
+    },
+    {
+      "id": "STORY-112",
+      "epic": "EPIC-009",
+      "title": "Pelaajan teot komennoiksi",
+      "type": "chore",
+      "narrative": "Samina haluan jokaisen pelaajan pelitilaa muuttavan teon komentona, jotta pelaajan peli toistuu tallennuksen komentolokista ja moninpeli voi myöhemmin synkronoida sen.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-095"
+      ],
+      "acceptance_criteria": [
+        "Jokainen pelaajan pelitilaa muuttava teko (yksikön moodi ja tehtävä, lippu, kaupungin painotus, vero ja ylellisyys, vallankumous, alueen painotus, retkikunta, valtion linja, tavoitevaltio ja -lääni, diplomatia ja kauppa, korttien valinnat ja kaupunkipaikan valinta tai ohitus) on komento, ja lista on tarkistettu koodista haulla. Ladattu komento tarkistetaan ennen käyttöä (tietoturvasääntö 5).",
+        "Vitest ajaa siemenen 42 pelin, jossa pelaaja tekee teot itse, ja toistaa sen tallennuksen komentolokista identtiseen tilaan."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
       }
     }
   ]

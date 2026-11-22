@@ -1,0 +1,73 @@
+{
+  "id": "PLAN-092",
+  "story": "STORY-095",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Lähtötilanne: src/globe/main.ts on 5 321 riviä, ja päivän laskenta on sen sisällä funktioina, jotka käyttävät moduulin globaaleja (play, world, clock, regions, mapState ja välimuistit) ja kutsuvat käyttöliittymää suoraan (discoveryCard.notice 49 kohdassa, advise 25 ja moment 24). Päivän putki on updatePlayssa: units.day, foundAt, cityDays, chronicleEraDay, rivalsDay, diplomacyDay, rivalWarDay, raidDay ja advisorDay. Kaupunkivaltioiden haku (scanNatives) tehdään 3 ms:n paloissa framea kohden, joten sen valmistumispäivä riippuu ruudunpäivityksestä. Tästä syystä autopilotin tulokset hajoavat (TICKET-TEST-090: läänin avautuminen 91–289 päivää samalla siemenellä), eikä uusintaa voi ajaa.\n\nRatkaisu: uusi kansio src/sim, jossa on pelin tila ja päivän laskenta ilman DOMia ja renderöintiä. Se tehdään vaiheittain niin, että peli toimii ja E2E-sarja on vihreä jokaisen vaiheen jälkeen (strangler-malli), ja jokainen vaihe mergetään erikseen.\n\n1. TILA. Play jaetaan kahtia: GameState (tallennettava ja simuloitava: yksiköt, kaupungit, parannukset, rosvot, sota, kilpailijat, tutkimus, verot, hallitus, edistyminen, neuvonantajat ja niiden lokit, komentoloki, tavoitteet, tarjoukset) ja UiState (avoimet kortit, valinnat, lipputyökalu, hud ja paneelit). save.ts tallentaa vain GameStaten, joten tallennusmuoto ei muutu (sääntö 8; latautumistesti varmistaa).\n2. MAAILMA. src/sim/world.ts rakentaa World-sovittimen (kulku, kaupunkialue, paikkapisteet, maasto, resurssit, kartoitus) siemenestä ja regions-, hexTiles-, terrainTypes- ja mapState-moduuleista. Ne käyttävät Three.js:n Vector3-matematiikkaa, mutta eivät renderöijää eivätkä DOMia, ja ne toimivat jo Nodessa (Vitest). Kriteerin 1 sanamuoto 'ei tuo Three.js:ää' tarkennetaan muotoon 'ei tuo DOMia eikä Three.js:n renderöintiä (sceneä, renderöijää, materiaaleja); Vector3-matematiikka sallitaan'. Vaihtoehto olisi oma vektorimatematiikka koko maailmamallille, mikä on iso riski tarkkuudelle ja suorituskyvylle (STORY-006).\n3. TAPAHTUMAT. src/sim/events.ts: simulaatio ei kutsu käyttöliittymää vaan lähettää tapahtumia (ilmoitus rikkaana tekstinä, neuvonantajan loki, hetki ruudulla, kortti: kaupunkipaikka, rosvot, nousu, sopimus ja valloitus). Selain piirtää ne, ja Node-ajuri kerää ne mittareiksi. Kortti, joka pysäyttää pelin, on simulaation tila (odottava päätös), ei käyttöliittymän: päivät eivät etene, kun päätös odottaa.\n4. PÄIVÄ. Päivän järjestelmät siirretään omiin moduuleihinsa src/simiin samassa järjestyksessä kuin nyt: kaupungit, ketjut ja kulttuuri; yksiköt ja perustaminen; kertomus; kilpailijat; diplomatia; kilpailijoiden sota; rosvot ja paimentolaiset; neuvonantajat (kaupunki, kaupunkialue, lääni, valtio ja planeetta) ja sota. simulateDay(state, world, events) ajaa putken. Kello ja nopeus jäävät selaimelle: se laskee, montako päivää frame vie, ja kutsuu simulateDayta. Funktioiden sisältö siirtyy sellaisenaan (kirurgisesti), ja vain globaalien tilalle tulevat parametrit.\n5. HAKU ENNEN PÄIVÄÄ (kriteeri 2). scanNatives lasketaan kokonaan synkronisesti silloin, kun sen tulosta tarvitaan ensimmäisen kerran (valtio tulee mukaan), eikä framejen kesken 3 ms:n budjetilla. Haun tulos tehdään funktioksi (siemen, valtio): nyt se suodattaa pois paikat, jotka ovat haun valmistumishetkellä olemassa olevien kaupunkien lähellä (ours), joten elävä ja ladattu peli voivat saada eri kaupunkivaltiot. Suodatus siirtyy käyttöhetkeen. Myös kilpailijan pääkaupungin perustaminen, joka nyt tapahtuu haun lopussa, siirtyy päivän alkuun. Kesto mitataan (koodaussääntö 6), ja pitkä haku tehdään latausruudun aikana, ei Web Workerissa, jotta Node-ajuri ja selain ajavat saman koodin.\n6. PELAAJAN TEOT KOMENNOIKSI omaan storyynsä STORY-112 (Utun katselmointi). Pelaajan suorat muutokset (setMode, setTask, lippu, setFocus, vero ja ylellisyys, vallankumous, alueen painotus, retkikunta, valtion linja, tavoitevaltio ja -lääni, diplomatia ja kauppa, korttien valinnat ja setSite) ovat noin 15 komentoa ja suurin palautumisen riski. STORY-095:n uusinta todennetaan neuvonantajien pelillä, jossa kaikki teot ovat jo komentoja, ja STORY-112 tuo pelaajan uusinnan. STORY-112 aloittaa listan grepillä (play.x = ja mutaattorit), jotta lista on kattava.\n7. NODE-AJURI JA UUSINTA (kriteeri 3). src/sim/run.ts: newGame(seed), step(days) ja apply(command). Vitest ajaa siemenen 42 neuvonantajien varassa (kaikilla tasoilla) N päivää, ottaa tallennuksen ja komentolokin, ajaa lokin uudelleen alusta ja vertaa tilaa (identtinen JSON, savedAt pois). Odottavat päätökset ovat simulaation tilassa taulukkona pelaajan mukaan (moninpeliä varten, nyt yksi pelaaja), ja ajuri tekee ne neuvonantajan tavalla ja kirjaa päätöksen komentona. Uusinta käyttää päivänumeroita eikä kellon tikkejä: selaimen kello voi pudottaa päiviä hitaalla framella (MAX_DAYS_PER_FRAME), mutta se ei kuulu simulaatioon. simulateDay(state, world, events, opts) jättää opts-parametrin STORY-014:n tiivistetylle laskennalle. Ajuri on STORY-085:n autopilotin pohja.\n8. KÄYTÖS EI MUUTU (Utun katselmointi). Ennen vaihetta A lisätään selaimeen testikoukku, joka ajaa päiviä synkronisesti ilman kelloa ja päättää kortit neuvonantajan tavalla, ja kaupunkivaltioiden haku ajetaan siinä heti loppuun. Sillä tallennetaan vanhasta koodista kultainen tila (tallennuksen JSON ilman savedAt-kenttää) päivinä 50, 100 ja 200 siemenellä 42 kolmella neuvonantajayhdistelmällä. Jokaisen vaiheen jälkeen sama ajo verrataan tavuun, ja koko E2E-sarja ja yksikkötestit ajetaan. Vaiheessa E odotettu ero (haun tulos ei enää riipu valmistumishetkestä) kirjataan ja kultainen tila päivitetään kerran. Kun Node-ajuri on valmis, se ajaa saman vertailun. Math.random on vain tähtitaivaalla ja Date.now vain savedAt-kentässä, ja testi nimeää ne poikkeuksiksi.\n9. KÄYTTÖLIITTYMÄN TILA SIMULAATIOSSA. updatePlay asettaa joka frame ennen päiviä yksiköiden focuksen, noCityn ja openStatesin; ne siirtyvät päivän alkuun simulateDayn sisään. advisorLevel ja ownHand riippuvat kameran tasosta (viewLevel), joten simulaation polut käyttävät edistymistä (openLevel). Moduulin globaalit (nativesOf, tribeLand, rivalScanned, unrest, atLimit, unreachable, goalUnreachable, joiningOf, bordersCache, joinsCache, tickDay, scouting) luokitellaan: tallennettava tila, johdettu tieto (lasketaan uudelleen latauksen jälkeen) tai ilmoitusten deduplikointi (ei vaikuta tilaan). tickDay ja scouting korvataan parametreilla. Raja valvotaan testillä, joka lukee src/simin importit: ei DOMia (document, window), ei Three.js:n renderöintiä (WebGLRenderer, Scene, materiaalit, three/examples); Vector3-matematiikka hexTilesin, regionsin ja pathfindingin kautta sallitaan.\n\nVaiheet ja mergeäminen: 0 kultainen tila, A tila ja maailma, E haku ennen päivää (ennen muita, koska vertailu vaatii sen), B tapahtumat, C päivän järjestelmät kaupungeista rosvoihin, D neuvonantajat ja sota, G Node-ajuri ja uusinta. Jokainen on oma committinsa ja ajonsa. Arvio: 4–6 istuntoa. Riski: main.ts:n funktiot kietoutuvat käyttöliittymään odotettua enemmän. Se nähdään vaiheessa C, ja jos siirto vaatii logiikan muutosta, se nostetaan esiin ennen toteutusta.\n\nKATSELMOINTI: Anu ei ollut käytettävissä (Fable 5.2 vaatii käyttökrediittejä), joten Utu katselmoi suunnitelman 2026-11-22. Tuomio oli 'kyllä muutoksin', ja muutokset ovat tässä versiossa: haku ennen muita vaiheita ja sen tulos funktioksi, kultainen tila ennen refaktorointia, käyttöliittymän tila pois simulaatiosta ja globaalien luokittelu, pelaajan komennot omaan storyynsä STORY-112, odottavat päätökset taulukkona pelaajan mukaan ja importtien rajatesti.\n\nHYVÄKSYNTÄ 2026-11-22 (Sami): suunnitelma hyväksyttiin, Vector3-matematiikka sallitaan simulaatiossa (kriteeri 1 tarkentui), ja pelaajan teot komennoiksi tulevat omaan storyynsä STORY-112, joka on MVP:ssä. Kortin päätöksen tekee Node-ajuri neuvonantajan tavalla, ja päätös kirjataan komentona.",
+  "alternatives_considered": [
+    {
+      "name": "Koko simulaatio kerralla uuteen moduuliin",
+      "pros": "Yksi iso muutos, ei välitiloja",
+      "cons": "Tuhansien rivien siirto ilman välivaiheiden testejä; virhettä on vaikea paikantaa",
+      "rejected_because": "Vaiheittain jokainen välitila on pelattava ja testattu"
+    },
+    {
+      "name": "Ajetaan main.ts Nodessa jsdomin ja tyhjän WebGL:n varassa",
+      "pros": "Ei refaktorointia",
+      "cons": "Ruudunpäivitys ja framejen kesken jaettu haku pysyvät simulaatiossa, eikä palvelin voi käyttää sitä",
+      "rejected_because": "Ei täytä kriteerejä 1 ja 2"
+    },
+    {
+      "name": "Oma vektorimatematiikka Three.js:n tilalle",
+      "pros": "Kriteeri 1 kirjaimellisesti",
+      "cons": "Koskee koko maailmamallia ja tarkkuutta (STORY-006), eikä tuo Nodessa mitään lisää",
+      "rejected_because": "Vector3 toimii Nodessa jo nyt; tarkennus kysytään Samilta"
+    }
+  ],
+  "files_to_change": [
+    "src/sim/state.ts, world.ts, events.ts, day.ts, run.ts (uudet)",
+    "src/sim/cities.ts, units.ts, chronicle.ts, rivals.ts, diplomacy.ts, war.ts, raids.ts, natives.ts, advisors.ts, province.ts (uudet, siirretty main.ts:stä)",
+    "src/globe/main.ts (ohenee käyttöliittymäksi ja kelloksi)",
+    "src/game/commands.ts ja src/game/save.ts (uudet komennot)",
+    "src/sim/*.test.ts ja src/game/commands.test.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "0: testikoukku, joka ajaa päiviä synkronisesti, ja kultainen tila vanhasta koodista (siemen 42, kolme neuvonantajayhdistelmää, päivät 50, 100 ja 200)",
+      "verify": "Kaksi peräkkäistä ajoa antavat saman tilan"
+    },
+    {
+      "step": 2,
+      "action": "A: GameState ja UiState erilleen, World-sovitin src/sim/world.ts:ään, globaalien luokittelu",
+      "verify": "Kultainen tila tavuun, save.test (tallennus ennallaan) ja koko E2E-sarja"
+    },
+    {
+      "step": 3,
+      "action": "E: kaupunkivaltioiden haku valmis ennen päivää, tulos funktiona (siemen, valtio), kilpailijan perustaminen päivään; mitataan kesto",
+      "verify": "Kirjattu kertaluonteinen ero kultaiseen tilaan; elävä ja ladattu peli saavat samat kaupunkivaltiot; city-states.e2e ja opponents.e2e"
+    },
+    {
+      "step": 4,
+      "action": "B: tapahtumat ja odottavat päätökset simulaation tilaksi (taulukko pelaajan mukaan)",
+      "verify": "Kultainen tila; E2E: kortit, ilmoitukset ja hetket kuten ennen"
+    },
+    {
+      "step": 5,
+      "action": "C: kaupungit, yksiköt, kertomus, kilpailijat, diplomatia, kilpailijoiden sota sekä rosvot ja paimentolaiset src/simiin; focus, noCity ja openStates päivän alkuun",
+      "verify": "Kultainen tila ja koko E2E-sarja"
+    },
+    {
+      "step": 6,
+      "action": "D: neuvonantajat ja sota src/simiin; advisorLevel ja ownHand edistymisestä",
+      "verify": "Kultainen tila, koko E2E-sarja ja neuvonantajatestit"
+    },
+    {
+      "step": 7,
+      "action": "G: Node-ajuri, uusinta neuvonantajien pelillä ja importtien rajatesti",
+      "verify": "Vitest: siemen 42 Nodessa, uusinta lokista identtiseen tilaan, ja Noden tila vastaa selaimen kultaista tilaa"
+    }
+  ],
+  "status": "approved"
+}
