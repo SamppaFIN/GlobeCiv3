@@ -42,10 +42,42 @@ describe('the simulation in Node (STORY-095)', () => {
     const save = validateSave(JSON.parse(JSON.stringify({ ...played, savedAt: 0, speed: 1, paused: false, selected: 0 })), { tiles: TILE_COUNT, cityAreas: 362 * 49 });
     expect(save).not.toBeNull();
     const again = Run.replay(42, save!.commands!);
-    expect(again.until(200)).toBe(true);
+    expect(again.until(200), again.error ?? '').toBe(true);
     const replayed = again.snapshot();
     // The same commands again, the advisors' too, and the same game
     expect(replayed.commands).toEqual(played.commands);
     expect(sha(simOf(replayed))).toBe(sha(simOf(played)));
+  }, 600_000);
+
+  it('plays again the player\'s own commands given between the days, not only the answers to cards (Utu\'s review)', () => {
+    const run = Run.play(42, COMBOS.build);
+    expect(run.until(40)).toBe(true);
+    // The player changes the city area's advisor and the capital's build on day 40, and the state's advisor on day 90
+    expect(run.give({ kind: 'advise', level: 'city', advisor: 'growth' })).toBe(true);
+    const capital = run.state.cities[0];
+    expect(run.give({ kind: 'build', city: capital.tile, build: 'warrior' })).toBe(true);
+    expect(run.until(90)).toBe(true);
+    expect(run.give({ kind: 'advise', level: 'state', advisor: 'science' })).toBe(true);
+    expect(run.until(150)).toBe(true);
+    const played = run.snapshot();
+    expect(played.commands.filter(e => e.by === 'player' && e.day === 40).map(e => e.cmd.kind)).toEqual(['advise', 'build']);
+    const again = Run.replay(42, played.commands);
+    expect(again.until(150), again.error ?? '').toBe(true);
+    expect(sha(simOf(again.snapshot()))).toBe(sha(simOf(played)));
+  }, 600_000);
+
+  it('a log that does not fit the game stops the replay with the reason', () => {
+    const run = Run.play(42, COMBOS.feed);
+    expect(run.until(30)).toBe(true);
+    // A command of day 3 after those of later days: the game has gone on past it
+    const again = Run.replay(42, [...run.snapshot().commands, { day: 3, by: 'player', cmd: { kind: 'site', accept: true } }]);
+    expect(again.until(40)).toBe(false);
+    expect(again.error).toMatch(/day 3 \(site\)/);
+  }, 600_000);
+
+  it('a run gives way to the next one, and the old one refuses to go on', () => {
+    const first = Run.play(7, COMBOS.feed);
+    Run.play(7, COMBOS.roam);
+    expect(() => first.step()).toThrow(/another run/);
   }, 600_000);
 });

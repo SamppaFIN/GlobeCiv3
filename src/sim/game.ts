@@ -1956,6 +1956,10 @@ export function resetGame(startCity: number) {
   goalUnreachable.clear();
   goalHeldKey = '';
   unreachableKey = '';
+  // The names know the home province and state ("Kotilääni"), which change with the start city
+  nameCache.clear();
+  tickDay = null;
+  scouting = false;
   // The province level's joins are worked out anew for this game (STORY-093)
   roadVersion++;
   bordersCache = null;
@@ -2147,7 +2151,7 @@ export function startGame<U extends object>(startCity: number, saved: SaveData |
     ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
     // The ties with them (STORY-076); a save from before meets them anew
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? s.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, townAdvisor: saved.townAdvisor, townLog: [], cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []),
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, townAdvisor: saved.townAdvisor, townLog: [], cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []), calmDays: saved.calmDays ?? 0,
     commands: new CommandLog(saved.commands ?? []),
     // A proposal waiting when the game was saved waits again (STORY-095)
     treaty: saved.treaty && saved.treaty.rival < s.rivals.length ? { ...saved.treaty } : null,
@@ -2166,10 +2170,16 @@ export function startGame<U extends object>(startCity: number, saved: SaveData |
 /** The rings of the city level around a city (STORY-069): the new start maps them first (STORY-017). */
 export const CITY_LEVEL_RINGS = 3;
 
-/** The game's part of the save (STORY-036): all but the wall clock, the clock's speed and the selected unit, which are the view's. */
-export function saveState(): Omit<SaveData, 'savedAt' | 'speed' | 'paused' | 'selected'> | null {
+/** The game's part of the save (STORY-036): all but the wall clock, the clock's speed and the selected unit, which are the view's. A game that ended is not saved. */
+export function saveState(): GameSave | null {
+  return play?.over ? null : stateOf();
+}
+
+/** The game's part of a save, also of a game that ended (a run's last state). */
+export type GameSave = Omit<SaveData, 'savedAt' | 'speed' | 'paused' | 'selected'>;
+export function stateOf(): GameSave | null {
   const p = play;
-  if (!p || !game || p.over) return null;
+  if (!p || !game) return null;
   const mapped: number[] = [];
   mapState.mapped.forEach((m, id) => { if (m) mapped.push(id); });
   return {
@@ -2183,6 +2193,7 @@ export function saveState(): Omit<SaveData, 'savedAt' | 'speed' | 'paused' | 'se
     research: p.research.save(), tax: p.tax, lux: p.lux, gov: p.gov, anarchyUntil: p.anarchyUntil, townAdvisor: p.townAdvisor, cityAdvisor: p.cityAdvisor, provinceAdvisor: p.provinceAdvisor, stateAdvisor: p.stateAdvisor, planetAdvisor: p.planetAdvisor, targetState: p.targetState, firsts: [...p.firsts],
     commands: p.commands.save(),
     ...(p.treaty ? { treaty: { ...p.treaty } } : {}),
+    calmDays: p.calmDays,
   };
 }
 

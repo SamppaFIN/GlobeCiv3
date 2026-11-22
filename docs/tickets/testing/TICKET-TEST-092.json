@@ -50,15 +50,15 @@
         "outcome": "pass"
       },
       {
-        "steps": "src/sim/boundary.test.ts ja sen tarkistus: world.ts:hen lisätty väliaikainen ui-importti",
+        "steps": "src/sim/boundary.test.ts ja sen tarkistus väliaikaisilla rikkeillä",
         "expected": "Kriteeri 1: ei DOMia eikä renderöintiä",
-        "result": "Läpi. Väliaikainen import ../ui/levelUi pudotti molemmat testit (ui-moduuli ja document-rivit), ja poistettuna testit menevät taas läpi",
+        "result": "Läpi. Väliaikainen import ../ui/levelUi pudotti testit (ui-moduuli ja document-rivit). Katselmoinnin jälkeen testi tunnistaa myös sivuvaikutus-, kaksoislainausmerkki-, monirivi- ja dynaamiset importit, sallii paketeista vain Three.js:n ja siitä vain Vector3:n, Matrix3:n ja hex-ruudukon IcosahedronGeometryn, ja kieltää navigatorin, HTMLElementin, Workerin, fetchin ja muut sivun globaalit. Testi tarkistaa omat ehtonsa esimerkkiteksteillä, ja state.ts:ään lisätty dynaaminen import(\"../ui/levelUi\") ja navigator pudottivat sen",
         "outcome": "pass"
       },
       {
         "steps": "Vitest kokonaan",
         "expected": "Ei regressiota",
-        "result": "53 tiedostoa ja 323 testiä läpi",
+        "result": "53 tiedostoa ja 329 testiä läpi (katselmoinnin korjausten jälkeen)",
         "outcome": "pass"
       },
       {
@@ -86,10 +86,22 @@
         "outcome": "not_run"
       },
       {
-        "steps": "Utun katselmointi toteutuksesta",
+        "steps": "golden.e2e, save.e2e ja diplomacy.e2e katselmoinnin korjausten jälkeen",
+        "expected": "Ei regressiota",
+        "result": "7 testiä läpi (4,6 min). Kultaiset tilat kirjoitettiin uudelleen calmDays-kentän takia",
+        "outcome": "pass"
+      },
+      {
+        "steps": "tests/sim/run.test.ts: pelaajan omat komennot päivien välissä, virheellinen loki ja kaksi ajoa samassa prosessissa",
+        "expected": "Uusinta toistaa pelaajan teot eikä hyväksy lokia, joka ei sovi peliin",
+        "result": "Läpi: uusinta antaa samat komennot ja saman tilan päivänä 150, myöhästynyt komento pysäyttää uusinnan syyllä \"day 3 (site)\", ja vanha ajo heittää virheen uuden alettua",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Utun katselmointi toteutuksesta (Sonnet, Anu ei käytettävissä)",
         "expected": "Hyväksytty",
-        "result": "Odottaa",
-        "outcome": "not_run"
+        "result": "Hyväksytty huomautuksin. Löydökset ja korjaukset: (1) resetGame ei tyhjentänyt nimivälimuistia, tickDayta eikä scouting-lippua, joten toinen peli samassa prosessissa olisi perinyt ne: tyhjennetään. (2) calmDays (päivät ilman rosvoja) puuttui tallennuksesta, joten ladattu peli sai rosvot eri päivänä: tallennetaan, validoidaan (kokonaisluku ≥ 0) ja puuttuva on 0 (sääntö 8, save.test). Kultainen tila muuttui vain tämän kentän osalta, tarkistettu kenttä kentältä. (3) Päättyneen pelin tallennus: saveState palauttaa nullin, kun peli on ohi. (4) Run.replay ohitti lokin, joka ei sovi peliin: nyt uusinta pysähtyy ja kertoo päivän ja komennon (error). (5) Kaksi Run-oliota samassa prosessissa jakoivat simulaation: vanha kieltäytyy jatkamasta (Run.current). (6) Uusinnan testissä ei ollut pelaajan omia komentoja päivien välissä: lisättiin build-peli, jossa pelaaja vaihtaa neuvonantajia ja pääkaupungin rakennuksen päivinä 40 ja 90, ja uusinta päivään 150 on sama. (7) Rajatestin säännölliset lausekkeet olivat löysiä: tiukennettu (yllä). Arvio, ei mittaus: finishScans saattaa nykäistä framea, kun valloitus avaa uusia valtioita ja haku pitää viedä loppuun ennen päivää. Mitataan, jos nykäys näkyy (koodaussääntö 6)",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

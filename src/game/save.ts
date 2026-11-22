@@ -112,6 +112,8 @@ export interface SaveData {
   commands?: Logged[];
   /** A rival's proposal the game stopped for (STORY-095); saves from before have none. */
   treaty?: { rival: number; kind: 'alliance' | 'peace' };
+  /** The days without disorder, by which the state's advisor lowers the luxury (STORY-051); saves from before have none, and count from 0. */
+  calmDays?: number;
 }
 
 /** Ranges the save is checked against. */
@@ -406,6 +408,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       ...(s.treaty === undefined || s.treaty === null ? {} : (t => ({
         treaty: { rival: int(t.rival, 'treaty rival', 0, Array.isArray(s.rivals) ? s.rivals.length - 1 : -1), kind: oneOf(t.kind, ['alliance', 'peace'] as const, 'treaty kind') },
       }))(obj(s.treaty, 'treaty'))),
+      ...(s.calmDays === undefined ? {} : { calmDays: int(s.calmDays, 'calm days', 0) }),
       ...(s.commands === undefined ? {} : {
         commands: list(s.commands, 'commands', v => {
           const e = obj(v, 'logged');
