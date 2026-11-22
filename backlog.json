@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T16:38:38Z",
+    "generated_at": "2026-11-22T17:45:36Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "c022978",
+    "git_commit": "d10f007",
     "git_branch": "main",
     "language": "fi"
   },
@@ -2866,12 +2866,12 @@
         "Kun lääni on ylin auki oleva taso, Asuttaja, Tutkimusmatkailija ja Vartija tähtäävät kukin omalla tavallaan lähimpään kotivaltion lääniin, jota ei vielä pidetä, ja tavoitteen valinta on komento.",
         "Autopilotti siemenellä 42 nousee valtiotasolle kaikilla kolmella läänin neuvonantajalla."
       ],
-      "status": "in_progress",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-091",
+        "implementation": "TICKET-IMPL-091",
+        "testing": "TICKET-TEST-091"
       }
     }
   ]
