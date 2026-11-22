@@ -7,7 +7,8 @@
  *
  * Module state in the browser's main.ts that is not here, and why (PLAN-092, Utu's review):
  * - Derived: worked out again from this state and the seed after a load, the same each time.
- *   The city-states and tribes (nativesOf, natives, tribeLand, rivalScanned and the scan), the
+ *   The city-states and tribes (nativesOf, natives, tribeLand, rivalScanned and the scan, done
+ *   before the day it concerns; those a city stood next to first, shadowed, at each day's start), the
  *   resource kinds found (foundKinds), the era last written in the chronicles (chronicleEra),
  *   and the memos of the generated world (stateLand, stateTilesOf, provinceLand, tilesOfArea,
  *   nameCache, noWay, bordersCache, joinsCache, roadVersion).

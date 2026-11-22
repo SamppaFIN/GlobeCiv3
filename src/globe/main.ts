@@ -798,7 +798,8 @@ function startPlay(startCity: number, saved?: SaveData) {
   // Finds waiting in a save from before STORY-052 open as ruins
   for (const d of saved.discoveries) openRuin(d.tile, d.finder);
   // A save's city-states are found at once, before a settler can come near one not yet found
-  while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
+  finishScans();
+  shadowNatives();
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
@@ -2202,6 +2203,17 @@ const NATIVE_CANDIDATES = 300;
  * 7 to 26 ms, Intel UHD, Chromium), too long for a frame.
  */
 const NATIVE_BUDGET_MS = 3;
+/**
+ * Finish the scans due now, at once: the frames do them a few milliseconds at a time, but a day
+ * waits for them, so the frames do not change the game (STORY-095). The longest, for measuring.
+ */
+let nativeSyncMs = 0;
+function finishScans() {
+  if (!play || !(nativeScan || nextNativeState() !== null)) return;
+  const t0 = performance.now();
+  while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
+  nativeSyncMs = Math.max(nativeSyncMs, performance.now() - t0);
+}
 /** The state whose land is being scored: its tiles, how far, and the scores so far. */
 let nativeScan: { state: number; tiles: number[]; at: number; rough: { tile: number; score: number }[] } | null = null;
 let nativeMs = 0;
@@ -2225,17 +2237,14 @@ function scanNatives(budgetMs: number) {
   if (scan.at === scan.tiles.length) {
     nativeScan = null;
     const rough = scan.rough.sort((a, b) => b.score - a.score || a.tile - b.tile);
-    // Not next to a city of the player's founded before the state's were found (an older save);
-    // later cities keep away from them, so leaving those tiles out gives the same city-states
-    const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
-    const land = rough.slice(0, NATIVE_CANDIDATES)
-      .filter(l => !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE))
-      .map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
+    const land = rough.slice(0, NATIVE_CANDIDATES).map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
     const rival = rivalStartStates.indexOf(scan.state);
     if (rival >= 0) {
-      // A rival's capital on the best site of its start state (STORY-068)
+      // A rival's capital on the best site of its start state (STORY-068), not next to a city:
+      // founded before the day that follows the scan, it is saved from then on
       rivalScanned.add(scan.state);
-      const best = land.filter(l => l.score > 0).sort((a, b) => b.score - a.score || a.tile - b.tile)[0];
+      const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
+      const best = land.filter(l => l.score > 0 && !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE)).sort((a, b) => b.score - a.score || a.tile - b.tile)[0];
       if (best && !play.rivals[rival].cities.length) play.rivals[rival].found(best.tile);
       if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
       return;
@@ -2246,6 +2255,7 @@ function scanNatives(budgetMs: number) {
     tribeLand.set(scan.state, scan.rough.map(l => l.tile).filter(t => !found.some(n => n.tile === t)).sort((a, b) => a - b));
     natives.push(...found);
     nativeCenters.push(...found.map(n => tileCenter(n.tile)));
+    shadowNatives();
   }
   if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
 }
@@ -2268,8 +2278,21 @@ function visibleNatives(): NativeCity[] {
   return natives.filter(n => mapState.isMapped(n.tile) && !nativeGone(n));
 }
 
-/** A city-state taken by the player or destroyed (STORY-064). */
-const nativeGone = (n: NativeCity) => play!.war.razed.has(n.tile) || play!.cities.some(c => c.tile === n.tile);
+/**
+ * City-states with a city next to their site (STORY-095). The scan gives a state's city-states
+ * from the seed alone, whenever it runs; a city that stood there before them hides them, as no
+ * city may be founded next to one after. Worked out when a scan ends and at each day's start.
+ */
+const shadowed = new Set<number>();
+function shadowNatives() {
+  shadowed.clear();
+  if (!play || !natives.length) return;
+  const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
+  natives.forEach((n, i) => { if (ours.some(c => c.angleTo(nativeCenters[i]) < NATIVE_CLEARANCE * TILE_ANGLE)) shadowed.add(n.tile); });
+}
+
+/** A city-state taken by the player or destroyed (STORY-064), or hidden by a city that stood there first. */
+const nativeGone = (n: NativeCity) => shadowed.has(n.tile) || play!.war.razed.has(n.tile) || play!.cities.some(c => c.tile === n.tile);
 const nativeAt = (tile: number) => natives.find(n => n.tile === tile && !nativeGone(n)) ?? null;
 /** Near a rival's city (STORY-068): within the rings kept between cities. */
 const nearRival = (tile: number) => {
@@ -4781,14 +4804,15 @@ function updatePlay(dt: number) {
     : meter === 'state' ? id => Math.floor(world.cityOf(id) / 49) === homeState()
     : held ? id => Math.floor(world.cityOf(id) / 49) === homeState() && !held.has(Math.floor(world.cityOf(id) / 7)) : null;
   play.units.noCity = nearForeign;
-  // A golden run finds the city-states whole before its day (STORY-095)
-  if (stepMode) while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
-  else scanNatives(NATIVE_BUDGET_MS);
+  scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
   const blocked = play.offers.length || play.raidAlert || treaty || over || unlockCard.visible || onboarding.visible;
   const days = blocked ? 0 : stepMode ? (clock.day++, 1) : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
+    // The city-states a day concerns are found before it, however the frames came (STORY-095)
+    finishScans();
+    shadowNatives();
     tickDay = clock.day - (days - 1 - d);
     scouting = true;
     // The scouts see as far as the city area's advisor lets them (STORY-107)
@@ -5088,7 +5112,8 @@ frameStartPlanet();
     const s = snapshot();
     if (!s) return null;
     const { savedAt: _at, speed: _speed, paused: _paused, ...rest } = s;
-    return { ...rest, notices: [...discoveryCard.log] };
+    // The city-states and tribes are not saved but found anew: their tiles count too
+    return { ...rest, notices: [...discoveryCard.log], natives: natives.filter(n => !nativeGone(n)).map(n => n.tile).sort((a, b) => a - b), tribes: tribesNow().map(t => t.camp).sort((a, b) => a - b) };
   },
   /** Long test games: a faster clock and the advisors of every level (STORY-060). */
   fastForward: (speed: number) => { clock.speed = speed as Speed; clock.paused = false; },
@@ -5182,6 +5207,7 @@ frameStartPlanet();
   /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */
   natives: () => natives.map(n => ({ ...n, mapped: mapState.isMapped(n.tile), size: nativeStrength(n, clock.day).size })),
   nativeMs: () => nativeMs,
+  nativeSyncMs: () => nativeSyncMs,
   /** The card of a region at any level (STORY-067). */
   regionView: (level: 0 | 1 | 2, id: number) => (play ? regionView({ level, id } as RegionRef) : null),
   /** A tile's score as a city site (STORY-065). */
