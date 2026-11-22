@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
 import { bestOf, bestTile, isUp, placeAll, spots, standsOnTile, PLACE_RINGS, type Ground } from '../game/placement';
 import { CommandLog, execute, type Actor, type Command } from '../game/commands';
-import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
+import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation } from '../game/diplomacy';
 import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
 import { createTradeCard, type TradeView } from '../ui/tradeCard';
 import { attachInput, GlobeCamera } from './camera';
@@ -35,7 +35,7 @@ import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, ADVANCE_LIST, LUX_RATES, NEEDS, Research, RESOURCE_KINDS, isKind, opensFrom, studyName, treeLayout, type Advance, type Study } from '../game/science';
-import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
+import { GOVERNMENTS, governed, revolutionDays } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
 import { createCityQuick } from '../ui/cityQuick';
@@ -70,9 +70,10 @@ import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
 import { PulseLayer, type PulseKind } from './pulses';
 import { SAVE_VERSION, validateSave, type FirstKind, type SaveData } from '../game/save';
+import type { GameState } from '../sim/state';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
-import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
+import { advance, startProgress, UNLOCK_SHARE } from '../game/progress';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, stateName, type RegionName } from '../game/names';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
@@ -615,75 +616,21 @@ unitLayer.raise = tile => cityLevel.raise(tile);
 const pulses = new PulseLayer(RADIUS);
 scene.add(pulses.group);
 const moment = (kind: PulseKind, tile: number) => pulses.add(kind, tile, performance.now());
-interface Play {
-  units: Units;
+/** The game's state and the view's: the open cards, the selected unit and the HUD (STORY-095). */
+interface Play extends GameState {
   selected: number;
   flagTool: boolean;
-  /** Tiles of the home province and state, for the meter and the unlocks. */
-  province: number[];
-  state: number[];
-  progress: Progress;
-  /** The province chosen as the state's target (design 7a), or -1. */
-  targetProvince: number;
-  /** Extra yield on tiles from finds before STORY-052; STORY-028's cities count it. */
-  bonuses: Map<number, Yield>;
-  /** Finds kept so far. */
-  found: number;
-  /** Cities in founding order, the capital first (STORY-028), and the one whose card is open. */
-  cities: City[];
+  /** The city whose card is open. */
   openCity: number | null;
-  /** City sites a scout suggests, the shown one first; every site ever suggested; the day of the last (STORY-032). */
-  offers: { tile: number; finder: number }[];
-  offered: number[];
-  lastOfferDay: number;
-  /** A site waiting for the settler the capital is building. */
-  pendingSite: number | null;
-  /** Irrigation, mines and roads the settlers built (STORY-033). */
-  improvements: Improvements;
-  /** Bandits on their way to a city, and whether their card waits to be answered (STORY-034). */
-  raids: Raids;
-  war: War;
-  rivals: Rival[];
-  raidAlert: boolean;
-  /** The treasury: trade comes in as gold, and buildings and buying cost it (STORY-038). */
-  gold: number;
-  /** Advances known and researched, and the share of trade that becomes gold (STORY-040). */
-  research: Research;
-  tax: number;
-  /** The share of trade that becomes luxury (STORY-046). */
-  lux: number;
-  /** The government, and the day anarchy ends, or −1 (STORY-047). */
-  gov: Government;
-  anarchyUntil: number;
   /** The tapped hex whose card is open (STORY-055). */
   tileOpen: number | null;
   /** The building the player is moving, by its city's tile (STORY-071). */
   moving: { city: number; building: Building } | null;
-  /** The ties with each rival, in the rivals' order, and the rival whose diplomacy card is open (STORY-076). */
-  ties: Ties[];
+  /** The rival whose diplomacy card is open (STORY-076), and whose trade card (STORY-078). */
   diplomacyOpen: number | null;
-  /** The rival whose trade card is open (STORY-078). */
   tradeOpen: number | null;
-  /** The city level's advisor and what it did lately (STORY-105). */
-  townAdvisor: TownAdvisor;
-  townLog: Rich[];
-  /** The city area's advisor, the advisor card, and what it did lately (STORY-049). */
-  cityAdvisor: CityAdvisor;
+  /** The advisor card (STORY-049). */
   advisorOpen: boolean;
-  advisorLog: Rich[];
-  /** The province-level advisor and what it did lately (STORY-050). */
-  provinceAdvisor: ProvinceAdvisor;
-  provinceLog: Rich[];
-  /** The state-level advisor, what it did lately, and the days without disorder (STORY-051). */
-  stateAdvisor: StateAdvisor;
-  stateLog: Rich[];
-  calmDays: number;
-  /** The planet-level advisor, what it did lately, and the target state, or −1 (STORY-057). */
-  planetAdvisor: PlanetAdvisor;
-  /** What has stopped the game once already (STORY-017). */
-  firsts: Set<FirstKind>;
-  planetLog: Rich[];
-  targetState: number;
   researchOpen: boolean;
   /** The science tree is open, and the advance on show; null shows the one under study (STORY-109). */
   scienceOpen: boolean;
@@ -694,8 +641,6 @@ interface Play {
   hud: ReturnType<typeof createGameHud>;
   /** The level panel at the top of the HUD (STORY-098). */
   area: AreaPanel;
-  /** The commands that took effect (STORY-086, rule 7). */
-  commands: CommandLog;
 }
 let play: Play | null = null;
 
@@ -853,7 +798,8 @@ function startPlay(startCity: number, saved?: SaveData) {
   // Finds waiting in a save from before STORY-052 open as ruins
   for (const d of saved.discoveries) openRuin(d.tile, d.finder);
   // A save's city-states are found at once, before a settler can come near one not yet found
-  while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
+  finishScans();
+  shadowNatives();
 }
 
 // ─── Cities (STORY-028) ───────────────────────────
@@ -2257,6 +2203,17 @@ const NATIVE_CANDIDATES = 300;
  * 7 to 26 ms, Intel UHD, Chromium), too long for a frame.
  */
 const NATIVE_BUDGET_MS = 3;
+/**
+ * Finish the scans due now, at once: the frames do them a few milliseconds at a time, but a day
+ * waits for them, so the frames do not change the game (STORY-095). The longest, for measuring.
+ */
+let nativeSyncMs = 0;
+function finishScans() {
+  if (!play || !(nativeScan || nextNativeState() !== null)) return;
+  const t0 = performance.now();
+  while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
+  nativeSyncMs = Math.max(nativeSyncMs, performance.now() - t0);
+}
 /** The state whose land is being scored: its tiles, how far, and the scores so far. */
 let nativeScan: { state: number; tiles: number[]; at: number; rough: { tile: number; score: number }[] } | null = null;
 let nativeMs = 0;
@@ -2280,17 +2237,14 @@ function scanNatives(budgetMs: number) {
   if (scan.at === scan.tiles.length) {
     nativeScan = null;
     const rough = scan.rough.sort((a, b) => b.score - a.score || a.tile - b.tile);
-    // Not next to a city of the player's founded before the state's were found (an older save);
-    // later cities keep away from them, so leaving those tiles out gives the same city-states
-    const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
-    const land = rough.slice(0, NATIVE_CANDIDATES)
-      .filter(l => !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE))
-      .map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
+    const land = rough.slice(0, NATIVE_CANDIDATES).map(l => ({ tile: l.tile, score: world.siteScore(l.tile) }));
     const rival = rivalStartStates.indexOf(scan.state);
     if (rival >= 0) {
-      // A rival's capital on the best site of its start state (STORY-068)
+      // A rival's capital on the best site of its start state (STORY-068), not next to a city:
+      // founded before the day that follows the scan, it is saved from then on
       rivalScanned.add(scan.state);
-      const best = land.filter(l => l.score > 0).sort((a, b) => b.score - a.score || a.tile - b.tile)[0];
+      const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
+      const best = land.filter(l => l.score > 0 && !ours.some(c => c.angleTo(tileCenter(l.tile)) < NATIVE_CLEARANCE * TILE_ANGLE)).sort((a, b) => b.score - a.score || a.tile - b.tile)[0];
       if (best && !play.rivals[rival].cities.length) play.rivals[rival].found(best.tile);
       if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
       return;
@@ -2301,6 +2255,7 @@ function scanNatives(budgetMs: number) {
     tribeLand.set(scan.state, scan.rough.map(l => l.tile).filter(t => !found.some(n => n.tile === t)).sort((a, b) => a - b));
     natives.push(...found);
     nativeCenters.push(...found.map(n => tileCenter(n.tile)));
+    shadowNatives();
   }
   if (budgetMs < Infinity) nativeMs = Math.max(nativeMs, performance.now() - t0);
 }
@@ -2323,8 +2278,21 @@ function visibleNatives(): NativeCity[] {
   return natives.filter(n => mapState.isMapped(n.tile) && !nativeGone(n));
 }
 
-/** A city-state taken by the player or destroyed (STORY-064). */
-const nativeGone = (n: NativeCity) => play!.war.razed.has(n.tile) || play!.cities.some(c => c.tile === n.tile);
+/**
+ * City-states with a city next to their site (STORY-095). The scan gives a state's city-states
+ * from the seed alone, whenever it runs; a city that stood there before them hides them, as no
+ * city may be founded next to one after. Worked out when a scan ends and at each day's start.
+ */
+const shadowed = new Set<number>();
+function shadowNatives() {
+  shadowed.clear();
+  if (!play || !natives.length) return;
+  const ours = [...play.cities.filter(c => !c.native), ...play.rivals.flatMap(r => r.cities)].map(c => tileCenter(c.tile));
+  natives.forEach((n, i) => { if (ours.some(c => c.angleTo(nativeCenters[i]) < NATIVE_CLEARANCE * TILE_ANGLE)) shadowed.add(n.tile); });
+}
+
+/** A city-state taken by the player or destroyed (STORY-064), or hidden by a city that stood there first. */
+const nativeGone = (n: NativeCity) => shadowed.has(n.tile) || play!.war.razed.has(n.tile) || play!.cities.some(c => c.tile === n.tile);
 const nativeAt = (tile: number) => natives.find(n => n.tile === tile && !nativeGone(n)) ?? null;
 /** Near a rival's city (STORY-068): within the rings kept between cities. */
 const nearRival = (tile: number) => {
@@ -4836,14 +4804,15 @@ function updatePlay(dt: number) {
     : meter === 'state' ? id => Math.floor(world.cityOf(id) / 49) === homeState()
     : held ? id => Math.floor(world.cityOf(id) / 49) === homeState() && !held.has(Math.floor(world.cityOf(id) / 7)) : null;
   play.units.noCity = nearForeign;
-  // A golden run finds the city-states whole before its day (STORY-095)
-  if (stepMode) while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
-  else scanNatives(NATIVE_BUDGET_MS);
+  scanNatives(NATIVE_BUDGET_MS);
   play.units.openStates = play.planetAdvisor === 'fortify' ? new Set([homeState(), ...won.conquered]) : won.open;
   const blocked = play.offers.length || play.raidAlert || treaty || over || unlockCard.visible || onboarding.visible;
   const days = blocked ? 0 : stepMode ? (clock.day++, 1) : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
   for (let d = 0; d < days; d++) {
+    // The city-states a day concerns are found before it, however the frames came (STORY-095)
+    finishScans();
+    shadowNatives();
     tickDay = clock.day - (days - 1 - d);
     scouting = true;
     // The scouts see as far as the city area's advisor lets them (STORY-107)
@@ -5143,7 +5112,8 @@ frameStartPlanet();
     const s = snapshot();
     if (!s) return null;
     const { savedAt: _at, speed: _speed, paused: _paused, ...rest } = s;
-    return { ...rest, notices: [...discoveryCard.log] };
+    // The city-states and tribes are not saved but found anew: their tiles count too
+    return { ...rest, notices: [...discoveryCard.log], natives: natives.filter(n => !nativeGone(n)).map(n => n.tile).sort((a, b) => a - b), tribes: tribesNow().map(t => t.camp).sort((a, b) => a - b) };
   },
   /** Long test games: a faster clock and the advisors of every level (STORY-060). */
   fastForward: (speed: number) => { clock.speed = speed as Speed; clock.paused = false; },
@@ -5237,6 +5207,7 @@ frameStartPlanet();
   /** City-states found so far, and the longest frame's search for them in ms (STORY-063). */
   natives: () => natives.map(n => ({ ...n, mapped: mapState.isMapped(n.tile), size: nativeStrength(n, clock.day).size })),
   nativeMs: () => nativeMs,
+  nativeSyncMs: () => nativeSyncMs,
   /** The card of a region at any level (STORY-067). */
   regionView: (level: 0 | 1 | 2, id: number) => (play ? regionView({ level, id } as RegionRef) : null),
   /** A tile's score as a city site (STORY-065). */

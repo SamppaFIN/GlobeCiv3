@@ -1,7 +1,8 @@
 {
   "feed": {
     "50": {
-      "sha256": "565585e579a14668cc5303991059ce253536b57552e3316ad59bb649bf0c4570",
+      "sha256": "99c7b7a1306b87857f007d343fd1ae33d58137fa7bb0fb44c93b71568906c894",
+      "play": "904e9b3a478db5c5da86548486f03c4d40b9c307b47d8ebef32d2f825394cd36",
       "day": 50,
       "cities": 2,
       "open": 3,
@@ -9,7 +10,8 @@
       "units": 3
     },
     "100": {
-      "sha256": "475cdceabbaac5d0c0ba4c6851db21ca4700946e894a6d6d2c4f9f1700de0fb8",
+      "sha256": "824b61b156ac864bcba2373601de9ad37bad706b6088ccbab816ca8a16b4d21d",
+      "play": "1ec5d6d5e2a94e451cc04c5c721bda376bf25396347042c37e86fca63818da6a",
       "day": 100,
       "cities": 4,
       "open": 3,
@@ -17,7 +19,8 @@
       "units": 11
     },
     "200": {
-      "sha256": "da745c75aecbb1ba20ac95262d7e91d74f5d7967228ee988401df0d05e19b49c",
+      "sha256": "aed203d22e4b69ad56181c7b61d21d46ef7e3fbf720b32ae23a6b33d0d3ae924",
+      "play": "b122fe0485b91661588b3c99fecb55f19819efebda1489e0ccd306f34c5d8990",
       "day": 200,
       "cities": 8,
       "open": 1,
@@ -27,7 +30,8 @@
   },
   "build": {
     "50": {
-      "sha256": "5c6b1b713097ff6c1617bfc02ebf2441b790401d9a093933d2ad5b8a7312807b",
+      "sha256": "ebc89509ae2d863d843afb29b3492a569486fd74a1ec8e37151aac779587ff4a",
+      "play": "53ec37634ba115c8dbcd96ff9574e23aa7a0da9f05f682018a18fd03140d37b1",
       "day": 50,
       "cities": 1,
       "open": 4,
@@ -35,7 +39,8 @@
       "units": 1
     },
     "100": {
-      "sha256": "53fd8aecdf26bf4f5b9a0c6d6a90cfbd143ce77831ac24568f774819f104af93",
+      "sha256": "744ea47bb34d3751461716546728f25809e21b0133b1aefef76e1519ac4257a1",
+      "play": "be9320084fe59cc0fdf10c4b5e03a6135de27994fa393968e76abff939d7f4bc",
       "day": 100,
       "cities": 2,
       "open": 3,
@@ -43,7 +48,8 @@
       "units": 9
     },
     "200": {
-      "sha256": "88d63aa5e1cb349c837294236542745fb6860c74bc8bd37dbfcada96e294ddcd",
+      "sha256": "74a6af08706b6c03050339544ae2cfa70c30756b08ad1658cdc0bc79508c8cbe",
+      "play": "852740cef9aafde8f33ce2114f84100f186101c018b07743fd44bff4c4084c14",
       "day": 200,
       "cities": 5,
       "open": 2,
@@ -53,7 +59,8 @@
   },
   "roam": {
     "50": {
-      "sha256": "42cd9bb596f73c17b06804d2ad15eb9a1ff66778a02deeeafba0ee5f53271c27",
+      "sha256": "6acac2f6e500d595fdeac002a3b9d033a0e44a701363585f3e6c74bcc9990eb8",
+      "play": "99d3a7c491f2ea92105b89209219e9b9319e65898a97bf44d0f9269080cb1e50",
       "day": 50,
       "cities": 1,
       "open": 4,
@@ -61,7 +68,8 @@
       "units": 0
     },
     "100": {
-      "sha256": "dcbebab69fd2ae4620e1cf3fc17d7a0dd4879b5521f078d3dff98e0231cd901a",
+      "sha256": "fc4af2a810cb0337518edb404cdad42f6ed6e41188b76abf8d35da1724f71d94",
+      "play": "78150352972173d937ed39b5ec5c0fc91410754d7c8c4585f9e3c102acc74330",
       "day": 100,
       "cities": 3,
       "open": 3,
@@ -69,7 +77,8 @@
       "units": 5
     },
     "200": {
-      "sha256": "903971c4e70ce08c558e18bc61bf2998dd9ad7b9876394c9ac56abba7fd2f2d5",
+      "sha256": "85999ab46bd1477bf74461b9e342f725c930f1960da8e6ad79829f155ef6ab1e",
+      "play": "16617b2f5334c44c3ed1d7faa91a7f35d4e92dc1e6108f59a3452ed0fbbcade0",
       "day": 200,
       "cities": 5,
       "open": 2,
