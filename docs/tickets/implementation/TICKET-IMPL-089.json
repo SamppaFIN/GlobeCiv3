@@ -1,0 +1,33 @@
+{
+  "id": "TICKET-IMPL-089",
+  "story": "STORY-094",
+  "plan": "PLAN-089",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/globe/main.ts",
+    "src/game/goals.ts",
+    "tests/e2e/opponents.e2e.ts"
+  ],
+  "change_summary": "main.ts: visibleNatives, visibleTribes ja visibleRivalCities vaativat valtiotason; paimentolaisten ryöstöt ja rivalWarDay vasta valtiotasolla; meetOpponents paljastaa naapureiden kaupunkivaltiot ja leirit ja kertoo ne nousukortissa; planeetan paneeliin rivi 'Ydinsota: tulossa myöhemmin'; debug opponentsShown. goals.ts: valtion valtauksen kortin teksti kertoo johtajien sodan ja ydinaseiden tulevan myöhemmin.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "visibleNatives",
+      "visibleTribes",
+      "visibleRivalCities",
+      "raidDay",
+      "rivalWarDay",
+      "rise"
+    ],
+    "call_sites_found": [
+      "Kartan merkit, sirut, aluekortit, Kenraalin kohteet, diplomatian tapaaminen ja kilpailijoiden ilmoitukset"
+    ],
+    "call_sites_updated": [
+      "Kaikki kulkevat näkyvyysfunktioiden kautta; vanhassa alussa stateStage() on aina tosi, joten sen testit eivät muutu"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "8292c4b",
+  "progress": 100,
+  "notes": "Tallennusmuoto ei muuttunut. Kaupunkia ei edelleenkään voi perustaa kaupunkivaltion viereen, vaikka se ei vielä näy; kotivaltion naapurit ovat lukossa ennen valtausta (STORY-016), joten tilanne on harvinainen."
+}

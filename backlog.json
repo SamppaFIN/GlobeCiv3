@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T09:56:06Z",
+    "generated_at": "2026-11-22T10:11:21Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "fbd6534",
+    "git_commit": "8292c4b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -252,7 +252,7 @@
         "STORY-093",
         "STORY-094"
       ],
-      "progress": 50
+      "progress": 75
     },
     {
       "id": "EPIC-012",
@@ -2487,14 +2487,14 @@
       ],
       "acceptance_criteria": [
         "Kaupunkivaltiot, paimentolaiset, kilpailijat, diplomatia, sota ja kauppa aktivoituvat vasta valtiotasolla.",
-        "Valtiotason tavoite näkyy, ja planeettataso näkyy lukittuna merkinnällä \"MVP:n jälkeen\"."
+        "Valtiotason tavoite näkyy, planeettataso avautuu kuten ennen, ja ydinsota näkyy lukittuna merkinnällä \"tulossa myöhemmin\" (Sami 2026-11-22)."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-089",
+        "implementation": "TICKET-IMPL-089",
+        "testing": "TICKET-TEST-089"
       }
     },
     {

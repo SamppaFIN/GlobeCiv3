@@ -60,7 +60,7 @@ export const LEVEL_GOALS: readonly LevelGoal[] = [
     level: 1, name: 'Läänit', text: 'Valtaa kotivaltio', reward: 150, need: 7, unit: 'hallussa',
     hint: 'Kaupunki kotivaltion jokaiseen seitsemään lääniin avaa planeetan ja naapurivaltiot.',
     count: s => s.provinces,
-    opens: { title: 'Valtio vallattu, zoomaa ulos', text: 'Planeetalla valitset kohdevaltion, ja naapurivaltiot avautuivat.' },
+    opens: { title: 'Valtio vallattu, zoomaa ulos', text: 'Planeetalla valitset kohdevaltion, ja naapurivaltiot avautuivat. Johtajien sota ja ydinaseet tulevat myöhemmin.' },
   },
 ];
 

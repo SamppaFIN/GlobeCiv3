@@ -1626,6 +1626,8 @@ function areaView(): AreaView {
         { label: 'Valtiot', value: `${won.conquered.size} vallattu` },
         { label: 'Kaupungit', value: p.cities.length ? someOf(p.cities.map(c => `${c.name} (${c.size})`)) : 'ei kaupunkeja' },
         { label: 'Kassa', value: `${p.gold} kultaa` },
+        // The leaders' war (STORY-097) comes later (Sami 2026-11-22)
+        { label: 'Ydinsota', value: 'tulossa myöhemmin' },
       ] : [],
       actions: [advisor, ...up, codex],
     };
@@ -2166,8 +2168,8 @@ function rivalsDay() {
   }
 }
 
-/** The rivals' cities on mapped tiles. */
-const visibleRivalCities = () => play!.rivals.flatMap(r => r.cities.filter(c => mapState.isMapped(c.tile)).map(city => ({ rival: r, city })));
+/** The rivals' cities on mapped tiles; they come into play at the state level (STORY-094). */
+const visibleRivalCities = () => (stateStage() ? play!.rivals.flatMap(r => r.cities.filter(c => mapState.isMapped(c.tile)).map(city => ({ rival: r, city }))) : []);
 const rivalCityAt = (tile: number) => play!.rivals.flatMap(r => r.cities.map(city => ({ rival: r, city }))).find(x => x.city.tile === tile) ?? null;
 const rivalCss = (k: number) => `rgb(${oklchToSrgb(...(RIVALS[k].color as unknown as [number, number, number])).map(v => Math.round(v * 255)).join(', ')})`;
 
@@ -2189,7 +2191,8 @@ function tribesNow(): TribeNow[] {
   }
   return out;
 }
-const visibleTribes = () => tribesNow().filter(t => mapState.isMapped(t.camp));
+/** Tribes on mapped tiles; they come into play at the state level (STORY-094). */
+const visibleTribes = () => (stateStage() ? tribesNow().filter(t => mapState.isMapped(t.camp)) : []);
 const tribeAt = (tile: number) => tribesNow().find(t => t.camp === tile) ?? null;
 
 /** The tribe's band sets off at the nearest city of the player's, within reach unless `anywhere`. */
@@ -2283,8 +2286,9 @@ function nextNativeState(): number | null {
   return k >= 0 ? rivalStartStates[k] : null;
 }
 
-/** City-states found so far, not taken, on mapped tiles. */
+/** City-states found so far, not taken, on mapped tiles; they come into play at the state level (STORY-094). */
 function visibleNatives(): NativeCity[] {
+  if (!stateStage()) return [];
   return natives.filter(n => mapState.isMapped(n.tile) && !nativeGone(n));
 }
 
@@ -3359,7 +3363,8 @@ function raidDay() {
     if (!play.raids.band) raidTally = null;
   }
   if (play.raids.band || !raidsOn || !play.cities.length || cityStage()) return;
-  for (const t of tribesNow()) if (tribeRaids(game.seed, t.tribe, clock.day) && sendTribe(t)) return;
+  // The tribes raid from the state level on (STORY-094); bandits belong to the city area
+  if (stateStage()) for (const t of tribesNow()) if (tribeRaids(game.seed, t.tribe, clock.day) && sendTribe(t)) return;
   if (!uprising(game.seed, clock.day, play.cities.length)) return;
   startRaid(play.cities[Math.floor(raidRoll(game.seed, clock.day, 100) * play.cities.length)]);
 }
@@ -3670,7 +3675,8 @@ function rise(opened: number, reached: NonNullable<ReturnType<typeof levelGoal>>
   discoveryCard.notice(`Tavoite saavutettu: ${reached.text} · +${reached.reward} kultaa`);
   const next = levelGoal(opened);
   const s = levelState();
-  unlockCard.show(reached.opens.title, `${reached.opens.text}${next ? ` Uusi tavoite: ${next.text} (${goalCount(next, s)} / ${next.need}).` : ''}`);
+  const met = opened === 1 && !classic ? meetOpponents() : '';
+  unlockCard.show(reached.opens.title, `${reached.opens.text}${met}${next ? ` Uusi tavoite: ${next.text} (${goalCount(next, s)} / ${next.need}).` : ''}`);
   moment('unlock', p.cities[0]?.tile ?? pointToTile(rig.target));
   // The city area shows once it opens (STORY-017), and the ready settlement sends its first scout,
   // the Retkeilijä's two (STORY-089, own)
@@ -3682,6 +3688,22 @@ function rise(opened: number, reached: NonNullable<ReturnType<typeof levelGoal>>
   // The province, the state and the planet have advisors of their own: chosen once the card is closed (STORY-096)
   // Each level with advisors of its own asks for one as it opens; the city area too (STORY-105)
   if (!classic && opened <= 3) pickPending = opened;
+}
+
+/**
+ * The first meeting at the state level (STORY-094, design brief view 7): the city-states and the
+ * tribes of the home state's neighbours show on the map, and the card tells them and the rivals
+ * growing farther away, in a sentence.
+ */
+function meetOpponents(): string {
+  const p = play!;
+  const near = regions.neighbors[homeState()].flatMap(st => nativesOf.get(st) ?? []).filter(n => !nativeGone(n));
+  const tribes = tribesNow();
+  reveal([...near.flatMap(n => tilesInRings(n.tile, 1)), ...tribes.flatMap(t => tilesInRings(t.camp, 1))]);
+  const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  const rivals = p.rivals.filter(r => r.cities.length).map(r => r.name);
+  const names = rivals.length > 1 ? `${rivals.slice(0, -1).join(', ')} ja ${rivals[rivals.length - 1]}` : rivals[0];
+  return ` Naapurivaltioissa on ${count(near.length, 'kaupunkivaltio', 'kaupunkivaltiota')} ja ${count(tribes.length, 'paimentolaisheimo', 'paimentolaisheimoa')}${names ? `, ja kauempana ${rivals.length === 1 ? 'kasvaa kilpailija' : 'kasvavat kilpailijat'} ${names}` : ''}. Diplomatia, sota ja kauppa alkavat nyt.`;
 }
 
 /** Chips and panels of the province and state levels, and the unlocks. */
@@ -4049,6 +4071,8 @@ function rivalWarWorld(r: Rival): WarWorld<RivalUnit> {
 /** The rivals at war: each picks the player's city to take, builds and gathers its army, and attacks. */
 function rivalWarDay() {
   const p = play!;
+  // War belongs to the state level (STORY-094), as diplomacy does
+  if (!stateStage()) return;
   p.rivals.forEach((r, k) => {
     if (p.ties[k]?.state !== 'war' || !p.cities.length || !r.cities.length) {
       r.enemy = null;
@@ -4899,6 +4923,8 @@ frameStartPlanet();
   /** The city level's distance for a city: the camera there sees it rise. */
   cityLevelDist: () => cityViewDist(),
   /** The rivals: start states, cities and units (STORY-068). */
+  /** The opponents shown on the map and in play (STORY-094): none before the state level. */
+  opponentsShown: () => ({ natives: visibleNatives().length, camps: visibleTribes().length, rivals: visibleRivalCities().length }),
   rivals: () => (play ? play.rivals.map((r, k) => ({ id: r.id, name: r.name, start: rivalStartStates[k], cities: r.cities.map(c => ({ name: c.name, tile: c.tile, size: c.size, build: c.build })), units: r.units.map(u => u.kind) })) : []),
   /** A unit of any kind in a city, supported by none (STORY-064). */
   spawnUnit: (kind: UnitKind, city: number) => (play ? play.units.spawn(kind, play.cities[city].tile, world, null).name : null),
