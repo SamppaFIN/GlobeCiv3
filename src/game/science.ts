@@ -112,6 +112,7 @@ export const TAX_RATES = [30, 50, 70] as const;
 export type TaxRate = (typeof TAX_RATES)[number];
 /** Luxury rates (STORY-046): the share of trade that makes citizens happy. */
 export const LUX_RATES = [0, 10, 20, 30] as const;
+export type LuxRate = (typeof LUX_RATES)[number];
 
 /** A city's trade split into gold, luxury and science (the rest) by the rates. */
 export function splitTrade(trade: number, tax: number, lux = 0): { gold: number; luxury: number; science: number } {

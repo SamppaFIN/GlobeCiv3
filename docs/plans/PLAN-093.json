@@ -1,0 +1,72 @@
+{
+  "id": "PLAN-093",
+  "story": "STORY-112",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Haku (rg main.ts:stä ja src/ui:sta: suorat sijoitukset pelitilaan ja Unitsin muuttavat metodit) löysi pelaajan suorat teot: yksikön moodi (setMode) ja tehtävä (setTask), kaupunkipaikan valinta napautuksella (setSite) ja ohitus (nextSite), lippu ja retkikunta (units.flag / sendTo), kaupungin painotus (focus), vero ja ylellisyys, vallankumous, alueen painotus (setAreaPlan), valtion linja (setStateLine), tavoitelääni (targetProvince ja sendTo), kohdevaltio (setTargetState), diplomatian teot (sota, liiton purku, liitto- ja rauhanehdotus) ja kauppa. Korttien vastaukset (site, raid, treaty), rakennukset, siirrot, tutkimus, neuvonantajat ja osto olivat jo komentoja. Jokainen löydetty teko saa komennon: mode, task, pick, skip, flag, focus, tax, lux, revolution, plan, line, aim, pact ja trade. Pelaajan tavoitelääni on olemassa oleva target ja sen perään flag läänin keskelle, kuten ennen. Retkikunta on flag alueen keskelle. Diplomatian ja kaupan säännöt siirtyvät main.ts:stä simulaatioon (src/sim/game.ts), koska ne muuttavat pelitilaa; näkymä kysyy simulaatiolta kaupan tavarat ja punninnan. Komento viittaa yksikköön tunnisteella (Unit.id) eikä valinnan indeksillä, kaupunkiin ruudulla kuten build ja buy, ja kaupan tavaraan tunnisteella (nothing, maps, advance:x, resource:x, gold:n). Komento, joka ei muuta mitään (hylätty ehdotus tai vaihto, sama arvo uudelleen ei kuitenkaan), palauttaa false eikä mene lokiin. Ladattu komento tarkistetaan save.ts:ssä kenttä kentältä (tietoturvasääntö 5), ja tallennuksen rakenne ei muutu, joten SAVE_VERSION pysyy (sääntö 8). Vartijatesti (vitest) hakee main.ts:stä ja src/ui:sta pelaajan suorat teot ilman globeDebug-lohkoa, joten uusi suora teko kaatuu testiin. Uusinta: Node pelaa siemenellä 42 Oma ohjaus -pelin, jossa pelaaja antaa itse teot, ja uusii sen tallennuksen komentolokista samaan tilaan. Diplomatia, kauppa, vallankumous ja kohdevaltio eivät ehdi Node-pelissä, joten niille tehdään skenaario, jossa sama valmistelu (kilpailija tavattu, Monarkia tunnettu, valtio auki) tehdään samana päivänä pelissä ja uusinnassa. Rajaus: ydinsotakokeilu (?planet, STORY-097) on oma kokeilunsa eikä tallennu, joten se jää tämän ulkopuolelle. Neuvonantajien suorat muutokset (vero, linja, kohdevaltio) jäävät ennalleen, koska uusinta laskee ne uudelleen.",
+  "alternatives_considered": [
+    {
+      "name": "Yksi yleinen set-komento kentälle ja arvolle",
+      "pros": "Vähemmän koodia",
+      "cons": "Tarkistus olisi löysä: mikä tahansa kenttä voisi muuttua ladatusta tallennuksesta",
+      "rejected_because": "Tietoturvasääntö 5 vaatii, että komento rakennetaan tarkistetuista kentistä lajinsa mukaan"
+    },
+    {
+      "name": "Kaupan tavarat rakenteisina (TradeItem) eikä tunnisteina",
+      "pros": "Ei merkkijonojen jäsentämistä",
+      "cons": "Näkymä valitsee tavaran jo tunnisteella, ja tunniste on helppo tarkistaa listasta",
+      "rejected_because": "Tunnisteet ovat valmiina ja tarkistettavissa yhdellä listalla"
+    },
+    {
+      "name": "Neuvonantajien suorat teot samalla komennoiksi",
+      "pros": "Sääntö 7 kattaisi kaiken",
+      "cons": "Kasvattaa storya, eikä uusinta tarvitse sitä",
+      "rejected_because": "Storyn kriteeri koskee pelaajan tekoja; vanha koodi muutetaan, kun siihen muutenkin kosketaan"
+    }
+  ],
+  "files_to_change": [
+    "src/game/commands.ts",
+    "src/game/trade.ts",
+    "src/game/save.ts",
+    "src/sim/game.ts",
+    "src/globe/main.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.test.ts",
+    "src/sim/boundary.test.ts",
+    "tests/sim/run.test.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Haku: kaikki pelaajan suorat pelitilan muutokset main.ts:stä ja src/ui:sta, lista tikettiin",
+      "verify": "Lista vastaa storyn kriteerin listaa; poikkeamat kirjataan"
+    },
+    {
+      "step": 2,
+      "action": "Vartijatesti, joka löytää nykyiset suorat teot",
+      "verify": "Testi kaatuu ennen muutosta ja nimeää rivit"
+    },
+    {
+      "step": 3,
+      "action": "Komennot, simulaation käsittelijät ja diplomatian ja kaupan siirto simulaatioon; main.ts lähettää komennot",
+      "verify": "Vartijatesti läpi, tsc ja Vitest"
+    },
+    {
+      "step": 4,
+      "action": "save.ts tarkistaa uudet komennot; save.test ja commands.test",
+      "verify": "Virheelliset hylätään, oikeat latautuvat"
+    },
+    {
+      "step": 5,
+      "action": "Uusinta Nodessa: pelaajan oma peli ja skenaario diplomatialle, kaupalle, vallankumoukselle ja kohdevaltiolle",
+      "verify": "Sama tila ja samat komennot uusinnassa"
+    },
+    {
+      "step": 6,
+      "action": "Kultainen tila ja E2E-osajoukko (diplomacy, trade, play, city, province, research, advisors, save, golden)",
+      "verify": "Kultainen tila ennallaan, E2E läpi"
+    }
+  ],
+  "status": "approved"
+}

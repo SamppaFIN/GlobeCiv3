@@ -71,6 +71,9 @@ test('a rival met has a diplomacy card: its ties and attitude, war, peace and an
   await expect(card.locator('.tile-rows')).toContainText(/Rauha\s*ei ennen kuin sota on kestänyt 10 päivää/);
   await card.getByRole('button', { name: 'Ehdota rauhaa' }).click();
   expect((await ties(page))[0].state).toBe('war');
+  // The acts are the player's commands (STORY-112): the refused alliance and peace changed nothing and are not in the log
+  const pacts = (await page.evaluate(() => (window as any).globeDebug.golden().commands)).filter((e: any) => e.cmd.kind === 'pact').map((e: any) => e.cmd.act);
+  expect(pacts).toEqual(['alliance', 'break', 'war']);
   await card.getByRole('button', { name: 'Sulje' }).click();
 
   // After twenty days of war, not too hostile, the rival proposes peace on a card that stops the game

@@ -7,7 +7,7 @@
  * hostile it trades nothing. An accepted trade raises its attitude by TRADE_ATTITUDE.
  */
 import type { Relation } from './diplomacy';
-import { advanceCost, STUDY_COST, type Advance } from './science';
+import { ADVANCE_LIST, advanceCost, RESOURCE_KINDS, STUDY_COST, type Advance } from './science';
 import type { ResourceKind } from './terrainTypes';
 
 export type TradeItem =
@@ -21,6 +21,27 @@ export const MAPS_WORTH = 10;
 export const TRADE_ATTITUDE = 10;
 /** Days between two trades of maps with a rival. */
 export const MAPS_EVERY = 30;
+/** The amounts of gold the player can give (own). */
+export const TRADE_GOLD = [25, 50, 100] as const;
+
+/** An item's id on the trade card and in the trade command (STORY-112). */
+export function tradeId(item: TradeItem): string {
+  switch (item.kind) {
+    case 'nothing':
+    case 'maps': return item.kind;
+    case 'advance':
+    case 'resource': return `${item.kind}:${item.id}`;
+    case 'gold': return `gold:${item.amount}`;
+  }
+}
+
+/** Every id an item can have, for checking a loaded command (security rule 5). */
+export const TRADE_IDS: readonly string[] = [
+  'nothing', 'maps',
+  ...ADVANCE_LIST.map(id => tradeId({ kind: 'advance', id })),
+  ...RESOURCE_KINDS.map(id => tradeId({ kind: 'resource', id })),
+  ...TRADE_GOLD.map(amount => tradeId({ kind: 'gold', amount })),
+];
 
 /** What an item is worth to the one who gets it, who knows `known` advances. */
 export function worth(item: TradeItem, known: number): number {

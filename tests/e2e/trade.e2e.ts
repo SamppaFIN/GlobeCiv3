@@ -76,6 +76,12 @@ test('a trade with a rival: an advance for an advance, maps and a kind for gold,
   await card.getByRole('button', { name: 'Tarjoa vaihto' }).click();
   await expect.poll(async () => (await page.evaluate(() => (window as any).globeGame.state.gold))).toBe(gold - 50);
   expect(kind).toBeTruthy();
+  // The trades taken are the player's commands (STORY-112); the one not worth it is not in the log
+  const trades = (await page.evaluate(() => (window as any).globeDebug.golden().commands)).filter((e: any) => e.cmd.kind === 'trade');
+  expect(trades.slice(-2)).toMatchObject([
+    { by: 'player', cmd: { rival: 0, give: 'gold:25', get: 'maps' } },
+    { by: 'player', cmd: { rival: 0, give: 'gold:25', get: expect.stringMatching(/^resource:/) } },
+  ]);
   // Hostile, it trades nothing
   await page.evaluate(() => (window as any).globeDebug.setAttitude(0, -60));
   await expect(verdict).toHaveText(`${name} ei vaihda: se on vihamielinen`);

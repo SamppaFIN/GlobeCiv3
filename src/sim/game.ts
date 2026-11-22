@@ -15,8 +15,9 @@
 import * as THREE from 'three';
 import { groundHeight } from '../game/relief';
 import { bestTile, placeAll, spots, type Ground } from '../game/placement';
-import { execute, type Actor, type Command, type CommandWorld, type RaidChoice } from '../game/commands';
-import { newTies, rivalMove, setState, tiesDay, BORDER_TILES } from '../game/diplomacy';
+import { execute, type Actor, type Command, type CommandWorld, type PactAct, type RaidChoice } from '../game/commands';
+import { accepts, attitudeWord, newTies, rivalMove, setState, tiesDay, BORDER_TILES } from '../game/diplomacy';
+import { acceptsTrade, factor, MAPS_EVERY, TRADE_ATTITUDE, TRADE_GOLD, tradeId, worth, type TradeItem } from '../game/trade';
 import { neighbors, pointToTile, tileCenter } from '../globe/hexTiles';
 import { Regions } from '../globe/regions';
 import { heightRange } from '../globe/terrain';
@@ -27,7 +28,7 @@ import { findPath, nearestTile, tilesInRings } from '../game/pathfinding';
 import { borderRings, cultureGain, heldByBorder, provinceCover, tileOwner, type BorderSource } from '../game/culture';
 import { connectedKinds, connectedShields, roadNetwork, strategicTiles, unconnected, type StrategicKind, type StrategicTile } from '../game/connection';
 import { FAIR_SITE, feedsCity, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
-import { ADVANCES, LUX_RATES, NEEDS, isKind, opensFrom, studyName, type Advance } from '../game/science';
+import { ADVANCES, LUX_RATES, NEEDS, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type LuxRate, type TaxRate } from '../game/science';
 import { revolutionDays } from '../game/government';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
@@ -42,7 +43,7 @@ import { city as cityRef, unit as unitRef, type Rich, type Segment } from '../ga
 import { marksPassed, record } from '../game/history';
 import { defenseBonus, goldBonus, goodsBonus, scienceBonus, settleBonus, sightBonus, yieldBonus, type ActiveBonuses } from '../game/bonuses';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
-import { directionName, type Unit, type World } from '../game/units';
+import { directionName, type AreaPlan, type Mode, type SettlerTask, type StateLine, type Unit, type World } from '../game/units';
 import { bestJob, IMPROVEMENT_NAMES, workDays, type Job } from '../game/improvements';
 import { defenseOf, holdChance, raidRoll, raidStart, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { type FirstKind } from '../game/save';
@@ -644,12 +645,178 @@ function targetAt(province: number): boolean {
 
 /** Every act of the player and the advisors goes through here and into the log (STORY-086, rule 7). */
 /** What the commands act on (STORY-086). */
-const commandWorld = (): CommandWorld => ({ cities: play!.cities, research: play!.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt, answerSite, answerRaid, answerTreaty });
+const commandWorld = (): CommandWorld => ({
+  cities: play!.cities, research: play!.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt, answerSite, answerRaid, answerTreaty,
+  setMode: modeOf, setTask: taskOf, pickSite, skipSite, sendTo: tile => play!.units.sendTo(tile, world), setTax, setLux, revolution: startRevolution, setPlan, setLine, aim: aimAt, pact: pactWith, trade: tradeWith,
+});
 export function dispatch(cmd: Command, by: Actor): boolean {
   if (!play) return false;
   const done = execute(cmd, commandWorld());
   if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
   return done;
+}
+
+// ─── The player's acts (STORY-112) ────────────────
+// What the HUD, the cards and the panels do, each as a command: the same rules as the buttons
+// had in the view (main.ts), and false where nothing changes, so that it stays out of the log.
+
+const unitById = (id: number) => play!.units.units.find(u => u.id === id);
+
+function modeOf(unit: number, mode: Mode): boolean {
+  const u = unitById(unit);
+  if (!u) return false;
+  play!.units.setMode(u, mode);
+  return true;
+}
+
+/** Only a settler founds cities or improves land; a worker keeps to its roads (STORY-093). */
+function taskOf(unit: number, task: SettlerTask): boolean {
+  const u = unitById(unit);
+  if (!u || u.kind !== 'settler') return false;
+  play!.units.setTask(u, task, world);
+  return true;
+}
+
+const pickSite = (tile: number) => play!.units.setSite(tile, world);
+
+function skipSite(): boolean {
+  play!.units.nextSite();
+  return true;
+}
+
+function setTax(tax: TaxRate): boolean {
+  play!.tax = tax;
+  return true;
+}
+
+function setLux(lux: LuxRate): boolean {
+  play!.lux = lux;
+  return true;
+}
+
+function setPlan(area: number, plan: AreaPlan): boolean {
+  if (area < 0 || area >= regions.centers[2].length) return false;
+  play!.units.setAreaPlan(area, plan, world);
+  return true;
+}
+
+function setLine(line: StateLine): boolean {
+  play!.units.setStateLine(line, world);
+  return true;
+}
+
+/** The planet level's target: an open state not yet conquered (STORY-057). */
+function aimAt(state: number): boolean {
+  const won = conquestNow();
+  if (play!.targetState === state || !won.open.has(state) || won.conquered.has(state)) return false;
+  setTargetState(state, null);
+  return true;
+}
+
+/** What the player does with a rival met (STORY-076): declare war, break the alliance, or propose one or peace. */
+function pactWith(k: number, act: PactAct): boolean {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  if (!r || !t?.met) return false;
+  if (act === 'war' && t.state === 'peace') {
+    setState(t, 'war', clock.day, true);
+    view.notice(`Julistitte sodan: ${r.name}`);
+    return true;
+  }
+  if (act === 'break' && t.state === 'alliance') {
+    setState(t, 'peace', clock.day, true);
+    view.notice(`Liitto purettu: ${r.name}`);
+    return true;
+  }
+  if ((act === 'alliance' && t.state === 'peace') || (act === 'peace' && t.state === 'war')) {
+    if (accepts(t, clock.day, act)) {
+      setState(t, act, clock.day);
+      view.notice(`${r.name} hyväksyi ${act === 'alliance' ? 'liiton' : 'rauhan'}`);
+      return true;
+    }
+    // Refused: nothing changes, so nothing goes into the log
+    view.notice(`${r.name} kieltäytyi · asenne ${attitudeWord(t.attitude)}`);
+  }
+  return false;
+}
+
+// ─── Trades (STORY-078) ────────────────────────────
+// Sami 2026-10-20: maps, advances and kinds of resource are traded, and the rival weighs a
+// trade by its worth and its attitude (trade.ts). Maps once in MAPS_EVERY days each way.
+
+export interface TradeOption { id: string; item: TradeItem; name: string }
+
+/** What the player may give a rival and get from it now, each with its id and name. */
+export function tradeItems(k: number): { give: TradeOption[]; get: TradeOption[] } {
+  const p = play!;
+  const r = p.rivals[k];
+  const maps = clock.day - p.ties[k].maps >= MAPS_EVERY;
+  const option = (item: TradeItem, name: string): TradeOption => ({ id: tradeId(item), item, name });
+  const nothing = option({ kind: 'nothing' }, 'Ei mitään');
+  const advances = (from: Research, to: Research) => [...from.known].filter(a => !to.known.has(a)).map(a => option({ kind: 'advance', id: a }, `Keksintö: ${ADVANCES[a].name}`));
+  return {
+    give: [
+      nothing,
+      ...(maps ? [option({ kind: 'maps' }, 'Kartat')] : []),
+      ...advances(p.research, r.research),
+      ...TRADE_GOLD.filter(n => n <= p.gold).map(n => option({ kind: 'gold', amount: n }, `${n} kultaa`)),
+    ],
+    get: [
+      nothing,
+      ...(maps ? [option({ kind: 'maps' }, `Kartat: ${r.name}n kaupunkien ympäristö`)] : []),
+      ...advances(r.research, p.research),
+      // The rivals know every kind; one the player does not know yet keeps its unknown name
+      ...RESOURCE_KINDS.filter(kd => !p.research.kinds.has(kd) && r.research.kinds.has(kd)).map(kd => option({ kind: 'resource', id: kd }, `Resurssilaji: ${studyName(kd)}`)),
+    ],
+  };
+}
+
+/** A trade weighed (the first item, nothing, for an id not offered now): what the rival gets and gives, as worth to each, and whether it accepts. */
+export function weighTrade(k: number, giveId: string, getId: string) {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  const items = tradeItems(k);
+  const give = items.give.find(x => x.id === giveId) ?? items.give[0];
+  const get = items.get.find(x => x.id === getId) ?? items.get[0];
+  const got = worth(give.item, r.research.known.size);
+  const given = worth(get.item, p.research.known.size);
+  return { items, give, get, got, given, ok: acceptsTrade(t.attitude, t.state, got, given), f: factor(t.attitude, t.state) };
+}
+
+/** The player offers a trade: accepted, both sides get their part and the attitude rises. */
+function tradeWith(k: number, giveId: string, getId: string): boolean {
+  const p = play!;
+  const r = p.rivals[k];
+  const t = p.ties[k];
+  if (!r || !t?.met) return false;
+  const w = weighTrade(k, giveId, getId);
+  // Only what the card offers now
+  if (w.give.id !== giveId || w.get.id !== getId) return false;
+  if (!w.ok) {
+    view.notice(`${r.name} kieltäytyi vaihdosta`);
+    return false;
+  }
+  const take = (item: TradeItem, toPlayer: boolean) => {
+    if (item.kind === 'maps') {
+      t.maps = clock.day;
+      if (toPlayer) for (const c of r.cities) reveal(tilesInRings(c.tile, 3));
+    } else if (item.kind === 'advance') {
+      if (toPlayer) {
+        p.research.known.add(item.id);
+        if (p.research.target === item.id) p.research.target = null;
+      } else r.research.known.add(item.id);
+    } else if (item.kind === 'resource' && toPlayer) {
+      p.research.kinds.add(item.id);
+      if (p.research.target === item.id) p.research.target = null;
+    } else if (item.kind === 'gold' && !toPlayer) p.gold -= item.amount;
+  };
+  take(w.give.item, false);
+  take(w.get.item, true);
+  t.attitude = Math.min(100, t.attitude + TRADE_ATTITUDE);
+  view.notice(`Vaihto: ${r.name} · annoit ${w.give.name.toLowerCase()}, sait ${w.get.name.toLowerCase()}`);
+  return true;
 }
 
 /** Buy what the city on the tile builds, out of the treasury (STORY-038; a command, STORY-098). */
