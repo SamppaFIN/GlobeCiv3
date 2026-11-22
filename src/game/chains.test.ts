@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BASE, buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_RULES, eat, GOODS, has, MAKE_DAYS, mealsReady, newChain, startSite, workDay, type ChainBuilding, type ChainState } from './chains';
-import { settlementDone, settlementStart, settlementSteps } from './chains';
+import { readySettlements, settlementDone, settlementStart, settlementSteps } from './chains';
 
 const total = (s: ChainState) => GOODS.reduce((n, g) => n + has(s, g), 0);
 /** Build a site to the end; the days it took. */
@@ -178,5 +178,15 @@ describe('a settlement founded in the city area (STORY-091)', () => {
     expect(settlementSteps(start, 3)).toEqual({ base: false, food: false, size: true });
     // A city of size 1 with all of them is a settlement still growing
     expect(settlementSteps(settlementStart(all), 1)).toEqual({ base: true, food: true, size: false });
+  });
+});
+
+describe('the city area\'s ready settlements (STORY-092)', () => {
+  const ready = { buildings: ['lumberjack', 'sawmill', 'quarry', 'fishery'], size: 3, chain: newChain() };
+  it('counts a city of chains once it is ready, and a city of the old rules as it stands', () => {
+    expect(readySettlements([])).toBe(0);
+    expect(readySettlements([ready, { ...ready, size: 2 }, { ...ready, buildings: ['sawmill'] }])).toBe(1);
+    // Taken, the old start or a save from before: no chains
+    expect(readySettlements([ready, { buildings: [], size: 1 }])).toBe(2);
   });
 });

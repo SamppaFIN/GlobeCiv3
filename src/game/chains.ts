@@ -107,6 +107,13 @@ export function settlementSteps(built: readonly string[], size: number): { base:
 export const settlementDone = (built: readonly string[], size: number) => Object.values(settlementSteps(built, size)).every(Boolean);
 
 /**
+ * The ready settlements among cities (STORY-092; Sami 2026-11-22): a city of chains once it is a
+ * ready settlement, and one of the old rules (taken, the old start, a save from before) as it stands.
+ */
+export const readySettlements = (cities: readonly { buildings: readonly string[]; size: number; chain?: unknown }[]) =>
+  cities.filter(c => !c.chain || settlementDone(c.buildings, c.size)).length;
+
+/**
  * The buildings a city founded in the city area starts with (STORY-091; Sami 2026-11-22, own):
  * the base and the first chain of food whose every building has ground near it, bread before
  * fish. A building with no ground near the city is left out, so such a city is not ready.

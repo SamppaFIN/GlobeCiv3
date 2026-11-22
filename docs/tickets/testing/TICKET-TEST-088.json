@@ -1,0 +1,67 @@
+{
+  "id": "TICKET-TEST-088",
+  "story": "STORY-092",
+  "implementation_ticket": "TICKET-IMPL-088",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux, Chromium headless (Playwright 1.64), vite preview, siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "chains.test: readySettlements laskee valmiin ketjukaupungin, ei kasvavaa eikä perustatonta, ja vanhojen sääntöjen kaupungin sellaisenaan; goals.test ja progress.test: kolme valmista avaa läänin",
+        "expected": "Kriteeri 1 (logiikka)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "area-goal.e2e: uusi peli, valmis pääkaupunki avaa kaupunkialueen (Kartoittaja); tavoite 'Kolme valmista settlementtiä' ja 1 / 3 valmiina; kaksi kaupunkia foundAtin kautta kokoon 1, vihje kertoo kasvavat; koko 3 nostaa mittarin 2 / 3:een ja kolmas avaa läänin ja maksaa 60 kultaa",
+        "expected": "Kriteeri 1",
+        "result": "Läpi; kuvakaappaus province-open.png",
+        "outcome": "pass"
+      },
+      {
+        "steps": "area-goal.e2e: nousun jälkeen kaupunkialueen neuvonantaja antaa yhä komentoja kaupungeille",
+        "expected": "Kriteeri 2 (neuvonantaja jatkaa)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Mittausajo selaimessa neuvonantajien varassa (kaupunkitasolla Ruokkija), siemen 42",
+        "expected": "Kriteeri 2 (nousu ilman pelaajaa)",
+        "result": "Lääni aukesi: Kasvattaja päivänä 104, Kartoittaja 107 ja Vartija 98 (kaupunkialue avautui päivinä 24–25). Kolmella kaupungilla ennen muutosta: 69, 77 ja 60. Node-autopilottia (STORY-085) ei vielä ole.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "goals, unlock (3), play (5), new-start, settlement ja onboarding (4)",
+        "expected": "Ei regressiota",
+        "result": "Läpi; onboarding.e2e:n ensimmäinen testi epäonnistui kerran new-start.e2e:n jälkeen (kaupunkikortti ei auennut) ja meni läpi yksin ajettuna",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results: area-goal.e2e province-open.png"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Kolme valmista settlementtiä tuntuu kaupunkialueen omalta päämäärältä",
+        "checked": false
+      },
+      {
+        "item": "Kaupunkialueen kesto (noin 75–85 päivää) ei ole liian pitkä",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

@@ -149,7 +149,7 @@ test('a level with advisors of its own offers its three once its rise card is cl
   await area.locator('.onboard-option').filter({ hasText: 'Kartoittaja' }).click();
   // The province has its own: after its card, its three
   await page.evaluate(() => (window as any).globeDebug.rise());
-  await expect(page.getByRole('heading', { name: 'Lääni avautui, zoomaa ulos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos' })).toBeVisible();
   await page.getByRole('button', { name: 'Myöhemmin' }).click();
   const pick = page.getByRole('dialog', { name: 'Kuka hoitaa lääniäsi?' });
   await expect(pick.locator('.onboard-option-name')).toHaveText(['Asuttaja', 'Tutkimusmatkailija', 'Vartija']);

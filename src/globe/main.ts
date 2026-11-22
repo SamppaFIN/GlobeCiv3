@@ -76,7 +76,7 @@ import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
-import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, settlementDone, settlementStart, settlementSteps, SETTLEMENT_SIZE, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
+import { buildDay, chainOpen, CHAIN_BUILDINGS, CHAIN_ONLY, CHAIN_RULES, eat, GOODS, has as stockOf, isChainBuilding, newChain, readySettlements, settlementDone, settlementStart, settlementSteps, SETTLEMENT_SIZE, siteMissing, startSite, waitsForBase, workDay, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, withMood, BUILDS, isSoldier, buy, buyCost, cityDay, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus, type Support } from '../game/cities';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
@@ -782,7 +782,7 @@ function startPlay(startCity: number, saved?: SaveData) {
       play.scienceOpen = true;
       play.scienceSelected = null;
     },
-    goalHint: () => { const g = play && levelGoal(play.progress.openLevel); if (g) discoveryCard.notice(g.level === 4 ? settlementHint() : g.hint); },
+    goalHint: () => { const g = play && levelGoal(play.progress.openLevel); if (g) discoveryCard.notice(g.level === 4 ? settlementHint() : g.level === 3 ? settlementsHint() : g.hint); },
     openList: () => {
       if (!play) return;
       play.listOpen = !play.listOpen;
@@ -2854,7 +2854,7 @@ function levelState(): LevelState {
   const capital = p.cities.find(c => c.capital) ?? p.cities[0];
   return {
     settlement: capital ? Object.values(settlementSteps(capital.buildings, capital.size)).filter(Boolean).length : 0,
-    cities: p.cities.length,
+    settlements: readySettlements(p.cities),
     provinces: heldIn(conquestNow(), homeState()),
   };
 }
@@ -4512,6 +4512,25 @@ function settlementHint(): string {
   ].join(' · ')}.`;
 }
 
+/**
+ * The city area's goal step by step (STORY-092): the ready settlements, and each city still
+ * growing with what it lacks, and with fewer than three cities the settlers there are.
+ */
+function settlementsHint(): string {
+  const p = play!;
+  const ready = readySettlements(p.cities);
+  const growing = p.cities.filter(c => c.chain && !settlementDone(c.buildings, c.size)).map(c => {
+    const step = settlementSteps(c.buildings, c.size);
+    return `${c.name} ${!step.base ? 'tarvitsee perustan' : !step.food ? 'tarvitsee ruokaketjun' : `koko ${c.size} / ${SETTLEMENT_SIZE}`}`;
+  });
+  const settlers = p.units.units.filter(u => u.kind === 'settler').length;
+  return [
+    `Valmiita settlementtejä ${Math.min(ready, 3)} / 3`,
+    ...(growing.length ? [`kasvamassa: ${growing.join(', ')}`] : []),
+    p.cities.length < 3 ? (settlers ? `uudisasukkaita ${settlers}: perusta niillä kaupunkeja` : 'perusta lisää kaupunkeja uudisasukkailla') : null,
+  ].filter(Boolean).join(' · ') + '.';
+}
+
 /** The top panel's meter: how far the deepest open level's goal is (STORY-087), then the states conquered. */
 function meterOf(): Pick<GameHudState, 'mapped' | 'meterName' | 'unlockAt' | 'meterText'> {
   const goal = levelGoal(play!.progress.openLevel);
@@ -4934,7 +4953,7 @@ frameStartPlanet();
   rise: () => {
     const g = play && levelGoal(play.progress.openLevel);
     if (!g) return null;
-    const opened = advance(play!.progress, { settlement: 3, cities: g.need, provinces: g.need });
+    const opened = advance(play!.progress, { settlement: 3, settlements: g.need, provinces: g.need });
     if (opened !== null) rise(opened, g);
     return opened;
   },

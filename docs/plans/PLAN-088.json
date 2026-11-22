@@ -1,0 +1,47 @@
+{
+  "id": "PLAN-088",
+  "story": "STORY-092",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-22",
+  "approach": "Samin valinta 2026-11-22: kaupunkialueen tavoite on kolme valmista settlementtiä. chains.ts:n readySettlements laskee valmiit: ketjukaupunki, kun se on valmis settlementti (STORY-089), ja vanhojen sääntöjen kaupunki (vallattu, vanha alku, vanha tallennus) sellaisenaan. goals.ts:n LevelState saa kentän settlements kentän cities tilalle, ja tason 3 tavoite on 'Kolme valmista settlementtiä' (mittari 'valmiina', 60 kultaa ennallaan). Tavoitteen vihje kertoo valmiit, jokaisen kasvavan kaupungin puutteen (perusta, ruokaketju tai koko) ja alle kolmella kaupungilla uudisasukkaat. Nousukortin otsikko kertoo kolme valmista settlementtiä. Kaupunkialueen neuvonantaja jatkaa nousun jälkeen kuten ennenkin (advisorDay ajaa sen tasosta riippumatta). Autopilottia (STORY-085) ei vielä ole Nodessa, joten nousu mitattiin selaimessa neuvonantajien varassa.",
+  "alternatives_considered": [
+    {
+      "name": "Kolme kaupunkia kuten ennen",
+      "pros": "Ei muutosta",
+      "cons": "Kaupunkialue ei käsittele kaupunkitason valmiita tuotoksia",
+      "rejected_because": "Sami valitsi kolme valmista settlementtiä"
+    },
+    {
+      "name": "Kolme kaupunkia ja 60 % kotiläänistä kartoitettuna",
+      "pros": "Kriteerin sanamuoto",
+      "cons": "Palauttaa kartoituksen nousuehdoksi, jonka STORY-087 poisti",
+      "rejected_because": "Sami valitsi kolme valmista settlementtiä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/chains.ts",
+    "src/game/goals.ts",
+    "src/globe/main.ts"
+  ],
+  "open_questions": [
+    "Siemenellä 42 lääni aukeaa nyt päivinä 98–107, kun aiemmin kolme kaupunkia avasi sen päivinä 60–77. Kaupunkialueella kuluu 74–83 päivää. Kalibroidaan autopilotilla ja pelitestillä."
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "readySettlements ja tason 3 tavoite",
+      "verify": "chains.test, goals.test ja progress.test"
+    },
+    {
+      "step": 2,
+      "action": "Vihje, mittari ja nousu",
+      "verify": "area-goal.e2e, goals.e2e ja unlock.e2e"
+    },
+    {
+      "step": 3,
+      "action": "Nousu neuvonantajien varassa siemenellä 42",
+      "verify": "Mittausajo Kasvattajalla, Kartoittajalla ja Vartijalla"
+    }
+  ],
+  "status": "approved"
+}

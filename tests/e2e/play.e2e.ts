@@ -108,7 +108,7 @@ test('scouts map the fog on their own; the meter counts the cities toward the pr
   await speed(page, '4×');
   await page.waitForFunction(m => (window as any).globeGame.state.mapped > m + 30, before, { timeout: 60_000 });
   // Mapping no longer opens the province: the meter is the city area's goal
-  await expect(page.locator('.hud-meter-value')).toHaveText(/^[0-2] \/ 3 kaupunkia$/);
+  await expect(page.locator('.hud-meter-value')).toHaveText(/^[0-2] \/ 3 valmiina$/);
   expect(errors).toEqual([]);
 });
 
