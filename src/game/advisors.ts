@@ -47,6 +47,9 @@ export const TOWN_ADVISORS: Record<TownAdvisor, { name: string; does: string }> 
 };
 
 /** A save from before STORY-105 had the city area's advisor run the city level too. */
+/** The advisor level of a zoom level: the city level has its own (STORY-105). */
+export const advisorOfLevel = (level: number): AdvisorLevel => (level >= 4 ? 'town' : level === 3 ? 'city' : level === 2 ? 'province' : level === 1 ? 'state' : 'planet');
+
 export const TOWN_OF_CITY: Record<CityAdvisor, TownAdvisor> = { none: 'none', growth: 'feed', explore: 'roam', defend: 'build' };
 
 export type CityAdvisor = 'none' | 'growth' | 'explore' | 'defend';

@@ -21,7 +21,7 @@ import { ADVANCE_LIST, ADVANCES, KIND_TERRAIN, NEEDS, opensFrom, RESOURCE_KINDS,
 import { RESOURCES, TERRAIN_RULES, type ResourceKind } from './terrainTypes';
 import { SIGHT } from './units';
 import { ATTACK, ATTACKERS, isAttacker } from './war';
-import { term, type Ref, type Rich, type Segment } from '../ui/richText';
+import { term, type Ref, type Rich, type Segment } from './rich';
 
 /** A resource building's purpose for the city card: its kind, bonus and reward. */
 const resourcePurpose = (b: ResourceBuilding, kindName = RESOURCES[RESOURCE_BUILDINGS[b].kind].name) => {

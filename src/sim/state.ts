@@ -34,7 +34,7 @@ import type { FirstKind } from '../game/save';
 import type { Research } from '../game/science';
 import type { Units } from '../game/units';
 import type { War } from '../game/war';
-import type { Rich } from '../ui/richText';
+import type { Rich } from '../game/rich';
 
 export interface GameState {
   units: Units;

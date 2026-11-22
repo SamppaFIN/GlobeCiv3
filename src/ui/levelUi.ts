@@ -15,7 +15,8 @@ export interface UnlockCard {
 }
 
 /** Design 5a: "Uusi taso avautui", a pinch hint, the desktop hint and two choices. */
-export function createUnlockCard(root: HTMLElement, onZoomOut: () => void): UnlockCard {
+/** The card of a level that opened: zoom out to it, or later; either closes it, and onClose follows. */
+export function createUnlockCard(root: HTMLElement, onZoomOut: () => void, onClose: () => void = () => {}): UnlockCard {
   const el = document.createElement('section');
   el.className = 'unlock-card';
   el.setAttribute('role', 'dialog');
@@ -34,8 +35,8 @@ export function createUnlockCard(root: HTMLElement, onZoomOut: () => void): Unlo
     </div>`;
   root.appendChild(el);
   const hide = () => { el.hidden = true; };
-  el.querySelector('.unlock-go')!.addEventListener('click', () => { hide(); onZoomOut(); });
-  el.querySelector('.unlock-later')!.addEventListener('click', hide);
+  el.querySelector('.unlock-go')!.addEventListener('click', () => { hide(); onZoomOut(); onClose(); });
+  el.querySelector('.unlock-later')!.addEventListener('click', () => { hide(); onClose(); });
   return {
     show(title, text = '') {
       el.querySelector('.unlock-title')!.textContent = title;

@@ -15,7 +15,7 @@ import { mix } from './personNames';
 import { RESOURCE_KINDS } from './science';
 import type { Era } from './persons';
 import { RESOURCES, type Terrain } from './terrainTypes';
-import { city as cityRef, term, unit as unitRef, type Rich, type Segment } from '../ui/richText';
+import { city as cityRef, term, unit as unitRef, type Rich, type Segment } from './rich';
 
 export type HistoryEvent =
   | { kind: 'founded'; day: number; founder: string | null; terrain: Terrain; resource: string | null; near: { name: string; tile: number } | null }
