@@ -47,10 +47,10 @@
     "tests/e2e/province.e2e.ts (uusi)"
   ],
   "open_questions": [
-    "Sami: kriteerin 1 tarkennus. Freecivissä kulttuuri ei siirrä rajoja, joten rajan pohja (radius_sq 5 + koko) ja kulttuuripisteet ovat civ2civ3:n lukuja ja kulttuurin vaikutus rajaan on oma sääntö, ja strateginen resurssi antaa läänitason tuoton vasta yhdistettynä. Hyväksytkö tarkennuksen?",
-    "Sami: yhdistetyn resurssin sääntö. Suositus: läänitason oma tuotto (jokainen läänin kaupunki saa lajin rakennuksen tuoton: hevoset +1, hiili +2, öljy +3 tuotantoa), resurssirakennukset ennallaan. Vaihtoehto: talli, paja ja öljylähde tuottavat vasta yhdistettyinä.",
-    "Sami: lääni hallussa myös, kun rajasi kattaa siitä vähintään 10 maaruutua, vai pysyykö sääntö 'kaupunki läänissä' sellaisenaan?",
-    "Sami: maaherran hovi ja hukka omaksi storyksi (STORY-110) MVP:n jälkeen vai MVP:hen? MVP:ssä on jo 24 storya (avoin kysymys 19). Siirron jälkeen tasot-ja-aikakaudet.md:n läänirivi päivitetään.",
+    "Ratkaistu 2026-11-22 (Sami): kriteerin 1 tarkennus hyväksyttiin: rajan pohja ja kulttuuripisteet ovat civ2civ3:n lukuja, kulttuurin vaikutus rajaan on oma sääntö, ja strateginen resurssi antaa läänitason tuoton vasta yhdistettynä.",
+    "Ratkaistu 2026-11-22 (Sami): yhdistetty laji antaa jokaiselle läänin kaupungille lajin rakennuksen tuoton, ja resurssirakennukset pysyvät ennallaan.",
+    "Ratkaistu 2026-11-22 (Sami): lääni on hallussa myös, kun raja kattaa siitä vähintään 10 maaruutua.",
+    "Ratkaistu 2026-11-22 (Sami): maaherran hovi ja hukka ovat oma story STORY-110 MVP:n jälkeen.",
     "Paimentolaiset ovat valtiotasolla (STORY-094), joten läänitasolla ei ole vastustajaa, eikä kaupunkivaltioiden ja kilpailijoiden rajoja vielä lasketa. tileOwner ottaa ne valtiotasolla, kun Sami haluaa kilpailevat rajat.",
     "Kulttuurin 20 pistettä radius_sq:ta kohden, 5 renkaan katto, 10 maaruudun hallintaraja ja yhdistetyn lajin tuotto ovat omia lukuja. Ne kalibroidaan autopilotilla siemenellä 42: pääkaupungin raja kasvaa läänitasolla kulttuurista ainakin kerran ennen valtiotason avautumista, eikä kotivaltion valtaus nopeudu yli neljänneksellä."
   ],
@@ -86,5 +86,5 @@
       "verify": "Mittaus kirjataan TICKET-TEST-090:een laitteen ja menetelmän kanssa; koko E2E-sarja ja CI vihreä"
     }
   ],
-  "status": "draft"
+  "status": "approved"
 }

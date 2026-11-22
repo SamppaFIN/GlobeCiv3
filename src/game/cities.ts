@@ -139,7 +139,7 @@ export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly st
  * genus Convert, data/classic/buildings.ruleset commit 27a6a0c1; Civ I has none). After a
  * soldier or a building the city goes on to it (STORY-039).
  */
-export type Build = 'warrior' | 'phalanx' | 'settler' | 'scout' | Attacker | Building | 'coinage';
+export type Build = 'warrior' | 'phalanx' | 'settler' | 'scout' | 'worker' | Attacker | Building | 'coinage';
 /** Soldiers defend their city; a phalanx twice as well (STORY-043). */
 export const isSoldier = (b: Build): b is 'warrior' | 'phalanx' => b === 'warrior' || b === 'phalanx';
 export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> = {
@@ -154,6 +154,8 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   settler: { name: 'Uudisasukas', cost: 40, pop: 1 },
   // Own (STORY-070): Freeciv civ1 has no explorer
   scout: { name: 'Tiedustelija', cost: 20, pop: 0 },
+  // Freeciv civ2civ3 units.ruleset Workers (STORY-093): build_cost 20, pop_cost 0, uk_shield 1, no tech
+  worker: { name: 'Työläinen', cost: 20, pop: 0 },
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
   market: { name: 'Tori', cost: 80, pop: 0 },
@@ -241,6 +243,8 @@ export interface City {
   chain?: ChainState;
   /** What happened to the city, for its chronicle (STORY-106, history.ts); a save from before has none. */
   history?: HistoryEvent[];
+  /** Culture gathered (STORY-093, culture.ts): it widens the border at the province level; a save from before has 0. */
+  culture?: number;
 }
 
 /** 1 when the building stands on its best ground (STORY-071, placement.ts). */

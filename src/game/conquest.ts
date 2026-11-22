@@ -5,7 +5,9 @@
  * scouts, flags and city sites stay in the open states. Conquering the home state opens the
  * planet level. Areas are numbered so that area / 7 is the province and area / 49 the state.
  * A province without land counts as held (STORY-058): no city can stand there, and some home
- * states have one (seeds 5 and 13).
+ * states have one (seeds 5 and 13). At the province level a border that covers ten of a
+ * province's land tiles holds it too (STORY-093, culture.ts; Sami 2026-11-22): the rule only
+ * adds provinces held.
  */
 export const PROVINCES_PER_STATE = 7;
 
@@ -19,8 +21,8 @@ export interface Conquest {
  * What the cities in these areas hold, conquer and open, from the home state, the state
  * neighbours and which provinces have land.
  */
-export function conquest(cityAreas: readonly number[], homeState: number, neighbors: readonly (readonly number[])[], hasLand: (province: number) => boolean = () => true): Conquest {
-  const held = new Set(cityAreas.map(a => Math.floor(a / 7)));
+export function conquest(cityAreas: readonly number[], homeState: number, neighbors: readonly (readonly number[])[], hasLand: (province: number) => boolean = () => true, byBorder: readonly number[] = []): Conquest {
+  const held = new Set([...cityAreas.map(a => Math.floor(a / 7)), ...byBorder]);
   const states = new Set([homeState, ...[...held].map(p => Math.floor(p / 7))]);
   for (const s of states) for (let k = 0; k < PROVINCES_PER_STATE; k++) if (!hasLand(s * 7 + k)) held.add(s * 7 + k);
   const conquered = new Set([...states].filter(s => Array.from({ length: PROVINCES_PER_STATE }, (_, k) => s * 7 + k).every(p => held.has(p))));

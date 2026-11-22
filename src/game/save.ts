@@ -115,13 +115,13 @@ export interface SaveData {
 /** Ranges the save is checked against. */
 export interface SaveLimits { tiles: number; cityAreas: number }
 
-const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'warrior', 'phalanx', ...ATTACKERS];
+const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'worker', 'warrior', 'phalanx', ...ATTACKERS];
 const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
 const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', 'lumberjack', 'mill', 'bakery', ...RESOURCE_BUILDING_LIST];
-const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS, ...BUILDINGS, 'coinage'];
+const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', 'worker', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior', ...ATTACKERS];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
@@ -237,6 +237,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'era': return { kind, day: day(e.day), era: oneOf(e.era, ERAS, 'era') };
         case 'taken': return { kind, day: day(e.day), from: orNull(e.from, f => str(f, 'taken from')) };
         case 'early': return { kind, until: day(e.until), count: int(e.count, 'early count', 2, MAX_INT) };
+        case 'border': return { kind, day: day(e.day), rings: int(e.rings, 'border rings', 1, 5) };
       }
     };
     // The player's cities and the rivals' (STORY-068)
@@ -258,6 +259,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         ...(c.chain === undefined ? {} : { chain: chain(c.chain) }),
         // The chronicle (STORY-106): a save from before has none, and tells what is known
         ...(c.history === undefined ? {} : { history: list(c.history, 'history', eventOf, HISTORY_MAX) }),
+        // Culture (STORY-093): a save from before has none, and the border starts from the size
+        ...(c.culture === undefined ? {} : { culture: int(c.culture, 'culture', 0, MAX_INT) }),
       };
     };
 

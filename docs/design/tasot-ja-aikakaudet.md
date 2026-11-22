@@ -66,7 +66,7 @@ Merkinnät: **nyt** = pelissä jo, **MVP** = tehdään MVP:ssä, **myöh.** = MV
 
 | | Varhaisaika | Rauta-aika | Teollinen aika | Atomiaika |
 |---|---|---|---|---|
-| Rakennukset | Tiet ja resurssien yhdistäminen: tiellä kaupunkiin yhdistetty resurssi hyödyttää koko lääniä (**MVP**, STORY-093) | Maaherran hovi: vähentää kaukaisten kaupunkien hukkaa (civ2civ3:n kakkospalatsi; **MVP**, STORY-093) | Teollisuusalue (myöh.) | Lentokenttä (myöh.) |
+| Rakennukset | Tiet ja resurssien yhdistäminen: tiellä kaupunkiin yhdistetty resurssi hyödyttää koko lääniä (**MVP**, STORY-093) | Maaherran hovi: vähentää kaukaisten kaupunkien hukkaa (civ2civ3:n kakkospalatsi; MVP:n jälkeen, STORY-110) | Teollisuusalue (myöh.) | Lentokenttä (myöh.) |
 | Yksiköt | Retkikunnat (**nyt**), työläiset (**MVP**, STORY-093) | Karavaanit (myöh.) | — | — |
 | Politiikka | Kulttuurirajat: kulttuuri laajentaa rajoja (civ2civ3; **MVP**, STORY-093) | Maaherran painotus | — | — |
 | Uskonto | Pyhät paikat: temppelit tuovat kulttuuria, ja usko leviää rajojen yli (Civ V:n uskonpaine, Unciv; myöh.) | | | |
@@ -104,7 +104,7 @@ tiivistetään kokeilun alkuvaiheiksi.
 | STORY-089 Valmis settlementti | Ketjujen tuotos, josta syntyy settlementti |
 | STORY-090 Kuvernööri pelaa kaupunkitasoa | Jakelulinja kuvernöörin valintana |
 | STORY-091 ja 092 Kaupunkialue | Nykyinen Civ I -sisältö pysyy; uutta vain valmiin settlementin asutus |
-| STORY-093 Läänitaso | Tiet ja resurssien yhdistäminen, maaherran hovi, kulttuurirajat ja työläiset |
+| STORY-093 Läänitaso | Tiet ja resurssien yhdistäminen, kulttuurirajat ja työläiset (maaherran hovi ja hukka siirtyivät STORY-110:een, Sami 2026-11-22) |
 | STORY-094 Valtiotaso | Linja, verot, kaupunkivaltiot ja diplomatia kootaan valtiotasolle |
 | STORY-098 Tasopaneeli | Aikakausi ja tason tiedot näkyviin |
 | STORY-097 Ydinsotakokeilu | Planeetan atomiaika |

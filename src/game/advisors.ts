@@ -146,6 +146,8 @@ export function exploreTarget(shares: readonly (readonly [area: number, share: n
  *                       60 % mapped: in the home province, then in the home state
  *   Vartija             keeps the scouts in the home province; a city without a soldier builds
  *                       one, and a city near the province border builds walls
+ * Each of the three has a worker built for a province with a strategic resource inside the
+ * border and no road to it, one worker a province (STORY-093, own); the Vartija's soldier first.
  * The province advisor's builds and expeditions go before the city advisor's.
  */
 export type ProvinceAdvisor = 'none' | 'settle' | 'explore' | 'defend';
@@ -153,9 +155,9 @@ export const PROVINCE_ADVISOR_LIST: readonly ProvinceAdvisor[] = ['none', 'settl
 
 export const PROVINCE_ADVISORS: Record<ProvinceAdvisor, { name: string; does: string }> = {
   none: { name: 'Oma ohjaus', does: 'Hoidat läänin painotukset ja retkikunnat itse.' },
-  settle: { name: 'Asuttaja', does: 'Merkitsee läänin parhaat kartoitetut alueet asutettaviksi ja hyväksyy kaupunkipaikat itse. Pääkaupunki tekee uudisasukkaan, kun paikka odottaa.' },
-  explore: { name: 'Tutkimusmatkailija', does: 'Poistaa Ohita-merkinnät ja lähettää retkikunnan lähimmälle alueelle, joka on alle 60 % kartoitettu: ensin läänissä, sitten valtiossa.' },
-  defend: { name: 'Vartija', does: 'Tiedustelijat pysyvät läänissä. Kaupunki ilman sotilasta tekee sellaisen, ja läänin rajalla oleva kaupunki rakentaa muurin.' },
+  settle: { name: 'Asuttaja', does: 'Merkitsee läänin parhaat kartoitetut alueet asutettaviksi ja hyväksyy kaupunkipaikat itse. Pääkaupunki tekee uudisasukkaan, kun paikka odottaa. Läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
+  explore: { name: 'Tutkimusmatkailija', does: 'Poistaa Ohita-merkinnät ja lähettää retkikunnan lähimmälle alueelle, joka on alle 60 % kartoitettu: ensin läänissä, sitten valtiossa. Läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
+  defend: { name: 'Vartija', does: 'Tiedustelijat pysyvät läänissä. Kaupunki ilman sotilasta tekee sellaisen, ja läänin rajalla oleva kaupunki rakentaa muurin. Sotilaan jälkeen läänin kaupunki tekee työläisen, joka yhdistää resurssin tiellä.' },
 };
 
 /** The areas the Asuttaja marks Asuta: the best of those without a city, mapped at least a quarter. */
@@ -174,10 +176,16 @@ export function expeditionTarget(areas: readonly { area: number; share: number; 
   return exploreTarget(areas.map(a => [a.area, a.share] as const));
 }
 
-/** The province Vartija's build for a city: a soldier first, then walls near the border. */
-export function provinceBuild(advisor: ProvinceAdvisor, n: { soldiers: number; border: boolean; available: Build[]; soldier: 'warrior' | 'phalanx'; walls: boolean }): Build | null {
+/**
+ * The province advisor's build for a city: the Vartija's soldier first; then a worker when the
+ * city is the one to build its province's (`worker`, STORY-093); then the Vartija's walls near
+ * the border.
+ */
+export function provinceBuild(advisor: ProvinceAdvisor, n: { soldiers: number; border: boolean; available: Build[]; soldier: 'warrior' | 'phalanx'; walls: boolean; worker?: boolean }): Build | null {
+  if (advisor === 'none') return null;
+  if (advisor === 'defend' && n.soldiers < 1) return n.soldier;
+  if (n.worker && n.available.includes('worker')) return 'worker';
   if (advisor !== 'defend') return null;
-  if (n.soldiers < 1) return n.soldier;
   return n.border && !n.walls && n.available.includes('walls') ? 'walls' : null;
 }
 
