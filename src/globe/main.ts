@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { buildCityTerrain, groundHeight, risingMaterial, type CityTerrain, type Site } from './cityView';
 import { bestOf, bestTile, isUp, placeAll, spots, standsOnTile, PLACE_RINGS, type Ground } from '../game/placement';
 import { CommandLog, execute, type Actor, type Command } from '../game/commands';
-import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation, type Ties } from '../game/diplomacy';
+import { accepts, attitudeWord, newTies, reasons, rivalMove, setState, tiesDay, BORDER_TILES, type Relation } from '../game/diplomacy';
 import { acceptsTrade, factor, worth, MAPS_EVERY, TRADE_ATTITUDE, type TradeItem } from '../game/trade';
 import { createTradeCard, type TradeView } from '../ui/tradeCard';
 import { attachInput, GlobeCamera } from './camera';
@@ -35,7 +35,7 @@ import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, ADVANCE_LIST, LUX_RATES, NEEDS, Research, RESOURCE_KINDS, isKind, opensFrom, studyName, treeLayout, type Advance, type Study } from '../game/science';
-import { GOVERNMENTS, governed, revolutionDays, type Government } from '../game/government';
+import { GOVERNMENTS, governed, revolutionDays } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
 import { createCityQuick } from '../ui/cityQuick';
@@ -70,9 +70,10 @@ import { UnitLayer } from './unitLayer';
 import { glowMesh, moveWell, newWell, pressWell, releaseWell, starMaterial, stepWell, wellUniforms } from './gravityWell';
 import { PulseLayer, type PulseKind } from './pulses';
 import { SAVE_VERSION, validateSave, type FirstKind, type SaveData } from '../game/save';
+import type { GameState } from '../sim/state';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
-import { advance, startProgress, UNLOCK_SHARE, type Progress } from '../game/progress';
+import { advance, startProgress, UNLOCK_SHARE } from '../game/progress';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, stateName, type RegionName } from '../game/names';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
@@ -615,75 +616,21 @@ unitLayer.raise = tile => cityLevel.raise(tile);
 const pulses = new PulseLayer(RADIUS);
 scene.add(pulses.group);
 const moment = (kind: PulseKind, tile: number) => pulses.add(kind, tile, performance.now());
-interface Play {
-  units: Units;
+/** The game's state and the view's: the open cards, the selected unit and the HUD (STORY-095). */
+interface Play extends GameState {
   selected: number;
   flagTool: boolean;
-  /** Tiles of the home province and state, for the meter and the unlocks. */
-  province: number[];
-  state: number[];
-  progress: Progress;
-  /** The province chosen as the state's target (design 7a), or -1. */
-  targetProvince: number;
-  /** Extra yield on tiles from finds before STORY-052; STORY-028's cities count it. */
-  bonuses: Map<number, Yield>;
-  /** Finds kept so far. */
-  found: number;
-  /** Cities in founding order, the capital first (STORY-028), and the one whose card is open. */
-  cities: City[];
+  /** The city whose card is open. */
   openCity: number | null;
-  /** City sites a scout suggests, the shown one first; every site ever suggested; the day of the last (STORY-032). */
-  offers: { tile: number; finder: number }[];
-  offered: number[];
-  lastOfferDay: number;
-  /** A site waiting for the settler the capital is building. */
-  pendingSite: number | null;
-  /** Irrigation, mines and roads the settlers built (STORY-033). */
-  improvements: Improvements;
-  /** Bandits on their way to a city, and whether their card waits to be answered (STORY-034). */
-  raids: Raids;
-  war: War;
-  rivals: Rival[];
-  raidAlert: boolean;
-  /** The treasury: trade comes in as gold, and buildings and buying cost it (STORY-038). */
-  gold: number;
-  /** Advances known and researched, and the share of trade that becomes gold (STORY-040). */
-  research: Research;
-  tax: number;
-  /** The share of trade that becomes luxury (STORY-046). */
-  lux: number;
-  /** The government, and the day anarchy ends, or −1 (STORY-047). */
-  gov: Government;
-  anarchyUntil: number;
   /** The tapped hex whose card is open (STORY-055). */
   tileOpen: number | null;
   /** The building the player is moving, by its city's tile (STORY-071). */
   moving: { city: number; building: Building } | null;
-  /** The ties with each rival, in the rivals' order, and the rival whose diplomacy card is open (STORY-076). */
-  ties: Ties[];
+  /** The rival whose diplomacy card is open (STORY-076), and whose trade card (STORY-078). */
   diplomacyOpen: number | null;
-  /** The rival whose trade card is open (STORY-078). */
   tradeOpen: number | null;
-  /** The city level's advisor and what it did lately (STORY-105). */
-  townAdvisor: TownAdvisor;
-  townLog: Rich[];
-  /** The city area's advisor, the advisor card, and what it did lately (STORY-049). */
-  cityAdvisor: CityAdvisor;
+  /** The advisor card (STORY-049). */
   advisorOpen: boolean;
-  advisorLog: Rich[];
-  /** The province-level advisor and what it did lately (STORY-050). */
-  provinceAdvisor: ProvinceAdvisor;
-  provinceLog: Rich[];
-  /** The state-level advisor, what it did lately, and the days without disorder (STORY-051). */
-  stateAdvisor: StateAdvisor;
-  stateLog: Rich[];
-  calmDays: number;
-  /** The planet-level advisor, what it did lately, and the target state, or −1 (STORY-057). */
-  planetAdvisor: PlanetAdvisor;
-  /** What has stopped the game once already (STORY-017). */
-  firsts: Set<FirstKind>;
-  planetLog: Rich[];
-  targetState: number;
   researchOpen: boolean;
   /** The science tree is open, and the advance on show; null shows the one under study (STORY-109). */
   scienceOpen: boolean;
@@ -694,8 +641,6 @@ interface Play {
   hud: ReturnType<typeof createGameHud>;
   /** The level panel at the top of the HUD (STORY-098). */
   area: AreaPanel;
-  /** The commands that took effect (STORY-086, rule 7). */
-  commands: CommandLog;
 }
 let play: Play | null = null;
 
