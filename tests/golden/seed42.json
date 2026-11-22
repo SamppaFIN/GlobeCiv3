@@ -1,0 +1,80 @@
+{
+  "feed": {
+    "50": {
+      "sha256": "565585e579a14668cc5303991059ce253536b57552e3316ad59bb649bf0c4570",
+      "day": 50,
+      "cities": 2,
+      "open": 3,
+      "gold": 193,
+      "units": 3
+    },
+    "100": {
+      "sha256": "475cdceabbaac5d0c0ba4c6851db21ca4700946e894a6d6d2c4f9f1700de0fb8",
+      "day": 100,
+      "cities": 4,
+      "open": 3,
+      "gold": 433,
+      "units": 11
+    },
+    "200": {
+      "sha256": "da745c75aecbb1ba20ac95262d7e91d74f5d7967228ee988401df0d05e19b49c",
+      "day": 200,
+      "cities": 8,
+      "open": 1,
+      "gold": 3332,
+      "units": 31
+    }
+  },
+  "build": {
+    "50": {
+      "sha256": "5c6b1b713097ff6c1617bfc02ebf2441b790401d9a093933d2ad5b8a7312807b",
+      "day": 50,
+      "cities": 1,
+      "open": 4,
+      "gold": 372,
+      "units": 1
+    },
+    "100": {
+      "sha256": "53fd8aecdf26bf4f5b9a0c6d6a90cfbd143ce77831ac24568f774819f104af93",
+      "day": 100,
+      "cities": 2,
+      "open": 3,
+      "gold": 762,
+      "units": 9
+    },
+    "200": {
+      "sha256": "88d63aa5e1cb349c837294236542745fb6860c74bc8bd37dbfcada96e294ddcd",
+      "day": 200,
+      "cities": 5,
+      "open": 2,
+      "gold": 4977,
+      "units": 16
+    }
+  },
+  "roam": {
+    "50": {
+      "sha256": "42cd9bb596f73c17b06804d2ad15eb9a1ff66778a02deeeafba0ee5f53271c27",
+      "day": 50,
+      "cities": 1,
+      "open": 4,
+      "gold": 236,
+      "units": 0
+    },
+    "100": {
+      "sha256": "dcbebab69fd2ae4620e1cf3fc17d7a0dd4879b5521f078d3dff98e0231cd901a",
+      "day": 100,
+      "cities": 3,
+      "open": 3,
+      "gold": 474,
+      "units": 5
+    },
+    "200": {
+      "sha256": "903971c4e70ce08c558e18bc61bf2998dd9ad7b9876394c9ac56abba7fd2f2d5",
+      "day": 200,
+      "cities": 5,
+      "open": 2,
+      "gold": 3826,
+      "units": 8
+    }
+  }
+}
