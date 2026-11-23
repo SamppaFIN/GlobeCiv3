@@ -2924,7 +2924,7 @@
     {
       "id": "STORY-114",
       "epic": "EPIC-009",
-      "title": "Ylemmältä tasolta näkyvät ja ohjataan kaikki yksiköt ja kaupungit",
+      "title": "Läänin- ja valtiotasolta näkyvät ja ohjataan kaikki yksiköt ja kaupungit",
       "type": "story",
       "narrative": "Pelaajana haluan nähdä valtiotasolla kaikki yksikköni ja kaupunkini ja rakentaa ja ohjata niitä sieltä, jotta minun ei tarvitse sukeltaa kaupunkialueelle jokaista tekoa varten.",
       "effort": "L",
@@ -2932,9 +2932,9 @@
         "STORY-112"
       ],
       "acceptance_criteria": [
-        "Läänin-, valtion- ja planeettatasolla jokainen pelaajan yksikkö näkyy kartalla merkkinä, joka on vähintään 12 px riippumatta tasosta (päällekkäiset yhdistyvät merkiksi, jossa on lukumäärä), ja tason paneelissa on yksiköiden luettelo lääneittäin. Merkin tai luettelorivin napautus valitsee yksikön lentämättä kaupunkialueelle.",
+        "Läänin- ja valtiotasolla jokainen pelaajan yksikkö näkyy kartalla merkkinä, joka on vähintään 12 px riippumatta tasosta (päällekkäiset yhdistyvät merkiksi, jossa on lukumäärä), ja tason paneelissa on yksiköiden luettelo lääneittäin. Merkin tai luettelorivin napautus valitsee yksikön lentämättä kaupunkialueelle.",
         "Valtiotasolla läänin siru kertoo kaupunkiensa määrän, ja läänin kortti luettelee kaikki sen kaupungit kokoineen linkkeinä. Kartalla näkyvät pääkaupungin ja jokaisen läänin suurimman kaupungin laput, eivätkä laput ja sirut mene päällekkäin.",
-        "Kaupunkikortti (rakennus, osto ja painotus) avautuu ja toimii jokaisella tasolla lentämättä, ja valitulle yksikölle annetaan moodi, tehtävä, lippu ja kaupunkipaikka kartan napautuksella millä tahansa tasolla. Kaikki teot ovat komentoja (sääntö 7), ja E2E-testi tekee ne valtiotasolla.",
+        "Kaupunkikortti (rakennus, osto ja painotus) avautuu ja toimii läänin- ja valtiotasolla lentämättä, ja valitulle yksikölle annetaan moodi, tehtävä, lippu ja kaupunkipaikka kartan napautuksella näillä tasoilla. Ohjaimet näkyvät valinnasta myös neuvonantajan hoitaessa tasoa, ja neuvonantaja saa muuttaa teon seuraavana päivänä. Kaikki teot ovat komentoja (sääntö 7), ja E2E-testi tekee ne valtiotasolla.",
         "Pääsäikeen JS-aika pysyy myöhäisessä pelissä enintään 8 ms framessa valtiotasolla (mittauslaite, selain ja menetelmä kirjataan)."
       ],
       "status": "todo",

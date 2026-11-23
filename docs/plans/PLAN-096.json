@@ -3,7 +3,7 @@
   "story": "STORY-114",
   "author_model": "Opus 5.5 (Enki)",
   "date": "2026-11-23",
-  "approach": "Sami 2026-11-23: kaikki tasot kaikkialla. Periaate 'kukin järjestelmä näkyy ja toimii vain omalla tasollaan' (2026-11-19) kumoutuu: kaupungin ja yksiköiden ohjaus toimii jokaisella tasolla. Toteutus on näkymän muutos (main.ts, unitLayer.ts ja kortit); pelin säännöt eivät muutu, ja teot kulkevat jo komentoina (STORY-112). 1) Yksiköt kartalla: yksikkömerkin koko on vähintään 12 px näytöllä (nyt merkki on 0,8 ruutua, mikä on valtiotasolla alle pikselin). Läänin-, valtion- ja planeettatasolla merkit, jotka osuvat alle 14 px:n päähän toisistaan, yhdistyvät yhdeksi merkiksi, jossa on lukumäärä; sen napautus valitsee yksikön, jos niitä on yksi, ja muuten avaa luettelon siihen kohtaan. 2) Yksiköt luettelona: tason paneelin infografiikkaan (STORY-098) tulee yksiköiden luettelo lääneittäin (nimi, laji, tila); rivin napautus valitsee yksikön ja kääntää kameran sen kohdalle lentämättä alas. Nykyinen Luettelo-kortti (vain kaupunkialueella ja Ohjaan itse -tilassa) avautuu jokaisella tasolla. 3) Kaupungit läänissä: valtiotasolla läänin sirun alarivi kertoo kaupunkien määrän (esimerkiksi 'Hallussa · 6 kaupunkia'), ja läänin kortti luettelee kaikki kaupungit kokoineen kaupunkilinkkeinä (STORY-103), kun nyt näkyy muutama. Kaupunkilapuista näkyvät valtiotasolla vain pääkaupunki ja jokaisen läänin suurin; muut näkyvät läänitasolla ja alempana. Lappu, joka osuisi sirun tai toisen lapun päälle, väistyy tai jää pois (pääkaupunki ensin). Planeettatasolla laput pysyvät poissa kuten nyt, mutta valtion kortti luettelee läänit kaupunkimäärineen. 4) Kaupunkikortti ja ohjaus: openCityCard ei enää lennä kaupunkialueelle (pikapaneelin 'Lennä kaupunkiin' jää). Yksikön HUD-paneeli (moodi, tehtävä, lippu, paikka) näkyy valitulle yksikölle jokaisella tasolla, ja kartan napautus lipputyökalulla tai uudisasukkaan paikan valinnassa osuu napautuskohdan ruutuun millä tahansa tasolla (pointToTile). Muuten napautus valitsee alueen kuten nyt. 5) Neuvonantajat (avoin kysymys 1): nyt ohjaimet näkyvät vain Ohjaan itse -tilassa (ownHand), ja neuvonantaja kumoaa pelaajan rakennuksen tai moodin seuraavana päivänä. Suositus: pelaajan teko ottaa kaupungin tai yksikön omiin käsiin, ja kortissa ja HUDissa on 'Palauta neuvonantajalle'. Omissa käsissä olevat tallennetaan (taaksepäin yhteensopiva kenttä, oletus tyhjä; sääntö 8), ja neuvonantajat ohittavat ne. 6) Testit: E2E valtiotasolla: merkkien määrä ja koko, luettelo, sirun kaupunkimäärä ja kortin kaupunkilista, kaupunkikortin rakennus ja osto, yksikön moodi ja lippu napautuksella, kaikki komentolokissa. Kuvakaappaukset kolmella tasolla (sääntö 10.6). Suorituskyky: myöhäinen peli valtiotasolla (siemen 42, 16+ kaupunkia), pääsäikeen JS-aika framea kohden ennen ja jälkeen samalla koneella.",
+  "approach": "Sami 2026-11-23: kaikki tasot kaikkialla. Periaate 'kukin järjestelmä näkyy ja toimii vain omalla tasollaan' (2026-11-19) kumoutuu: kaupungin ja yksiköiden ohjaus toimii jokaisella tasolla. Toteutus on näkymän muutos (main.ts, unitLayer.ts ja kortit); pelin säännöt eivät muutu, ja teot kulkevat jo komentoina (STORY-112). 1) Yksiköt kartalla: yksikkömerkin koko on vähintään 12 px näytöllä (nyt merkki on 0,8 ruutua, mikä on valtiotasolla alle pikselin). Läänin- ja valtiotasolla merkit, jotka osuvat alle 14 px:n päähän toisistaan, yhdistyvät yhdeksi merkiksi, jossa on lukumäärä; sen napautus valitsee yksikön, jos niitä on yksi, ja muuten avaa luettelon siihen kohtaan. 2) Yksiköt luettelona: tason paneelin infografiikkaan (STORY-098) tulee yksiköiden luettelo lääneittäin (nimi, laji, tila); rivin napautus valitsee yksikön ja kääntää kameran sen kohdalle lentämättä alas. Nykyinen Luettelo-kortti (vain kaupunkialueella ja Ohjaan itse -tilassa) avautuu jokaisella tasolla. 3) Kaupungit läänissä: valtiotasolla läänin sirun alarivi kertoo kaupunkien määrän (esimerkiksi 'Hallussa · 6 kaupunkia'), ja läänin kortti luettelee kaikki kaupungit kokoineen kaupunkilinkkeinä (STORY-103), kun nyt näkyy muutama. Kaupunkilapuista näkyvät valtiotasolla vain pääkaupunki ja jokaisen läänin suurin; muut näkyvät läänitasolla ja alempana. Lappu, joka osuisi sirun tai toisen lapun päälle, väistyy tai jää pois (pääkaupunki ensin). Planeettataso pysyy ennallaan (Sami 2026-11-23: vain lääni ja valtio). 4) Kaupunkikortti ja ohjaus: openCityCard ei enää lennä kaupunkialueelle (pikapaneelin 'Lennä kaupunkiin' jää). Yksikön HUD-paneeli (moodi, tehtävä, lippu, paikka) näkyy valitulle yksikölle jokaisella tasolla, ja kartan napautus lipputyökalulla tai uudisasukkaan paikan valinnassa osuu napautuskohdan ruutuun millä tahansa tasolla (pointToTile). Muuten napautus valitsee alueen kuten nyt. 5) Neuvonantajat (Sami 2026-11-23): ohjaimet näkyvät aina, kun kaupunki tai yksikkö on valittu, eivätkä enää vain Ohjaan itse -tilassa (ownHand): kaupunkikortin rakennus, osto ja painotus, pikapaneelin osto, yksikön HUD-paneeli ja Luettelo-kortti. Neuvonantaja saa muuttaa pelaajan teon seuraavana päivänä kuten nyt, joten pelitila ja tallennus eivät muutu. Yläpaneelin oletusnäkymä pysyy STORY-096:n mukaisena (tavoite, aika ja neuvonantaja); ohjaimet tulevat esiin vasta valinnasta. 6) Testit: E2E valtiotasolla neuvonantajan hoitaessa tasoa: merkkien määrä ja koko, luettelo, sirun kaupunkimäärä ja kortin kaupunkilista, kaupunkikortin rakennus ja osto, yksikön moodi ja lippu napautuksella, kaikki komentolokissa. Kuvakaappaukset kolmella tasolla (sääntö 10.6). Suorituskyky: myöhäinen peli valtiotasolla (siemen 42, 16+ kaupunkia), pääsäikeen JS-aika framea kohden ennen ja jälkeen samalla koneella.",
   "alternatives_considered": [
     {
       "name": "Vain valtiotaso näkee kaiken",
@@ -18,10 +18,16 @@
       "rejected_because": "Sami valitsi kaupungit läänin siruun"
     },
     {
-      "name": "Neuvonantaja kumoaa pelaajan teon seuraavana päivänä (nykyinen)",
-      "pros": "Ei uutta tilaa",
-      "cons": "Pelaajan ohjaus ei pysy, kun neuvonantaja hoitaa tasoa",
-      "rejected_because": "Odottaa Samin valintaa (avoin kysymys 1)"
+      "name": "Pelaajan teko ottaa kohteen omiin käsiin neuvonantajalta",
+      "pros": "Pelaajan käsky pysyy",
+      "cons": "Uusi tallennettava tila ja neuvonantajien poikkeukset",
+      "rejected_because": "Sami valitsi 2026-11-23, että neuvonantaja saa kumota teon"
+    },
+    {
+      "name": "Yksiköt ja ohjaus myös planeettatasolla",
+      "pros": "Kaikki tasot kaikkialla täysin",
+      "cons": "Planeettatasolla merkkejä olisi satoja yhdessä kohdassa",
+      "rejected_because": "Sami valitsi 2026-11-23 vain läänin ja valtion"
     }
   ],
   "files_to_change": [
@@ -29,13 +35,9 @@
     "src/globe/unitLayer.ts",
     "src/ui/levelUi.ts (sirut ja tasopaneelit)",
     "src/ui/gameHud.ts",
-    "src/sim/game.ts ja src/game/save.ts (vain jos omat kädet valitaan)",
     "tests/e2e/everywhere.e2e.ts (uusi)"
   ],
-  "open_questions": [
-    "Kun neuvonantaja hoitaa tasoa ja pelaaja antaa kaupungille rakennuksen tai yksikölle moodin ylemmältä tasolta: ottaako teko kohteen omiin käsiin (suositus), näkyvätkö ohjaimet aina mutta neuvonantaja kumoaa teon seuraavana päivänä, vai näkyvätkö ohjaimet vain Ohjaan itse -tilassa kuten nyt?",
-    "Planeettataso: näkyvätkö yksikkömerkit ja ohjaus myös siellä (suositus: kyllä, kaikki tasot kaikkialla), vai rajataanko läänin- ja valtiotasoon?"
-  ],
+  "open_questions": [],
   "steps": [
     {
       "step": 1,
@@ -59,8 +61,8 @@
     },
     {
       "step": 5,
-      "action": "Neuvonantajat ja omat kädet Samin valinnan mukaan",
-      "verify": "Vitest: neuvonantaja ei muuta omissa käsissä olevaa; vanha tallennus latautuu"
+      "action": "Ohjaimet näkyviin valinnasta myös neuvonantajan hoitaessa tasoa (ei enää ownHand-ehtoa kortissa, pikapaneelissa, yksikön HUDissa eikä Luettelossa)",
+      "verify": "E2E: neuvonantajan kanssa kaupunkikortin rakennus ja yksikön moodi valtiotasolla komentolokissa"
     },
     {
       "step": 6,
