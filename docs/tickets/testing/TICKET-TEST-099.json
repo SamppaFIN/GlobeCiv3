@@ -50,6 +50,18 @@
         "outcome": "pass"
       },
       {
+        "steps": "Utun katselmointi (Sonnet) 2026-11-23: koodi ja testit kriteereittäin",
+        "expected": "Hyväksytty",
+        "result": "Hyväksytty muutoksin. Keskitaso: kortin vastaus vaihtoi rakennuksen myös rosvojen uhkaaman kaupungin sotilaan ja odottavan paikan uudisasukkaan tilalle, ihmeen sai valita kaikkiin kaupunkeihin (kaikki rakentaisivat ja vain yksi voittaisi), pelaajan oma rakennusvalinta ei päättänyt priorisointia, ja vastaus, joka ei koskenut yhtään kaupunkia, hyväksyttiin. Saavutettavuus: valinta piirsi napit uudelleen ja fokus katosi (WCAG 2.4.3), aria-modal puuttui, Jatka ei kertonut, miksi se on pois käytöstä, eikä fokus palannut kortin sulkeuduttua. Pieni: kansan ehdotus kuulosti neuvonantajan ehdotukselta, tallennuksen kortit tarkistettiin vain nimistä (kaksoiskappaleet ja tuntemattomat kelpasivat), ja kirjaamatta olivat lajitutkimuksen pysähtymättömyys sekä myöhemmin perustetun kaupungin ja pääkaupungin vaihdon sääntö.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Korjaukset (Enki) ja toistavat testit: learned.test.ts (ihme vain pääkaupunkiin, pelaajan oma rakennus päättää priorisoinnin, rosvojen sotilas pysyy; kaksi keksintöä samana päivänä odottavat kortti kerrallaan; tallennuksen väärä scope hylätään) ja advance-card.e2e (fokus pysyy valitussa napissa, aria-modal)",
+        "expected": "Testit punaisina ennen korjausta, vihreinä sen jälkeen",
+        "result": "Ihme-testi oli punainen ennen korjausta (expected true to be false). Korjauksen jälkeen Vitest 61 tiedostoa ja 365 testiä läpi, ja E2E advance-card, codex, science, science-tree, frame-budget ja golden läpi (kultaiset tilat ennallaan, koska ne ajetaan ilman kortteja).",
+        "outcome": "pass"
+      },
+      {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
         "result": "Ajetaan mergen jälkeen",

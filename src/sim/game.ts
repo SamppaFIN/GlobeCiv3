@@ -695,6 +695,11 @@ export function dispatch(cmd: Command, by: Actor): boolean {
   if (by === 'player') finishDay();
   const done = execute(cmd, commandWorld());
   if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
+  // The player's own build in a city ends a building put first there (STORY-118, Utu's review)
+  if (done && by === 'player' && cmd.kind === 'build') {
+    const c = play.cities.find(x => x.tile === cmd.city);
+    if (c && c.first !== cmd.build) delete c.first;
+  }
   return done;
 }
 
@@ -1153,6 +1158,14 @@ export function firstChoices(a: Advance): Building[] {
   return BUILDINGS.filter(b => NEEDS[b] === a && p.cities.some(c => startable(c).includes(b)));
 }
 
+/** Where a building can go first (Utu's review): in every city when two or more can start it and it is no wonder, in the capital when the capital can. */
+export function firstScopes(b: Building): FirstScope[] {
+  const p = play!;
+  const capital = p.cities.find(c => c.capital) ?? p.cities[0];
+  const can = p.cities.filter(c => startable(c).includes(b)).length;
+  return [...(!isWonder(b) && can >= 2 ? ['all' as const] : []), ...(capital && startable(capital).includes(b) ? ['capital' as const] : [])];
+}
+
 /** The answer to the first advance card waiting: its next study and a building put first, as the learned command. */
 function answerLearned(study: Study | null, first: { build: Building; scope: FirstScope } | null): boolean {
   const p = play!;
@@ -1162,18 +1175,26 @@ function answerLearned(study: Study | null, first: { build: Building; scope: Fir
   if (study !== null && study !== p.research.target && !open.includes(study)) return false;
   // Nothing open is the only way to choose no study
   if (study === null && (open.length || p.research.target !== null)) return false;
-  if (first && !firstChoices(a).includes(first.build)) return false;
+  // A wonder goes first in the capital only: in every city all would build it and one win (Utu's review)
+  if (first && (!firstChoices(a).includes(first.build) || (isWonder(first.build) && first.scope === 'all'))) return false;
+  const capital = p.cities.find(c => c.capital) ?? p.cities[0];
+  const cities = first ? (first.scope === 'all' ? p.cities : [capital]).filter(c => c && startable(c).includes(first.build)) : [];
+  // None of the cities chosen can build it: the answer changes nothing it says
+  if (first && !cities.length) return false;
   p.learned.shift();
   if (study !== null) p.research.target = study;
-  if (first) {
-    const capital = p.cities.find(c => c.capital) ?? p.cities[0];
-    for (const c of first.scope === 'all' ? p.cities : [capital]) {
-      if (!startable(c).includes(first.build)) continue;
-      c.first = first.build;
-      c.build = first.build;
-    }
+  for (const c of cities) {
+    c.first = first!.build;
+    // A soldier against bandits on their way and a waiting site's settler stay; the building comes after (Utu's review)
+    if (!keepsBuild(c)) c.build = first!.build;
   }
   return true;
+}
+
+/** A build an advisor or a card does not change: a soldier against bandits on their way, a waiting site's settler (STORY-108, STORY-113). */
+function keepsBuild(c: City): boolean {
+  const p = play!;
+  return (p.raids.band?.city === c.tile && isSoldier(c.build)) || (c.build === 'settler' && p.pendingSite !== null && c === settlerBuilder(p.pendingSite));
 }
 
 // ─── Advisors (STORY-049, STORY-050, STORY-051) ───
@@ -1435,7 +1456,7 @@ function* advisorDay(): Generator<void, void, void> {
     // card (STORY-118; not over a soldier against bandits on their way), then the province's builds
     const war = p.stateAdvisor === 'war' ? warBuild(c, available) : null;
     if (c.first && !available.includes(c.first)) delete c.first;
-    const first = c.first && !(p.raids.band?.city === c.tile && isSoldier(c.build)) ? c.first : null;
+    const first = c.first && !keepsBuild(c) ? c.first : null;
     const build = war ?? first ?? ordered ?? advice?.build ?? null;
     // The settler for a waiting city site is not changed in the city that builds it (STORY-113:
     // only there, or every city that ever built one kept building them, Utu's review)
@@ -2525,7 +2546,8 @@ export function startGame<U extends object>(startCity: number, saved: SaveData |
     commands: new CommandLog(saved.commands ?? []),
     // A proposal waiting when the game was saved waits again (STORY-095)
     treaty: saved.treaty && saved.treaty.rival < s.rivals.length ? { ...saved.treaty } : null,
-    learned: [...(saved.learned ?? [])],
+    // A card waits for an advance known, once (Utu's review: a save is not trusted)
+    learned: [...new Set(saved.learned ?? [])].filter(a => saved.research.known.includes(a)),
   });
   clock.day = saved.day;
   for (const c of s.cities) placeAll(c, ground);
