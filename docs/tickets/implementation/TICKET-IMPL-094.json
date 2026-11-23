@@ -1,0 +1,31 @@
+{
+  "id": "TICKET-IMPL-094",
+  "story": "STORY-085",
+  "plan": "PLAN-094",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/sim/run.ts",
+    "tests/sim/autopilot.ts",
+    "tests/sim/autopilot.test.ts",
+    "docs/plans/PLAN-094.json",
+    "backlog.json"
+  ],
+  "change_summary": "Run.happened kirjaa pelin kertomat asiat päivineen. tests/sim/autopilot.ts laskee viisi mittaria ja ylimääräisenä pisimmän jakson ilman päätöstä, tunnistaa 19 järjestelmää ja tarkistaa invariantit päivittäin. tests/sim/autopilot.test.ts ajaa siemenen 42 kolmella tavalla (noin 1–2 s kukin), tulostaa raportin ja kirjoittaa sen tiedostoon test-results/autopilot/seed-42.json.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Run (happened)",
+      "Happening"
+    ],
+    "call_sites_found": [
+      "Run-oliota käyttävät tests/sim/run.test.ts, acts.test.ts ja jams.test.ts"
+    ],
+    "call_sites_updated": [
+      "Ei muutoksia: happened vain lisää kirjaa"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "cb9cbd5",
+  "progress": 100,
+  "notes": "Ensimmäinen ajo löysi jumin: puolustavilla neuvonantajilla valtiotaso ei auennut 900 päivässä (STORY-113, korjattu ennen tätä committia). Havaintoja raportista: päätöksiä on vähän (3–4 nousuun valtiotasolle), ja pisimmät jaksot ilman päätöstä ovat 61–147 päivää (1,5–3,7 min). Build-tavalla 'yksiköt' näkyy päivänä 6 ennen kaupunkialuetta, mikä kannattaa tarkistaa: kaupunkitason ei pitäisi rakentaa yksiköitä (STORY-089)."
+}

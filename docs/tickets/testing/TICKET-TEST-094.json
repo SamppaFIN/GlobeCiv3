@@ -1,0 +1,59 @@
+{
+  "id": "TICKET-TEST-094",
+  "story": "STORY-085",
+  "implementation_ticket": "TICKET-IMPL-094",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU), Node 22 (Vitest 5); selaintestit Chromium headless (Playwright 1.64) SwiftShaderilla, vite preview; siemen 42",
+    "tooling": "Vitest 5",
+    "cases": [
+      {
+        "steps": "tests/sim/autopilot.test.ts: siemen 42 kolmella neuvonantajatavalla, horisontti 900 päivää",
+        "expected": "Kriteeri 1: viisi mittaria raportoidaan",
+        "result": "feed: nousut päivinä 24, 106 ja 167; ensimmäinen päätös päivänä 24; 3 päätöstä (0,018/pv); pisin tyhjä jakso 5 pv, ilman päätöstä 61 pv; sekavuus enintään 7 järjestelmää minuutissa (päivästä 2), keskimäärin 3,33. build: nousut 55, 130 ja 220; ensimmäinen päätös 55; 3 päätöstä (0,014/pv); tyhjä 22 pv, ilman päätöstä 90 pv; sekavuus enintään 6, keskimäärin 2,73. roam: nousut 55, 219 ja 295; ensimmäinen päätös 55; 4 päätöstä (0,014/pv); tyhjä 14 pv, ilman päätöstä 147 pv; sekavuus enintään 6, keskimäärin 1,76",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Ajo ilman STORY-113:n korjausta",
+        "expected": "Kriteeri 2: punainen, kun nousua ei tapahdu",
+        "result": "build-tapa: 'not opened by day 900: valtio', testi punainen; feed ja roam vihreitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest kokonaan ja tsc",
+        "expected": "Ei regressiota",
+        "result": "56 tiedostoa ja 340 testiä läpi, tsc ilman virheitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Utun katselmointi",
+        "expected": "Hyväksytty",
+        "result": "Odottaa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Mittarien määritelmät (päätös, tyhjä jakso, järjestelmälista) vastaavat sitä, mitä halusit mitata",
+        "checked": false
+      },
+      {
+        "item": "Mitä raportin luvuille tehdään: esimerkiksi pitkät jaksot ilman päätöstä",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-22T22:52:55Z",
+    "generated_at": "2026-11-23T06:30:08Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "62c479a",
+    "git_commit": "cb9cbd5",
     "git_branch": "main",
     "language": "fi"
   },
@@ -206,7 +206,7 @@
         "STORY-084",
         "STORY-085"
       ],
-      "progress": 67
+      "progress": 100
     },
     {
       "id": "EPIC-009",
@@ -218,6 +218,7 @@
         "STORY-086",
         "STORY-095",
         "STORY-112",
+        "STORY-113",
         "STORY-087",
         "STORY-017",
         "STORY-014",
@@ -226,7 +227,7 @@
         "STORY-099",
         "STORY-108"
       ],
-      "progress": 80
+      "progress": 82
     },
     {
       "id": "EPIC-010",
@@ -2292,12 +2293,12 @@
         "Vitest ajaa uuden pelin neuvonantajien varassa siemenellä 42 ja raportoi viisi mittaria: aika ensimmäiseen päätökseen, päätöksiä pelipäivää kohden, pisin tyhjä jakso, sekavuusindeksi (uusia järjestelmiä minuutissa) ja aika jokaiseen nousuun.",
         "Testi menee punaiseksi vain, jos nousua ei tapahdu tai invariantti rikkoutuu. Mittarit ovat raportti, eivät raja-arvoja."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-094",
+        "implementation": "TICKET-IMPL-094",
+        "testing": "TICKET-TEST-094"
       }
     },
     {
@@ -2895,6 +2896,28 @@
         "plan": "PLAN-093",
         "implementation": "TICKET-IMPL-093",
         "testing": "TICKET-TEST-093"
+      }
+    },
+    {
+      "id": "STORY-113",
+      "epic": "EPIC-009",
+      "title": "Odottavan kaupunkipaikan uudisasukas kaupungista, joka voi antaa asukkaan",
+      "type": "bug",
+      "narrative": "Pelaajana haluan, että kaupunkipaikka saa uudisasukkaan myös silloin, kun pääkaupunki ei kasva, jotta peli ei jää jumiin ennen valtiotasoa.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-060"
+      ],
+      "acceptance_criteria": [
+        "Kun kaupunkipaikka odottaa eikä vapaata uudisasukasta ole, uudisasukasta rakentaa kaupunki, joka voi antaa asukkaan, jos sellainen on: pääkaupunki kuten ennen, muuten paikkaa lähin. Testi toistaa jumin siemenellä 42 puolustavilla neuvonantajilla.",
+        "Autopilotissa siemen 42 nousee valtiotasolle myös puolustavilla neuvonantajilla."
+      ],
+      "status": "review",
+      "progress": 100,
+      "linked": {
+        "plan": "PLAN-095",
+        "implementation": "TICKET-IMPL-095",
+        "testing": "TICKET-TEST-095"
       }
     }
   ]

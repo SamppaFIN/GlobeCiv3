@@ -1,0 +1,55 @@
+{
+  "id": "TICKET-TEST-095",
+  "story": "STORY-113",
+  "implementation_ticket": "TICKET-IMPL-095",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU), Node 22 (Vitest 5); selaintestit Chromium headless (Playwright 1.64) SwiftShaderilla, vite preview; siemen 42",
+    "tooling": "Vitest 5, Playwright",
+    "cases": [
+      {
+        "steps": "tests/sim/jams.test.ts ilman korjausta ja sen kanssa",
+        "expected": "Kriteeri 1: testi toistaa jumin",
+        "result": "Ilman korjausta punainen päivänä 75 (odottava paikka, eikä mikään asukkaan antava kaupunki rakenna uudisasukasta); korjauksen kanssa läpi, ja kaupunkeja on päivänä 300 yli 5",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Autopilotti build-tavalla",
+        "expected": "Kriteeri 2: valtiotaso aukeaa",
+        "result": "Ennen: valtio ei auennut 900 päivässä. Nyt: kaupunkialue 55, lääni 130, valtio 220",
+        "outcome": "pass"
+      },
+      {
+        "steps": "golden.e2e (kirjoitus ja vertailu) ja sites.e2e",
+        "expected": "Muutos vain siellä, missä pääkaupunki oli pieni",
+        "result": "6 testiä läpi. Kenttävertailu: feed-ajot ja päivä 50 ennallaan, build- ja roam-ajot muuttuvat päivästä 100",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Utun katselmointi",
+        "expected": "Hyväksytty",
+        "result": "Odottaa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Oma sääntö: lähin asukkaan antava kaupunki rakentaa uudisasukkaan, kun pääkaupunki ei voi",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

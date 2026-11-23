@@ -1,0 +1,34 @@
+{
+  "id": "TICKET-IMPL-095",
+  "story": "STORY-113",
+  "plan": "PLAN-095",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/sim/game.ts",
+    "tests/sim/jams.test.ts",
+    "tests/golden/seed42.json",
+    "docs/plans/PLAN-095.json",
+    "backlog.json",
+    "CLAUDE.md"
+  ],
+  "change_summary": "settlerBuilder valitsee odottavan paikan uudisasukkaan rakentajan: pääkaupunki, jos se voi antaa asukkaan, muuten paikkaa lähin, joka voi. settleAt ja päivän odottavan paikan sääntö käyttävät sitä.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "settleAt",
+      "prepareDay (odottava paikka)",
+      "settlerBuilder",
+      "canGiveCitizen"
+    ],
+    "call_sites_found": [
+      "settleAt: komennot settle ja site"
+    ],
+    "call_sites_updated": [
+      "Ei muutoksia kutsujiin"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "b3523df",
+  "progress": 100,
+  "notes": "Kultaiset tilat: feed-ajo ennallaan, build- ja roam-ajot muuttuvat päivästä 100 (niiden pääkaupungit olivat pieniä). Autopilotissa roam-tavan lääni aukeaa nyt päivänä 219 (ennen 129) ja valtio päivänä 295 (ennen 320)."
+}
