@@ -1322,24 +1322,41 @@ function sendToProvince(province: number): boolean {
   return true;
 }
 
-export function advisorDay() {
+/**
+ * The advisors' day, with a pause after each level and each city (STORY-117: on the planet
+ * level's first day it took up to 47 ms in one part); nothing else runs in the pauses.
+ */
+function* advisorDay(): Generator<void, void, void> {
   const p = play;
   if (!p) return;
   p.units.keepHome = p.provinceAdvisor === 'defend';
   // The province level's goal (STORY-111): its advisors aim at the nearest province not held
   const goal = provinceGoal();
   p.units.keepAlso = p.provinceAdvisor === 'defend' && goal !== null ? new Set([...conquestNow().held, goal]) : new Set();
-  if (p.planetAdvisor !== 'none') planetAdvisorDay();
+  if (p.planetAdvisor !== 'none') {
+    planetAdvisorDay();
+    yield;
+  }
   if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
   // The campaign first: a city taken today gets its yields with the others
-  if (p.stateAdvisor === 'war') warDay();
+  if (p.stateAdvisor === 'war') {
+    warDay();
+    yield;
+  }
   const yields = cityYields();
-  if (p.stateAdvisor !== 'none') stateAdvisorDay(p.stateAdvisor, yields);
+  if (p.stateAdvisor !== 'none') {
+    stateAdvisorDay(p.stateAdvisor, yields);
+    yield;
+  }
   // The cities that build their province's worker (STORY-093)
   const builders = workerBuilders();
-  p.cities.forEach((c, i) => {
+  // As forEach went: the cities there at the start, by index
+  const count = p.cities.length;
+  for (let i = 0; i < count; i++) {
+    if (!(i in p.cities)) continue;
+    const c = p.cities[i];
     const soldiers = soldiersIn(c.tile).length;
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
@@ -1370,7 +1387,8 @@ export function advisorDay() {
       const price = buyCost(c);
       if (price > 0 && price * 2 <= p.gold && dispatch({ kind: 'buy', city: c.tile }, 'city')) advise([cityRef(c.tile, c.name), ' osti: ', buildRef(c.build), ` (${price} kultaa)`]);
     }
-  });
+    yield;
+  }
   if (p.provinceAdvisor === 'settle') {
     const withCity = new Set(p.cities.map(c => world.cityOf(c.tile)));
     const chosen = settleAreas(homeAreas.map(area => ({ area, hasCity: withCity.has(area), share: areaShare(area), best: bestSite(area) })));
@@ -2216,7 +2234,7 @@ function* dayPhases(day: number): Generator<void, void, void> {
   rivalWarDay();
   raidDay();
   yield;
-  advisorDay();
+  yield* advisorDay();
   advisorsAnswer();
   riseCheck();
   tickDay = null;
