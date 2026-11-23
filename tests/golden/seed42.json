@@ -11,24 +11,24 @@
       "units": 3
     },
     "100": {
-      "sha256": "744a5fa6a4aaddd144f1f40a7fb39ad458ad2fbb863cdcd806970d82c0d9cc41",
-      "play": "34aaf631cf95792d029c925ff91ee3bae0a476050e1c801a31a18bbe2d4b16ce",
-      "sim": "8a2d31885e38b596a3115c287d879853bc61e55b2de40334f5f02681e1f0b75f",
+      "sha256": "2d4229dc35f8b25d85268747862c7a74d8e48e5950320a11a44cc63219d882b2",
+      "play": "3348b87160fc8df62d5515faa636fff55332379e99679528c91b8e6dd3e4c448",
+      "sim": "31fd729a5d05296cbc27b873157c5138e773c10a66387a672daefa65d850a8bf",
       "day": 100,
       "cities": 4,
-      "open": 3,
-      "gold": 433,
+      "open": 2,
+      "gold": 806,
       "units": 11
     },
     "200": {
-      "sha256": "08be5a24afb06dc41f4b484861c4ee638c47b65fa1f6bfd009b250e55cdea3e7",
-      "play": "297a789b1ab8ceade7f3d887eed090ffee08929ab79863215a06b48d782e37a9",
-      "sim": "4b89190a3622669d0e42afdef34d438638b999446794f74d97e8cb3b70474e00",
+      "sha256": "48ca9405a7f503ea57437008ff653dc55c3cd3f22351a86baa232dff1e8497cc",
+      "play": "666acd2e2fdb3237c8a40150c271e768d322a62ccc01563f2ebda2956526b750",
+      "sim": "59306a9b21e5dd1aace16768253673c450b8b3a0e6843bf61b909feda599e37d",
       "day": 200,
-      "cities": 8,
+      "cities": 7,
       "open": 1,
-      "gold": 3332,
-      "units": 31
+      "gold": 6201,
+      "units": 15
     }
   },
   "build": {
@@ -43,24 +43,24 @@
       "units": 1
     },
     "100": {
-      "sha256": "eb51f034e7cef2529aae5bbf7bb3a5dce032a4fb3674420c10590a55fb92d8ad",
-      "play": "c2d8b8f4db0a3609093cb0474dc46036ceed2d2ef9a6573508a6919c75ffc1d4",
-      "sim": "ef59bad062a9a60e660f34cb285bdb38ef32d57c1a47f2863d1122ea40db2488",
+      "sha256": "76fdb8bbafe0a061ec6cde19a52e00d140b346e11f054cff1fcbfca36cb7b0b8",
+      "play": "1550cff0c23f48df67fb9dd57abf7ec4ef8f6c54256448aa05f135f2e3ed95cb",
+      "sim": "bcfccda6b28d38f4514a3df143ee1e38718fe78ced0f9a2d59c6ef227b36f626",
       "day": 100,
       "cities": 3,
       "open": 3,
-      "gold": 691,
-      "units": 10
+      "gold": 793,
+      "units": 9
     },
     "200": {
-      "sha256": "ffb54141ee52d9f29b8ed6a5975e22a5821a90d2ba7b9f1472c9b79719735fcb",
-      "play": "e3ed749a554406f18538f8b89873977907a57f91c4e588a0bb0bb1d5163d128e",
-      "sim": "ea682c36a167c1a4beb0e402b1ac46f9f99c44b0ea6779c6283f5df1a8bb7105",
+      "sha256": "0980e2973043b412374ba20f7350f6ee6324ad02b89c62ab35c3b10a1169f586",
+      "play": "492fbba341cfc0654364ab2a9d7a25666ec88a57c6d7835a8086a655e9d30f66",
+      "sim": "951cd86085872de3a7762e22906ba639a13688a29301c5fd82b16f3a20a3ffb2",
       "day": 200,
       "cities": 8,
       "open": 2,
-      "gold": 4156,
-      "units": 45
+      "gold": 6575,
+      "units": 27
     }
   },
   "roam": {
@@ -75,24 +75,24 @@
       "units": 0
     },
     "100": {
-      "sha256": "c7a17939016cb0ca4f9d49fab27a2f4235db20006616d4bbd0fcd5d5dbcf9f76",
-      "play": "fdf95959f89f84e516963e6de981954fb4e13056fd5b9a6be2ee0461146973ba",
-      "sim": "eacb5a777f7d7f2bcf08a375f03d878a3e15d87aa9a72389d185287f19ab7018",
+      "sha256": "91bcabe6b8e74cc3c80ea974a8d7ddff98612ba198e146a6ee3663be4588db3e",
+      "play": "3ab0b3dda233bf52db441cf3e06a910ec9caeaba9a7b6fb3d17f27e77706ec6d",
+      "sim": "c9b65258d17954662fb14c2aee9d01600814ee8e2e0fcca98d42f2ea4c224b91",
       "day": 100,
       "cities": 3,
       "open": 3,
-      "gold": 410,
-      "units": 7
+      "gold": 564,
+      "units": 3
     },
     "200": {
-      "sha256": "22f5197ddda0fab5cd9bcf831ca47ea67bdd7fccee04d16b702bfa82ee8125cc",
-      "play": "3c96aed41b7481dea022a9c20eeafaba1cb84364f94b016364f2ea6175994f69",
-      "sim": "ae21d8685ee919bc9d9eae679f81e108dcc41026f5963f3902d4d32657ffb909",
+      "sha256": "59ea28d4b73d515d8f5985014b9c6e1399dc807c34702908b6e6c855d670d3a5",
+      "play": "4d0584401232e2e29e1fe15ffce635a79c9ec55c5243ba69a0df1d7df4204ee0",
+      "sim": "5378f424237ae62f53af6d9f149972599afb749e5cc96e6e514cbd87d9ca8300",
       "day": 200,
       "cities": 6,
-      "open": 3,
-      "gold": 921,
-      "units": 23
+      "open": 2,
+      "gold": 4435,
+      "units": 9
     }
   }
 }

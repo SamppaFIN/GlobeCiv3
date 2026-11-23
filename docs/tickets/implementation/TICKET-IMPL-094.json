@@ -27,5 +27,5 @@
   },
   "commit": "cb9cbd5",
   "progress": 100,
-  "notes": "Ensimmäinen ajo löysi jumin: puolustavilla neuvonantajilla valtiotaso ei auennut 900 päivässä (STORY-113, korjattu ennen tätä committia). Havaintoja raportista: päätöksiä on vähän (3–4 nousuun valtiotasolle), ja pisimmät jaksot ilman päätöstä ovat 61–147 päivää (1,5–3,7 min). Build-tavalla 'yksiköt' näkyy päivänä 6 ennen kaupunkialuetta, mikä kannattaa tarkistaa: kaupunkitason ei pitäisi rakentaa yksiköitä (STORY-089)."
+  "notes": "Ensimmäinen ajo löysi jumin (STORY-113). Raportissa päätöksiä on 4–5 nousuun valtiotasolle, ja pisimmät jaksot ilman päätöstä ovat 99–125 päivää (2,5–3,1 min). Build-tavalla 'yksiköt' näkyy päivänä 6 ennen kaupunkialuetta, koska ajo antaa kaikkien tasojen neuvonantajat alussa ja läänin Vartija tilaa soturin; selaimessa ylempien tasojen neuvonantajat valitaan tasojen avautuessa."
 }

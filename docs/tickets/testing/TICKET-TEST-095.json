@@ -8,21 +8,21 @@
     "tooling": "Vitest 5, Playwright",
     "cases": [
       {
-        "steps": "tests/sim/jams.test.ts ilman korjausta ja sen kanssa",
+        "steps": "tests/sim/jams.test.ts puolustavalla ja tutkivalla tavalla, ilman korjausta, ensimmäisellä korjauksella ja nykyisellä",
         "expected": "Kriteeri 1: testi toistaa jumin",
-        "result": "Ilman korjausta punainen päivänä 75 (odottava paikka, eikä mikään asukkaan antava kaupunki rakenna uudisasukasta); korjauksen kanssa läpi, ja kaupunkeja on päivänä 300 yli 5",
+        "result": "Ilman korjausta punainen päivänä 75 (odottava paikka, eikä mikään asukkaan antava kaupunki rakenna uudisasukasta). Ensimmäisellä korjauksella punainen päivänä 75 (kaksi kaupunkia rakentaa paikan uudisasukasta). Nykyisellä läpi: enintään yksi kaupunki rakentaa paikalle, uudisasukkaita enintään 4, ja kaupunkeja päivänä 300 yli 5",
         "outcome": "pass"
       },
       {
-        "steps": "Autopilotti build-tavalla",
+        "steps": "Autopilotti kolmella tavalla",
         "expected": "Kriteeri 2: valtiotaso aukeaa",
-        "result": "Ennen: valtio ei auennut 900 päivässä. Nyt: kaupunkialue 55, lääni 130, valtio 220",
+        "result": "Ennen: build-tavalla valtio ei auennut 900 päivässä. Nyt valtio aukeaa feed-tavalla päivänä 189, build 242 ja roam 260; uudisasukkaita enimmillään 8, 4 ja 2 (ennen STORY-113:a 48, 2 ja 3; ensimmäisellä korjauksella 62, 41 ja 24, 400 päivän ajolla)",
         "outcome": "pass"
       },
       {
-        "steps": "golden.e2e (kirjoitus ja vertailu) ja sites.e2e",
+        "steps": "golden.e2e (kirjoitus ja vertailu), sites.e2e ja unlock.e2e",
         "expected": "Muutos vain siellä, missä pääkaupunki oli pieni",
-        "result": "6 testiä läpi. Kenttävertailu: feed-ajot ja päivä 50 ennallaan, build- ja roam-ajot muuttuvat päivästä 100",
+        "result": "9 testiä läpi. Kenttävertailu ennen STORY-113:a kirjoitettuun: päivä 50 ennallaan kaikilla tavoilla, ja kaikki tavat muuttuvat päivästä 100, myös feed, koska kasvattajankin uudisasukkaat kasautuivat ennen (48)",
         "outcome": "pass"
       },
       {
@@ -32,10 +32,10 @@
         "outcome": "not_run"
       },
       {
-        "steps": "Utun katselmointi",
+        "steps": "Utun katselmointi (Sonnet)",
         "expected": "Hyväksytty",
-        "result": "Odottaa",
-        "outcome": "not_run"
+        "result": "Hyväksytty huomautuksin. Löydökset ja korjaukset: (1) Riski, lähes vika: ensimmäinen korjaus kasasi uudisasukkaita (build enimmillään 29, ennen 2), koska jokainen paikan uudisasukkaan rakentanut kaupunki jatkoi rakentamista ja jokaisena päivänä, kun uudisasukas käveli paikalleen, tilattiin uusi (kävelevää ei laskettu vapaaksi). Korjattu: paikka odottaa matkalla olevaa uudisasukasta, uusi tilataan vain, kun uudisasukkaita ei ole, rakentaja palaa kultaan, ja neuvonantajalta suojataan vain rakentajan uudisasukas. (2) Kultaisen tilan muutos oli selitetty osittain: nyt kirjattu (kaikki tavat muuttuvat päivästä 100). (3) Testi oli löyhä: nyt kaksi tapaa, enintään yksi rakentaja ja enintään 4 uudisasukasta. (4) Huomio: rakentaja ei vaihdu nopeampaan, vaikka se olisi hidas; ei jumi, jätetty. (5) Ei muuta huomautettavaa",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

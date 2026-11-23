@@ -456,6 +456,10 @@ export function cityDays() {
     const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout' || done === 'worker') ? play!.units.spawn(done, c.tile, world, c.id) : null;
     view.notice([cityRef(c.tile, c.name), ` rakensi${isWonder(done) ? ' ihmeen' : ''}: `, made ? unitRef(made.id, made.name) : buildRef(done)]);
     if (isResourceBuilding(done)) rewardOf(c, done);
+    // The settler of a waiting site is one: the city goes on to gold, and its advisor orders
+    // more if it wants them (STORY-113, own rule; Utu's review: else every city that built one
+    // kept building them)
+    if (done === 'settler' && play!.pendingSite !== null) c.build = 'coinage';
   });
   // The governor puts new buildings on their best ground, and the bonuses follow (STORY-071)
   for (const c of play.cities) placeAll(c, ground);
@@ -485,10 +489,12 @@ export function cityDays() {
     sendSettler(free, play.pendingSite);
     play.pendingSite = null;
     view.notice([unitRef(free.id, free.name), ' lähti kaupunkipaikalle']);
-  } else if (play.pendingSite !== null && !free) {
+  } else if (play.pendingSite !== null && !free && !anySettler()) {
     // The waiting site keeps a settler coming (STORY-060): a soldier against bandits, an
     // advisor or the player may have changed the build, and the site would wait for ever.
-    // A city that cannot give a citizen builds it for ever, too (STORY-113)
+    // A city that cannot give a citizen builds it for ever, too (STORY-113). While a settler
+    // is on its way to another site, the site waits for it (Utu's review: else a settler more
+    // was ordered every day it walked)
     const builder = settlerBuilder(play.pendingSite);
     if (builder && !play.cities.some(c => c.build === 'settler' && (c === builder || canGiveCitizen(c)))) builder.build = 'settler';
   }
@@ -624,6 +630,12 @@ function settleAt(tile: number): boolean {
     view.notice([unitRef(settler.id, settler.name), ' lähti perustamaan kaupunkia']);
     return true;
   }
+  // A settler on its way to another site comes here next (STORY-113)
+  if (anySettler()) {
+    play.pendingSite = tile;
+    view.notice('Kaupunkipaikka odottaa: uudisasukas lähtee sinne, kun edellinen on perillä');
+    return true;
+  }
   const builder = settlerBuilder(tile);
   if (!builder) return false;
   builder.build = 'settler';
@@ -631,6 +643,8 @@ function settleAt(tile: number): boolean {
   view.notice([cityRef(builder.tile, builder.name), ' rakentaa uudisasukkaan kaupunkipaikalle']);
   return true;
 }
+
+const anySettler = () => play!.units.units.some(u => u.kind === 'settler');
 
 /** A settler takes a citizen (Freeciv civ1 pop_cost 1), so a city of size 1 waits to grow before it is built. */
 const canGiveCitizen = (c: City) => c.size > BUILDS.settler.pop;
@@ -1336,8 +1350,9 @@ export function advisorDay() {
     // The state's campaign goes first (STORY-064), then the province's builds
     const war = p.stateAdvisor === 'war' ? warBuild(c, available) : null;
     const build = war ?? ordered ?? advice?.build ?? null;
-    // A settler for a waiting city site is not changed
-    if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null)) {
+    // The settler for a waiting city site is not changed in the city that builds it (STORY-113:
+    // only there, or every city that ever built one kept building them, Utu's review)
+    if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null && c === settlerBuilder(p.pendingSite))) {
       const by = war ? 'state' : ordered ? 'province' : town ? 'town' : 'city';
       if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise([cityRef(c.tile, c.name), ' rakentaa: ', buildRef(build)], by);
     }

@@ -10,7 +10,14 @@
  * - An empty stretch is a run of days on which the game tells nothing: no decision, no notice,
  *   no moment (a city, a find, raiders, a victory, a level, an improvement) and no card.
  * - The confusion index is how many systems are new to the player within a minute of play at 1×
- *   speed (DAY_SECONDS a day, 40 days a minute): the most in any minute, and the mean.
+ *   speed (DAY_SECONDS a day, 40 days a minute): the most in any minute, and the mean. A system
+ *   counts when the player can see it, whoever runs it: science the people choose, a government
+ *   an advisor changes. A level comes with its own systems on the day it opens (the province
+ *   with its borders), and each counts, for each is new to the player.
+ * - The first decision comes after the welcome's (the advisors chosen at the start); under the
+ *   advisors it is the card of the first level that opens.
+ * - A run that stops (a card nothing answers) fails as a level not opened: the game cannot go on.
+ * - What the game tells as a day is readied is stamped with the day before (Run.happened).
  * - Minutes are of play at 1× speed: a day is DAY_SECONDS of wall time (clock.ts).
  */
 import { DAY_SECONDS } from '../../src/game/clock';
@@ -34,7 +41,8 @@ const SYSTEMS: { name: string; seen: (s: GameState, today: Happening[]) => boole
   { name: 'kaupunkialue', seen: s => s.progress.openLevel <= 3 },
   { name: 'yksiköt', seen: s => s.units.units.length > 0 },
   { name: 'kaupunkipaikat', seen: s => s.offered.length > 0 },
-  { name: 'rauniot', seen: (_, t) => t.some(h => h.moment === 'find') },
+  // A find is a ruin's or a site's moment (Utu's review): the ruins by the finds kept
+  { name: 'rauniot', seen: s => s.found > 0 },
   { name: 'rosvot', seen: s => s.raids.band !== null },
   { name: 'maanparannus', seen: (_, t) => t.some(h => h.moment === 'improve') },
   { name: 'tiede', seen: s => s.research.target !== null || s.research.known.size > 0 },
@@ -45,7 +53,8 @@ const SYSTEMS: { name: string; seen: (s: GameState, today: Happening[]) => boole
   { name: 'valtio', seen: s => s.progress.openLevel <= 1 },
   { name: 'kilpailijat', seen: s => s.ties.some(t => t.met) },
   { name: 'diplomatia', seen: (s, t) => t.some(h => h.kind === 'treaty') || s.ties.some(x => x.state !== 'peace') },
-  { name: 'sota', seen: (_, t) => t.some(h => h.moment === 'victory') },
+  // A victory is a raid beaten off too (Utu's review): war by a campaign or a rival at war
+  { name: 'sota', seen: s => s.war.target !== null || s.ties.some(x => x.state === 'war') },
   { name: 'hallitusmuoto', seen: s => s.gov !== 'despotism' },
   { name: 'planeetta', seen: s => s.progress.openLevel <= 0 },
 ];
@@ -60,6 +69,8 @@ export function broken(s: GameState, lastLevel: number): string | null {
     if (tiles.has(c.tile)) return `two cities on tile ${c.tile}`;
     tiles.add(c.tile);
   }
+  for (const c of s.cities) if (c.food < 0 || c.shields < 0) return `${c.name} food ${c.food}, shields ${c.shields}`;
+  if (s.pendingSite !== null && tiles.has(s.pendingSite)) return `the waiting site ${s.pendingSite} is a city`;
   for (const u of s.units.units) if (!Number.isInteger(u.tile) || u.tile < 0 || u.tile >= TILE_COUNT) return `${u.name} on tile ${u.tile}`;
   if (s.progress.openLevel > lastLevel) return `level ${lastLevel} closed again (${s.progress.openLevel})`;
   return null;
@@ -82,6 +93,8 @@ export interface Report {
   confusion: { peakPerMinute: number; peakAt: number; meanPerMinute: number };
   rises: { level: string; day: number; minutes: number }[];
   systems: { name: string; day: number }[];
+  /** Besides the five: the most settlers at once (STORY-113's pile-up showed there). */
+  mostSettlers: number;
 }
 
 /**
@@ -97,18 +110,22 @@ export function autopilot(seed: number, advisors: Advisors, horizon: number): Re
   let level = s.progress.openLevel;
   let failure: string | null = null;
   let read = 0;
+  let mostSettlers = 0;
   for (let day = 1; day <= horizon && !failure; day++) {
     if (!run.until(day)) { failure = `the run stopped on day ${run.clock.day}: ${run.state.over ? 'the game was lost' : run.error}`; break; }
     const today: Happening[] = [];
     for (; read < run.happened.length; read++) today.push(run.happened[read]);
     for (const sys of SYSTEMS) if (!seen.has(sys.name) && sys.seen(s, today)) seen.set(sys.name, day);
     failure = broken(s, level);
+    mostSettlers = Math.max(mostSettlers, s.units.units.filter(u => u.kind === 'settler').length);
     while (s.progress.openLevel < level) {
       level--;
       rises.push({ level: LEVEL_NAMES[level], day, minutes: minutes(day) });
     }
     if (level <= Math.min(...MVP_LEVELS)) break;
   }
+  // The last level's card answered too: its advisors are a decision
+  if (!failure && !run.until(run.clock.day + 1)) failure = `the run stopped on day ${run.clock.day}: ${run.error}`;
   const days = run.clock.day;
   if (!failure) {
     const missing = MVP_LEVELS.filter(l => level > l).map(l => LEVEL_NAMES[l]);
@@ -148,5 +165,6 @@ export function autopilot(seed: number, advisors: Advisors, horizon: number): Re
     confusion: { peakPerMinute: peak, peakAt, meanPerMinute: Math.round((systems.length / Math.max(0.1, minutes(days))) * 100) / 100 },
     rises,
     systems,
+    mostSettlers,
   };
 }
