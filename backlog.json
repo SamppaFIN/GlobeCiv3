@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-23T07:51:56Z",
+    "generated_at": "2026-11-23T12:37:58Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "37399db",
+    "git_commit": "7ae3c9c",
     "git_branch": "main",
     "language": "fi"
   },
@@ -230,7 +230,7 @@
         "STORY-099",
         "STORY-108"
       ],
-      "progress": 77
+      "progress": 85
     },
     {
       "id": "EPIC-010",
@@ -2960,12 +2960,12 @@
         "Yksiköiden luettelo (Luettelo-kortin Yksiköt) avautuu läänin- ja valtiotasolla myös neuvonantajan hoitaessa tasoa, ja rivit on ryhmitelty lääneittäin. Rivin tai merkin napautus valitsee yksikön ja kääntää kameran sen kohdalle lentämättä alas.",
         "Pääsäikeen JS-aika pysyy myöhäisessä pelissä valtiotasolla enintään 8 ms framessa (mittauslaite, selain ja menetelmä kirjataan)."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-097",
+        "implementation": "TICKET-IMPL-097",
+        "testing": "TICKET-TEST-097"
       }
     },
     {

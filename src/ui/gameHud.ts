@@ -67,8 +67,10 @@ export interface GameHudState {
   advisor: string | null;
   /** The level's advisor buttons (STORY-105): the three faces and the own hand; empty for none. */
   advisors: AdvisorButton[];
-  /** The player's own hand (STORY-096): the list shows only then (main.ts leaves out the unit and the research). */
+  /** The player's own hand (STORY-096): main.ts leaves out the unit and the research otherwise. */
   own: boolean;
+  /** The list button: with the own hand, and at the province and state levels (STORY-115). */
+  list: boolean;
   /** The science tree's button (STORY-109): there is a city, so there is science. */
   science: boolean;
 }
@@ -218,7 +220,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
         research.classList.toggle('btn-primary', s.research.choose);
         research.classList.toggle('btn-secondary', !s.research.choose);
       }
-      q<HTMLButtonElement>('.hud-city').hidden = !s.own;
+      q<HTMLButtonElement>('.hud-city').hidden = !s.list;
       q<HTMLButtonElement>('.hud-science').hidden = !s.science;
       advisors.hidden = s.advisor === null || !s.advisors.length;
       drawAdvisors(s.advisor === null ? [] : s.advisors);
