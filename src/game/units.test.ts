@@ -47,6 +47,18 @@ describe('game clock', () => {
 });
 
 describe('pathfinding', () => {
+  it("keeps each centre's rings apart, also many rings (Utu's review of STORY-117)", () => {
+    const c = pointToTile(new THREE.Vector3(0.3, 0.5, 0.8).normalize());
+    // With the old key centre × 16 + rings, (c, 24) was (c + 1, 8)
+    const near = tilesInRings(c + 1, 8);
+    const far = tilesInRings(c, 24);
+    expect(far.length).toBeGreaterThan(near.length);
+    expect(far).toContain(c);
+    // A list of its own each time
+    far.length = 0;
+    expect(tilesInRings(c, 24).length).toBeGreaterThan(near.length);
+  });
+
   it('finds a connected path around the sea, and none into it', () => {
     const world = makeWorld();
     const goal = pointToTile(new THREE.Vector3(0.47, 0.2, 0.86).normalize());

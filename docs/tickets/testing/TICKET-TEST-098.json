@@ -54,6 +54,48 @@
         "expected": "Vihreä",
         "result": "Ajetaan mergen jälkeen",
         "outcome": "not_run"
+      },
+      {
+        "steps": "Utun katselmointi (Sonnet) 2026-11-23: koodi ja testit kriteereittäin",
+        "expected": "Hyväksytty",
+        "result": "Hyväksytty muutoksin. Vakava: framen tasonnousun tarkistus (updateLevels → riseCheck) nosti tason päivän osien välissä, jolloin osissa laskettu päivä erosi kerralla lasketusta. Keskitaso: automaattitallennus laski kesken olevan päivän loppuun yhdessä framessa noin 10 s välein; kello kulki laskettujen päivien edellä, kun jonossa oli useampi päivä, joten komennon päiväleima ja tallennuksen päivä olivat myöhempiä kuin pelin päivä. Pieni: tauko ei pysäyttänyt jonoa, päivän kortit vilahtivat kesken päivän, renkaiden avain center × 16 + rings törmäsi 16 renkaasta alkaen, AC 1:n mittaus kattoi vain p95:n ja 20 päivää. Löydös 8 (TICKET-TEST-095 muutettujen tiedostojen listassa) ei ole virhe: haara kirjasi siihen CI-tuloksen.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Vitest day-parts.test.ts: tasonnousun tarkistus päivän osien välissä (Ruokkija, päivä 120)",
+        "expected": "Sama tila kuin kerralla",
+        "result": "Toisti vian ennen korjausta, läpi korjauksen jälkeen (riseCheck ei nosta päivän osien välissä, vain sen viimeisessä osassa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest units.test.ts: renkaiden avain (c, 24) ja (c + 1, 8)",
+        "expected": "Eri renkaat",
+        "result": "Toisti vian ennen korjausta (avain center × 64 + rings, yli 63 renkaan haku ilman muistia), läpi korjauksen jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E frame-budget.e2e: kellolla 4×-nopeudella päivästä 300 yli 12 s (SwiftShader, framet hitaita)",
+        "expected": "Kellon päivä on aloitettu päivä joka framessa, eikä tallennus laske päivää kerralla",
+        "result": "Ennen korjausta: kello edellä 11 framessa 15:stä ja yksi päivä laskettiin kerralla. Korjauksen jälkeen: 0 ja 0 (päivät 300 → 306: jono on enintään kaksi päivää, joten hidas laite pelaa hitaammin)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Node: myöhäisen päivän osat päivinä 300–330 (Rakentaja-tapa)",
+        "expected": "Suurin osa",
+        "result": "Noin 44 osaa päivässä, suurin 5,2 ms (yksikön haku). Budjetti laskettiin 4 ms:stä 3 ms:iin, jotta pala, joka päättyy suurimpaan osaan, mahtuu 8 ms:iin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E frame-budget.e2e: päivät 300–400 3 ms:n paloissa",
+        "expected": "p95 enintään 8 ms",
+        "result": "Neljä ajoa: mediaani 3,1 ms, p95 6,5–7,9 ms. Suurin pala oli ensin 115–129 ms (päivän ensimmäinen osa teki koko valtion kaupunkivaltiohaun kerralla), sitten 63–120 ms päivänä 399 (planeettatason ensimmäinen päivä kävi kaikki ruudut läpi jokaista uutta valtiota kohden) ja sitten 22–47 ms neuvonantajien osassa. Korjattu: haku 2 ms:n osissa, valtioiden ruudut yhdellä läpikäynnillä ja neuvonantajien päivään tauko jokaisen tason ja kaupungin jälkeen. Jäljellä 32–64 ms päivänä 399: valtion neuvonantaja laskee kerran uusien valtioiden alueiden nimet (noin 30 ms headlessissä) valloituksen jälkeisenä päivänä. Arvio, headless ilman GPU:ta 2 vCPU:lla, jossa SwiftShader kilpailee samoista ytimistä. Suurin pala oikeilla laitteilla on Samin hyväksynnässä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E STORY-118:n haarassa (sisältää korjaukset): golden, unlock, play, advance-card, raids, codex, onboarding, science-tree, levels, save ja site-card",
+        "expected": "Vihreä",
+        "result": "Läpi; unlock.e2e:60 (tunnettu vaihtelija) ja play.e2e:57 (1×-nopeuden mittaus 1,19 s, kun raja on 1,2) läpi uusinnassa samalla buildilla",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

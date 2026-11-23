@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { saveState } from '../../src/sim/game';
+import { riseCheck, saveState } from '../../src/sim/game';
 import { Run, type Advisors } from '../../src/sim/run';
 import { sha, simOf } from '../golden/hash';
 
@@ -52,6 +52,15 @@ describe('a day over several frames (STORY-117)', () => {
     expect(given).toBe(true);
     expect(taxed(mid)).toEqual([120]);
     expect(taxed(mid)).toEqual(edgeTaxed);
+  }, 600_000);
+
+  it("a level's rise checked by a frame in the middle of a day waits for the day's end (Utu's review)", () => {
+    // The browser checks the rises each frame (updateLevels); a day over several frames must not rise mid-day
+    const want = hashes(Run.play(42, FEED), [120]);
+    const run = Run.play(42, FEED);
+    run.stepped = true;
+    run.between = () => riseCheck();
+    expect(hashes(run, [120])).toEqual(want);
   }, 600_000);
 
   it('a save in the middle of a day holds the day worked out to its end', () => {

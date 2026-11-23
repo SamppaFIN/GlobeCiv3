@@ -1000,6 +1000,8 @@ export function finishScans() {
   while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
   nativeSyncMs = Math.max(nativeSyncMs, performance.now() - t0);
 }
+/** The scan's slice in a part of a day worked out over frames (own, STORY-117). */
+const SCAN_PART_MS = 2;
 /** The state whose land is being scored: its tiles, how far, and the scores so far. */
 let nativeScan: { state: number; tiles: number[]; at: number; rough: { tile: number; score: number }[] } | null = null;
 export let nativeMs = 0;
@@ -1320,24 +1322,41 @@ function sendToProvince(province: number): boolean {
   return true;
 }
 
-export function advisorDay() {
+/**
+ * The advisors' day, with a pause after each level and each city (STORY-117: on the planet
+ * level's first day it took up to 47 ms in one part); nothing else runs in the pauses.
+ */
+function* advisorDay(): Generator<void, void, void> {
   const p = play;
   if (!p) return;
   p.units.keepHome = p.provinceAdvisor === 'defend';
   // The province level's goal (STORY-111): its advisors aim at the nearest province not held
   const goal = provinceGoal();
   p.units.keepAlso = p.provinceAdvisor === 'defend' && goal !== null ? new Set([...conquestNow().held, goal]) : new Set();
-  if (p.planetAdvisor !== 'none') planetAdvisorDay();
+  if (p.planetAdvisor !== 'none') {
+    planetAdvisorDay();
+    yield;
+  }
   if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
   // The campaign first: a city taken today gets its yields with the others
-  if (p.stateAdvisor === 'war') warDay();
+  if (p.stateAdvisor === 'war') {
+    warDay();
+    yield;
+  }
   const yields = cityYields();
-  if (p.stateAdvisor !== 'none') stateAdvisorDay(p.stateAdvisor, yields);
+  if (p.stateAdvisor !== 'none') {
+    stateAdvisorDay(p.stateAdvisor, yields);
+    yield;
+  }
   // The cities that build their province's worker (STORY-093)
   const builders = workerBuilders();
-  p.cities.forEach((c, i) => {
+  // As forEach went: the cities there at the start, by index
+  const count = p.cities.length;
+  for (let i = 0; i < count; i++) {
+    if (!(i in p.cities)) continue;
+    const c = p.cities[i];
     const soldiers = soldiersIn(c.tile).length;
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
@@ -1368,7 +1387,8 @@ export function advisorDay() {
       const price = buyCost(c);
       if (price > 0 && price * 2 <= p.gold && dispatch({ kind: 'buy', city: c.tile }, 'city')) advise([cityRef(c.tile, c.name), ' osti: ', buildRef(c.build), ` (${price} kultaa)`]);
     }
-  });
+    yield;
+  }
   if (p.provinceAdvisor === 'settle') {
     const withCity = new Set(p.cities.map(c => world.cityOf(c.tile)));
     const chosen = settleAreas(homeAreas.map(area => ({ area, hasCity: withCity.has(area), share: areaShare(area), best: bestSite(area) })));
@@ -1414,26 +1434,30 @@ export function advisorDay() {
 const stateLand = new Map<number, number>();
 function landOf(state: number): number {
   if (!stateLand.has(state)) {
-    const table = regions.tileTable();
     let n = 0;
-    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state && Number.isFinite(world.cost(id))) n++;
+    for (const id of tilesOfState(state)) if (Number.isFinite(world.cost(id))) n++;
     stateLand.set(state, n);
   }
   return stateLand.get(state)!;
 }
-/** Tiles of each state, for its mapped share. */
-const stateTilesOf = new Map<number, number[]>();
+/**
+ * Tiles of each state, for its mapped share: indexed in one pass over all the tiles the first
+ * time (STORY-117: a pass for each state newly open took the planet level's first day over 100 ms).
+ */
+let stateTiles: number[][] | null = null;
 export function stateShare(state: number): number {
   return mapState.share(tilesOfState(state));
 }
+
+/** The tiles of a state. */
 export function tilesOfState(state: number): number[] {
-  if (!stateTilesOf.has(state)) {
+  if (!stateTiles) {
     const table = regions.tileTable();
-    const ids: number[] = [];
-    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state) ids.push(id);
-    stateTilesOf.set(state, ids);
+    const index: number[][] = [];
+    for (let id = 0; id < table.length; id++) (index[Math.floor(table[id] / 49)] ??= []).push(id);
+    stateTiles = index;
   }
-  return stateTilesOf.get(state)!;
+  return stateTiles[state] ?? [];
 }
 
 /** Make a state the target: the expedition goes there (STORY-057). */
@@ -2118,8 +2142,14 @@ export function prepareDay() {
  * A day of the game: the city-states it concerns found first, then the units, the cities, the
  * chronicles, the rivals, diplomacy, war, the raids and the advisors, in that order.
  */
+/** The day last begun, worked out or under way (STORY-117): the clock's day is it. */
+export let dayBegun = 0;
+/** Days a save or a command worked out to their end at once (STORY-117's measure). */
+export let daysFinishedAtOnce = 0;
+
 export function simulateDay(day: number) {
   finishDay();
+  dayBegun = day;
   const run = dayPhases(day);
   while (!run.next().done);
 }
@@ -2138,6 +2168,7 @@ export const dayRunning = () => dayRun !== null;
 /** A day to work out over the frames, the last one ended first. */
 export function startDay(day: number) {
   finishDay();
+  dayBegun = day;
   dayRun = dayPhases(day);
 }
 
@@ -2162,6 +2193,7 @@ export function stepDay(budgetMs: number): boolean {
 /** The day in progress worked out to its end now. */
 export function finishDay() {
   if (!dayRun || dayStepping) return;
+  daysFinishedAtOnce++;
   dayStepping = true;
   try {
     while (!dayRun.next().done);
@@ -2175,8 +2207,12 @@ export function finishDay() {
 function* dayPhases(day: number): Generator<void, void, void> {
   const p = play;
   if (!p) return;
-  // The city-states a day concerns are found before it, however the frames came (STORY-095)
-  finishScans();
+  // The city-states a day concerns are found before it, however the frames came (STORY-095),
+  // a slice of the scan a part (a whole state's scan in one part took over 100 ms, STORY-117)
+  while (play && (nativeScan || nextNativeState() !== null)) {
+    scanNatives(SCAN_PART_MS);
+    yield;
+  }
   shadowNatives();
   prepareDay();
   tickDay = day;
@@ -2198,7 +2234,7 @@ function* dayPhases(day: number): Generator<void, void, void> {
   rivalWarDay();
   raidDay();
   yield;
-  advisorDay();
+  yield* advisorDay();
   advisorsAnswer();
   riseCheck();
   tickDay = null;
@@ -2321,7 +2357,9 @@ function meetOpponents(): string {
  */
 export function riseCheck(): boolean {
   const p = play;
-  if (!p || pending(p).length) return false;
+  // Not between the parts of a day worked out over frames: the day rises at its end, as all at
+  // once (Utu's review of STORY-117); inside its last part it may
+  if (!p || pending(p).length || (dayRunning() && !dayStepping)) return false;
   const reached = levelGoal(p.progress.openLevel);
   const opened = advance(p.progress, levelState());
   if (opened !== null && reached) {

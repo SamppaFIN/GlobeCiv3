@@ -71,7 +71,7 @@ import { validateSave, type SaveData } from '../game/save';
 import { pending, type GameState } from '../sim/state';
 import type { SimEvents } from '../sim/events';
 import { DETAIL, RADIUS } from '../sim/world';
-import { advisorsAnswer, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
+import { advisorsAnswer, dayBegun, daysFinishedAtOnce, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
@@ -508,7 +508,8 @@ let lastSaveDay = -1;
 /** Save when a day has passed since the last save and SAVE_EVERY_MS has gone by, or now when forced. */
 function autosave(force = false): Promise<boolean> {
   const now = performance.now();
-  if (!force && (clock.day === lastSaveDay || now - lastSaveAt < SAVE_EVERY_MS)) return Promise.resolve(false);
+  // Not in the middle of a day: the save would work it out to its end in one frame (Utu's review of STORY-117)
+  if (!force && (clock.day === lastSaveDay || now - lastSaveAt < SAVE_EVERY_MS || dayRunning())) return Promise.resolve(false);
   const data = snapshot();
   if (!data) return Promise.resolve(false);
   lastSaveAt = now;
@@ -2911,10 +2912,14 @@ let stepMode = false;
 
 /**
  * Days that passed and wait to be worked out (STORY-117): a day goes over several frames, at
- * most DAY_BUDGET_MS of each, so a late game does not stutter at every day's turn.
+ * most DAY_BUDGET_MS of each, so a late game does not stutter at every day's turn. The budget is
+ * 3 ms and not 4: a part of a day, one unit's search at most, takes up to about 5 ms (Node,
+ * days 300–330), and the slice that ends with it stays within the frame's 8 ms (Utu's review).
  */
 let daysDue = 0;
-const DAY_BUDGET_MS = 4;
+/** At most this many days wait in the queue (own): a slow device plays slower rather than works days out in one frame. */
+const MAX_DAYS_DUE = 2;
+const DAY_BUDGET_MS = 3;
 /** The play update's JS time in the last frames, for the 8 ms measure (STORY-117). */
 const playMs: number[] = [];
 /** The slices of the stepped days when measured (STORY-117): the budget, and each slice's time. */
@@ -2943,23 +2948,27 @@ function updatePlay(dt: number) {
       }
     } else if (!blocked) simulateDay(++clock.day);
   } else {
-    if (!blocked) daysDue += clock.advance(dt);
-    else if (daysDue && !dayRunning()) {
-      // A card stopped the game: the days after it wait as before
-      clock.day -= daysDue;
-      daysDue = 0;
+    // The clock's days wait in a queue, and the clock's day is the one last begun, so that a
+    // command and a save take the day the game is on (Utu's review: the clock ran ahead of the
+    // days worked out). A device too slow for the queue plays slower rather than stutters (own).
+    if (!blocked) {
+      const days = clock.advance(dt);
+      clock.day -= days;
+      daysDue = Math.min(MAX_DAYS_DUE, daysDue + days);
     }
+    // A pause or a card: the days after it wait as before
+    if ((blocked || clock.paused) && !dayRunning()) daysDue = 0;
     const started = performance.now();
     while (dayRunning() || (daysDue > 0 && !pending(play).length && !unlockCard.visible)) {
       const left = DAY_BUDGET_MS - (performance.now() - started);
       if (left <= 0) break;
-      if (!dayRunning()) startDay(clock.day - --daysDue);
+      if (!dayRunning()) {
+        daysDue--;
+        startDay(++clock.day);
+      }
       if (!stepDay(left)) break;
     }
-    if (!dayRunning() && daysDue && (pending(play).length || unlockCard.visible)) {
-      clock.day -= daysDue;
-      daysDue = 0;
-    }
+    if (!dayRunning() && (pending(play).length || unlockCard.visible)) daysDue = 0;
   }
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   // The cards an advisor answers itself, also those waiting in a loaded game
@@ -2968,8 +2977,11 @@ function updatePlay(dt: number) {
     play.selected = Math.max(0, play.units.units.indexOf(sentUnit));
     sentUnit = null;
   }
-  updateTreatyCard();
-  updateSiteOffer();
+  // The cards of a day come at its end, when an advisor may already have answered them (Utu's review)
+  if (!dayRunning()) {
+    updateTreatyCard();
+    updateSiteOffer();
+  }
   updateListCard();
   updateCityCard();
   updateResearchCard();
@@ -3359,6 +3371,9 @@ frameStartPlanet();
   frameMs: () => [...frameMs],
   markerMs: () => [...markerMs],
   playMs: () => [...playMs],
+  /** The day last begun, and the days a save or a command worked out at once (STORY-117, Utu's review). */
+  dayBegun: () => dayBegun,
+  daysFinishedAtOnce: () => daysFinishedAtOnce,
   /** Stepped days worked out in slices of this budget (0: a whole day at once), and the slices' times. */
   sliceDays: (budget: number) => { sliceBudget = budget; sliceMs.length = 0; },
   sliceMs: () => [...sliceMs],

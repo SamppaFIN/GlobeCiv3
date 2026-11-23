@@ -129,7 +129,9 @@ const ringsFound = new Map<number, number[]>();
 
 /** Tiles within a number of rings of a tile (the tile included): a list of its own each time. */
 export function tilesInRings(center: number, rings: number): number[] {
-  const key = center * 16 + rings;
+  // Many rings (a test's 24) are not kept: the key holds up to 63 (Utu's review: 16 made (c, 24) and (c + 1, 8) one)
+  if (rings >= 64) return findRings(center, rings);
+  const key = center * 64 + rings;
   let found = ringsFound.get(key);
   if (!found) {
     found = findRings(center, rings);
