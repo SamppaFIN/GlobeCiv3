@@ -42,6 +42,12 @@
         "expected": "Hyväksytty",
         "result": "Hyväksytty huomautuksin. Löydökset ja korjaukset: (1) Riski, lähes vika: ensimmäinen korjaus kasasi uudisasukkaita (build enimmillään 29, ennen 2), koska jokainen paikan uudisasukkaan rakentanut kaupunki jatkoi rakentamista ja jokaisena päivänä, kun uudisasukas käveli paikalleen, tilattiin uusi (kävelevää ei laskettu vapaaksi). Korjattu: paikka odottaa matkalla olevaa uudisasukasta, uusi tilataan vain, kun uudisasukkaita ei ole, rakentaja palaa kultaan, ja neuvonantajalta suojataan vain rakentajan uudisasukas. (2) Kultaisen tilan muutos oli selitetty osittain: nyt kirjattu (kaikki tavat muuttuvat päivästä 100). (3) Testi oli löyhä: nyt kaksi tapaa, enintään yksi rakentaja ja enintään 4 uudisasukasta. (4) Huomio: rakentaja ei vaihdu nopeampaan, vaikka se olisi hidas; ei jumi, jätetty. (5) Ei muuta huomautettavaa",
         "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä uudisasukaskorjauksen jälkeen (20db0a3)",
+        "expected": "Vihreä",
+        "result": "Vihreä: ajo 45174619286 (20db0a3, 1 h 22 min), site-card.e2e läpi. Julkaistu Pagesiin.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
