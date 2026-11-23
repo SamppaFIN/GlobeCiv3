@@ -9,26 +9,26 @@
     "cases": [
       {
         "steps": "Vitest src/ui/unitMarkers.test.ts",
-        "expected": "Yhdistyminen kosketusalueen mukaan, valittu ensin, sivuun siirto sirun tieltä, päälle piirto kun vapaata ei ole, kosketusalueet erillään",
-        "result": "6/6",
+        "expected": "Yhdistyminen kosketusalueen mukaan, valittu ensin, sivuun siirto sirun tieltä paneelien väliin ja näkymän sisään, liittyminen lähimpään merkkiin kun vapaata ei ole, kosketusalueet erillään ja vuorottelu yksiköiden järjestyksessä",
+        "result": "8/8",
         "outcome": "pass"
       },
       {
         "steps": "unit-markers.e2e puhelimen (390 × 844) ja työpöydän (1280 × 800) koossa: ?classic, kahdeksan kaupunkia neljässä läänissä, soturi joka kaupungissa, kolme yksikköä yhdessä ruudussa ja yksinäinen tiedustelija, valtiotaso",
-        "expected": "Kriteeri 1: jokainen näkyvä yksikkö merkissä, merkit vähintään 12 px, ei sirujen tai lappujen alla, yhdistetyssä lukumäärä",
-        "result": "14 yksikköä viidessä merkissä molemmissa koossa; merkkien lukumäärien summa on näkyvien yksiköiden määrä; pisteet 14 px; yksikään paikallaan oleva merkki ei osu siruun, lappuun tai toisen merkin kosketusalueeseen. Puhelimella yksi merkki ei löytänyt vapaata kohtaa ja piirtyi sirun päälle (over), työpöydällä ei yhtään.",
+        "expected": "Kriteeri 1: jokainen näkyvä yksikkö merkissä, merkit vähintään 12 px, paneelien välissä ja näkymän sisällä, ei sirujen tai lappujen alla, yhdistetyssä lukumäärä",
+        "result": "14 yksikköä neljässä (puhelin) tai viidessä (työpöytä) merkissä; lukumäärien summa on näkyvien yksiköiden määrä; pisteet 14 px; merkit paneelien välissä ja näkymän sisällä; yksikään merkki ei osu siruun, lappuun tai toisen merkin kosketusalueeseen, eikä yksikään piirry päälle.",
         "outcome": "pass"
       },
       {
-        "steps": "Sama: yksinäisen merkin napautus ja kolmen yksikön merkin kaksi napautusta",
+        "steps": "Sama: yksinäisen merkin napautus, ja pinon merkkiä napautetaan kuusi kertaa",
         "expected": "Kriteeri 1: napautus valitsee yksikön ja kääntää kameran lentämättä alas",
-        "result": "Valinta on merkin yksikkö, taso pysyy 1, kameran etäisyys sama ja yksikkö alle 40 px:n päässä ruudun keskeltä; yhdistetty merkki antaa kaksi eri yksikköä ryhmästään",
+        "result": "Valinta on merkin yksikkö, taso pysyy 1, kameran etäisyys sama ja yksikkö alle 40 px:n päässä ruudun keskeltä. Pinon merkki antaa jokaisen pinon yksikön (katselmoinnin jälkeen; ennen korjausta vuoro kulki kahden välillä).",
         "outcome": "pass"
       },
       {
-        "steps": "Sama: luettelo valtiotasolla, Yksiköt-välilehti, toisen läänin ensimmäinen rivi",
+        "steps": "Sama: luettelo valtiotasolla, Kaupungit-välilehden ensimmäinen rivi ja Yksiköt-välilehti",
         "expected": "Kriteeri 2: luettelo aukeaa, rivit lääneittäin, rivi valitsee yksikön lentämättä alas",
-        "result": "Läänien otsikot ovat erilliset, ja niiden määrien summa on yksiköiden määrä; rivi sulkee luettelon, valitsee yksikön, taso ja etäisyys pysyvät",
+        "result": "Kaupunkirivi sulkee luettelon ja avaa kaupungin pikapaneelin valtiotasolla. Läänien otsikot ovat erilliset ja niiden määrien summa on yksiköiden määrä; rivi sulkee luettelon, valitsee yksikön, ja taso ja etäisyys pysyvät.",
         "outcome": "pass"
       },
       {
@@ -40,19 +40,19 @@
       {
         "steps": "Läänitaso samassa pelissä ja kuvakaappaukset valtio-, lääni- ja kaupunkialuetasolta",
         "expected": "Sääntö 10.6",
-        "result": "Läänitasolla samat tarkistukset vihreinä; kuvat state, state-picked, list ja province molemmissa koossa (paikallinen ajo, ei versionhallinnassa)",
+        "result": "Läänitasolla samat tarkistukset vihreinä. Kuvat state, state-picked, list ja province molemmissa koossa (paikallinen ajo, ei versionhallinnassa). Planeettatasolle ei päästä ?classic-pelissä ilman kotivaltion valtausta, eikä merkkejä piirretä kaupunkialueella, joten niiden kuvia ei otettu.",
         "outcome": "pass"
       },
       {
         "steps": "globeDebug.markerMs valtio- ja läänitasolla, noin 150 framea",
         "expected": "Kriteeri 3: pääsäikeen JS enintään 8 ms framessa myöhäisessä pelissä",
-        "result": "Merkkien oma JS-aika: mediaani 0,1 ms ja p95 0,2 ms molemmissa koossa; yksittäiset piikit 3–8 ms osuvat satunnaisiin frameihin, joten ne ovat 2 vCPU:n ja SwiftShaderin kohinaa tai roskienkeruuta. Koko framen 8 ms:n raja mitataan oikealla GPU:lla kuten TICKET-TEST-082:ssa.",
+        "result": "Merkkien oma JS-aika: mediaani 0,1 ms ja p95 0,2 ms molemmissa koossa, suurin 0,5–0,9 ms katselmoinnin jälkeisessä ajossa; aiemmissa ajoissa yksittäisiä 3–8 ms:n piikkejä satunnaisissa frameissa. Arvio: piikit ovat 2 vCPU:n ja SwiftShaderin kilpailua tai roskienkeruuta, sillä ne eivät osu samoihin frameihin ajosta toiseen; tätä ei ole todennettu. Koko framen 8 ms:n raja mitataan oikealla GPU:lla kuten TICKET-TEST-082:ssa.",
         "outcome": "not_run"
       },
       {
-        "steps": "Liittyvät E2E: advisors, city, diplomacy, list, onboarding, opponents, state-view",
+        "steps": "Liittyvät E2E katselmoinnin korjausten jälkeen: list, onboarding, opponents, state-view ja unit-markers",
         "expected": "Vihreä",
-        "result": "14/15; onboarding.e2e:n 'a new game greets' oli punainen erässä mutta vihreä yksin samalla buildilla (epävakaa)",
+        "result": "11/11 (aiempi erä 14/15, jossa onboarding.e2e:n \"a new game greets\" oli punainen mutta vihreä yksin)",
         "outcome": "pass"
       },
       {
@@ -64,8 +64,8 @@
       {
         "steps": "Utun katselmointi",
         "expected": "Hyväksytty",
-        "result": "Odottaa",
-        "outcome": "not_run"
+        "result": "Hyväksytty muutoksin (2026-11-23). Korjattu: vuorottelu yksiköiden järjestyksessä (nextUnit, ennen vuoro kulki kahden välillä), testi napauttaa pinoa ja vaatii jokaisen yksikön, merkit pysyvät paneelien välissä ja näkymän sisällä, merkki, jolle ei löydy vapaata kohtaa, liittyy lähimpään merkkiin eikä vie sirun napautuksia (vain ensimmäinen voi jäädä päälle), luettelo sulkeutuu planeettatasolla eikä nappi näy siellä, kaupunkirivin pikapaneeli testataan, kommentti aria-labelista korjattu ja tikettirivit tarkennettu. Tunnetut rajoitukset: merkin nappi seuraa yksikön indeksiä, joten kuollut yksikkö siirtää indeksejä ja fokus voi hypätä; Tab-järjestys on luontijärjestys; jokainen frame rakentaa merkkien taulukot ja tekstit.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

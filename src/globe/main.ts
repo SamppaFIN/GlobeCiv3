@@ -31,7 +31,7 @@ import { borderRings, cultureGain, HOLD_BY_BORDER } from '../game/culture';
 import { CONNECTED_SHIELD, isStrategic, type StrategicKind } from '../game/connection';
 import { FAIR_SITE, goodSite, SITE_SPACING } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
-import { createUnitMarkers, type UnitMark } from '../ui/unitMarkers';
+import { createUnitMarkers, nextUnit, type UnitMark } from '../ui/unitMarkers';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
@@ -726,8 +726,7 @@ const cityLabels = createCityLabels(hud_root, id => {
  */
 function pickUnits(units: number[]) {
   if (!play || !units.length) return;
-  const k = units.indexOf(play.selected);
-  play.selected = units[k < 0 ? 0 : (k + 1) % units.length];
+  play.selected = nextUnit(units, play.selected);
   rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
 }
 
@@ -1121,7 +1120,7 @@ const markerMs: number[] = [];
 /** Each of the player's units as a marker at the province and state levels (STORY-115), clear of the chips and labels. */
 function updateUnitMarkers(labelRects: ScreenRect[]) {
   const started = performance.now();
-  if (!play || (viewLevel !== 1 && viewLevel !== 2)) unitMarkers.update(null, []);
+  if (!play || (viewLevel !== 1 && viewLevel !== 2)) unitMarkers.update(null, [], { left: 0, top: 0, right: 0, bottom: 0 });
   else {
     // Not under the top or the bottom panel
     const band = panelEdges();
@@ -1130,7 +1129,7 @@ function updateUnitMarkers(labelRects: ScreenRect[]) {
       const shown = at !== null && at[1] > band.top && at[1] < band.bottom;
       return { index, label: u.name, x: shown ? at[0] : null, y: shown ? at[1] : null, selected: index === play!.selected };
     });
-    unitMarkers.update(marks, [...chipRects, ...labelRects]);
+    unitMarkers.update(marks, [...chipRects, ...labelRects], { left: 0, top: band.top, right: innerWidth, bottom: band.bottom });
   }
   markerMs.push(performance.now() - started);
   if (markerMs.length > 240) markerMs.shift();
@@ -1864,7 +1863,9 @@ function economyRows(yields: CityYield[]): ListView['economy'] {
 }
 
 function updateListCard() {
-  // At the city area, and above it at the province and state levels (STORY-115)
+  // At the city area, and above it at the province and state levels (STORY-115); the planet
+  // level closes it, so it does not come back on the way down
+  if (play?.listOpen && viewLevel === 0) play.listOpen = false;
   if (!play || !play.listOpen || viewLevel === 0 || discoveryCard.visible) {
     if (listCard.visible) listCard.hide();
     return;
@@ -2956,7 +2957,7 @@ function updatePlay(dt: number) {
     advisors: advisorButtons(advisorLevel()),
     own: ownHand(),
     // The list also where the advisor runs the province or the state (STORY-115)
-    list: ownHand() || viewLevel === 1 || viewLevel === 2,
+    list: viewLevel !== 0 && (ownHand() || viewLevel === 1 || viewLevel === 2),
     science: play.cities.length > 0,
     research: !play.cities.length || play.researchOpen || !ownHand() ? null
       : play.research.target ? { text: `Tiede · ${studyName(play.research.target)} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
