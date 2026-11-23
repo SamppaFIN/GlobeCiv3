@@ -1416,26 +1416,30 @@ export function advisorDay() {
 const stateLand = new Map<number, number>();
 function landOf(state: number): number {
   if (!stateLand.has(state)) {
-    const table = regions.tileTable();
     let n = 0;
-    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state && Number.isFinite(world.cost(id))) n++;
+    for (const id of tilesOfState(state)) if (Number.isFinite(world.cost(id))) n++;
     stateLand.set(state, n);
   }
   return stateLand.get(state)!;
 }
-/** Tiles of each state, for its mapped share. */
-const stateTilesOf = new Map<number, number[]>();
+/**
+ * Tiles of each state, for its mapped share: indexed in one pass over all the tiles the first
+ * time (STORY-117: a pass for each state newly open took the planet level's first day over 100 ms).
+ */
+let stateTiles: number[][] | null = null;
 export function stateShare(state: number): number {
   return mapState.share(tilesOfState(state));
 }
+
+/** The tiles of a state. */
 export function tilesOfState(state: number): number[] {
-  if (!stateTilesOf.has(state)) {
+  if (!stateTiles) {
     const table = regions.tileTable();
-    const ids: number[] = [];
-    for (let id = 0; id < table.length; id++) if (Math.floor(table[id] / 49) === state) ids.push(id);
-    stateTilesOf.set(state, ids);
+    const index: number[][] = [];
+    for (let id = 0; id < table.length; id++) (index[Math.floor(table[id] / 49)] ??= []).push(id);
+    stateTiles = index;
   }
-  return stateTilesOf.get(state)!;
+  return stateTiles[state] ?? [];
 }
 
 /** Make a state the target: the expedition goes there (STORY-057). */
