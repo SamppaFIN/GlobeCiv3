@@ -12,7 +12,7 @@
     "backlog.json",
     "CLAUDE.md"
   ],
-  "change_summary": "settlerBuilder valitsee odottavan paikan uudisasukkaan rakentajan: pääkaupunki, jos se voi antaa asukkaan, muuten paikkaa lähin, joka voi. settleAt ja päivän odottavan paikan sääntö käyttävät sitä.",
+  "change_summary": "settlerBuilder valitsee odottavan paikan uudisasukkaan rakentajan: pääkaupunki, jos se voi antaa asukkaan, muuten paikkaa lähin, joka voi. settleAt ja päivän odottavan paikan sääntö käyttävät sitä. Katselmoinnin jälkeen: anySettler-ehto (uusi uudisasukas tilataan vain, kun yhtään ei ole, ja odottava paikka odottaa matkalla olevaa), paikan uudisasukkaan rakentanut kaupunki palaa kultaan, ja neuvonantajan suoja koskee vain rakentajaa.",
   "impact_analysis": {
     "changed_symbols": [
       "settleAt",
@@ -30,5 +30,5 @@
   },
   "commit": "b3523df",
   "progress": 100,
-  "notes": "Kultaiset tilat: feed-ajo ennallaan, build- ja roam-ajot muuttuvat päivästä 100 (niiden pääkaupungit olivat pieniä). Autopilotissa roam-tavan lääni aukeaa nyt päivänä 219 (ennen 129) ja valtio päivänä 295 (ennen 320)."
+  "notes": "Kultaiset tilat: päivä 50 ennallaan, kaikki tavat muuttuvat päivästä 100, myös feed (sen kasvattajan uudisasukkaat kasautuivat ennen 48:aan). Autopilotissa valtio aukeaa feed-tavalla päivänä 189 (ennen 167), build 242 (ennen ei lainkaan) ja roam 260 (ennen 320); läänit 89, 132 ja 134."
 }

@@ -10,7 +10,7 @@
       {
         "steps": "tests/sim/autopilot.test.ts: siemen 42 kolmella neuvonantajatavalla, horisontti 900 päivää",
         "expected": "Kriteeri 1: viisi mittaria raportoidaan",
-        "result": "feed: nousut päivinä 24, 106 ja 167; ensimmäinen päätös päivänä 24; 3 päätöstä (0,018/pv); pisin tyhjä jakso 5 pv, ilman päätöstä 61 pv; sekavuus enintään 7 järjestelmää minuutissa (päivästä 2), keskimäärin 3,33. build: nousut 55, 130 ja 220; ensimmäinen päätös 55; 3 päätöstä (0,014/pv); tyhjä 22 pv, ilman päätöstä 90 pv; sekavuus enintään 6, keskimäärin 2,73. roam: nousut 55, 219 ja 295; ensimmäinen päätös 55; 4 päätöstä (0,014/pv); tyhjä 14 pv, ilman päätöstä 147 pv; sekavuus enintään 6, keskimäärin 1,76",
+        "result": "feed: nousut 24, 89 ja 189; ensimmäinen päätös 24; 4 päätöstä (0,021/pv); tyhjä 6 pv, ilman päätöstä 99 pv; sekavuus enintään 7, keskimäärin 2,92; uudisasukkaita enintään 8. build: nousut 55, 132 ja 242; 4 päätöstä (0,016/pv); tyhjä 22 pv, ilman päätöstä 109 pv; sekavuus enintään 5, keskimäärin 2,3; uudisasukkaita 4. roam: nousut 55, 134 ja 260; 5 päätöstä (0,019/pv); tyhjä 14 pv, ilman päätöstä 125 pv; sekavuus enintään 5, keskimäärin 2,31; uudisasukkaita 2",
         "outcome": "pass"
       },
       {
@@ -32,10 +32,10 @@
         "outcome": "not_run"
       },
       {
-        "steps": "Utun katselmointi",
+        "steps": "Utun katselmointi (Sonnet)",
         "expected": "Hyväksytty",
-        "result": "Odottaa",
-        "outcome": "not_run"
+        "result": "Hyväksytty huomautuksin. Korjattu: (1) raunioiden tunnistin osui kaupunkipaikkoihin (find-hetki): nyt löydöistä; (2) sodan tunnistin osui torjuttuihin rosvoihin (victory-hetki): nyt sotaretkestä tai kilpailijan sodasta; (4) mittari ei enää kaada testiä (firstDecision-väite pois), ja pysähtynyt ajo on kirjattu tulkinnaksi: peli ei voi jatkua, joten nousu ei tapahdu; (5) raportti kirjoitetaan afterAll-koukussa; (6) viimeisen tason kortti vastataan, joten sen neuvonantajat lasketaan päätökseksi; (9) invariantteihin kaupunkien ruoka ja tuotanto sekä odottava paikka, joka ei ole kaupunki; uudisasukkaiden enimmäismäärä raportoidaan erikseen (ei invariantti, vaan tasapaino). Kirjattu määritelmiin: (3) taso tuo omat järjestelmänsä samana päivänä, ja jokainen lasketaan, koska jokainen on pelaajalle uusi; (7) järjestelmä lasketaan, kun pelaaja näkee sen, kuka sitä hoitaakin; (10) valmistelun tapahtumat saavat edellisen päivän leiman. Jätetty: (8) Vartija tilaa soturin kaupunkitasolla päivänä 2, koska ajo antaa kaikkien tasojen neuvonantajat alussa, toisin kuin selain; ei pelin vika vaan ajon tapa, kirjattu; (11) raportti näkyy CI:n lokissa",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
