@@ -1,0 +1,77 @@
+{
+  "id": "TICKET-TEST-098",
+  "story": "STORY-117",
+  "implementation_ticket": "TICKET-IMPL-098",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU, Intel Xeon 2,3 GHz) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1), siemen 42; Vitest 5 Nodessa",
+    "tooling": "Vitest, Playwright, globeDebug.sliceDays ja sliceMs, Node --cpu-prof",
+    "cases": [
+      {
+        "steps": "Vitest tests/sim/day-parts.test.ts: Rakentaja- ja Ruokkija-tavat päiviin 60, 150 ja 250 osissa ja kerralla",
+        "expected": "Sama tila (sha) osissa ja kerralla, ja päivässä useita osia",
+        "result": "Sama tila kaikilla päivillä; osia yli 5 päivässä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: veroa muutetaan kesken päivän 120 (osissa), verrataan päivän 120 lopussa annettuun",
+        "expected": "Sama tila päivinä 121 ja 180, ja komento lokissa päivällä 120",
+        "result": "Sama tila ja päiväleima 120",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: tallennus kesken päivän 120 (kolmannen osan jälkeen), verrataan päivän 120 lopussa tehtyyn",
+        "expected": "Sama tallennus",
+        "result": "Sama tallennus",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest koko sarja (kultaiset tilat run.test.ts, autopilotti, jumit)",
+        "expected": "Vihreä, kultaiset tilat ennallaan",
+        "result": "60 tiedostoa, 358 testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Päivän kustannus Nodessa päivinä 300–400 ennen ja jälkeen vaiheiden 1–2 (zz-daycost, Node 22)",
+        "expected": "Mediaani laskee",
+        "result": "Rakentaja 71 → 16 ms, Ruokkija 7 ms, Retkeilijä 2,6 ms; 70 % ajasta oli ennen tiedustelijoiden hakua",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E tests/e2e/frame-budget.e2e.ts: siemen 42, Rakentaja, Vartija, Vartija ja Kenraali, askelletaan päivään 300, sitten 20 päivää 4 ms:n paloissa",
+        "expected": "Palojen p95 enintään 8 ms",
+        "result": "44 palaa 20 päivässä, mediaani 4,2 ms, p95 6,5 ms, suurin 8,4 ms. Arvio: headless ilman GPU:ta; oikeat laitteet (Intel UHD ja S23 Ultra) mitataan Samin hyväksynnässä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: golden.e2e (askelletut kultaiset ajot ja tallennus päivänä 100), save, site-card, state-view, unit-markers, unlock, raids, advisors, chains, science, play, firsts, growth ja notices (kellolla etenevät päivät)",
+        "expected": "Vihreä",
+        "result": "32/34 läpi ensimmäisellä ajolla; play.e2e:n puhelinnäkymä (30 s:n aikaraja) ja unlock.e2e:60 (kortti auki tarkistushetkellä, tunnettu vaihtelija) läpi uusinnassa samalla buildilla",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Ajetaan mergen jälkeen",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": []
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Pelaa myöhäistä peliä Intel UHD:lla ja S23 Ultralla: kartta ei nyi päivänvaihteessa (globeDebug.playMs: p95 ja suurin enintään 8 ms)",
+        "checked": false
+      },
+      {
+        "item": "Kello ja kortit toimivat kuten ennen: kortti pysäyttää pelin, ja päivät jatkuvat sen jälkeen",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

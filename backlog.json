@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-23T13:12:51Z",
+    "generated_at": "2026-11-23T18:17:12Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "7ae3c9c",
+    "git_commit": "cd3669c",
     "git_branch": "main",
     "language": "fi"
   },
@@ -231,7 +231,7 @@
         "STORY-099",
         "STORY-108"
       ],
-      "progress": 85
+      "progress": 86
     },
     {
       "id": "EPIC-010",
@@ -3022,12 +3022,12 @@
         "Myöhäisessä pelissä (siemen 42, neuvonantajina Rakentaja, Vartija, Vartija ja Kenraali, päivät 300–400) pääsäikeen JS-aika framessa on p95:nä ja suurimmillaan enintään 8 ms. Mittauslaite, selain ja menetelmä kirjataan, ja Intel UHD ja S23 Ultra mitataan Samin hyväksynnässä.",
         "Päivän laskenta jaetaan frameille, ja jaettu päivä tuottaa saman tilan kuin yhdessä framessa laskettu (kultaiset tilat ennallaan). Kesken päivän annettu komento ajetaan päivän jälkeen samalla päiväleimalla, ja tallennus kesken päivän laskee päivän ensin loppuun."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
         "plan": "PLAN-098",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-098",
+        "testing": "TICKET-TEST-098"
       }
     },
     {
