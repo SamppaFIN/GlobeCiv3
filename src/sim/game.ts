@@ -1000,6 +1000,8 @@ export function finishScans() {
   while (nativeScan || nextNativeState() !== null) scanNatives(Infinity);
   nativeSyncMs = Math.max(nativeSyncMs, performance.now() - t0);
 }
+/** The scan's slice in a part of a day worked out over frames (own, STORY-117). */
+const SCAN_PART_MS = 2;
 /** The state whose land is being scored: its tiles, how far, and the scores so far. */
 let nativeScan: { state: number; tiles: number[]; at: number; rough: { tile: number; score: number }[] } | null = null;
 export let nativeMs = 0;
@@ -2183,8 +2185,12 @@ export function finishDay() {
 function* dayPhases(day: number): Generator<void, void, void> {
   const p = play;
   if (!p) return;
-  // The city-states a day concerns are found before it, however the frames came (STORY-095)
-  finishScans();
+  // The city-states a day concerns are found before it, however the frames came (STORY-095),
+  // a slice of the scan a part (a whole state's scan in one part took over 100 ms, STORY-117)
+  while (play && (nativeScan || nextNativeState() !== null)) {
+    scanNatives(SCAN_PART_MS);
+    yield;
+  }
   shadowNatives();
   prepareDay();
   tickDay = day;
