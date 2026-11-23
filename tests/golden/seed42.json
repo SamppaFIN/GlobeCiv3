@@ -11,9 +11,9 @@
       "units": 3
     },
     "100": {
-      "sha256": "2d4229dc35f8b25d85268747862c7a74d8e48e5950320a11a44cc63219d882b2",
-      "play": "3348b87160fc8df62d5515faa636fff55332379e99679528c91b8e6dd3e4c448",
-      "sim": "31fd729a5d05296cbc27b873157c5138e773c10a66387a672daefa65d850a8bf",
+      "sha256": "4a87ec668bd7b271d38e6a5a3bb4d4670452c148276368bc744206761151925e",
+      "play": "1cdb279daa8d3fcee7fc11178229c0a5757175fc8ea432b1c27edecfd3dc0936",
+      "sim": "0e434987ee8531faff5a601467b2bbd9b65da116836d2457a51773e24985136e",
       "day": 100,
       "cities": 4,
       "open": 2,
@@ -21,9 +21,9 @@
       "units": 11
     },
     "200": {
-      "sha256": "48ca9405a7f503ea57437008ff653dc55c3cd3f22351a86baa232dff1e8497cc",
-      "play": "666acd2e2fdb3237c8a40150c271e768d322a62ccc01563f2ebda2956526b750",
-      "sim": "59306a9b21e5dd1aace16768253673c450b8b3a0e6843bf61b909feda599e37d",
+      "sha256": "bdbed674ae560df086dd9d270a9f884abad8754ead2d85061a37a5de15d88015",
+      "play": "906455b94591f633d0a18dfddcddb41fa741c6a0f25add0fe2d72cabad816292",
+      "sim": "8ef7ea3fc7b6961c4f4bcf82fbad40002f5f02609a96c0c2288cae841cef8144",
       "day": 200,
       "cities": 7,
       "open": 1,
@@ -43,9 +43,9 @@
       "units": 1
     },
     "100": {
-      "sha256": "66c402ccb27d60f49e9cafd10d79da6b7ec6429f66873d27d67bb12268888ff8",
-      "play": "1550cff0c23f48df67fb9dd57abf7ec4ef8f6c54256448aa05f135f2e3ed95cb",
-      "sim": "bcfccda6b28d38f4514a3df143ee1e38718fe78ced0f9a2d59c6ef227b36f626",
+      "sha256": "bc3065abc9ad8ba4d7209cbaae8de1a09982c7fd1c6f09ffd82054a357f810cb",
+      "play": "618d2c4ded2b43f9110107f389d7da65f230f62b1475f3906b1db633a170ec05",
+      "sim": "4e8eee007f75e4d9a5b9af49b0add05aa203e1431cfd7ed95f83adfc36e4e87b",
       "day": 100,
       "cities": 3,
       "open": 3,
@@ -53,9 +53,9 @@
       "units": 9
     },
     "200": {
-      "sha256": "f7e5a8f1d74159c357adbeae0ca989eb174cf3a8079e6488b2e670a2b1c1aab6",
-      "play": "e509f3e3a7f2f3adc463fc0c7b74f478c18124df788b34cd7d18e84e98f04ed4",
-      "sim": "bd9f66dfd7b17ce59f3d73f6217dcba9da28013bb72d303f1fbc3999aaaf5e9e",
+      "sha256": "869c8807ae983b99e30d278ff4936cf89cc651cc290f5f7419177c21a9aed0e6",
+      "play": "a78703d7976cd9bfb3573fc7f172dc9231580a5adad6a02cb7ed486d1c647e22",
+      "sim": "046ffbcabeafcc32965e4e25e1d1cc9a826f2ef47e3634e8437ea03cc0b85912",
       "day": 200,
       "cities": 9,
       "open": 1,
@@ -65,9 +65,9 @@
   },
   "roam": {
     "50": {
-      "sha256": "4d4a10f0174cd8006df09b0add2715aab7d3ca2e6983308ab3be4fed2ca413ea",
-      "play": "3a62f315fd3d6778793ce6e10614f9e7cde060134e855e3eda5abc46265e4be1",
-      "sim": "f21f84892d6b4b761271e5e6277092516b4c48b95f16b115ee04fd6271533a3f",
+      "sha256": "3c2b2c67a7593a61ef5fcf095c61dbb0c7288ffddc6e8f3b8140593decfee540",
+      "play": "d8eb2480e58cc4bc870d0a8cd3c7c876aba053a358817ae990883d77a94088eb",
+      "sim": "5e34177901334d89d77255c16af40736800f6cecafce3ac1a3a33a9f49df1d1a",
       "day": 50,
       "cities": 1,
       "open": 4,
@@ -75,9 +75,9 @@
       "units": 0
     },
     "100": {
-      "sha256": "e7eeba8f469ecd77082bc607ab2ad4dbc32f56f1d1629981d55fa537381237b4",
-      "play": "2e9b48c8a0add0e872a401009dced2559556ad7e9cbc15d5c6e5e21bcb323a76",
-      "sim": "5a28fdbc6053058394ac7cd4f83462131c0349d23008e72ba71760087c0882a5",
+      "sha256": "765cb6536e911fc3b4be7700228241bae9f5820da684c2da6f4705de72497e50",
+      "play": "05387e68ceb480d8e47155aaa0e9b8564df8c35105d235e9918871cfb2e895cf",
+      "sim": "a1ab04ffc7546062473e1526a0d3748a8fb248af41a79bc10d9bf92411791782",
       "day": 100,
       "cities": 3,
       "open": 3,
@@ -85,9 +85,9 @@
       "units": 4
     },
     "200": {
-      "sha256": "f7b1c4e006775ca3bf8ef4de58e9cee284dec4357f2509d6bae68de2f97e5cb5",
-      "play": "abcb70befc90eb5192f3ba99946ef75a5cadfcef27e4cd187f4a019b3ef213b5",
-      "sim": "0d2aa749803cfd288ae4ce80359b90f7ccd8910557697490c4b616c3a51f0c1a",
+      "sha256": "cb20efb9249de17332e8bf079f7676572ebb6e38f3d31a433b64f463b8d617fa",
+      "play": "ad5f9aaf20a5c0ee9231ead9934c95d964058270ea316153c94e50bd12e9e48d",
+      "sim": "b2f7c063f77732f11c2b5c243491e846bf7be529fd2f033c2c744a74ba100d93",
       "day": 200,
       "cities": 6,
       "open": 2,

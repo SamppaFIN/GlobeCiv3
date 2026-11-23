@@ -45,6 +45,12 @@ export type Command =
   | { kind: 'raid'; choice: RaidChoice }
   /** The answer to a rival's proposal (STORY-076): yes or no. */
   | { kind: 'treaty'; accept: boolean }
+  /**
+   * The answer to an advance's card (STORY-118): the next study (null when none is open), and
+   * a building the advance opened put first in every city or in the capital, or null to leave
+   * the builds to the advisors.
+   */
+  | { kind: 'learned'; study: Study | null; first: { build: Building; scope: FirstScope } | null }
   /** A unit, by its id, explores, gathers or defends (STORY-025). */
   | { kind: 'mode'; unit: number; mode: Mode }
   /** A settler, by its id, founds cities or improves land (STORY-033). */
@@ -78,12 +84,16 @@ export type Command =
 export type PactAct = 'war' | 'break' | 'alliance' | 'peace';
 export const PACT_ACTS: readonly PactAct[] = ['war', 'break', 'alliance', 'peace'];
 
+/** Where a building an advance opened goes first (STORY-118): every city, or the capital. */
+export type FirstScope = 'all' | 'capital';
+export const FIRST_SCOPES: readonly FirstScope[] = ['all', 'capital'];
+
 /** What a raid card's buttons do (STORY-108). */
 export type RaidChoice = 'build' | 'buy' | 'later';
 export const RAID_CHOICES: readonly RaidChoice[] = ['build', 'buy', 'later'];
 
 export type CommandKind = Command['kind'];
-export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy', 'target', 'site', 'raid', 'treaty',
+export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy', 'target', 'site', 'raid', 'treaty', 'learned',
   'mode', 'task', 'pick', 'skip', 'flag', 'focus', 'tax', 'lux', 'revolution', 'plan', 'line', 'aim', 'pact', 'trade'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
@@ -115,6 +125,7 @@ export interface CommandWorld {
   answerSite(accept: boolean): boolean;
   answerRaid(choice: RaidChoice): boolean;
   answerTreaty(accept: boolean): boolean;
+  answerLearned(study: Study | null, first: { build: Building; scope: FirstScope } | null): boolean;
   /** The player's other acts (STORY-112): each false when it changes nothing. */
   setMode(unit: number, mode: Mode): boolean;
   setTask(unit: number, task: SettlerTask): boolean;
@@ -152,6 +163,8 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       return w.answerRaid(cmd.choice);
     case 'treaty':
       return w.answerTreaty(cmd.accept);
+    case 'learned':
+      return w.answerLearned(cmd.study, cmd.first);
     case 'settle':
       return w.settle(cmd.tile);
     case 'mode':

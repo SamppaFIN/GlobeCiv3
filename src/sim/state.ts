@@ -31,7 +31,7 @@ import type { Progress } from '../game/progress';
 import type { Raids } from '../game/raids';
 import type { Rival } from '../game/rivals';
 import type { FirstKind } from '../game/save';
-import type { Research } from '../game/science';
+import type { Advance, Research } from '../game/science';
 import type { Units } from '../game/units';
 import type { War } from '../game/war';
 import type { Rich } from '../game/rich';
@@ -98,14 +98,16 @@ export interface GameState {
   commands: CommandLog;
   /** A rival's proposal the game stopped for (STORY-076), and the end of the game: the last city fell. */
   treaty: { rival: number; kind: 'alliance' | 'peace' } | null;
+  /** Advances gained whose cards wait, the first shown (STORY-118): the game waits for the next study. */
+  learned: Advance[];
   over: boolean;
 }
 
-/** A card the game stops for until its player answers it: a city site, a raid or a proposal, or the end. */
+/** A card the game stops for until its player answers it: a city site, a raid, a proposal, an advance, or the end. */
 export interface Decision {
   /** The player who answers it: one player now, a game of several later (PLAN-092). */
   player: number;
-  kind: 'site' | 'raid' | 'treaty' | 'over';
+  kind: 'site' | 'raid' | 'treaty' | 'learned' | 'over';
 }
 
 /** The decisions waiting, in the order their cards come: no day passes while there are any (STORY-095). */
@@ -115,5 +117,6 @@ export function pending(s: GameState): Decision[] {
   if (s.treaty) out.push({ player: 0, kind: 'treaty' });
   if (s.offers.length) out.push({ player: 0, kind: 'site' });
   if (s.raidAlert) out.push({ player: 0, kind: 'raid' });
+  if (s.learned.length) out.push({ player: 0, kind: 'learned' });
   return out;
 }

@@ -603,3 +603,17 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
   .nuclear { left: auto; right: 12px; top: 12px; bottom: auto; width: 380px; max-height: calc(100vh - 24px); }
 }
 .seg-opt[hidden] { display: none; }
+
+/* An advance's card (STORY-118): the game waits on it, and the rest of the HUD steps aside */
+.advance-card { z-index: 6; max-height: 78dvh; }
+.advance-head { display: flex; align-items: center; gap: 12px; }
+/* The svg itself is class advance-art (advanceArt.ts), as in the science tree's nodes */
+.advance-card-art { width: 64px; height: 64px; flex: none; }
+.advance-card-art svg { display: block; }
+.advance-facts { margin: 0; }
+.advance-studies[hidden], .advance-firsts[hidden], .advance-more[hidden] { display: none; }
+.advance-go { min-height: var(--touch-target); }
+.advance-go:disabled { opacity: 0.5; cursor: default; }
+#hud.advance-open .hud-bottom, #hud.advance-open .level-bottom, #hud.advance-open .chips,
+#hud.advance-open .city-card:not(.advance-card), #hud.advance-open .city-labels, #hud.advance-open .unit-markers,
+#hud.advance-open .city-quick, #hud.advance-open .tile-yields { display: none; }

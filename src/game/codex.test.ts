@@ -59,7 +59,9 @@ describe('Tietokirja (STORY-104)', () => {
     expect(facts('unit/phalanx')).toMatchObject({ Hinta: '20 tuotantoa', Vaatii: 'Pronssityö', Puolustus: '2' });
     expect(facts('unit/catapult')).toMatchObject({ Hyökkäys: '6', Vaatii: 'Matematiikka' });
     expect(facts('unit/settler').Hinta).toBe('40 tuotantoa ja 1 asukas');
-    expect(facts('advance/bronze')).toMatchObject({ Vaatii: 'ei aiempia keksintöjä', Avaa: 'Falangi ja Kolossi', Johtaa: 'Rahatalous ja Rautatyö' });
+    // An advance tells each build it opens with its numbers (STORY-118)
+    expect(facts('advance/bronze')).toMatchObject({ Vaatii: 'ei aiempia keksintöjä', Yksikkö: 'Falangi: Puolustaa kaupunkia, kaksi kertaa soturia vahvempi · 20 tuotantoa · puolustus 2', Ihme: 'Kolossi: Ihme: +1 kauppa jokaiseen kaupungin ruutuun, jossa on kauppaa · 200 tuotantoa · kerran pelissä', Johtaa: 'Rahatalous ja Rautatyö' });
+    expect(facts('advance/writing').Rakennus).toBe('Kirjasto: Tieteeseen 50 % lisää, ylhäällä +1 päivässä · 80 tuotantoa · ylläpito 1 kulta päivässä');
     expect(facts('advance/currency').Resurssista).toBe('Kulta ja Jalokivet');
     expect(facts('resource/horses')).toMatchObject({ Maasto: 'tasanko', 'Tuotto ruudulla': '+2 tuotanto', 'Avaa tutkimuksen': 'Ratsastus ja Pyörä', Rakennus: 'Talli' });
     expect(facts('good/bread')).toMatchObject({ Tekijä: 'Leipomo', 'Raaka-aine': 'Jauhot', Ravinto: 'Yksi ruokkii asukkaan päiväksi (2 ruokaa)' });

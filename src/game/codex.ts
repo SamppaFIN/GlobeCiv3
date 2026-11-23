@@ -14,7 +14,7 @@
 import { ADVISOR_LEVEL_NAMES, CITY_ADVISORS, PLANET_ADVISORS, PROVINCE_ADVISORS, STATE_ADVISORS, TOWN_ADVISORS, type AdvisorLevel } from './advisors';
 import { describeBonus } from './bonuses';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOOD_NAMES, GOODS, MEAL_FOOD, isChainBuilding, type ChainBuilding, type Good } from './chains';
-import { BUILDINGS, BUILDS, isBuilding, isResourceBuilding, isWonder, RESOURCE_BUILDING_LIST, RESOURCE_BUILDINGS, TERRAIN_BUILDINGS, UPKEEP, type Build, type Building, type ResourceBuilding, type TerrainBuilding } from './cities';
+import { BUILDINGS, BUILDS, isBuilding, isResourceBuilding, isSoldier, isWonder, RESOURCE_BUILDING_LIST, RESOURCE_BUILDINGS, TERRAIN_BUILDINGS, UPKEEP, type Build, type Building, type ResourceBuilding, type TerrainBuilding } from './cities';
 import { ALL_PERSONS, ERA_NAMES, ERAS, ROLES, type Era, type Person } from './persons';
 import { defenseOf } from './raids';
 import { ADVANCE_LIST, ADVANCES, KIND_TERRAIN, NEEDS, opensFrom, RESOURCE_KINDS, STUDY_COST, studyName, type Advance } from './science';
@@ -194,9 +194,33 @@ function unitPage(u: Build): Page {
   return { key: `unit/${u}`, kicker: 'Yksikkö', title: BUILDS[u].name, text: [BUILD_PURPOSE[u]], facts };
 }
 
+/**
+ * What an advance does, a fact each with its numbers (STORY-118, Sami 2026-11-23: "selkeät
+ * vaikutukset joka teknologiasta"): each build it opens with its effect, price and upkeep,
+ * what else changes, and the advances it leads to. The advance's card, the science tree and
+ * the Tietokirja tell the same facts.
+ */
+export function advanceEffects(a: Advance): Page['facts'] {
+  const facts: Page['facts'] = [];
+  for (const b of (Object.keys(NEEDS) as Build[]).filter(x => NEEDS[x] === a)) {
+    const numbers = [
+      BUILDS[b].cost ? `${BUILDS[b].cost} tuotantoa${BUILDS[b].pop ? ` ja ${BUILDS[b].pop} asukas` : ''}` : null,
+      isBuilding(b) && UPKEEP[b] ? `ylläpito ${UPKEEP[b]} ${UPKEEP[b] === 1 ? 'kulta' : 'kultaa'} päivässä` : null,
+      isSoldier(b) ? `puolustus ${defenseOf(b)}` : null,
+      isWonder(b) ? 'kerran pelissä' : null,
+    ].filter((x): x is string => x !== null);
+    facts.push({ label: isWonder(b) ? 'Ihme' : isBuilding(b) ? 'Rakennus' : 'Yksikkö', value: [buildRef(b), `: ${BUILD_PURPOSE[b]}`, ...numbers.map(x => ` · ${x}`)] });
+  }
+  if (a === 'mapmaking') facts.push({ label: 'Liike', value: ['Yksiköt kulkevat rannikkovesillä ruudun päivässä'] });
+  if (a === 'monarchy') facts.push({ label: 'Hallitus', value: ['Vallankumous Monarkiaan: ruudut tuottavat täysin, ja yksiköt maksavat ylläpitoa alusta asti'] });
+  if (a === 'iron') facts.push({ label: 'Aikakausi', value: [eraRef('iron'), ' alkaa, ja neuvonantajiksi tulevat uudet henkilöt omine bonuksineen'] });
+  const next = ADVANCE_LIST.filter(n => ADVANCES[n].needs.includes(a));
+  if (next.length) facts.push({ label: 'Johtaa', value: list(next.map(n => advanceRef(n))) });
+  return facts;
+}
+
 function advancePage(a: Advance, known: KnownKind): Page {
   const builds = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a);
-  const next = ADVANCE_LIST.filter(n => ADVANCES[n].needs.includes(a));
   const rewardOf = RESOURCE_BUILDING_LIST.filter(b => RESOURCE_BUILDINGS[b].reward === a);
   const more: Segment[] = a === 'mapmaking' ? ['Yksiköt kulkevat rannikkovesillä.']
     : a === 'monarchy' ? ['Kansa voi tehdä vallankumouksen Monarkiaan.']
@@ -205,8 +229,7 @@ function advancePage(a: Advance, known: KnownKind): Page {
     { label: 'Vaatii', value: ADVANCES[a].needs.length ? list(ADVANCES[a].needs.map(n => advanceRef(n))) : ['ei aiempia keksintöjä'] },
   ];
   if (ADVANCES[a].from) facts.push({ label: 'Resurssista', value: list(ADVANCES[a].from!.map(k => resourceRef(k, known(k)))) });
-  if (builds.length) facts.push({ label: 'Avaa', value: list(builds.map(b => buildRef(b))) });
-  if (next.length) facts.push({ label: 'Johtaa', value: list(next.map(n => advanceRef(n))) });
+  facts.push(...advanceEffects(a));
   if (rewardOf.length) facts.push({ label: 'Saadaan myös', value: list(rewardOf.map(b => buildRef(b))) });
   facts.push({ label: 'Hinta', value: ['10 × (tunnetut keksinnöt + 1) tiedettä'] });
   const text: Segment[] = builds.length ? [ADVANCES[a].name, ' avaa ', ...list(builds.map(b => buildRef(b, isWonder(b) ? BUILDS[b].name : BUILDS[b].name.toLowerCase()))), '.', ...(more.length ? [' ', ...more] : [])]

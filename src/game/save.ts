@@ -25,7 +25,7 @@ import { TERRAINS, type ResourceKind } from './terrainTypes';
 import { ERAS } from './persons';
 import { GOVERNMENT_LIST, type Government } from './government';
 import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from './advisors';
-import { ACTORS, COMMAND_KINDS, PACT_ACTS, RAID_CHOICES, type Command, type Logged } from './commands';
+import { ACTORS, COMMAND_KINDS, FIRST_SCOPES, PACT_ACTS, RAID_CHOICES, type Command, type Logged } from './commands';
 import { TRADE_IDS } from './trade';
 
 export const SAVE_VERSION = 1;
@@ -113,6 +113,8 @@ export interface SaveData {
   commands?: Logged[];
   /** A rival's proposal the game stopped for (STORY-095); saves from before have none. */
   treaty?: { rival: number; kind: 'alliance' | 'peace' };
+  /** Advances whose cards wait (STORY-118); saves from before have none. */
+  learned?: Advance[];
   /** The days without disorder, by which the state's advisor lowers the luxury (STORY-051); saves from before have none, and count from 0. */
   calmDays?: number;
 }
@@ -179,6 +181,11 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'site':
         case 'treaty': return { kind, accept: bool(c.accept, 'accept') };
         case 'raid': return { kind, choice: oneOf(c.choice, RAID_CHOICES, 'raid choice') };
+        case 'learned': return {
+          kind,
+          study: orNull(c.study, v => oneOf(v, [...ADVANCE_LIST, ...RESOURCE_KINDS] as const, 'study')),
+          first: orNull(c.first, v => { const f = obj(v, 'first'); return { build: oneOf(f.build, BUILDINGS, 'first build'), scope: oneOf(f.scope, FIRST_SCOPES, 'first scope') }; }),
+        };
         // The player's other acts (STORY-112)
         case 'mode': return { kind, unit: int(c.unit, 'unit'), mode: oneOf(c.mode, MODES, 'mode') };
         case 'task': return { kind, unit: int(c.unit, 'unit'), task: oneOf(c.task, TASKS, 'task') };
@@ -287,6 +294,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         ...(c.history === undefined ? {} : { history: list(c.history, 'history', eventOf, HISTORY_MAX) }),
         // Culture (STORY-093): a save from before has none, and the border starts from the size
         ...(c.culture === undefined ? {} : { culture: int(c.culture, 'culture', 0, MAX_INT) }),
+        // A building put first from an advance's card (STORY-118)
+        ...(c.first === undefined ? {} : { first: oneOf(c.first, BUILDINGS, 'first') }),
       };
     };
 
@@ -427,6 +436,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         treaty: { rival: int(t.rival, 'treaty rival', 0, Array.isArray(s.rivals) ? s.rivals.length - 1 : -1), kind: oneOf(t.kind, ['alliance', 'peace'] as const, 'treaty kind') },
       }))(obj(s.treaty, 'treaty'))),
       ...(s.calmDays === undefined ? {} : { calmDays: int(s.calmDays, 'calm days', 0) }),
+      ...(s.learned === undefined ? {} : { learned: list(s.learned, 'learned', v => oneOf(v, ADVANCE_LIST, 'learned'), ADVANCE_LIST.length) }),
       ...(s.commands === undefined ? {} : {
         commands: list(s.commands, 'commands', v => {
           const e = obj(v, 'logged');

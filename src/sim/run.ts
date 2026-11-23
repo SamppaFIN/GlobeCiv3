@@ -22,7 +22,7 @@ import { FAIR_SITE } from '../game/sites';
 import { chooseStartSite } from '../game/start';
 import type { Rich } from '../game/rich';
 import { quietEvents, type MomentKind, type SimEvents } from './events';
-import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, setGame, simulateDay, startDay, startGame, stateOf, stepDay, terrainOf, world } from './game';
+import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, setGame, simulateDay, startDay, startGame, stateOf, stepDay, suggestedStudy, terrainOf, world } from './game';
 import { pending, type GameState } from './state';
 import { createWorld } from './world';
 
@@ -187,6 +187,8 @@ export class Run {
     if (!d) return null;
     if (d.kind === 'site') return { kind: 'site', accept: true };
     if (d.kind === 'treaty') return { kind: 'treaty', accept: false };
+    // An advance's card: the advisor's study, and the builds left to the advisors (STORY-118)
+    if (d.kind === 'learned') return { kind: 'learned', study: suggestedStudy(), first: null };
     if (d.kind === 'raid') {
       const band = s.raids.band;
       const c = band && s.cities.find(x => x.tile === band.city);

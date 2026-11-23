@@ -64,6 +64,7 @@ function world(): TestWorld {
     answerSite: (accept: boolean) => answer('site', String(accept)),
     answerRaid: choice => answer('raid', choice),
     answerTreaty: (accept: boolean) => answer('treaty', String(accept)),
+    answerLearned: (study, first) => answer('learned', `${study} ${first?.build ?? ''}`),
     acts,
     setMode: (unit, mode) => act('mode', unit, mode),
     setTask: (unit, task) => act('task', unit, task),

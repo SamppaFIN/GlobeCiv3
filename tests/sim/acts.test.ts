@@ -78,7 +78,8 @@ describe('the player\'s own acts (STORY-112)', () => {
     give({ kind: 'line', line: 'defend' });
     expect(run.until(260)).toBe(true);
 
-    expect(new Set(playerKinds(run))).toEqual(new Set(['advise', 'mode', 'task', 'skip', 'pick', 'flag', 'focus', 'tax', 'lux', 'plan', 'line', 'target']));
+    // An advance's card is answered by the player too (STORY-118)
+    expect(new Set(playerKinds(run))).toEqual(new Set(['advise', 'mode', 'task', 'skip', 'pick', 'flag', 'focus', 'tax', 'lux', 'plan', 'line', 'target', 'learned']));
     const { played, replayed: again } = replayed(run, 260);
     expect(again.commands).toEqual(played.commands);
     expect(sha(simOf(again))).toBe(sha(simOf(played)));
