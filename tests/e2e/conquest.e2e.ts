@@ -64,7 +64,8 @@ async function conquer(page: Page, testInfo: TestInfo) {
   });
   for (const p of provinces.slice(0, 6)) expect(await page.evaluate(id => (window as any).globeDebug.foundIn(id), p)).not.toBeNull();
   await expect(page.locator('.hud-meter-value')).toHaveText('6 / 7 hallussa');
-  await expect(page.locator('.chip-sub', { hasText: 'Hallussa' }).first()).toBeVisible();
+  // A held province's chip tells its cities, which hold it (STORY-114)
+  await expect(page.locator('.chip-sub', { hasText: /^\d+ kaupunki/ }).first()).toBeVisible();
   expect((await page.evaluate(() => (window as any).globeGame.state)).openLevel).toBe(1);
   await page.screenshot({ path: testInfo.outputPath('held.png') });
 

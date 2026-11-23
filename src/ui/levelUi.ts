@@ -108,7 +108,13 @@ export function spreadChips(chips: readonly ChipPlace[]): { x: number; y: number
 }
 
 /** Region chips over the map (design 6a, 7a). Tapping one selects it; tapping it again dives in. */
-export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }, spread?: boolean): void } {
+/** Where a chip or a label stands on the screen: its centre and size in CSS pixels (STORY-114). */
+export interface ScreenRect { x: number; y: number; w: number; h: number }
+
+/** Whether two rectangles on the screen overlap. */
+export const overlaps = (a: ScreenRect, b: ScreenRect) => Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.y - b.y) * 2 < a.h + b.h;
+
+export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }, spread?: boolean): ScreenRect[] } {
   const layer = document.createElement('div');
   layer.className = 'chips';
   root.appendChild(layer);
@@ -116,7 +122,11 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
   /** Chip widths as measured after their text last changed. */
   const widths = new Map<HTMLButtonElement, number>();
   return {
-    /** `free`: the screen band between the HUD panels; chips are kept inside it so they can be tapped. `spread`: move overlapping chips apart. */
+    /**
+     * `free`: the screen band between the HUD panels; chips are kept inside it so they can be
+     * tapped. `spread`: move overlapping chips apart. Returns where the chips stand, for the
+     * city labels to keep off them (STORY-114).
+     */
     update(chips, free, spread = false) {
       while (pool.length < chips.length) {
         const b = document.createElement('button');
@@ -163,6 +173,8 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
       const ys = layoutChips(shown.map(c => ({ x: c.x, y: c.y, w: held ? width(c.b) : 0 })), free);
       // Centred on the region, whatever the chip's width
       shown.forEach((c, i) => { c.b.style.transform = `translate(${c.x.toFixed(1)}px, ${ys[i].toFixed(1)}px) translate(-50%, -50%)`; });
+      // A width is read once its text changes, as above (STORY-062), not in every frame
+      return shown.map((c, i) => ({ x: c.x, y: ys[i], w: width(c.b), h: CHIP_HALF * 2 }));
     },
   };
 }
