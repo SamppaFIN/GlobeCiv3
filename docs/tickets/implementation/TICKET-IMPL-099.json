@@ -44,7 +44,12 @@
       "advanceEffects",
       "advancePage",
       "studyOptions",
-      "researchView"
+      "researchView",
+      "firstScopes",
+      "keepsBuild",
+      "dispatch",
+      "startGame",
+      "createAdvanceCard"
     ],
     "affected_callers": [
       "Kaikki pelit, joissa keksintö saadaan: peli pysähtyy kortille",
@@ -59,5 +64,5 @@
   },
   "commit": "38e0b14",
   "progress": 100,
-  "notes": "Tallennuksen versio ei muuttunut: learned ja City.first ovat valinnaisia, ja vanha tallennus latautuu ilman niitä (testattu). Kultaiset tilat kirjoitettiin uudelleen, koska kortit tuovat learned-komennot lokiin; Node tulee samaan tilaan kuin selain. acts.test.ts:n odotettuihin pelaajan komentoihin lisättiin learned. codex.e2e.ts päivitettiin: keksintösivu kertoo jokaisen rakennuksen omalla rivillään."
+  "notes": "Tallennuksen versio ei muuttunut: learned ja City.first ovat valinnaisia, ja vanha tallennus latautuu ilman niitä (testattu). Kultaiset tilat kirjoitettiin uudelleen, koska kortit tuovat learned-komennot lokiin; Node tulee samaan tilaan kuin selain. acts.test.ts:n odotettuihin pelaajan komentoihin lisättiin learned. codex.e2e.ts päivitettiin: keksintösivu kertoo jokaisen rakennuksen omalla rivillään. Utun katselmoinnin jälkeen: kortin vastaus asettaa City.firstin mutta ei vaihda rosvojen uhkaaman kaupungin sotilasta eikä odottavan paikan uudisasukasta (keepsBuild, sama sääntö kuin neuvonantajilla); ihmeen voi priorisoida vain pääkaupunkiin, ja Kaikki kaupungit ensin näkyy vain, kun vähintään kaksi kaupunkia voi aloittaa rakennuksen (firstScopes); vastaus, joka ei koske yhtään kaupunkia, hylätään; pelaajan oma rakennusvalinta kaupungissa päättää siellä priorisoinnin (dispatch); ladatut kortit poistetaan kaksoiskappaleista ja tuntemattomista keksinnöistä. Kortin napit pysyvät valinnassa (aria-checked päivitetään paikallaan, fokus säilyy), kortissa on aria-modal, Jatka viittaa ohjeriviin (aria-describedby), ja fokus palaa kortin sulkeuduttua. Omat säännöt: alle valtiotason kansan valinta on valmiina ja kerrotaan oletuksena; priorisointi koskee vastaushetken kaupunkeja, joten myöhemmin perustettu kaupunki ei saa sitä ja vanha pääkaupunki pitää sen pääkaupungin vaihtuessa; resurssilajin tutkimus (STORY-072) ei pysäytä peliä, koska se ei ole keksintö."
 }

@@ -66,13 +66,18 @@ test('own hand: the card tells the effects, the game waits for a study, and a bu
   expect((await state(page)).day).toBe(day);
   await page.screenshot({ path: testInfo.outputPath('advance-card.png') });
 
-  // A building goes first: the wonder only in the capital, the granary also in every city
+  // A building goes first: with one city only in the capital (every city wants two, and a wonder
+  // goes to the capital only; Utu's review)
   const firsts = card.getByRole('radiogroup', { name: 'Uusi rakennus' }).getByRole('radio');
-  await expect(firsts).toHaveText([/^Viljavarasto: kaikki kaupungit ensin/, /^Viljavarasto: pääkaupunki ensin/, /^Riippuvat puutarhat: pääkaupunki ensin/, /^Neuvonantaja päättää/]);
+  await expect(firsts).toHaveText([/^Viljavarasto: pääkaupunki ensin/, /^Riippuvat puutarhat: pääkaupunki ensin/, /^Neuvonantaja päättää/]);
   await expect(firsts.last()).toHaveAttribute('aria-checked', 'true');
+  await expect(card).toHaveAttribute('aria-modal', 'true');
   const writing = studies.filter({ hasText: 'Aakkoset' });
   await writing.click();
+  // A choice keeps its button, and the focus on it (WCAG 2.4.3)
+  await expect(writing).toBeFocused();
   await firsts.first().click();
+  await expect(firsts.first()).toBeFocused();
   await expect(writing).toHaveAttribute('aria-checked', 'true');
   await expect(go).toBeEnabled();
   await go.click();
@@ -81,6 +86,7 @@ test('own hand: the card tells the effects, the game waits for a study, and a bu
   expect(s.research.target).toBe('alphabet');
   expect(s.cities[0].build).toBe('granary');
   expect(s.cities[0].first).toBe('granary');
+  expect(s.cities[0].capital).toBe(true);
   // The answer is a command, and the days go on
   expect(s.commands.at(-1)).toMatchObject({ by: 'player', kind: 'learned' });
   await page.waitForFunction(d => (window as any).globeGame.state.day > d, s.day, { timeout: 30_000 });

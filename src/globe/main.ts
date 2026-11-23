@@ -71,7 +71,7 @@ import { validateSave, type SaveData } from '../game/save';
 import { pending, type GameState } from '../sim/state';
 import type { SimEvents } from '../sim/events';
 import { DETAIL, RADIUS } from '../sim/world';
-import { advisorsAnswer, dayBegun, daysFinishedAtOnce, firstChoices, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
+import { advisorsAnswer, dayBegun, daysFinishedAtOnce, firstChoices, firstScopes, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
@@ -2021,8 +2021,9 @@ function updateAdvanceCard() {
     facts: advanceEffects(a),
     options: options.map(o => ({ study: o.advance, name: o.name, cost: o.cost, opens: o.opens })),
     chosen,
-    suggestion: chosen === null ? null : chosen === p.research.target ? 'Tutkimus jatkuu, ellet valitse muuta.' : advisor ? `${advisor} ehdottaa tätä.` : 'Kansa ehdottaa tätä.',
-    firsts: firstChoices(a).map(b => ({ build: b, name: BUILDS[b].name, wonder: isWonder(b) })),
+    // Below the state level the people's choice waits ready (own rule, Utu's review: told as the default)
+    suggestion: chosen === null ? null : chosen === p.research.target ? 'Tutkimus jatkuu, ellet valitse muuta.' : advisor ? `${advisor} ehdottaa tätä.` : 'Oletus: kansa tutkii tätä, ellet valitse muuta.',
+    firsts: firstChoices(a).map(b => ({ build: b, name: BUILDS[b].name, scopes: firstScopes(b) })),
     more: p.learned.length - 1,
   });
 }
