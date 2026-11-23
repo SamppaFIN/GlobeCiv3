@@ -32,6 +32,12 @@
         "outcome": "pass"
       },
       {
+        "steps": "Autopilotti uudelleen STORY-113:n jälkikorjauksen jälkeen (2026-11-23)",
+        "expected": "Nousut 900 päivässä",
+        "result": "Valtiotaso aukeaa: feed päivä 189, build 184 (oli 242), roam 288 (oli 260)",
+        "outcome": "pass"
+      },
+      {
         "steps": "Utun katselmointi (Sonnet)",
         "expected": "Hyväksytty",
         "result": "Hyväksytty huomautuksin. Korjattu: (1) raunioiden tunnistin osui kaupunkipaikkoihin (find-hetki): nyt löydöistä; (2) sodan tunnistin osui torjuttuihin rosvoihin (victory-hetki): nyt sotaretkestä tai kilpailijan sodasta; (4) mittari ei enää kaada testiä (firstDecision-väite pois), ja pysähtynyt ajo on kirjattu tulkinnaksi: peli ei voi jatkua, joten nousu ei tapahdu; (5) raportti kirjoitetaan afterAll-koukussa; (6) viimeisen tason kortti vastataan, joten sen neuvonantajat lasketaan päätökseksi; (9) invariantteihin kaupunkien ruoka ja tuotanto sekä odottava paikka, joka ei ole kaupunki; uudisasukkaiden enimmäismäärä raportoidaan erikseen (ei invariantti, vaan tasapaino). Kirjattu määritelmiin: (3) taso tuo omat järjestelmänsä samana päivänä, ja jokainen lasketaan, koska jokainen on pelaajalle uusi; (7) järjestelmä lasketaan, kun pelaaja näkee sen, kuka sitä hoitaakin; (10) valmistelun tapahtumat saavat edellisen päivän leiman. Jätetty: (8) Vartija tilaa soturin kaupunkitasolla päivänä 2, koska ajo antaa kaikkien tasojen neuvonantajat alussa, toisin kuin selain; ei pelin vika vaan ajon tapa, kirjattu; (11) raportti näkyy CI:n lokissa",

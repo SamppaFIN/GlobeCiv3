@@ -32,6 +32,12 @@
         "outcome": "pass"
       },
       {
+        "steps": "Regressio: CI-ajot 45127024044 (73d821d) ja 45138134086 (71b6ea8) punaisia site-card.e2e:ssä (Expected settler, Received warrior). Toisto Nodessa: tests/sim/sites.test.ts (siemen 42, Kasvattaja-tie: toinen paikka valitaan, kun uudisasukas kävelee ensimmäiselle)",
+        "expected": "Pelaajan valitsemalle paikalle rakennetaan uudisasukas, eikä niitä kasaannu",
+        "result": "Testi oli punainen ennen korjausta. Korjauksen jälkeen sites.test.ts, jams.test.ts, autopilotti ja run.test.ts (uudet kultaiset tilat) vihreitä; site-card, golden, sites ja settlement E2E 8/8 paikallisesti",
+        "outcome": "pass"
+      },
+      {
         "steps": "Utun katselmointi (Sonnet)",
         "expected": "Hyväksytty",
         "result": "Hyväksytty huomautuksin. Löydökset ja korjaukset: (1) Riski, lähes vika: ensimmäinen korjaus kasasi uudisasukkaita (build enimmillään 29, ennen 2), koska jokainen paikan uudisasukkaan rakentanut kaupunki jatkoi rakentamista ja jokaisena päivänä, kun uudisasukas käveli paikalleen, tilattiin uusi (kävelevää ei laskettu vapaaksi). Korjattu: paikka odottaa matkalla olevaa uudisasukasta, uusi tilataan vain, kun uudisasukkaita ei ole, rakentaja palaa kultaan, ja neuvonantajalta suojataan vain rakentajan uudisasukas. (2) Kultaisen tilan muutos oli selitetty osittain: nyt kirjattu (kaikki tavat muuttuvat päivästä 100). (3) Testi oli löyhä: nyt kaksi tapaa, enintään yksi rakentaja ja enintään 4 uudisasukasta. (4) Huomio: rakentaja ei vaihdu nopeampaan, vaikka se olisi hidas; ei jumi, jätetty. (5) Ei muuta huomautettavaa",
