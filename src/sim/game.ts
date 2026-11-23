@@ -489,12 +489,12 @@ export function cityDays() {
     sendSettler(free, play.pendingSite);
     play.pendingSite = null;
     view.notice([unitRef(free.id, free.name), ' lähti kaupunkipaikalle']);
-  } else if (play.pendingSite !== null && !free && !anySettler()) {
+  } else if (play.pendingSite !== null && !free && spareSettlers() === 0) {
     // The waiting site keeps a settler coming (STORY-060): a soldier against bandits, an
     // advisor or the player may have changed the build, and the site would wait for ever.
-    // A city that cannot give a citizen builds it for ever, too (STORY-113). While a settler
-    // is on its way to another site, the site waits for it (Utu's review: else a settler more
-    // was ordered every day it walked)
+    // A city that cannot give a citizen builds it for ever, too (STORY-113). A settler built
+    // for it waits while another walks to its site, and none more is ordered (Utu's review:
+    // else a settler more was ordered every day it walked)
     const builder = settlerBuilder(play.pendingSite);
     if (builder && !play.cities.some(c => c.build === 'settler' && (c === builder || canGiveCitizen(c)))) builder.build = 'settler';
   }
@@ -630,8 +630,9 @@ function settleAt(tile: number): boolean {
     view.notice([unitRef(settler.id, settler.name), ' lähti perustamaan kaupunkia']);
     return true;
   }
-  // A settler on its way to another site comes here next (STORY-113)
-  if (anySettler()) {
+  // A settler waiting while another walks to its site comes here next (STORY-113); with none
+  // waiting, one is built, as the site card promises
+  if (spareSettlers() > 0) {
     play.pendingSite = tile;
     view.notice('Kaupunkipaikka odottaa: uudisasukas lähtee sinne, kun edellinen on perillä');
     return true;
@@ -644,7 +645,8 @@ function settleAt(tile: number): boolean {
   return true;
 }
 
-const anySettler = () => play!.units.units.some(u => u.kind === 'settler');
+/** Settlers not on their way to a site: each takes a waiting site once the one walking is there (STORY-113). */
+const spareSettlers = () => play!.units.units.filter(u => u.kind === 'settler').length - (play!.units.founding ? 1 : 0);
 
 /** A settler takes a citizen (Freeciv civ1 pop_cost 1), so a city of size 1 waits to grow before it is built. */
 const canGiveCitizen = (c: City) => c.size > BUILDS.settler.pop;
