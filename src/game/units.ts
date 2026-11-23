@@ -317,8 +317,18 @@ export class Units {
 
   /** One day: every unit acts. Returns the tiles where cities were founded. */
   day(world: World): number[] {
+    const run = this.dayEach(world);
+    for (;;) {
+      const step = run.next();
+      if (step.done) return step.value;
+    }
+  }
+
+  /** The units' day a unit at a time (STORY-117): the browser works it out over several frames. */
+  *dayEach(world: World): Generator<void, number[], void> {
     const founded: number[] = [];
     for (const u of this.units) {
+      yield;
       if (u.wait > 0) { u.wait--; continue; }
       if ((u.kind === 'settler' || u.kind === 'worker') && u.task === 'improve' && this.work(u, world)) continue;
       if (!u.path.length && u.kind === 'scout') u.path = this.plan(u, world);

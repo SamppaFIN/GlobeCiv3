@@ -71,7 +71,7 @@ import { validateSave, type SaveData } from '../game/save';
 import { pending, type GameState } from '../sim/state';
 import type { SimEvents } from '../sim/events';
 import { DETAIL, RADIUS } from '../sim/world';
-import { advisorsAnswer, opponentsNow, saveState, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
+import { advisorsAnswer, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
@@ -2909,25 +2909,61 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
  */
 let stepMode = false;
 
+/**
+ * Days that passed and wait to be worked out (STORY-117): a day goes over several frames, at
+ * most DAY_BUDGET_MS of each, so a late game does not stutter at every day's turn.
+ */
+let daysDue = 0;
+const DAY_BUDGET_MS = 4;
+/** The play update's JS time in the last frames, for the 8 ms measure (STORY-117). */
+const playMs: number[] = [];
+/** The slices of the stepped days when measured (STORY-117): the budget, and each slice's time. */
+let sliceBudget = 0;
+const sliceMs: number[] = [];
+
 function updatePlay(dt: number) {
   tiles.knownResources.value = kindMask();
   if (!play) return;
-  // The units' regions and the open states for the view too, between the days
-  prepareDay();
-  scanNatives(NATIVE_BUDGET_MS);
-  const blocked = pending(play).length || unlockCard.visible || onboarding.visible;
-  const days = blocked ? 0 : stepMode ? (clock.day++, 1) : clock.advance(dt);
   const selectedUnit = play.units.units[play.selected];
-  for (let d = 0; d < days; d++) {
-    simulateDay(clock.day - (days - 1 - d));
-    if (pending(play).length || unlockCard.visible) {
-      clock.day -= days - d - 1;
-      break;
+  // Between the days only: the units' regions and the open states for the view too, the
+  // city-states' search and the cards an advisor answers, as when a day took one frame
+  if (!dayRunning()) {
+    prepareDay();
+    scanNatives(NATIVE_BUDGET_MS);
+  }
+  const blocked = pending(play).length || unlockCard.visible || onboarding.visible;
+  if (stepMode) {
+    // Golden runs: a whole day a frame; the frame budget's measure works it out in slices
+    if (!blocked && sliceBudget) {
+      startDay(++clock.day);
+      for (let done = false; !done; ) {
+        const started = performance.now();
+        done = stepDay(sliceBudget);
+        sliceMs.push(performance.now() - started);
+      }
+    } else if (!blocked) simulateDay(++clock.day);
+  } else {
+    if (!blocked) daysDue += clock.advance(dt);
+    else if (daysDue && !dayRunning()) {
+      // A card stopped the game: the days after it wait as before
+      clock.day -= daysDue;
+      daysDue = 0;
+    }
+    const started = performance.now();
+    while (dayRunning() || (daysDue > 0 && !pending(play).length && !unlockCard.visible)) {
+      const left = DAY_BUDGET_MS - (performance.now() - started);
+      if (left <= 0) break;
+      if (!dayRunning()) startDay(clock.day - --daysDue);
+      if (!stepDay(left)) break;
+    }
+    if (!dayRunning() && daysDue && (pending(play).length || unlockCard.visible)) {
+      clock.day -= daysDue;
+      daysDue = 0;
     }
   }
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   // The cards an advisor answers itself, also those waiting in a loaded game
-  advisorsAnswer();
+  if (!dayRunning()) advisorsAnswer();
   if (sentUnit) {
     play.selected = Math.max(0, play.units.units.indexOf(sentUnit));
     sentUnit = null;
@@ -3095,7 +3131,12 @@ function animate(now = performance.now()) {
   tiles.sunDir.value.copy(lightX.multiplyScalar(-0.45)).addScaledVector(lightY, 0.55).addScaledVector(lightZ, 0.7).normalize();
   tiles.screenUp.value.copy(lightY);
   updateTileTypes(now);
-  if (!stepMode) updatePlay(dt);
+  if (!stepMode) {
+    const playStarted = performance.now();
+    updatePlay(dt);
+    playMs.push(performance.now() - playStarted);
+    if (playMs.length > 600) playMs.shift();
+  }
   updateWar(dt);
   updateCityLevel(dt);
   // The canvas fills the window: its height without a layout read (STORY-062)
@@ -3317,6 +3358,10 @@ frameStartPlanet();
   /** The main thread's ms in the last frames (STORY-101). */
   frameMs: () => [...frameMs],
   markerMs: () => [...markerMs],
+  playMs: () => [...playMs],
+  /** Stepped days worked out in slices of this budget (0: a whole day at once), and the slices' times. */
+  sliceDays: (budget: number) => { sliceBudget = budget; sliceMs.length = 0; },
+  sliceMs: () => [...sliceMs],
   /** How far into the day the clock is, 0 to 1 (STORY-101). */
   dayPart: () => clock.fraction,
   /** Frames drawn since the page opened (STORY-101). */

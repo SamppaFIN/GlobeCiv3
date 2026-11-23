@@ -686,6 +686,8 @@ const commandWorld = (): CommandWorld => ({
 });
 export function dispatch(cmd: Command, by: Actor): boolean {
   if (!play) return false;
+  // The player acts at a day's edge, as when a day took one frame (STORY-117)
+  if (by === 'player') finishDay();
   const done = execute(cmd, commandWorld());
   if (done) play.commands.record(tickDay ?? clock.day, by, cmd);
   return done;
@@ -2117,6 +2119,60 @@ export function prepareDay() {
  * chronicles, the rivals, diplomacy, war, the raids and the advisors, in that order.
  */
 export function simulateDay(day: number) {
+  finishDay();
+  const run = dayPhases(day);
+  while (!run.next().done);
+}
+
+// ─── A day over several frames (STORY-117) ────────
+// A late day took 20 to 70 ms, all in one frame. The browser works it out a part at a time
+// (stepDay), and the parts come in the same order as in one go, so the day ends the same. A
+// player's command or a save comes at a day's edge: the day is worked out to its end first.
+
+let dayRun: Generator<void, void, void> | null = null;
+let dayStepping = false;
+
+/** Whether a day is being worked out over the frames. */
+export const dayRunning = () => dayRun !== null;
+
+/** A day to work out over the frames, the last one ended first. */
+export function startDay(day: number) {
+  finishDay();
+  dayRun = dayPhases(day);
+}
+
+/** Work on the day until it ends or the time runs out: true when it ended. */
+export function stepDay(budgetMs: number): boolean {
+  if (!dayRun) return true;
+  const until = performance.now() + budgetMs;
+  dayStepping = true;
+  try {
+    do {
+      if (dayRun.next().done) {
+        dayRun = null;
+        return true;
+      }
+    } while (performance.now() < until);
+    return false;
+  } finally {
+    dayStepping = false;
+  }
+}
+
+/** The day in progress worked out to its end now. */
+export function finishDay() {
+  if (!dayRun || dayStepping) return;
+  dayStepping = true;
+  try {
+    while (!dayRun.next().done);
+  } finally {
+    dayRun = null;
+    dayStepping = false;
+  }
+}
+
+/** The parts of a day, in order: a pause after each unit and between the parts (STORY-117). */
+function* dayPhases(day: number): Generator<void, void, void> {
   const p = play;
   if (!p) return;
   // The city-states a day concerns are found before it, however the frames came (STORY-095)
@@ -2129,15 +2185,19 @@ export function simulateDay(day: number) {
   p.units.extraSight = sightBonus(activeBonuses());
   // The founding settler's name goes into the chronicle before the settler becomes the city
   const founder = p.units.founding ? (p.units.settler?.name ?? null) : null;
-  const founded = p.units.day(world);
+  const founded = yield* p.units.dayEach(world);
   scouting = false;
   founded.forEach(t => foundAt(t, founder));
+  yield;
   cityDays();
+  yield;
   chronicleEraDay();
   rivalsDay();
+  yield;
   diplomacyDay();
   rivalWarDay();
   raidDay();
+  yield;
   advisorDay();
   advisorsAnswer();
   riseCheck();
@@ -2378,6 +2438,8 @@ export const CITY_LEVEL_RINGS = 3;
 
 /** The game's part of the save (STORY-036): all but the wall clock, the clock's speed and the selected unit, which are the view's. A game that ended is not saved. */
 export function saveState(): GameSave | null {
+  // A save holds whole days (STORY-117)
+  finishDay();
   return play?.over ? null : stateOf();
 }
 

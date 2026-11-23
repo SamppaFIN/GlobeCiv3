@@ -22,7 +22,7 @@ import { FAIR_SITE } from '../game/sites';
 import { chooseStartSite } from '../game/start';
 import type { Rich } from '../game/rich';
 import { quietEvents, type MomentKind, type SimEvents } from './events';
-import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, setGame, simulateDay, startGame, stateOf, terrainOf, world } from './game';
+import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, setGame, simulateDay, startDay, startGame, stateOf, stepDay, terrainOf, world } from './game';
 import { pending, type GameState } from './state';
 import { createWorld } from './world';
 
@@ -44,6 +44,9 @@ export class Run {
   readonly seed: number;
   /** Why a run stopped short of its day, if it did. */
   error: string | null = null;
+  /** A day worked out a part at a time as in the browser, and what to do between the parts (STORY-117). */
+  stepped = false;
+  between: ((run: Run) => void) | null = null;
   /** A level that opened, whose card waits to be closed: then its advisors are asked for. */
   private risen: number | null = null;
   /** The advisors that answer the cards, or (null) a replay of the player's commands of a log, and the next of them. */
@@ -105,7 +108,11 @@ export class Run {
     const blocked = pending(this.state).length > 0 || this.risen !== null;
     if (!blocked) {
       this.clock.day++;
-      simulateDay(this.clock.day);
+      if (this.stepped) {
+        // As the browser works a day out: a part at a time (STORY-117), with what comes between
+        startDay(this.clock.day);
+        while (!stepDay(0)) this.between?.(this);
+      } else simulateDay(this.clock.day);
     }
     advisorsAnswer();
     if (this.risen === null) riseCheck();
