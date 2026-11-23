@@ -1,0 +1,54 @@
+{
+  "id": "PLAN-097",
+  "story": "STORY-115",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Sami 2026-11-23 valitsi yksiköille merkit ja luettelon ('Molemmat') ja jaon 'a ja b nyt'; STORY-115 on osa b. 1) Merkit: uusi src/ui/unitMarkers.ts piirtää lääni- ja valtiotasolla jokaisen pelaajan yksikön DOM-merkkinä (14 px:n piste 44 px:n kosketusalueessa, oma). Yksiköt, joiden kosketusalueet osuisivat toisiinsa, yhdistyvät merkiksi, jossa on lukumäärä (groupMarks, valittu yksikkö ensin). Merkki sijoitetaan yksikön kohdalle tai lähimpään vapaaseen kohtaan 24 ja 40 px:n kehillä niin, ettei sen näkyvä osa ole sirun tai kaupunkilapun päällä eikä sen kosketusalue toisen merkin päällä (placeGroups); jos vapaata ei ole, merkki piirtyy sirujen ja lappujen päälle. Sirujen suorakulmiot tulevat createChipsistä ja lappujen cityLabels.updatesta (STORY-114), ei asettelun lukua. Ylä- ja alapaneelin alla olevat yksiköt jätetään pois (panelEdges). Merkin napautus valitsee yksikön ja kääntää kameran sen kohdalle samalla etäisyydellä (rig.flyTo), ja yhdistetty merkki antaa yksikkönsä vuorotellen (oma). Merkin nappi pysyy ryhmän pienimmän yksikköindeksin mukana, jotta kesken oleva napautus ei siirry toiseen ryhmään framejen välillä. 2) Luettelo: HUDin luettelonappi näkyy lääni- ja valtiotasolla myös neuvonantajan hoitaessa tasoa (uusi HudState.list), ja luettelokortti avautuu tasoilla 1–3. Yksiköt-välilehden rivit ryhmitellään lääneittäin otsikoin (läänin nimi ja määrä). Yksikkörivi valitsee yksikön ja kääntää kameran lentämättä alas kuten ennen; kaupunkirivi avaa ylemmillä tasoilla pikapaneelin kuten läänin kortti (STORY-114). 3) Mittaus: globeDebug.markerMs kertoo merkkien JS-ajan framessa; koko framen aika mitataan frameMs:llä.",
+  "alternatives_considered": [
+    {
+      "name": "Merkit Three.js-spriteinä vakiokokoisina",
+      "pros": "Ei DOM-elementtejä",
+      "cons": "Sirut ja laput ovat DOMissa, joten päällekkäisyyden välttäminen vaatisi saman laskennan ja osuman tunnistuksen erikseen",
+      "rejected_because": "DOM-merkit käyttävät samoja suorakulmioita ja napautusta kuin laput"
+    },
+    {
+      "name": "Peittyvä merkki jää pois",
+      "pros": "Ei koskaan sirun päällä",
+      "cons": "Yksikkö katoaisi kartalta, mikä rikkoo kriteerin 'jokainen yksikkö näkyy'",
+      "rejected_because": "Sivuun siirto ja viimeisenä päälle piirto pitävät jokaisen yksikön näkyvissä"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/unitMarkers.ts (uusi)",
+    "src/ui/unitMarkers.test.ts (uusi)",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/listCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/unit-markers.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Ryhmittely ja sijoittelu puhtaina funktioina",
+      "verify": "Vitest: yhdistyminen, valittu ensin, sivuun siirto, päälle piirto, kosketusalueet erillään"
+    },
+    {
+      "step": 2,
+      "action": "Merkit näkymään sirujen ja lappujen jälkeen; napautus valitsee ja kääntää",
+      "verify": "E2E puhelimen ja työpöydän koossa: jokainen yksikkö merkissä, vähintään 12 px, ei sirun tai lapun alla, valinta ja kamera"
+    },
+    {
+      "step": 3,
+      "action": "Luettelo lääni- ja valtiotasolla, yksiköt lääneittäin",
+      "verify": "E2E: otsikot, rivin napautus, ja neuvonantajan kanssa nappi näkyy ylemmillä tasoilla"
+    },
+    {
+      "step": 4,
+      "action": "Mittaus ja kuvakaappaukset",
+      "verify": "markerMs ja kuvat valtio-, lääni- ja kaupunkialuetasolta"
+    }
+  ],
+  "status": "approved"
+}

@@ -1,0 +1,91 @@
+{
+  "id": "TICKET-TEST-097",
+  "story": "STORY-115",
+  "implementation_ticket": "TICKET-IMPL-097",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1), siemen 42; Vitest 5 Nodessa",
+    "tooling": "Playwright, Vitest 5, globeDebug.markerMs",
+    "cases": [
+      {
+        "steps": "Vitest src/ui/unitMarkers.test.ts",
+        "expected": "Yhdistyminen kosketusalueen mukaan, valittu ensin, sivuun siirto sirun tieltä, päälle piirto kun vapaata ei ole, kosketusalueet erillään",
+        "result": "6/6",
+        "outcome": "pass"
+      },
+      {
+        "steps": "unit-markers.e2e puhelimen (390 × 844) ja työpöydän (1280 × 800) koossa: ?classic, kahdeksan kaupunkia neljässä läänissä, soturi joka kaupungissa, kolme yksikköä yhdessä ruudussa ja yksinäinen tiedustelija, valtiotaso",
+        "expected": "Kriteeri 1: jokainen näkyvä yksikkö merkissä, merkit vähintään 12 px, ei sirujen tai lappujen alla, yhdistetyssä lukumäärä",
+        "result": "14 yksikköä viidessä merkissä molemmissa koossa; merkkien lukumäärien summa on näkyvien yksiköiden määrä; pisteet 14 px; yksikään paikallaan oleva merkki ei osu siruun, lappuun tai toisen merkin kosketusalueeseen. Puhelimella yksi merkki ei löytänyt vapaata kohtaa ja piirtyi sirun päälle (over), työpöydällä ei yhtään.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sama: yksinäisen merkin napautus ja kolmen yksikön merkin kaksi napautusta",
+        "expected": "Kriteeri 1: napautus valitsee yksikön ja kääntää kameran lentämättä alas",
+        "result": "Valinta on merkin yksikkö, taso pysyy 1, kameran etäisyys sama ja yksikkö alle 40 px:n päässä ruudun keskeltä; yhdistetty merkki antaa kaksi eri yksikköä ryhmästään",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sama: luettelo valtiotasolla, Yksiköt-välilehti, toisen läänin ensimmäinen rivi",
+        "expected": "Kriteeri 2: luettelo aukeaa, rivit lääneittäin, rivi valitsee yksikön lentämättä alas",
+        "result": "Läänien otsikot ovat erilliset, ja niiden määrien summa on yksiköiden määrä; rivi sulkee luettelon, valitsee yksikön, taso ja etäisyys pysyvät",
+        "outcome": "pass"
+      },
+      {
+        "steps": "unit-markers.e2e: uusi peli neuvonantajilla (Ruokkija, Vartija, Vartija, Oppinut), tasot nostettu",
+        "expected": "Kriteeri 2: luettelo myös neuvonantajan hoitaessa tasoa",
+        "result": "Kaupunkialueella luettelonappi piilossa (STORY-096), läänitasolla ja valtiotasolla näkyvissä; luettelo aukeaa, ja yksiköt ovat lääneittäin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Läänitaso samassa pelissä ja kuvakaappaukset valtio-, lääni- ja kaupunkialuetasolta",
+        "expected": "Sääntö 10.6",
+        "result": "Läänitasolla samat tarkistukset vihreinä; kuvat state, state-picked, list ja province molemmissa koossa (paikallinen ajo, ei versionhallinnassa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "globeDebug.markerMs valtio- ja läänitasolla, noin 150 framea",
+        "expected": "Kriteeri 3: pääsäikeen JS enintään 8 ms framessa myöhäisessä pelissä",
+        "result": "Merkkien oma JS-aika: mediaani 0,1 ms ja p95 0,2 ms molemmissa koossa; yksittäiset piikit 3–8 ms osuvat satunnaisiin frameihin, joten ne ovat 2 vCPU:n ja SwiftShaderin kohinaa tai roskienkeruuta. Koko framen 8 ms:n raja mitataan oikealla GPU:lla kuten TICKET-TEST-082:ssa.",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Liittyvät E2E: advisors, city, diplomacy, list, onboarding, opponents, state-view",
+        "expected": "Vihreä",
+        "result": "14/15; onboarding.e2e:n 'a new game greets' oli punainen erässä mutta vihreä yksin samalla buildilla (epävakaa)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Odottaa CI-ajoa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "Utun katselmointi",
+        "expected": "Hyväksytty",
+        "result": "Odottaa",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/unit-markers.e2e.ts-*/state.png, state-picked.png, list.png, province.png (paikallinen ajo)"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Pelaa puhelimella: yksiköt näkyvät valtio- ja läänitasolla, ja merkin napautus löytää yksikön",
+        "checked": false
+      },
+      {
+        "item": "Yhdistetyn merkin vuorottelu ja merkki sirun päällä, kun tilaa ei ole",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

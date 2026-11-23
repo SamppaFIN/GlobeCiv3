@@ -1,0 +1,45 @@
+{
+  "id": "TICKET-IMPL-097",
+  "story": "STORY-115",
+  "plan": "PLAN-097",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/ui/unitMarkers.ts",
+    "src/ui/unitMarkers.test.ts",
+    "src/globe/main.ts",
+    "src/ui/gameHud.ts",
+    "src/ui/listCard.ts",
+    "src/ui/hud.css",
+    "tests/e2e/unit-markers.e2e.ts"
+  ],
+  "change_summary": "Uusi src/ui/unitMarkers.ts: groupMarks yhdistää yksiköt, joiden 44 px:n kosketusalueet osuisivat toisiinsa (valittu ensin), ja placeGroups sijoittaa ryhmän yksikön kohdalle tai lähimpään vapaaseen kohtaan 24 tai 40 px:n kehällä niin, ettei näkyvä osa (14 px:n piste tai 24 px:n lukumäärä) ole sirun tai lapun päällä eikä kosketusalue toisen merkin päällä. Jos vapaata ei ole, merkki piirtyy päälle (unit-marker-over). Merkin nappi seuraa ryhmän pienintä yksikköindeksiä, joten kesken oleva napautus pysyy samoissa yksiköissä. main.ts: updateUnitMarkers ajetaan lappujen jälkeen lääni- ja valtiotasolla (sirujen ja lappujen suorakulmiot, paneelien välinen kaista), pickUnits valitsee yksikön ja kääntää kameran samalla etäisyydellä, ja yhdistetty merkki antaa yksikkönsä vuorotellen. Luettelo aukeaa tasoilla 1–3, HUDin luettelonappi näkyy lääni- ja valtiotasolla myös neuvonantajan kanssa (HudState.list), yksiköt ryhmitellään lääneittäin otsikoin, ja kaupunkirivi avaa ylemmillä tasoilla pikapaneelin. globeDebug.markerMs mittaa merkkien JS-ajan.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "createUnitMarkers",
+      "groupMarks",
+      "placeGroups",
+      "pickUnits",
+      "updateUnitMarkers",
+      "HudState.list",
+      "ListView.units.group",
+      "updateListCard",
+      "listActions.city",
+      "cityLabels.update (paluuarvo)"
+    ],
+    "call_sites_found": [
+      "gameHud.update: HUD-tila main.ts:ssä",
+      "listCard.update: updateListCard",
+      "cityLabels.update: updateCityLabels"
+    ],
+    "call_sites_updated": [
+      "HUD-tila saa kentän list",
+      "yksikkörivit saavat läänin nimen",
+      "updateCityLabels välittää lappujen paikat merkeille"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "7ae3c9c",
+  "progress": 100,
+  "notes": "Omat säännöt: 44 px:n kosketusalue (tokens.css --touch-target), 14 px:n piste, siirtokehät 24 ja 40 px sekä yhdistetyn merkin vuorottelu. Luettelonappi näkyy kaupunkialueella edelleen vain omalla ohjauksella (STORY-096). Kaupunkirivi avaa ylemmillä tasoilla pikapaneelin kuten läänin kortin linkki (STORY-114), koska kaupunkikortti kuuluu kaupunkialueelle."
+}
