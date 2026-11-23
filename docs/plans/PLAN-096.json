@@ -1,0 +1,51 @@
+{
+  "id": "PLAN-096",
+  "story": "STORY-114",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Sami 2026-11-23: jokaisella tasolla on omat toimintonsa, ja STORY-114:n luonnos (kaikki yksiköt ja kaupungit näkyviin ja ohjattaviksi valtiotasolta) jaettiin Utun katselmoinnin mukaan: siivous (tämä story) ja yksiköt näkyviin (STORY-115) tehdään nyt, ja ohjaus ylemmältä tasolta (STORY-116) päätetään tasojen hiontavaiheessa. 1) Siru: valtiotasolla läänin sirun alarivi kertoo kaupunkien määrän hallussa olevassa läänissä (esimerkiksi 'Hallussa · 6 kaupunkia'); tila tarkistetaan puhelimen 96 px:n sirussa. 2) Kortti: läänin kortin Kaupungit-rivi luettelee kaikki kaupungit kokoineen (nyt someOf rajaa neljään) kaupunkilinkkeinä (STORY-103). Kortin kaupunkilinkki ja kaupungin rivi valitsevat kaupungin ja avaavat sen pikapaneelin lentämättä; pikapaneelin 'Lennä kaupunkiin' ja 'Kaupunkikortti' toimivat kuten nyt (kortti lentää alas, koska kaupunkikortin ohjaus ylemmällä tasolla kuuluu STORY-116:een). Muiden linkkien (ilmoitukset) käytös ei muutu. 3) Laput: valtiotasolla näkyvät vain pääkaupungin ja jokaisen läänin suurimman kaupungin laput; läänitasolla tarkasteltavan läänin kaupungit. Vieraat laput (kaupunkivaltiot, paimentolaiset ja kilpailijat) näkyvät kuten nyt, mutta samassa karsinnassa. Karsinta: sirujen sijoitetut suorakulmiot tulevat createChipsistä (ei getBoundingClientRectiä, STORY-062), ja lappu, joka osuisi sirun tai jo sijoitetun lapun päälle, jää pois; järjestys pääkaupunki, suurin koko, vieraat. Lappujen leveydet arvioidaan nimen pituudesta laskennallisesti. 4) Testit: E2E valtiotasolla siemenellä 42 myöhäisessä pelissä (debug-koukuilla kaupunkeja usean läänin alueelle): sirun kaupunkimäärä, kortin kaikki kaupungit, kaupunkirivin napautus avaa pikapaneelin ilman lentoa, ja lappujen ja sirujen suorakulmiot eivät leikkaa puhelimen ja työpöydän koossa. Kuvakaappaukset valtio-, lääni- ja kaupunkialuetasolta (sääntö 10.6). Pääsäikeen aika ennen ja jälkeen samalla koneella.",
+  "alternatives_considered": [
+    {
+      "name": "Kaikki laput levitettyinä",
+      "pros": "Jokainen nimi näkyy",
+      "cons": "Kuvakaappauksen myöhäisessä pelissä 20+ lappua ei mahdu puhelimeen",
+      "rejected_because": "Sami valitsi kaupungit läänin siruun"
+    },
+    {
+      "name": "Kaupunkikortti ja ohjaus valtiotasolla samassa storyssa",
+      "pros": "Yksi kokonaisuus",
+      "cons": "Ohjaus ylemmältä tasolta on ristiriidassa tasojen omien toimintojen kanssa ja vaatii suunnittelua",
+      "rejected_because": "Sami 2026-11-23: ohjaus hiontavaiheeseen (STORY-116)"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/main.ts (updateCityLabels, sirut, regionView)",
+    "src/ui/levelUi.ts (createChips palauttaa sijoitetut suorakulmiot)",
+    "src/ui/cityLabels.ts tai vastaava lappumoduuli",
+    "tests/e2e/province.e2e.ts tai area-panel.e2e.ts (laajennus)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "createChips palauttaa sijoitetut suorakulmiot; lappujen karsinta valtiotasolla ja läänitasolla",
+      "verify": "E2E: suorakulmiot eivät leikkaa puhelimen ja työpöydän koossa"
+    },
+    {
+      "step": 2,
+      "action": "Sirun kaupunkimäärä ja kortin kaikki kaupungit linkkeinä",
+      "verify": "E2E: sirun teksti ja kortin rivit"
+    },
+    {
+      "step": 3,
+      "action": "Kaupungin valinta kortista avaa pikapaneelin lentämättä",
+      "verify": "E2E: kameran etäisyys ei muutu"
+    },
+    {
+      "step": 4,
+      "action": "Kuvakaappaukset ja mittaus",
+      "verify": "Kolme tasoa kuvina; pääsäie ennen ja jälkeen"
+    }
+  ],
+  "status": "approved"
+}

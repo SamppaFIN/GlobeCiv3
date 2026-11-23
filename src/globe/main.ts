@@ -75,7 +75,7 @@ import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
-import { createChips, createLevelPanels, createUnlockCard, type Chip } from '../ui/levelUi';
+import { createChips, createLevelPanels, createUnlockCard, type Chip, type ScreenRect } from '../ui/levelUi';
 import { isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOODS, has as stockOf, readySettlements, settlementDone, settlementSteps, SETTLEMENT_SIZE, siteMissing, waitsForBase, BUILD_DAYS, type Good } from '../game/chains';
@@ -717,6 +717,14 @@ const cityLabels = createCityLabels(hud_root, id => {
   openCityCard(id);
 });
 
+/** A city's quick panel at the level in view, the region's card closed (STORY-114). */
+function quickCityAt(tile: number) {
+  const id = play?.cities.findIndex(c => c.tile === tile) ?? -1;
+  if (id < 0) return;
+  regionCard = null;
+  quickCity = id;
+}
+
 function openCityCard(id: number) {
   if (!play) return;
   quickCity = null;
@@ -1029,13 +1037,35 @@ function areaView(): AreaView {
 // What the open city's tiles bring in, over the map and under the card (STORY-039)
 const tileYields = createTileYields(hud_root);
 
+/**
+ * The player's cities whose labels the level shows (STORY-114), in the order they are placed:
+ * at the state level the capital and each province's largest, at the province level the
+ * province's own cities, at the city area all.
+ */
+function labelledCities(): City[] {
+  const p = play!;
+  if (viewLevel === 3) return p.cities;
+  const province = (c: City) => provinceOfTile(c.tile);
+  const bySize = [...p.cities].sort((a, b) => Number(b.capital) - Number(a.capital) || b.size - a.size || a.id - b.id);
+  if (viewLevel === 2) {
+    const here = path[1]?.id;
+    return bySize.filter(c => province(c) === here);
+  }
+  // The capital comes first, so it is its own province's city
+  const seen = new Set<number>();
+  return bySize.filter(c => !seen.has(province(c)) && !!seen.add(province(c)));
+}
+
 function updateCityLabels() {
   if (!play) return;
   const lift = labelLift();
   // City-states have negative ids: -1 - their place among those in view (STORY-063)
   const shown = visibleNatives();
+  // The open quick panel's city keeps its label (STORY-098), placed first (STORY-114)
+  const cities = labelledCities().filter(c => c.id !== quickCity);
+  if (quickCity !== null && play.cities[quickCity]) cities.unshift(play.cities[quickCity]);
   cityLabels.update(viewLevel === 0 ? [] : [
-    ...play.cities.map(c => {
+    ...cities.map(c => {
       const at = toScreen(tileCenter(c.tile));
       // Above the city's houses at the city-area level, on the city further out. At the city
       // area a small line tells what it builds and how it grows (STORY-098); not at the city
@@ -1057,7 +1087,7 @@ function updateCityLabels() {
       const at = toScreen(tileCenter(t.camp));
       return { id: -1001 - k, name: t.tribe.name, size: tribeBand(game!.seed, t.tribe, clock.day).size, x: at?.[0] ?? null, y: at ? at[1] - lift : null, foe: 'tribe' as const };
     }),
-  ]);
+  ], viewLevel === 1 || viewLevel === 2 ? chipRects : null);
   updateCityQuick(lift);
 }
 
@@ -2189,6 +2219,12 @@ function updateLevels() {
   // A rise due between the days (a loaded game, a card answered) comes as the frame's
   if (!discoveryCard.visible && !unlockCard.visible && !onboarding.visible) riseCheck();
   const list: Chip[] = [];
+  // A province held tells its cities (STORY-114): its chip stands for them at the state level.
+  // A city holds its province (STORY-016), so the count says it, and the chip stays narrow on a phone.
+  const held = (province: number) => {
+    const n = play!.cities.filter(c => provinceOfTile(c.tile) === province).length;
+    return n ? `${n} ${n === 1 ? 'kaupunki' : 'kaupunkia'}` : 'Hallussa';
+  };
   if (viewLevel === 2 || viewLevel === 1) {
     const level = viewLevel === 2 ? 2 : 1;
     const parent = path[level - 1]?.id ?? 0;
@@ -2198,7 +2234,7 @@ function updateLevels() {
       const share = level === 2 ? areaShare(id) : provinceShare(id);
       const sub = level === 2
         ? share === 0 ? 'Sumussa' : AREA_PLAN_NAMES[play.units.areaPlans.get(id) ?? 'explore']
-        : id === play.targetProvince ? 'Tavoite' : !provinceHasLand(id) ? 'Ei maata' : won.held.has(id) ? 'Hallussa' : `Kartoitettu ${Math.round(share * 100)} %`;
+        : id === play.targetProvince ? 'Tavoite' : !provinceHasLand(id) ? 'Ei maata' : won.held.has(id) ? held(id) : `Kartoitettu ${Math.round(share * 100)} %`;
       const isSelected = selection?.level === level && selection.id === id;
       list.push({ id, name: nameOf(level, id).name, sub: isSelected ? `${sub} · valittu` : sub, x: at?.[0] ?? null, y: at?.[1] ?? null, selected: isSelected });
     }
@@ -2232,8 +2268,11 @@ function updateLevels() {
     },
     viewLevel === 0 ? planetPanel(won) : null,
   );
-  chips.update(list, list.length ? panelEdges() : { top: 0, bottom: window.innerHeight }, viewLevel === 0);
+  chipRects = chips.update(list, list.length ? panelEdges() : { top: 0, bottom: window.innerHeight }, viewLevel === 0);
 }
+
+/** Where the level's chips stood this frame, for the city labels (STORY-114). */
+let chipRects: ScreenRect[] = [];
 
 // "−" zooms out a level on a desktop (the unlock card's hint)
 window.addEventListener('keydown', e => {
@@ -2292,7 +2331,8 @@ function tapPlay(x: number, y: number, width: number, height: number, hit: THREE
 }
 
 const tileCard = createTileCard(hud_root, {
-  links: richLinks,
+  // A city in a region's card opens its quick panel where the view is (STORY-114); elsewhere a link flies down to it
+  links: { ...richLinks, city: tile => (viewLevel < 3 && regionCard !== null ? quickCityAt(tile) : richLinks.city(tile)) },
   close: () => {
     if (!play) return;
     if (play.moving) stopMoving();
@@ -2386,7 +2426,9 @@ function regionView(ref: RegionRef): TileView {
     rows.push({ label: 'Tiedossa', value: 'Ei vielä mitään: tiedustelijat kartoittavat alueen.' });
   }
   const cities = p.cities.filter(c => inside.has(c.tile));
-  rows.push({ label: 'Kaupungit', value: cities.length ? someOf(cities.map(c => `${c.name} (${c.size})`)) : 'ei kaupunkeja' });
+  // A province's and an area's cities all, as links to their quick panels (STORY-114); a state's in short
+  rows.push({ label: 'Kaupungit', value: !cities.length ? 'ei kaupunkeja' : ref.level === 0 ? someOf(cities.map(c => `${c.name} (${c.size})`))
+    : [...cities].sort((a, b) => b.size - a.size || a.id - b.id).flatMap((c, i): Rich => [...(i ? [', '] : []), cityRef(c.tile, c.name), ` (${c.size})`]) });
   const natives = visibleNatives().filter(n => inside.has(n.tile));
   if (natives.length) rows.push({ label: 'Kaupunkivaltiot', value: someOf(natives.map(n => `${n.name} (${nativeStrength(n, clock.day).size})`)) });
   const rivalCities = visibleRivalCities().filter(x => inside.has(x.city.tile));
@@ -2839,7 +2881,6 @@ function updatePlay(dt: number) {
   }
   updateTreatyCard();
   updateSiteOffer();
-  updateCityLabels();
   updateListCard();
   updateCityCard();
   updateResearchCard();
@@ -2891,6 +2932,8 @@ function updatePlay(dt: number) {
     spacing: tileSpacing(),
   }, camera.position);
   updateLevels();
+  // After the chips: the labels keep off them (STORY-114)
+  updateCityLabels();
 }
 
 /** Advance the start screen and the fly-in for this frame. */
