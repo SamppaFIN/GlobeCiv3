@@ -2118,8 +2118,14 @@ export function prepareDay() {
  * A day of the game: the city-states it concerns found first, then the units, the cities, the
  * chronicles, the rivals, diplomacy, war, the raids and the advisors, in that order.
  */
+/** The day last begun, worked out or under way (STORY-117): the clock's day is it. */
+export let dayBegun = 0;
+/** Days a save or a command worked out to their end at once (STORY-117's measure). */
+export let daysFinishedAtOnce = 0;
+
 export function simulateDay(day: number) {
   finishDay();
+  dayBegun = day;
   const run = dayPhases(day);
   while (!run.next().done);
 }
@@ -2138,6 +2144,7 @@ export const dayRunning = () => dayRun !== null;
 /** A day to work out over the frames, the last one ended first. */
 export function startDay(day: number) {
   finishDay();
+  dayBegun = day;
   dayRun = dayPhases(day);
 }
 
@@ -2162,6 +2169,7 @@ export function stepDay(budgetMs: number): boolean {
 /** The day in progress worked out to its end now. */
 export function finishDay() {
   if (!dayRun || dayStepping) return;
+  daysFinishedAtOnce++;
   dayStepping = true;
   try {
     while (!dayRun.next().done);
@@ -2321,7 +2329,9 @@ function meetOpponents(): string {
  */
 export function riseCheck(): boolean {
   const p = play;
-  if (!p || pending(p).length) return false;
+  // Not between the parts of a day worked out over frames: the day rises at its end, as all at
+  // once (Utu's review of STORY-117); inside its last part it may
+  if (!p || pending(p).length || (dayRunning() && !dayStepping)) return false;
   const reached = levelGoal(p.progress.openLevel);
   const opened = advance(p.progress, levelState());
   if (opened !== null && reached) {
