@@ -1,0 +1,33 @@
+{
+  "id": "PLAN-100",
+  "story": "STORY-119",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Samin viesti 2026-11-23: 'avata sen ydinsota moodin'. Enkin oletus (kysymys keskeytyi): aloitusnäyttöön heti nappi nykyiseen ydinsotakokeiluun, ja atomiaika liittää ydinsodan peliin myöhemmin (STORY-123). Aloitusnäytön toimintoihin tulee pelin omien nappien alle hillitympi 'Ydinsota · kokeilu', joka avaa osoitteen ?planet säilyttäen siemenen. Kokeilun paneelin otsikkoon tulee takaisin-nappi (Aloitusnäyttöön), joka palaa osoitteeseen ilman ?planetia. Kokeilu ei luo eikä tallenna peliä, joten tallennus pysyy ennallaan.",
+  "alternatives_considered": [
+    {
+      "name": "Kokeilu samassa sivussa ilman osoitteen vaihtoa",
+      "pros": "Ei sivun latausta",
+      "cons": "Kokeilu on rakennettu käynnistymään osoitteesta (STORY-097), ja pelin ja kokeilun tila sekoittuisi",
+      "rejected_because": "Sivun lataus pitää kokeilun erillään pelistä"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/startScreen.ts",
+    "src/ui/nuclearPanel.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/planet-trial.e2e.ts"
+  ],
+  "open_questions": [
+    "Sami vahvistaa tulkinnan: nappi nyt ja atomiaika myöhemmin"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Aloitusnäytön nappi ja kokeilun takaisin-nappi",
+      "verify": "E2E: tallennus ennen, kokeilu avautuu siemenellä, takaisin aloitusnäyttöön, Jatka sama"
+    }
+  ],
+  "status": "approved"
+}

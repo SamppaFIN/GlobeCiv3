@@ -67,3 +67,45 @@ test('the trial leaves the game alone: no war without ?planet', async ({ page })
   await expect(page.locator('.nuclear')).toHaveCount(0);
   expect(await page.evaluate(() => 'globeWar' in window)).toBe(false);
 });
+
+test('the start screen opens the trial, and back again the saved game waits as it was (STORY-119)', async ({ page }, testInfo) => {
+  test.setTimeout(180_000);
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  // A game saved first
+  let ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  await page.goto('./?seed=42');
+  await ready;
+  await page.evaluate(() => (window as any).globeDebug.setDiscoveries(false));
+  await page.getByRole('button', { name: 'Uusi peli' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 20_000 });
+  expect(await page.evaluate(() => (window as any).globeDebug.saveNow())).toBe(true);
+  ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  await page.reload();
+  await ready;
+  const resume = page.getByRole('button', { name: /^Jatka/ });
+  await expect(resume).toBeVisible();
+  const before = await resume.textContent();
+
+  // The trial from the start screen, the seed kept
+  const trial = page.getByRole('button', { name: /^Ydinsota · kokeilu/ });
+  await expect(trial).toBeVisible();
+  const box = (await trial.boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(43.5);
+  await page.screenshot({ path: testInfo.outputPath('start-trial.png') });
+  ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  await trial.click();
+  await ready;
+  expect(new URL(page.url()).search).toBe('?planet&seed=42');
+  const panel = page.getByRole('region', { name: 'Johtajien sota' });
+  await expect(panel.getByRole('list', { name: 'Johtajat' }).getByRole('button')).toHaveCount(5);
+
+  // Back to the start screen: the save as it was
+  ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  await panel.getByRole('button', { name: 'Aloitusnäyttöön' }).click();
+  await ready;
+  expect(new URL(page.url()).search).toBe('?seed=42');
+  await expect(page.getByRole('button', { name: /^Jatka/ })).toHaveText(before!);
+  expect(errors).toEqual([]);
+});

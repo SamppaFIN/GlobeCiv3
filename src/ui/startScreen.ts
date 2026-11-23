@@ -50,7 +50,7 @@ export interface StartScreen {
   remove(): void;
 }
 
-export function createStartScreen(root: HTMLElement, onNewGame: () => void): StartScreen {
+export function createStartScreen(root: HTMLElement, onNewGame: () => void, onPlanet?: () => void): StartScreen {
   const el = document.createElement('section');
   el.className = 'start';
   el.setAttribute('aria-label', 'Aloitus');
@@ -64,6 +64,7 @@ export function createStartScreen(root: HTMLElement, onNewGame: () => void): Sta
     <div class="start-actions">
       <button class="btn btn-primary btn-block start-continue" type="button" hidden>Jatka ${ARROW}</button>
       <button class="btn btn-primary btn-block start-new" type="button">Uusi peli ${ARROW}</button>
+      <button class="btn btn-secondary btn-block start-planet" type="button" hidden>Ydinsota · kokeilu ${ARROW}</button>
       <div class="start-progress"><div class="start-track"></div><span>Kartoitettu 0 %</span></div>
     </div>`;
   root.appendChild(el);
@@ -72,6 +73,12 @@ export function createStartScreen(root: HTMLElement, onNewGame: () => void): Sta
   const actions = el.querySelector<HTMLElement>('.start-actions')!;
   const newGame = el.querySelector<HTMLButtonElement>('.start-new')!;
   const continueButton = el.querySelector<HTMLButtonElement>('.start-continue')!;
+  // The war of leaders, a trial apart from the game (STORY-119): it leaves the save alone
+  const planet = el.querySelector<HTMLButtonElement>('.start-planet')!;
+  if (onPlanet) {
+    planet.hidden = false;
+    planet.addEventListener('click', onPlanet);
+  }
   /** A save exists: the first press on "Uusi peli" asks, the second starts anew. */
   let asks = false;
   newGame.addEventListener('click', () => {

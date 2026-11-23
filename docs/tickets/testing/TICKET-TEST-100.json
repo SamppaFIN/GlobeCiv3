@@ -1,0 +1,49 @@
+{
+  "id": "TICKET-TEST-100",
+  "story": "STORY-119",
+  "implementation_ticket": "TICKET-IMPL-100",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1), siemen 42",
+    "tooling": "Playwright",
+    "cases": [
+      {
+        "steps": "E2E planet-trial.e2e: tallennus, uudelleenlataus, Ydinsota · kokeilu, takaisin",
+        "expected": "Nappi vähintään 44 px, osoite ?planet&seed=42, viisi johtajaa, takaisin osoitteeseen ?seed=42 ja Jatka-napin teksti sama",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E planet-trial.e2e (STORY-097:n testit), start.e2e ja save.e2e",
+        "expected": "Vihreä",
+        "result": "11/11 läpi. Ensimmäisellä ajolla STORY-097:n testi oli kerran punainen: johtajan teko ehti lokin kärkeen ennen pelaajan ohjusta, kun kone oli kuormitettu; läpi uusinnassa ilman kuormaa",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Ajetaan mergen jälkeen",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/planet-trial.e2e.ts-*/start-trial.png (paikallinen ajo)"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Puhelimella: aloitusnäytön nappi avaa kokeilun ja takaisin-nappi palaa, ja tallennettu peli jatkuu",
+        "checked": false
+      },
+      {
+        "item": "Tulkinta 'avata ydinsota moodi': nappi nyt ja atomiaika myöhemmin (STORY-123)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

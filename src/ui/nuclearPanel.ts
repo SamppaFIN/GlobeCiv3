@@ -20,11 +20,12 @@ export interface NuclearMarks {
 const attitudeWord = (n: number) => (n >= 50 ? 'ystävällinen' : n >= 15 ? 'myönteinen' : n > -15 ? 'varautunut' : n > -50 ? 'vihamielinen' : 'raivoissaan');
 const people = (n: number) => `${n.toLocaleString('fi-FI', { maximumFractionDigits: 1 })} milj.`;
 
-export function createNuclearPanel(root: HTMLElement, on: { act(a: Act): void; togglePause(): void; setSpeed(s: number): void }) {
+export function createNuclearPanel(root: HTMLElement, on: { act(a: Act): void; togglePause(): void; setSpeed(s: number): void; leave(): void }) {
   const el = document.createElement('section');
   el.className = 'nuclear';
   el.setAttribute('aria-label', 'Johtajien sota');
   el.innerHTML = `<div class="nuclear-head">
+      <button class="btn btn-secondary nuclear-leave" type="button" aria-label="Aloitusnäyttöön"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5 L8 12 L15 19"/></svg></button>
       <div class="nuclear-title"><span class="nuclear-kicker">Planeetta · kokeilu</span><span class="nuclear-day" aria-live="polite"></span></div>
       <button class="btn btn-secondary nuclear-pause" type="button"></button>
       <div class="seg nuclear-speed" role="radiogroup" aria-label="Nopeus">${[1, 4].map(s => `<label class="seg-opt"><input type="radio" name="nuclear-speed" value="${s}">${s}×</label>`).join('')}</div>
@@ -39,6 +40,7 @@ export function createNuclearPanel(root: HTMLElement, on: { act(a: Act): void; t
   root.appendChild(marks);
   const q = <T extends Element>(s: string) => el.querySelector<T>(s)!;
   q('.nuclear-pause').addEventListener('click', on.togglePause);
+  q('.nuclear-leave').addEventListener('click', on.leave);
   el.querySelectorAll<HTMLInputElement>('input[name="nuclear-speed"]').forEach(i => i.addEventListener('change', () => on.setSpeed(Number(i.value))));
   let target = -1;
   q('.nuclear-leaders').addEventListener('click', e => {

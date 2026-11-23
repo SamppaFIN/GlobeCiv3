@@ -1,0 +1,31 @@
+{
+  "id": "TICKET-IMPL-100",
+  "story": "STORY-119",
+  "plan": "PLAN-100",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/ui/startScreen.ts",
+    "src/ui/nuclearPanel.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/e2e/planet-trial.e2e.ts"
+  ],
+  "change_summary": "createStartScreen saa valinnaisen onPlanet-kutsun, ja aloitusnäytön toimintoihin tulee 'Ydinsota · kokeilu' (btn-secondary, läpinäkyvä, 44 px). main.ts siirtyy osoitteeseen ?planet ja säilyttää siemenen (seedQuery). Kokeilun paneelissa (createNuclearPanel) on takaisin-nappi, jonka saavutettava nimi on 'Aloitusnäyttöön' ja joka palaa osoitteeseen ilman ?planetia.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "createStartScreen",
+      "createNuclearPanel",
+      "seedQuery"
+    ],
+    "affected_callers": [
+      "Aloitusnäyttö: kolmas nappi vie tilaa pallolta",
+      "Kokeilun paneeli: otsikkoon uusi nappi"
+    ],
+    "breaking_changes": [],
+    "migration_needed": false
+  },
+  "commit": "9724797",
+  "progress": 100,
+  "notes": "Kokeilu ei kosketa tallennusta: pelaajan peliä ei ole, joten automaattitallennus ei tallenna mitään."
+}
