@@ -52,7 +52,7 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   el.hidden = true;
   el.innerHTML = `
     <div class="advance-head">
-      <div class="advance-art" aria-hidden="true"></div>
+      <div class="advance-card-art" aria-hidden="true"></div>
       <div class="city-titles"><span id="advance-kicker" class="city-kicker"></span><h2 id="advance-title" class="city-name"></h2></div>
     </div>
     <dl class="codex-facts advance-facts"></dl>
@@ -133,7 +133,7 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
         q('#advance-kicker').textContent = v.kicker;
         q('#advance-title').textContent = v.name;
         // Our own drawing from constants (advanceArt.ts)
-        q('.advance-art').innerHTML = advanceSvg(v.advance, 64);
+        q('.advance-card-art').innerHTML = advanceSvg(v.advance, 64);
         const facts = q('.advance-facts');
         facts.replaceChildren();
         for (const f of v.facts) {

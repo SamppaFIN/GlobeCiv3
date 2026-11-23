@@ -607,8 +607,9 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 /* An advance's card (STORY-118): the game waits on it, and the rest of the HUD steps aside */
 .advance-card { z-index: 6; max-height: 78dvh; }
 .advance-head { display: flex; align-items: center; gap: 12px; }
-.advance-art { width: 64px; height: 64px; flex: none; }
-.advance-art svg { display: block; }
+/* The svg itself is class advance-art (advanceArt.ts), as in the science tree's nodes */
+.advance-card-art { width: 64px; height: 64px; flex: none; }
+.advance-card-art svg { display: block; }
 .advance-facts { margin: 0; }
 .advance-studies[hidden], .advance-firsts[hidden], .advance-more[hidden] { display: none; }
 .advance-go { min-height: var(--touch-target); }
