@@ -5,12 +5,13 @@
   "implemented_by_model": "Opus 5.5 (Enki)",
   "status": "review",
   "files_changed": [
-    "src/sim/game.ts",
-    "tests/sim/jams.test.ts",
-    "tests/golden/seed42.json",
-    "docs/plans/PLAN-095.json",
+    "CLAUDE.md",
     "backlog.json",
-    "CLAUDE.md"
+    "docs/plans/PLAN-095.json",
+    "src/sim/game.ts",
+    "tests/golden/seed42.json",
+    "tests/sim/jams.test.ts",
+    "tests/sim/sites.test.ts"
   ],
   "change_summary": "settlerBuilder valitsee odottavan paikan uudisasukkaan rakentajan: pääkaupunki, jos se voi antaa asukkaan, muuten paikkaa lähin, joka voi. settleAt ja päivän odottavan paikan sääntö käyttävät sitä. Katselmoinnin jälkeen: anySettler-ehto (uusi uudisasukas tilataan vain, kun yhtään ei ole, ja odottava paikka odottaa matkalla olevaa), paikan uudisasukkaan rakentanut kaupunki palaa kultaan, ja neuvonantajan suoja koskee vain rakentajaa.",
   "impact_analysis": {
@@ -30,5 +31,5 @@
   },
   "commit": "b3523df",
   "progress": 100,
-  "notes": "Kultaiset tilat: päivä 50 ennallaan, kaikki tavat muuttuvat päivästä 100, myös feed (sen kasvattajan uudisasukkaat kasautuivat ennen 48:aan). Autopilotissa valtio aukeaa feed-tavalla päivänä 189 (ennen 167), build 242 (ennen ei lainkaan) ja roam 260 (ennen 320); läänit 89, 132 ja 134."
+  "notes": "Kultaiset tilat: päivä 50 ennallaan, kaikki tavat muuttuvat päivästä 100, myös feed (sen kasvattajan uudisasukkaat kasautuivat ennen 48:aan). Autopilotissa valtio aukeaa feed-tavalla päivänä 189 (ennen 167), build 242 (ennen ei lainkaan) ja roam 260 (ennen 320); läänit 89, 132 ja 134. Korjaus 2026-11-23 (CI punainen 73d821d:stä alkaen, site-card.e2e): katselmoinnin sääntö \"uutta ei tilata, kun yksikin uudisasukas on olemassa\" esti pelaajan oman valinnan \"Rakenna uudisasukas tänne\", kun toinen uudisasukas käveli paikalleen. Nyt lasketaan ylimääräiset uudisasukkaat (kaikki paitsi matkalla oleva): paikka odottaa ylimääräistä, ja jos sellaista ei ole, yksi rakennetaan. tests/sim/sites.test.ts toistaa vian. Kultaiset tilat build ja roam muuttuivat päivästä 100 (build 200: 9 kaupunkia, valtio auki; roam: kulta ja yksiköt)."
 }
