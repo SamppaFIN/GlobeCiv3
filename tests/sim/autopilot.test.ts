@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import type { Advisors } from '../../src/sim/run';
 import { autopilot, type Report } from './autopilot';
 
@@ -29,6 +29,7 @@ function lines(way: string, r: Report): string[] {
     `  4 sekavuusindeksi: enintään ${r.confusion.peakPerMinute} uutta järjestelmää minuutissa (päivästä ${r.confusion.peakAt}), keskimäärin ${r.confusion.meanPerMinute}`,
     `  5 nousut: ${r.rises.map(x => `${x.level} päivä ${x.day} (${x.minutes} min)`).join(' · ') || 'ei nousuja'}`,
     `  järjestelmät: ${r.systems.map(x => `${x.name} ${x.day}`).join(', ')}`,
+    `  uudisasukkaita enimmillään: ${r.mostSettlers}`,
   ];
 }
 
@@ -40,16 +41,14 @@ describe('the autopilot plays seed 42 under its advisors (STORY-085)', () => {
       const r = autopilot(SEED, advisors, HORIZON);
       reports[way] = r;
       console.log(lines(way, r).join('\n'));
+      // Red only for a level not opened, a run stopped or an invariant broken (Utu's review: not for a measure)
       expect(r.failure).toBeNull();
-      // Every measure was taken
-      expect(r.firstDecision).not.toBeNull();
-      expect(r.rises.map(x => x.level)).toEqual(['kaupunkialue', 'lääni', 'valtio']);
     }, 600_000);
   }
 
-  it('writes the report', () => {
+  // The report of the ways that ran, also when only some did (Utu's review)
+  afterAll(() => {
     mkdirSync('test-results/autopilot', { recursive: true });
     writeFileSync(`test-results/autopilot/seed-${SEED}.json`, `${JSON.stringify(reports, null, 2)}\n`);
-    expect(Object.keys(reports)).toEqual(Object.keys(WAYS));
   });
 });
