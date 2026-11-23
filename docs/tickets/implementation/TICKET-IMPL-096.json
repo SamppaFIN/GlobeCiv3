@@ -1,0 +1,41 @@
+{
+  "id": "TICKET-IMPL-096",
+  "story": "STORY-114",
+  "plan": "PLAN-096",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/globe/main.ts",
+    "src/ui/levelUi.ts",
+    "src/ui/cityLabels.ts",
+    "tests/e2e/state-view.e2e.ts",
+    "tests/e2e/conquest.e2e.ts"
+  ],
+  "change_summary": "Valtiotasolla hallussa olevan läänin siru kertoo kaupunkiensa määrän ('3 kaupunkia'; ilman kaupunkia 'Hallussa'). Läänin ja kaupunkialueen kortin Kaupungit-rivi luettelee kaikki kaupungit koon mukaan linkkeinä, ja ylemmällä tasolla linkki sulkee kortin ja avaa kaupungin pikapaneelin lentämättä. labelledCities valitsee laput: valtiotasolla pääkaupunki ja jokaisen läänin suurin (pääkaupunki on oman lääninsä kaupunki), läänitasolla tarkasteltavan läänin kaupungit, kaupunkialueella kaikki. createChips palauttaa sirujen suorakulmiot, ja cityLabels.update sijoittaa laput järjestyksessä kaupungin kohdalle tai lapun korkeuden verran ylä- tai alapuolelle; lappu, jolle ei löydy vapaata paikkaa, jää pois. Avoimen pikapaneelin lappu sijoitetaan ensin ja pysyy paneelin kanssa kaupungin kohdalla. Leveys arvioidaan nimestä ennen ensimmäistä mittausta, ja mitattu leveys luetaan vain tekstin muuttuessa (STORY-062).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "labelledCities",
+      "updateCityLabels",
+      "quickCityAt",
+      "held (sirun alarivi)",
+      "regionView (Kaupungit)",
+      "createChips.update (paluuarvo)",
+      "cityLabels.update (avoid)",
+      "ScreenRect",
+      "overlaps"
+    ],
+    "call_sites_found": [
+      "createChips.update: kartan sirut framessa (main.ts)",
+      "cityLabels.update: updateCityLabels",
+      "sirun teksti 'Hallussa': conquest.e2e.ts"
+    ],
+    "call_sites_updated": [
+      "updateCityLabels ajetaan framessa sirujen jälkeen, ja se saa sirujen suorakulmiot valtio- ja läänitasolla",
+      "conquest.e2e.ts lukee sirun uuden tekstin"
+    ],
+    "compile_errors_before": 0
+  },
+  "commit": "37399db",
+  "progress": 100,
+  "notes": "Poikkeama suunnitelmasta: sirun teksti on '3 kaupunkia' eikä 'Hallussa · 3 kaupunkia', koska pidempi teksti levensi siruja niin, että ne menivät puhelimessa päällekkäin (state-view.e2e löysi). Kaupunki pitää lääninsä (STORY-016), joten määrä kertoo hallinnan. conquest.e2e:n tarkistus muutettiin lukemaan uusi teksti (testi muuttui, koska sirun teksti muuttui tarkoituksella). Puhelimen valtiotasolla siemenellä 42 sirut peittävät kaupunkien kohdat, joten yhtään lappua ei näy; sirut kertovat kaupunkien määrän, ja läänitasolla laput näkyvät. Kaupunkialuetasolla laput sijoitetaan kuten ennen, joten lähekkäiset kaupungit voivat yhä mennä päällekkäin (tasojen hiontaan)."
+}

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-23T06:30:08Z",
+    "generated_at": "2026-11-23T07:51:56Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "cb9cbd5",
+    "git_commit": "37399db",
     "git_branch": "main",
     "language": "fi"
   },
@@ -230,7 +230,7 @@
         "STORY-099",
         "STORY-108"
       ],
-      "progress": 82
+      "progress": 77
     },
     {
       "id": "EPIC-010",
@@ -2905,7 +2905,7 @@
       "id": "STORY-113",
       "epic": "EPIC-009",
       "title": "Odottavan kaupunkipaikan uudisasukas kaupungista, joka voi antaa asukkaan",
-      "type": "bug",
+      "type": "chore",
       "narrative": "Pelaajana haluan, että kaupunkipaikka saa uudisasukkaan myös silloin, kun pääkaupunki ei kasva, jotta peli ei jää jumiin ennen valtiotasoa.",
       "effort": "S",
       "depends_on": [
@@ -2937,12 +2937,12 @@
         "Valtiotasolla läänin siru kertoo kaupunkiensa määrän, ja läänin kortti luettelee kaikki sen kaupungit kokoineen. Kaupungin rivin napautus valitsee kaupungin ja avaa sen pikapaneelin lentämättä.",
         "Valtiotasolla kartalla näkyvät pääkaupungin ja jokaisen läänin suurimman kaupungin laput, ja läänitasolla läänin kaupunkien laput. Laput eivät mene sirujen eivätkä toistensa päälle puhelimen (390 × 844) eikä työpöydän koossa, mikä tarkistetaan E2E-testissä ja kuvakaappauksista."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
         "plan": "PLAN-096",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-096",
+        "testing": "TICKET-TEST-096"
       }
     },
     {
