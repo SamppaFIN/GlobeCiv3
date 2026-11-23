@@ -114,6 +114,12 @@ export interface ScreenRect { x: number; y: number; w: number; h: number }
 /** Whether two rectangles on the screen overlap. */
 export const overlaps = (a: ScreenRect, b: ScreenRect) => Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.y - b.y) * 2 < a.h + b.h;
 
+/** A chip's width before it is measured: its text at about 7 px a letter, within the chip's CSS bounds. */
+function guessChipWidth(b: HTMLButtonElement): number {
+  const letters = Math.max(b.querySelector('.chip-name')?.textContent?.length ?? 0, b.querySelector('.chip-sub')?.textContent?.length ?? 0);
+  return Math.min(160, Math.max(96, 8 + 7 * letters));
+}
+
 export function createChips(root: HTMLElement, onTap: (id: number) => void): { update(chips: Chip[], free: { top: number; bottom: number }, spread?: boolean): ScreenRect[] } {
   const layer = document.createElement('div');
   layer.className = 'chips';
@@ -121,6 +127,8 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
   const pool: HTMLButtonElement[] = [];
   /** Chip widths as measured after their text last changed. */
   const widths = new Map<HTMLButtonElement, number>();
+  /** When a chip last measured 0 (hidden under a card): read again only half a second later (STORY-062). */
+  const zeroAt = new Map<HTMLButtonElement, number>();
   return {
     /**
      * `free`: the screen band between the HUD panels; chips are kept inside it so they can be
@@ -157,12 +165,15 @@ export function createChips(root: HTMLElement, onTap: (id: number) => void): { u
         }
         shown.push({ b, x: c.x!, y: c.y! });
       });
+      const now = performance.now();
       const width = (b: HTMLButtonElement) => {
         if (widths.has(b)) return widths.get(b)!;
-        // A chip hidden under a card measures 0: measured again once it shows
+        // A chip hidden under a card measures 0: its width is guessed until it shows again
+        if (now - (zeroAt.get(b) ?? -Infinity) < 500) return guessChipWidth(b);
         const w = b.offsetWidth;
         if (w > 0) widths.set(b, w);
-        return w;
+        else zeroAt.set(b, now);
+        return w > 0 ? w : guessChipWidth(b);
       };
       if (spread) {
         const moved = spreadChips(shown.map(c => ({ x: c.x, y: c.y, w: width(c.b) })));

@@ -62,7 +62,8 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
     await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
     await page.getByRole('button', { name: 'Tauko' }).click();
 
-    // A late game's home state: the province and state levels open, three cities in each of four provinces
+    // A late game's home state: the province and state levels open, three, two, one and three
+    // cities in four provinces, of different sizes
     await mapShare(page, 'province', 0.61);
     await page.evaluate(() => (window as any).globeDebug.rise());
     await page.getByRole('button', { name: 'Myöhemmin' }).click();
@@ -72,13 +73,14 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
       const w = window as any;
       const home = Math.floor(w.globeGame.state.startCity / 49);
       const used: number[] = [];
+      const many = [3, 2, 1, 3];
       for (let k = 0; k < 7 && used.length < 4; k++) {
         const p = home * 7 + k;
         if (w.globeDebug.foundIn(p) === null) continue;
-        w.globeDebug.foundIn(p);
-        w.globeDebug.foundIn(p);
+        for (let n = 1; n < many[used.length]; n++) w.globeDebug.foundIn(p);
         used.push(p);
       }
+      (w.globeGame.state.cities as unknown[]).forEach((_, i) => w.globeDebug.setCitySize(i, 1 + ((i * 3) % 5)));
       return used;
     });
     expect(provinces.length).toBe(4);
@@ -98,36 +100,32 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
       const table = w.globeRegions.tileTable();
       return (ps as number[]).map(p => cities.filter(c => Math.floor(table[c.tile] / 7) === p).length);
     }, provinces);
-    const subs = await page.locator('.chip:not([hidden]) .chip-sub').allTextContents();
-    for (const n of counts) expect(subs.some(s => s.startsWith(`${n} ${n === 1 ? 'kaupunki' : 'kaupunkia'}`))).toBe(true);
+    expect(new Set(counts).size).toBeGreaterThan(1);
+    for (const [k, p] of provinces.entries()) {
+      const name = await page.evaluate(id => (window as any).globeDebug.regionView(1, id).title, p);
+      const chip = page.locator('.chip:not([hidden])').filter({ has: page.locator('.chip-name', { hasText: new RegExp(`^${name}$`) }) });
+      await expect(chip.locator('.chip-sub')).toHaveText(new RegExp(`^${counts[k]} ${counts[k] === 1 ? 'kaupunki' : 'kaupunkia'}`));
+    }
 
-    // The labels: the capital and each province's largest at most, and nothing on top of anything
+    // The labels: a province's one is its capital, else its largest city (the first of equals),
+    // and nothing on top of anything
     const { chips, labels } = await shownRects(page);
-    const allowed = await page.evaluate(() => {
+    const { expected, capital } = await page.evaluate(() => {
       const w = window as any;
       const table = w.globeRegions.tileTable();
-      const best = new Map<number, { name: string; size: number }>();
-      const names: string[] = [];
+      const best = new Map<number, { name: string; size: number; capital: boolean }>();
       for (const c of w.globeGame.state.cities as { name: string; size: number; tile: number; capital: boolean }[]) {
-        if (c.capital) names.push(c.name);
         const p = Math.floor(table[c.tile] / 7);
-        if (!best.has(p) || best.get(p)!.size < c.size) best.set(p, c);
+        const b = best.get(p);
+        if (!b || (!b.capital && (c.capital || b.size < c.size))) best.set(p, c);
       }
-      return [...names, ...[...best.values()].map(c => c.name)];
+      return { expected: [...best.values()].map(c => c.name), capital: (w.globeGame.state.cities as { name: string; capital: boolean }[]).find(c => c.capital)!.name };
     });
     const ownNames = await page.evaluate(() => (window as any).globeGame.state.cities.map((c: { name: string }) => c.name));
     const own = labels.filter(x => (ownNames as string[]).includes(x.name));
-    for (const l of own) expect(allowed).toContain(l.name);
-    // One label a province at most, the capital's included
-    const provinceOf = await page.evaluate(() => {
-      const w = window as any;
-      const table = w.globeRegions.tileTable();
-      return Object.fromEntries((w.globeGame.state.cities as { name: string; tile: number }[]).map(c => [c.name, Math.floor(table[c.tile] / 7)]));
-    });
-    const perProvince = own.map(l => provinceOf[l.name]);
-    expect(new Set(perProvince).size).toBe(perProvince.length);
-    // On a desktop there is room for them; on a phone the chips may take it all, and the chips tell the cities
-    if (size.name === 'desktop') expect(own.length).toBeGreaterThan(0);
+    for (const l of own) expect(expected).toContain(l.name);
+    // On a desktop there is room for the capital's; on a phone the chips may take it all, and the chips tell the cities
+    if (size.name === 'desktop') expect(own.map(l => l.name)).toContain(capital);
     expect(overlapping([...chips, ...labels])).toEqual([]);
     await page.screenshot({ path: testInfo.outputPath('state.png') });
 
@@ -186,15 +184,18 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
       return (w.globeGame.state.cities as { name: string; tile: number }[]).filter(c => Math.floor(table[c.tile] / 7) === p).map(c => c.name);
     });
     const province = await shownRects(page);
-    for (const l of province.labels.filter(x => (ownNames as string[]).includes(x.name))) expect(inProvince).toContain(l.name);
+    const ownInProvince = province.labels.filter(x => (ownNames as string[]).includes(x.name));
+    for (const l of ownInProvince) expect(inProvince).toContain(l.name);
+    if (size.name === 'desktop') expect(ownInProvince.length).toBeGreaterThan(0);
     expect(overlapping([...province.chips, ...province.labels])).toEqual([]);
     await page.screenshot({ path: testInfo.outputPath('province.png') });
 
     // The city area below: every label as before (rule 10.6: the third level's picture)
     const inner = await freeSpot();
     expect(inner).not.toBeNull();
+    // The area's card goes in (a second tap may land on the card on a desktop)
     await page.mouse.click(inner!.x, inner!.y);
-    await page.mouse.click(inner!.x, inner!.y);
+    await page.getByRole('button', { name: 'Sukella sisään' }).click();
     await arrive(page, 3);
     await page.screenshot({ path: testInfo.outputPath('area.png') });
     expect(errors).toEqual([]);

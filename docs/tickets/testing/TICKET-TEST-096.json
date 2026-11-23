@@ -8,9 +8,9 @@
     "tooling": "Playwright, Vitest 5, globeDebug.frameMs",
     "cases": [
       {
-        "steps": "state-view.e2e puhelimen (390 × 844) ja työpöydän (1280 × 800) koossa: kolme kaupunkia neljään kotivaltion lääniin, valtiotaso",
+        "steps": "state-view.e2e puhelimen (390 × 844) ja työpöydän (1280 × 800) koossa: 3, 2, 1 ja 3 kaupunkia neljään kotivaltion lääniin, kokoja 1–5, valtiotaso",
         "expected": "Kriteeri 1: sirun teksti kertoo läänin kaupunkien määrän",
-        "result": "Neljän läänin sirut: '3 kaupunkia' molemmissa koossa",
+        "result": "Jokaisen läänin siru nimen mukaan: oikea määrä (3, 2, 1, 3) molemmissa koossa",
         "outcome": "pass"
       },
       {
@@ -21,8 +21,8 @@
       },
       {
         "steps": "Sama: lappujen ja sirujen suorakulmiot valtiotasolla, pikapaneelin kanssa ja läänitasolla",
-        "expected": "Kriteeri 2: vain pääkaupunki ja läänien suurimmat, enintään yksi lappu lääniä kohden; laput eivät leikkaa siruja eivätkä toisiaan",
-        "result": "Työpöydällä 2 omaa lappua valtiotasolla, ei leikkauksia. Puhelimella sirut vievät tilan, eikä valtiotasolla näy lappuja; läänitasolla pääkaupungin lappu. Pikapaneelin lappu saa peittää sirun, muut eivät leikkaa.",
+        "expected": "Kriteeri 2: läänin ainoa lappu on sen pääkaupunki tai suurin kaupunki; laput eivät leikkaa siruja eivätkä toisiaan",
+        "result": "Jokainen oma lappu on läänensä odotettu kaupunki. Työpöydällä pääkaupungin ja Pohjoisläänin suurimman (koko 5) laput valtiotasolla ja läänitasolla kaksi lappua. Puhelimella pääkaupungin lappu astuu puolen leveytensä vasemmalle Kotiläänin sirun tieltä ja näkyy; muut laput jäävät pois, koska sirut vievät tilan. Ei leikkauksia. Pikapaneelin lappu saa peittää sirun, muut eivät leikkaa.",
         "outcome": "pass"
       },
       {
@@ -33,14 +33,20 @@
       },
       {
         "steps": "globeDebug.frameMs valtiotasolla samassa myöhäisessä pelissä, main ja haara, 60 framea kolmesti",
-        "expected": "Pääsäie ei kasva",
-        "result": "Mediaani puhelimen koossa main 3,0–6,7 ms ja haara 3,1–8,4 ms, työpöydän koossa main 10,5–12,1 ms ja haara 11,4–12 ms. Render-kutsu sisältää SwiftShaderin työtä, ja ero on kohinan sisällä; oikea GPU mittaamatta.",
-        "outcome": "pass"
+        "expected": "Pääsäie ei kasva havaittavasti",
+        "result": "Mediaani puhelimen koossa main 3,0–6,7 ms ja haara 3,1–8,4 ms, työpöydän koossa main 10,5–12,1 ms ja haara 11,4–12 ms. Render-kutsu sisältää SwiftShaderin työtä, ja ero on kohinan sisällä; oikea GPU mittaamatta. Vaihteluvälit menevät päällekkäin, joten tästä ei voi päätellä eroa kumpaankaan suuntaan (Utu).",
+        "outcome": "not_run"
       },
       {
         "steps": "Vitest ja E2E: area-panel, city-label, city-states, conquest, province-advisors, region-card, rich-links, rivals, unlock",
         "expected": "Vihreä",
         "result": "Vitest 340/340. E2E 12/14 ensin; conquest.e2e:n kaksi testiä odottivat sirun vanhaa tekstiä 'Hallussa', ja uudella tekstillä conquest ja state-view 5/5",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: placeLabels (src/ui/cityLabels.test.ts)",
+        "expected": "Sijoittelu: kaupungin kohdalle, ylös, alas, sivuun tai pois; järjestys; avoimen paneelin lappu; näkymätön kaupunki",
+        "result": "5/5",
         "outcome": "pass"
       },
       {
@@ -52,8 +58,8 @@
       {
         "steps": "Utun katselmointi",
         "expected": "Hyväksytty",
-        "result": "Odottaa",
-        "outcome": "not_run"
+        "result": "Hyväksytty muutoksin (2026-11-23). Korjattu: sirun leveyttä ei lueta joka framella piilotetuista siruista (puolen sekunnin väli ja arvio), lappujen leveydet tekstin mukaan ja luku kirjoitusten jälkeen, sijoittelu puhtaaksi funktioksi (placeLabels, Vitest), quickCityAt sulkee kaupunkikortin, neuvonantajan, ruutukortin ja Tietokirjan ja kääntää näkymän ruudun ulkopuolella olevaan kaupunkiin, kaupungit lääneittäin kerran framessa, ja testi tarkistaa sirut nimen mukaan, eri kokoiset kaupungit, pääkaupungin lapun työpöydällä ja läänitason lapun. Löydös 1 (pääkaupungin lappu puuttui puhelimen valtiotasolta): lappu voi nyt astua myös puolen leveytensä sivuun, ja siemenellä 42 se näkyy. Jäi: siirretty lappu ei näytä kaupunkiaan eikä piilotettu lappu ole ruudunlukijan saatavilla (kaupungit löytyvät luettelosta ja läänin kortista), ja conquest.e2e ei enää tarkista kaupungitonta hallussa olevaa lääniä (Hallussa-teksti säilyy koodissa).",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
@@ -68,7 +74,7 @@
         "checked": false
       },
       {
-        "item": "Puhelimen valtiotasolla laput jäävät pois, kun sirut vievät tilan",
+        "item": "Puhelimen valtiotasolla vain pääkaupungin lappu mahtuu sirujen väliin; muiden läänien kaupungit kertoo siru",
         "checked": false
       },
       {

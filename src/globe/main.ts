@@ -717,11 +717,20 @@ const cityLabels = createCityLabels(hud_root, id => {
   openCityCard(id);
 });
 
-/** A city's quick panel at the level in view, the region's card closed (STORY-114). */
+/**
+ * A city's quick panel at the level in view, the region's card closed (STORY-114), and what else
+ * would hide it as a rich link closes it. A city out of view is turned to at the same distance.
+ */
 function quickCityAt(tile: number) {
-  const id = play?.cities.findIndex(c => c.tile === tile) ?? -1;
+  if (!play) return;
+  const id = play.cities.findIndex(c => c.tile === tile);
   if (id < 0) return;
   regionCard = null;
+  play.advisorOpen = false;
+  play.openCity = null;
+  play.tileOpen = null;
+  closeCodex();
+  if (!toScreen(tileCenter(tile))) rig.flyTo(tileCenter(tile), rig.dist, reduceMotion() ? 0 : 0.5);
   quickCity = id;
 }
 
@@ -2221,8 +2230,10 @@ function updateLevels() {
   const list: Chip[] = [];
   // A province held tells its cities (STORY-114): its chip stands for them at the state level.
   // A city holds its province (STORY-016), so the count says it, and the chip stays narrow on a phone.
+  const perProvince = new Map<number, number>();
+  if (viewLevel === 1) for (const c of play.cities) perProvince.set(provinceOfTile(c.tile), (perProvince.get(provinceOfTile(c.tile)) ?? 0) + 1);
   const held = (province: number) => {
-    const n = play!.cities.filter(c => provinceOfTile(c.tile) === province).length;
+    const n = perProvince.get(province) ?? 0;
     return n ? `${n} ${n === 1 ? 'kaupunki' : 'kaupunkia'}` : 'Hallussa';
   };
   if (viewLevel === 2 || viewLevel === 1) {
