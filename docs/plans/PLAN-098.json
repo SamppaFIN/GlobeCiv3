@@ -1,0 +1,65 @@
+{
+  "id": "PLAN-098",
+  "story": "STORY-117",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Sami 2026-11-23: suorituskyky ensin omana storynaan (STORY-117), kuumat kohdat ja päivä frameille. Utu katselmoi luonnoksen Anun sijasta (Fable vaati krediittejä): hyväksy muutoksin. Mittaus: Nodessa (2 vCPU, siemen 42, päivät 300–400) simuloitu päivä maksaa mediaanina 20 ms (Kasvattaja-tie), 71 ms (Rakentaja/Kenraali) ja 7 ms (Retkeilijä), suurin 45–130 ms, ja selain laskee päivän yhdessä framessa. Profiili: 70 % päivästä on tiedustelijoiden lähimmän kartoittamattoman ruudun hakua (units.plan → nearestTile), josta naapurifunktio vie suurimman osan. 1) Naapurit laiskana tyypitettynä vierekkäisyytenä (Int32Array 6 × ruutu ja määrä Uint8Arrayssa, noin 26 Mt, vakio), neighbors() palauttaa yhä tuoreen taulukon samassa järjestyksessä, ja kuumille poluille forEachNeighbor; Mapin välimuisti hylättiin, koska se kasvaa rajatta ja jakaisi muutettavia taulukoita. 2) Tiedustelijan tyhjä haku muistetaan avaimella, jossa ovat kaikki haun tekijät (kartoituksen versio, purjehdus, kohde, avoimet valtiot, kielletyt alueet ja näkyvyys); testi vertaa tulosta muistin kanssa ja ilman. 3) simulateDay generaattoriksi, joka antaa vuoron vaiheiden välillä ja yksikkö kerrallaan units.day:ssa. Node ajaa sen loppuun, joten tulos on rakenteellisesti sama; selain syöttää sitä noin 4 ms:n budjetilla. Kesken päivän: prepareDay, kortit ja scanNatives ohitetaan, komennot jonotetaan päivän loppuun samalla päiväleimalla, ja tallennus (myös visibilitychange) laskee päivän ensin loppuun. 4) Mittaus updatePlayn JS-ajasta (performance.now) headless Chromiumilla siemenellä 42, päivät 300–400, p95 ja suurin; merkitään arvioksi, ja oikea laite Samin hyväksynnässä.",
+  "alternatives_considered": [
+    {
+      "name": "Simulaatio Web Workeriin",
+      "pros": "Pääsäie vapautuu kokonaan päivän laskennasta",
+      "cons": "Näkymä lukee pelin tilaa joka framessa; tila pitäisi kopioida tai synkronoida workerista, ja kaikki komennot kulkisivat viesteinä. Iso muutos, joka koskee lähes jokaista näkymän tiedostoa",
+      "rejected_because": "Pelin tila on moduulin singletonina, ja näkymä lukee sitä sadoissa kohdissa, joten worker koskisi koko näkymää. Moninpelin palvelin ajaa simulaation Nodessa (STORY-095), eikä tarvitse workeria. Generaattori sopii myöhemmin myös workerille."
+    },
+    {
+      "name": "Alempien tasojen tiivistys (kaupungit ja yksiköt karkeammin, kun pelaaja on ylempänä)",
+      "pros": "Kustannus laskee tasojen määrän mukana",
+      "cons": "Muuttaa pelin sääntöjä ja tuloksia sen mukaan, mitä pelaaja katsoo; kultaiset tilat ja autopilotti eivät enää vastaisi selainta",
+      "rejected_because": "Sami valitsi tiivistyksen STORY-014:ään; tämä story hoitaa nykimisen ilman sääntömuutosta."
+    },
+    {
+      "name": "Map-välimuisti naapureille",
+      "pros": "Pieni muutos, puolitti päivän kokeessa",
+      "cons": "Kasvaa rajatta (100+ Mt pitkässä pelissä puhelimella), ja välimuistin jaettu taulukko turmeltuisi, kun kutsuja lajittelee sen",
+      "rejected_because": "Tyypitetty vierekkäisyys on vakiokokoinen ja palauttaa tuoreen taulukon"
+    }
+  ],
+  "files_to_change": [
+    "src/globe/hexTiles.ts (naapurit tyypitettynä, forEachNeighbor)",
+    "src/game/pathfinding.ts ja src/game/units.ts (tyhjän haun muisti)",
+    "src/sim/game.ts (simulateDay generaattoriksi)",
+    "src/sim/run.ts",
+    "src/globe/main.ts (päivä frameille, komentojono, tallennus päivän rajalla)",
+    "tests/sim/*.test.ts",
+    "tests/e2e/frame-budget.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Naapurit tyypitettynä ja forEachNeighbor kuumille poluille",
+      "verify": "Kultaiset tilat ja autopilotti ennallaan; hexTiles-testit; päivän mediaani ja p95 Nodessa ennen ja jälkeen"
+    },
+    {
+      "step": 2,
+      "action": "Tiedustelijan tyhjän haun muisti kaikilla tekijöillä",
+      "verify": "Testi: sama polku muistin kanssa ja ilman koko pelin ajan; kultaiset tilat"
+    },
+    {
+      "step": 3,
+      "action": "simulateDay generaattoriksi, Node ajaa loppuun",
+      "verify": "run.test.ts ja kultaiset tilat ennallaan"
+    },
+    {
+      "step": 4,
+      "action": "Selain syöttää päivää budjetilla, komennot ja tallennus päivän rajalle",
+      "verify": "E2E: kultainen ajo selaimessa ennallaan; komento kesken päivän; tallennus kesken päivän"
+    },
+    {
+      "step": 5,
+      "action": "Mittaus",
+      "verify": "updatePlayn JS-aika p95 ja suurin myöhäisessä pelissä (headless, arvio); Sami: Intel UHD ja S23 Ultra"
+    }
+  ],
+  "status": "approved"
+}

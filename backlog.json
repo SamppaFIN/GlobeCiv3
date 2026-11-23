@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-23T12:37:58Z",
+    "generated_at": "2026-11-23T13:12:51Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
     "git_commit": "7ae3c9c",
     "git_branch": "main",
@@ -224,6 +224,7 @@
         "STORY-115",
         "STORY-087",
         "STORY-017",
+        "STORY-117",
         "STORY-014",
         "STORY-096",
         "STORY-098",
@@ -601,16 +602,17 @@
     {
       "id": "STORY-014",
       "epic": "EPIC-009",
-      "title": "Alempi taso jatkaa neuvonantajilla",
+      "title": "Alempi taso tiivistettynä, ja ohjat käyntikerraksi",
       "type": "story",
       "narrative": "Pelaajana haluan alempien tasojen elävän itsestään, jotta voin keskittyä ylempään tasoon.",
       "effort": "L",
       "depends_on": [
-        "STORY-087"
+        "STORY-087",
+        "STORY-117"
       ],
       "acceptance_criteria": [
-        "Nousun jälkeen alempi taso etenee tiivistettynä neuvonantajien ohjaamana. Pelaaja voi palata alemmalle tasolle ja ottaa ohjat, ja neuvonantaja jatkaa, kun pelaaja lähtee.",
-        "Pääsäikeen JS-aika on enintään 8 ms framessa myöhäisessä pelissä (mittauslaite, selain ja menetelmä kirjataan), ja väestö ja omistus säilyvät tiivistyksessä (invariantti)."
+        "Kun taso on noussut, alempi taso etenee tiivistettynä neuvonantajien ohjaamana. Tiivistys riippuu pelin tilasta (avoin taso ja ohjat) eikä kamerasta, joten sama siemen ja samat komennot tuottavat saman pelin (sääntö 7). Väestö ja omistus säilyvät tiivistyksessä (invariantti).",
+        "Pelaaja voi palata alemmalle tasolle ja ottaa ohjat (komento). Kun hän nousee tason yläpuolelle, sama neuvonantaja jatkaa (komento). Ohjat tallentuvat, ja vanha tallennus latautuu."
       ],
       "status": "todo",
       "progress": 0,
@@ -2986,6 +2988,28 @@
       "progress": 0,
       "linked": {
         "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-117",
+      "epic": "EPIC-009",
+      "title": "Myöhäinen peli ei nyi päivänvaihteessa",
+      "type": "story",
+      "narrative": "Pelaajana haluan myöhäisen pelin pyörivän tasaisesti, jotta kartta ei nyi joka päivä.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-095"
+      ],
+      "acceptance_criteria": [
+        "Myöhäisessä pelissä (siemen 42, neuvonantajina Rakentaja, Vartija, Vartija ja Kenraali, päivät 300–400) pääsäikeen JS-aika framessa on p95:nä ja suurimmillaan enintään 8 ms. Mittauslaite, selain ja menetelmä kirjataan, ja Intel UHD ja S23 Ultra mitataan Samin hyväksynnässä.",
+        "Päivän laskenta jaetaan frameille, ja jaettu päivä tuottaa saman tilan kuin yhdessä framessa laskettu (kultaiset tilat ennallaan). Kesken päivän annettu komento ajetaan päivän jälkeen samalla päiväleimalla, ja tallennus kesken päivän laskee päivän ensin loppuun."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": "PLAN-098",
         "implementation": null,
         "testing": null
       }
