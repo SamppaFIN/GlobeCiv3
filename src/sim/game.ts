@@ -485,10 +485,12 @@ export function cityDays() {
     sendSettler(free, play.pendingSite);
     play.pendingSite = null;
     view.notice([unitRef(free.id, free.name), ' lähti kaupunkipaikalle']);
-  } else if (play.pendingSite !== null && !free && play.cities[0] && !play.cities.some(c => c.build === 'settler')) {
+  } else if (play.pendingSite !== null && !free) {
     // The waiting site keeps a settler coming (STORY-060): a soldier against bandits, an
-    // advisor or the player may have changed the build, and the site would wait for ever
-    play.cities[0].build = 'settler';
+    // advisor or the player may have changed the build, and the site would wait for ever.
+    // A city that cannot give a citizen builds it for ever, too (STORY-113)
+    const builder = settlerBuilder(play.pendingSite);
+    if (builder && !play.cities.some(c => c.build === 'settler' && (c === builder || canGiveCitizen(c)))) builder.build = 'settler';
   }
   // The best known sites come daily too, not only with freshly mapped land
   noteSiteOffer([]);
@@ -622,11 +624,28 @@ function settleAt(tile: number): boolean {
     view.notice([unitRef(settler.id, settler.name), ' lähti perustamaan kaupunkia']);
     return true;
   }
-  if (!play.cities.length) return false;
-  play.cities[0].build = 'settler';
+  const builder = settlerBuilder(tile);
+  if (!builder) return false;
+  builder.build = 'settler';
   play.pendingSite = tile;
-  view.notice([cityRef(play.cities[0].tile, play.cities[0].name), ' rakentaa uudisasukkaan kaupunkipaikalle']);
+  view.notice([cityRef(builder.tile, builder.name), ' rakentaa uudisasukkaan kaupunkipaikalle']);
   return true;
+}
+
+/** A settler takes a citizen (Freeciv civ1 pop_cost 1), so a city of size 1 waits to grow before it is built. */
+const canGiveCitizen = (c: City) => c.size > BUILDS.settler.pop;
+
+/**
+ * The city that builds the settler of a waiting site (STORY-113, own rule): the capital, as
+ * before, when it can give a citizen; else the city nearest the site that can; else the capital,
+ * to grow first. Under a production focus the capital may stay at size 1 for good.
+ */
+function settlerBuilder(site: number): City | null {
+  const cities = play!.cities;
+  if (!cities.length || canGiveCitizen(cities[0])) return cities[0] ?? null;
+  const at = tileCenter(site);
+  const able = cities.filter(canGiveCitizen);
+  return able.length ? able.reduce((a, b) => (tileCenter(b.tile).angleTo(at) < tileCenter(a.tile).angleTo(at) ? b : a)) : cities[0];
 }
 
 /** The selected settler sets out for its marked site (the found command). */
