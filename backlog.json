@@ -109,7 +109,8 @@
       "status": "todo",
       "stories": [
         "STORY-018",
-        "STORY-100"
+        "STORY-100",
+        "STORY-116"
       ],
       "progress": 0
     },
@@ -220,6 +221,7 @@
         "STORY-112",
         "STORY-113",
         "STORY-114",
+        "STORY-115",
         "STORY-087",
         "STORY-017",
         "STORY-014",
@@ -2924,23 +2926,66 @@
     {
       "id": "STORY-114",
       "epic": "EPIC-009",
-      "title": "Läänin- ja valtiotasolta näkyvät ja ohjataan kaikki yksiköt ja kaupungit",
+      "title": "Valtiotason näkymä selväksi: kaupungit läänin sirussa ja kortissa",
       "type": "story",
-      "narrative": "Pelaajana haluan nähdä valtiotasolla kaikki yksikköni ja kaupunkini ja rakentaa ja ohjata niitä sieltä, jotta minun ei tarvitse sukeltaa kaupunkialueelle jokaista tekoa varten.",
-      "effort": "L",
+      "narrative": "Pelaajana haluan nähdä valtiotasolla, missä läänissä kaupunkini ovat, ilman päällekkäisiä lappuja, jotta valtion tilanne on luettavissa yhdellä silmäyksellä.",
+      "effort": "M",
       "depends_on": [
         "STORY-112"
       ],
       "acceptance_criteria": [
-        "Läänin- ja valtiotasolla jokainen pelaajan yksikkö näkyy kartalla merkkinä, joka on vähintään 12 px riippumatta tasosta (päällekkäiset yhdistyvät merkiksi, jossa on lukumäärä), ja tason paneelissa on yksiköiden luettelo lääneittäin. Merkin tai luettelorivin napautus valitsee yksikön lentämättä kaupunkialueelle.",
-        "Valtiotasolla läänin siru kertoo kaupunkiensa määrän, ja läänin kortti luettelee kaikki sen kaupungit kokoineen linkkeinä. Kartalla näkyvät pääkaupungin ja jokaisen läänin suurimman kaupungin laput, eivätkä laput ja sirut mene päällekkäin.",
-        "Kaupunkikortti (rakennus, osto ja painotus) avautuu ja toimii läänin- ja valtiotasolla lentämättä, ja valitulle yksikölle annetaan moodi, tehtävä, lippu ja kaupunkipaikka kartan napautuksella näillä tasoilla. Ohjaimet näkyvät valinnasta myös neuvonantajan hoitaessa tasoa, ja neuvonantaja saa muuttaa teon seuraavana päivänä. Kaikki teot ovat komentoja (sääntö 7), ja E2E-testi tekee ne valtiotasolla.",
-        "Pääsäikeen JS-aika pysyy myöhäisessä pelissä enintään 8 ms framessa valtiotasolla (mittauslaite, selain ja menetelmä kirjataan)."
+        "Valtiotasolla läänin siru kertoo kaupunkiensa määrän, ja läänin kortti luettelee kaikki sen kaupungit kokoineen. Kaupungin rivin napautus valitsee kaupungin ja avaa sen pikapaneelin lentämättä.",
+        "Valtiotasolla kartalla näkyvät pääkaupungin ja jokaisen läänin suurimman kaupungin laput, ja läänitasolla läänin kaupunkien laput. Laput eivät mene sirujen eivätkä toistensa päälle puhelimen (390 × 844) eikä työpöydän koossa, mikä tarkistetaan E2E-testissä ja kuvakaappauksista."
       ],
       "status": "todo",
       "progress": 0,
       "linked": {
         "plan": "PLAN-096",
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-115",
+      "epic": "EPIC-009",
+      "title": "Yksiköt näkyvät läänin- ja valtiotasolla merkkeinä ja luettelona",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä kaikki yksikköni myös läänin- ja valtiotasolla, jotta tiedän, missä ne ovat ja mitä ne tekevät.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-114"
+      ],
+      "acceptance_criteria": [
+        "Läänin- ja valtiotasolla jokainen pelaajan yksikkö näkyy kartalla merkkinä, joka on vähintään 12 px tasosta riippumatta. Merkit, jotka osuisivat toistensa osuma-alueelle, yhdistyvät merkiksi, jossa on lukumäärä, eivätkä merkit jää sirujen tai lappujen alle.",
+        "Yksiköiden luettelo (Luettelo-kortin Yksiköt) avautuu läänin- ja valtiotasolla myös neuvonantajan hoitaessa tasoa, ja rivit on ryhmitelty lääneittäin. Rivin tai merkin napautus valitsee yksikön ja kääntää kameran sen kohdalle lentämättä alas.",
+        "Pääsäikeen JS-aika pysyy myöhäisessä pelissä valtiotasolla enintään 8 ms framessa (mittauslaite, selain ja menetelmä kirjataan)."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-116",
+      "epic": "EPIC-005",
+      "title": "Kaupunkien ja yksiköiden ohjaus ylemmältä tasolta (tasojen hionta)",
+      "type": "story",
+      "narrative": "Pelaajana haluan rakentaa kaupungeissa ja ohjata yksiköitä läänin- ja valtiotasolta, jotta minun ei tarvitse sukeltaa kaupunkialueelle jokaista tekoa varten.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-115"
+      ],
+      "acceptance_criteria": [
+        "Päätetään tasojen hiontavaiheessa (Sami 2026-11-23), kuuluuko kaupunkikortti (rakennus, osto ja painotus) ja yksikön ohjaus (moodi, tehtävä, lippu ja paikka) ylemmille tasoille, ja miten neuvonantajan kumoama teko näytetään. Utun katselmoinnin löydökset 1, 2, 5, 6, 8 ja 9 (PLAN-096-luonnos) ovat lähtökohta.",
+        "Kaikki teot ovat komentoja (sääntö 7), ja E2E-testi tekee ne valtiotasolla."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
         "implementation": null,
         "testing": null
       }
