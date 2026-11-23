@@ -21,10 +21,13 @@ import { tilesInRings } from '../game/pathfinding';
 import { FAIR_SITE } from '../game/sites';
 import { chooseStartSite } from '../game/start';
 import type { Rich } from '../game/rich';
-import { quietEvents } from './events';
+import { quietEvents, type MomentKind, type SimEvents } from './events';
 import { advisorsAnswer, bind, CITY_LEVEL_RINGS, dispatch, opponentsNow, prepareDay, raidPlan, reveal, riseCheck, setGame, simulateDay, startGame, stateOf, terrainOf, world } from './game';
 import { pending, type GameState } from './state';
 import { createWorld } from './world';
+
+/** What the game told on a day, as the browser would show it: a notice, a moment and its kind, a level risen, a card (STORY-085). */
+export interface Happening { day: number; kind: keyof SimEvents; moment?: MomentKind }
 
 /** The advisor of every level, chosen at the start: the city level's first, as the welcome asks. */
 export interface Advisors { town: TownAdvisor; city: CityAdvisor; province: ProvinceAdvisor; state: StateAdvisor; planet: PlanetAdvisor }
@@ -35,6 +38,8 @@ export class Run {
   readonly clock = new GameClock();
   /** The notices told, in order. */
   readonly notices: (string | Rich)[] = [];
+  /** Everything the game told, by day, for the autopilot's measures (STORY-085). */
+  readonly happened: Happening[] = [];
   readonly state: GameState;
   readonly seed: number;
   /** Why a run stopped short of its day, if it did. */
@@ -52,7 +57,12 @@ export class Run {
     this.log = log;
     Run.current = this;
     const w = createWorld();
-    const events = { ...quietEvents(this.notices), rise: (opened: number) => { this.risen = opened; } };
+    const told = { ...quietEvents(this.notices), rise: (opened: number) => { this.risen = opened; } } as SimEvents;
+    // Each event kept with its day as it passes on
+    const events = Object.fromEntries((Object.keys(told) as (keyof SimEvents)[]).map(kind => [kind, (...args: unknown[]) => {
+      this.happened.push(kind === 'moment' ? { day: this.clock.day, kind, moment: args[0] as MomentKind } : { day: this.clock.day, kind });
+      return (told[kind] as (...a: unknown[]) => void)(...args);
+    }])) as unknown as SimEvents;
     bind({ ...w, clock: this.clock, events, classic: false });
     // A varied site with one special resource (STORY-070), mapped with its neighbours as the
     // flight comes down, and the city's rings as it lands (STORY-017)
