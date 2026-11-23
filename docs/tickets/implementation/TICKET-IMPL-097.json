@@ -41,5 +41,5 @@
   },
   "commit": "7ae3c9c",
   "progress": 100,
-  "notes": "Omat säännöt: 44 px:n kosketusalue (tokens.css --touch-target), 14 px:n piste, siirtokehät 24 ja 40 px sekä yhdistetyn merkin vuorottelu. Luettelonappi näkyy kaupunkialueella edelleen vain omalla ohjauksella (STORY-096). Kaupunkirivi avaa ylemmillä tasoilla pikapaneelin kuten läänin kortin linkki (STORY-114), koska kaupunkikortti kuuluu kaupunkialueelle."
+  "notes": "Omat säännöt: 44 px:n kosketusalue (tokens.css --touch-target), 14 px:n piste, siirtokehät 24 ja 40 px sekä yhdistetyn merkin vuorottelu. Luettelonappi näkyy kaupunkialueella edelleen vain omalla ohjauksella (STORY-096). Kaupunkirivi avaa ylemmillä tasoilla pikapaneelin kuten läänin kortin linkki (STORY-114), koska kaupunkikortti kuuluu kaupunkialueelle. Utun katselmoinnin korjaukset (2026-11-23): nextUnit kiertää yksiköt järjestyksessä, placeGroups saa sallitun alueen (paneelien väli ja näkymän leveys), ja merkki, jolle ei löydy vapaata kohtaa, liittyy lähimpään merkkiin (oma). Luettelo sulkeutuu planeettatasolla, eikä nappi näy siellä."
 }

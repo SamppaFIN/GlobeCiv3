@@ -43,6 +43,7 @@ const view = (page: Page) => page.evaluate(() => {
     return at !== null && at[1] > top && at[1] < bottom;
   });
   return {
+    band: { top, bottom, width: innerWidth },
     markers: shown('.unit-marker').map(e => ({
       target: rect(e), dot: rect(e.querySelector('.unit-marker-dot')!), label: e.getAttribute('aria-label') ?? '',
       count: Number(e.querySelector('.unit-marker-dot')!.textContent || 1), over: e.classList.contains('unit-marker-over'),
@@ -62,6 +63,13 @@ async function checkMarkers(page: Page) {
   for (const m of v.markers) {
     expect(m.dot.right - m.dot.left).toBeGreaterThanOrEqual(12);
     expect(m.dot.bottom - m.dot.top).toBeGreaterThanOrEqual(12);
+  }
+  // Between the panels and inside the view, where a tap reaches them (Utu's review)
+  for (const m of v.markers) {
+    expect(m.dot.left).toBeGreaterThanOrEqual(0);
+    expect(m.dot.right).toBeLessThanOrEqual(v.band.width);
+    expect(m.dot.top).toBeGreaterThanOrEqual(v.band.top);
+    expect(m.dot.bottom).toBeLessThanOrEqual(v.band.bottom);
   }
   const placed = v.markers.filter(m => !m.over);
   for (const m of placed) for (const r of [...v.chips, ...v.labels]) expect(meet(m.dot, r)).toBe(false);
@@ -160,20 +168,26 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
     const stacked: string[] = await page.evaluate(t => (window as any).globeGame.state.units.filter((u: { tile: number }) => u.tile === t).map((u: { name: string }) => u.name), stack);
     expect(stacked.length).toBeGreaterThanOrEqual(3);
     const namesOf = (label: string) => (label.includes(': ') ? label.split(': ')[1].split('; ') : [label]);
-    const labels = await page.locator('.unit-marker-many').evaluateAll(es => es.map(e => e.getAttribute('aria-label') ?? ''));
-    const at = labels.findIndex(l => stacked.every(n => namesOf(l).includes(n)));
-    expect(at).toBeGreaterThanOrEqual(0);
-    const many = page.getByRole('button', { name: labels[at], exact: true });
-    const names = namesOf(labels[at]);
     const selectedName = () => page.evaluate(() => { const s = (window as any).globeGame.state; return s.units[s.selected].name as string; });
-    await many.click();
-    const first = await selectedName();
-    await frames(page);
-    await many.click();
-    const second = await selectedName();
-    expect(names).toContain(first);
-    expect(names).toContain(second);
-    expect(second).not.toBe(first);
+    // The marker that holds the stack, found anew for each tap: the view turns, and its group may change
+    const tapStack = async () => {
+      // Found and tapped in one go: its label may change from one frame to the next
+      const label = await page.evaluate(names => {
+        const split = (l: string) => (l.includes(': ') ? l.split(': ')[1].split('; ') : [l]);
+        const b = [...document.querySelectorAll<HTMLButtonElement>('.unit-marker-many:not([hidden])')].find(e => names.every(n => split(e.getAttribute('aria-label') ?? '').includes(n)));
+        b?.click();
+        return b?.getAttribute('aria-label') ?? null;
+      }, stacked);
+      expect(label).not.toBeNull();
+      const name = await selectedName();
+      expect(namesOf(label!)).toContain(name);
+      await frames(page);
+      return name;
+    };
+    // Twice as many taps as the stack holds reach each of its units (Utu's review: the turn went between two)
+    const turns: string[] = [];
+    for (let tap = 0; tap < 2 * stacked.length; tap++) turns.push(await tapStack());
+    for (const n of stacked) expect(turns).toContain(n);
     await frames(page);
     await checkMarkers(page);
     await page.screenshot({ path: testInfo.outputPath('state-picked.png') });
@@ -190,6 +204,19 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
     expect(heads.reduce((n, h) => n + Number(h.match(/· (\d+) yksikkö/)![1]), 0)).toBe(total);
     expect(new Set(heads.map(h => h.split(' · ')[0])).size).toBe(heads.length);
     await page.screenshot({ path: testInfo.outputPath('list.png') });
+    // A city row opens the city's quick panel where the view is
+    await list.locator('label', { hasText: /^Kaupungit/ }).click();
+    await expect(list.locator('.list-group')).toHaveCount(0);
+    const cityRow = list.locator('.list-rows button').first();
+    const cityName = (await cityRow.locator('.city-build-name').textContent())!;
+    await cityRow.click();
+    await expect(list).toBeHidden();
+    await expect(page.getByRole('group', { name: `Kaupunki ${cityName}: pikatoiminnot` })).toBeVisible();
+    expect(await page.evaluate(() => (window as any).globeLevels.state.level)).toBe(1);
+    await page.getByRole('group', { name: `Kaupunki ${cityName}: pikatoiminnot` }).getByRole('button', { name: 'Sulje' }).click();
+    await page.getByRole('button', { name: 'Luettelo: kaupungit, yksiköt, talous ja diplomatia' }).click();
+    await list.locator('label', { hasText: /^Yksiköt/ }).click();
+    await expect(list.locator('.list-group').first()).toBeVisible();
     const row = list.locator('.list-group').nth(1).locator('xpath=following-sibling::button[1]');
     const rowName = (await row.locator('.city-build-name').textContent())!;
     await row.click();

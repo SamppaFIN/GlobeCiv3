@@ -4,14 +4,14 @@
  * Up there a unit's figure is smaller than a pixel or two, so each unit gets a marker of a
  * fixed size on the screen. Markers whose touch targets would meet merge into one that tells
  * how many units it holds. A marker does not stand under a chip or a city label: it moves a
- * little aside, and only when nothing near is free does it stand over them.
+ * little aside, and when nothing near is free it joins the nearest marker.
  */
 import { overlaps, type ScreenRect } from './levelUi';
 
 export interface UnitMark {
   /** The unit's index in the player's units. */
   index: number;
-  /** For the screen reader, e.g. "Tiedustelija 1, tutkii". */
+  /** For the screen reader: the unit's name, e.g. "Tiedustelija 1" (its doings are in the list). */
   label: string;
   /** Screen position in CSS pixels, or null when not in view. */
   x: number | null;
@@ -64,26 +64,56 @@ const seen = (g: MarkerGroup, x: number, y: number): ScreenRect => {
   return { x, y, w: w + 4, h: w + 4 };
 };
 
-/**
- * Where each group stands: on its units, else the nearest free shift, clear of `avoid` (the chips
- * and the labels) by what shows and of the groups placed before it by their touch targets.
- * `over` marks a group that found no free place and stands over the others.
- */
-export function placeGroups(groups: readonly MarkerGroup[], avoid: readonly ScreenRect[]): { x: number; y: number; over: boolean }[] {
-  const targets: ScreenRect[] = [];
-  return groups.map(g => {
-    const free = SHIFTS.find(([dx, dy]) => {
-      const x = g.x + dx, y = g.y + dy;
-      const target = { x, y, w: MARKER_TARGET, h: MARKER_TARGET };
-      return !avoid.some(r => overlaps(r, seen(g, x, y))) && !targets.some(r => overlaps(r, target));
-    });
-    const [dx, dy] = free ?? [0, 0];
-    targets.push({ x: g.x + dx, y: g.y + dy, w: MARKER_TARGET, h: MARKER_TARGET });
-    return { x: g.x + dx, y: g.y + dy, over: free === undefined };
-  });
+/** A group where it stands; `over` when it found no free place and stands over the chips and labels. */
+export interface PlacedGroup extends MarkerGroup {
+  over: boolean;
 }
 
-export function createUnitMarkers(root: HTMLElement, onTap: (units: number[]) => void): { update(marks: UnitMark[] | null, avoid: readonly ScreenRect[]): void } {
+/** The part of the screen a marker may stand in: between the panels, inside the view. */
+export interface MarkerArea {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * Where each group stands: on its units, else the nearest free shift inside `area`, clear of
+ * `avoid` (the chips and the labels) by what shows and of the groups placed before it by their
+ * touch targets. A group that finds no free place joins the nearest group placed (own, Utu's
+ * review: a marker over a chip took its taps), and only the first stands over the rest.
+ */
+export function placeGroups(groups: readonly MarkerGroup[], avoid: readonly ScreenRect[], area: MarkerArea): PlacedGroup[] {
+  const placed: PlacedGroup[] = [];
+  const inside = (r: ScreenRect) => r.x - r.w / 2 >= area.left && r.x + r.w / 2 <= area.right && r.y - r.h / 2 >= area.top && r.y + r.h / 2 <= area.bottom;
+  for (const g of groups) {
+    const free = SHIFTS.find(([dx, dy]) => {
+      const x = g.x + dx, y = g.y + dy;
+      const shown = seen(g, x, y);
+      const target = { x, y, w: MARKER_TARGET, h: MARKER_TARGET };
+      return inside(shown) && !avoid.some(r => overlaps(r, shown)) && !placed.some(p => overlaps({ x: p.x, y: p.y, w: MARKER_TARGET, h: MARKER_TARGET }, target));
+    });
+    if (free) {
+      placed.push({ ...g, units: [...g.units], x: g.x + free[0], y: g.y + free[1], over: false });
+      continue;
+    }
+    const near = placed.reduce<PlacedGroup | null>((a, p) => (!a || Math.hypot(p.x - g.x, p.y - g.y) < Math.hypot(a.x - g.x, a.y - g.y) ? p : a), null);
+    if (near) {
+      near.units.push(...g.units);
+      near.selected ||= g.selected;
+    } else placed.push({ ...g, units: [...g.units], over: true });
+  }
+  return placed;
+}
+
+/** The unit a tap on a group selects: the one after the selected in the units' order, else the first (own). */
+export function nextUnit(units: readonly number[], selected: number): number {
+  const order = [...units].sort((a, b) => a - b);
+  const k = order.indexOf(selected);
+  return order[k < 0 ? 0 : (k + 1) % order.length];
+}
+
+export function createUnitMarkers(root: HTMLElement, onTap: (units: number[]) => void): { update(marks: UnitMark[] | null, avoid: readonly ScreenRect[], area: MarkerArea): void } {
   const layer = document.createElement('div');
   layer.className = 'unit-markers';
   root.appendChild(layer);
@@ -95,11 +125,10 @@ export function createUnitMarkers(root: HTMLElement, onTap: (units: number[]) =>
   const members = new Map<HTMLButtonElement, number[]>();
   return {
     /** `marks`: the player's units, or null where the level draws them itself (the city area). */
-    update(marks, avoid) {
-      const groups = marks ? groupMarks(marks) : [];
-      const places = placeGroups(groups, avoid);
+    update(marks, avoid, area) {
+      const groups = marks ? placeGroups(groupMarks(marks), avoid, area) : [];
       const used = new Set<HTMLButtonElement>();
-      groups.forEach((g, i) => {
+      groups.forEach(g => {
         const lead = Math.min(...g.units);
         let b = byLead.get(lead);
         if (!b) {
@@ -126,8 +155,8 @@ export function createUnitMarkers(root: HTMLElement, onTap: (units: number[]) =>
           b.querySelector('.unit-marker-dot')!.textContent = g.units.length > 1 ? String(g.units.length) : '';
           b.classList.toggle('unit-marker-many', g.units.length > 1);
         }
-        b.classList.toggle('unit-marker-over', places[i].over);
-        b.style.transform = `translate(${places[i].x.toFixed(1)}px, ${places[i].y.toFixed(1)}px) translate(-50%, -50%)`;
+        b.classList.toggle('unit-marker-over', g.over);
+        b.style.transform = `translate(${g.x.toFixed(1)}px, ${g.y.toFixed(1)}px) translate(-50%, -50%)`;
       });
       for (const b of byLead.values()) if (!used.has(b) && !b.hidden) b.hidden = true;
     },
