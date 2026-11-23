@@ -55,7 +55,7 @@ import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { createCodexCard } from '../ui/codexCard';
 import { createScienceTree, type NodeState, type TreeView } from '../ui/scienceTree';
 import { ADVANCE_LORE } from '../game/advanceLore';
-import { advanceRef, BUILD_PURPOSE, buildRef, CHAIN_PURPOSE, codexPage, personRef } from '../game/codex';
+import { advanceEffects, advanceRef, BUILD_PURPOSE, buildRef, CHAIN_PURPOSE, codexPage, personRef, resourceRef } from '../game/codex';
 import { city as cityRef, plain, unit as unitRef, type Rich, type RichLinks } from '../ui/richText';
 import { narrate } from '../game/history';
 import { along, ARRIVE_AT, MAX_CARRIERS, tripsOf, type Trip } from './carriers';
@@ -71,13 +71,14 @@ import { validateSave, type SaveData } from '../game/save';
 import { pending, type GameState } from '../sim/state';
 import type { SimEvents } from '../sim/events';
 import { DETAIL, RADIUS } from '../sim/world';
-import { advisorsAnswer, dayBegun, daysFinishedAtOnce, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
+import { advisorsAnswer, dayBegun, daysFinishedAtOnce, firstChoices, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip, type ScreenRect } from '../ui/levelUi';
 import { isRuin, ruinAt, type Yield } from '../game/discoveries';
+import { createAdvanceCard } from '../ui/advanceCard';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOODS, has as stockOf, readySettlements, settlementDone, settlementSteps, SETTLEMENT_SIZE, siteMissing, waitsForBase, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, BUILDS, buyCost, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, granary, isBuilding, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus } from '../game/cities';
@@ -1963,12 +1964,9 @@ function governmentLine(): string {
   return `Hallitus: ${GOVERNMENTS.despotism.name} · ruudun yli kahden tuotosta menee yksi hukkaan${p.research.known.has('monarchy') ? '' : '. Monarkia-tutkimus avaa paremman.'}`;
 }
 
-function researchView(): ResearchView {
+/** The studies open, with their price and what they open: the research card's and an advance card's choices. */
+function studyOptions(): { advance: Study; name: string; cost: string; opens: string; selected: boolean }[] {
   const r = play!.research;
-  const rates = scienceRates();
-  // A kind of resource the people study themselves too, a bulb a day from each city (STORY-072)
-  const perDay = rates.science + peopleStudy();
-  const days = r.target && perDay > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / perDay)) : null;
   // What an advance opens: the buildings that need it, and the advances that need it
   const opens = (a: Advance) => [
     ...(Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
@@ -1976,6 +1974,55 @@ function researchView(): ResearchView {
     ...(a === 'monarchy' ? ['hallitusmuodon Monarkia'] : []),
     ...(a === 'mapmaking' ? ['kulun rannikkovesillä'] : []),
   ];
+  return r.available(foundKinds).map(a => ({
+    advance: a, name: studyName(a), cost: `${r.costOf(a)} tiedettä`, selected: a === r.target,
+    // A kind: what its study shows, and the advances it opens (STORY-072)
+    opens: isKind(a) ? `Paljastaa lajin kartalla ja sen tuoton${opensFrom(a).length ? ` · avaa tutkimuksen ${opensFrom(a).map(n => ADVANCES[n].name).join(' ja ')}` : ''} · kansa tutkii mukana` : `Avaa: ${opens(a).join(', ')}`,
+  }));
+}
+
+// ─── An advance's card (STORY-118) ────────────────
+// The game waits on it until the next study is chosen (the sim's learned decision); the
+// advisor's choice waits ready on it, and none in the player's own hand.
+const advanceCard = createAdvanceCard(hud_root, {
+  answer: (study, first) => {
+    const a = play?.learned[0];
+    if (!a || !dispatch({ kind: 'learned', study, first }, 'player')) return;
+    advanceCard.hide();
+    if (study) discoveryCard.notice(['Tutkitaan: ', isKind(study) ? resourceRef(study, knownKind(study), true) : advanceRef(study), ...(first ? [' · ', buildRef(first.build), first.scope === 'all' ? ' ensin joka kaupungissa' : ' ensin pääkaupungissa'] : [])]);
+  },
+  links: richLinks,
+});
+
+function updateAdvanceCard() {
+  const p = play;
+  const a = p?.learned[0];
+  if (!p || !a || discoveryCard.visible || unlockCard.visible || onboarding.visible) {
+    if (advanceCard.visible) advanceCard.hide();
+    return;
+  }
+  const options = studyOptions();
+  const chosen = ownHand() ? p.research.target : suggestedStudy();
+  const advisor = p.stateAdvisor === 'none' ? null : STATE_ADVISORS[p.stateAdvisor].name;
+  advanceCard.show({
+    advance: a,
+    kicker: `Uusi keksintö · peli pysähtyi · Päivä ${clock.day}`,
+    name: ADVANCES[a].name,
+    facts: advanceEffects(a),
+    options: options.map(o => ({ study: o.advance, name: o.name, cost: o.cost, opens: o.opens })),
+    chosen,
+    suggestion: chosen === null ? null : chosen === p.research.target ? 'Tutkimus jatkuu, ellet valitse muuta.' : advisor ? `${advisor} ehdottaa tätä.` : 'Kansa ehdottaa tätä.',
+    firsts: firstChoices(a).map(b => ({ build: b, name: BUILDS[b].name, wonder: isWonder(b) })),
+    more: p.learned.length - 1,
+  });
+}
+
+function researchView(): ResearchView {
+  const r = play!.research;
+  const rates = scienceRates();
+  // A kind of resource the people study themselves too, a bulb a day from each city (STORY-072)
+  const perDay = rates.science + peopleStudy();
+  const days = r.target && perDay > 0 ? Math.max(1, Math.ceil((r.cost - r.bulbs) / perDay)) : null;
   return {
     rates: `Tiedettä +${rates.science}/pv · kultaa ${rates.gold < 0 ? '−' : '+'}${Math.abs(rates.gold)}/pv${rates.luxury ? ` · ylellisyyttä +${rates.luxury}` : ''}`,
     current: r.target
@@ -1983,11 +2030,7 @@ function researchView(): ResearchView {
       : 'Valitse, mitä tutkitaan. Tiede kertyy odottamaan.',
     progress: r.cost ? r.bulbs / r.cost : 0,
     hint: perDay > 0 ? null : 'Tiedettä ei tule: tiede syntyy kaupasta. Kauppaa tuovat tiet ruoho-, tasanko- ja aavikkomaalla (uudisasukas: Kehitä) ja meriruudut; pienempi kullan osuus siirtää kauppaa tieteeseen.',
-    options: r.available(foundKinds).map(a => ({
-      advance: a, name: studyName(a), cost: `${r.costOf(a)} tiedettä`, selected: a === r.target,
-      // A kind: what its study shows, and the advances it opens (STORY-072)
-      opens: isKind(a) ? `Paljastaa lajin kartalla ja sen tuoton${opensFrom(a).length ? ` · avaa tutkimuksen ${opensFrom(a).map(n => ADVANCES[n].name).join(' ja ')}` : ''} · kansa tutkii mukana` : `Avaa: ${opens(a).join(', ')}`,
-    })),
+    options: studyOptions(),
     tax: play!.tax,
     lux: play!.lux,
     government: governmentLine(),
@@ -2981,6 +3024,7 @@ function updatePlay(dt: number) {
   if (!dayRunning()) {
     updateTreatyCard();
     updateSiteOffer();
+    updateAdvanceCard();
   }
   updateListCard();
   updateCityCard();
@@ -3249,7 +3293,11 @@ frameStartPlanet();
   yieldOf: (id: number) => yieldOf(id, false),
   worked: () => workedByCity(),
   /** Discoveries, site offers and raids all stop the game: off together, site offers or raids back on alone. */
-  setDiscoveries: (on: boolean) => setSwitches({ discoveries: on, siteOffers: on, raids: on }),
+  // Tests of other things turn an advance's card off with the rest (STORY-118)
+  setDiscoveries: (on: boolean) => setSwitches({ discoveries: on, siteOffers: on, raids: on, advanceCards: on }),
+  setAdvanceCards: (on: boolean) => setSwitches({ advanceCards: on }),
+  /** Study this, as the research card's choice (STORY-118). */
+  study: (target: Study) => dispatch({ kind: 'study', target }, 'player'),
   setRaids: (on: boolean) => setSwitches({ raids: on }),
   /** Golden runs (STORY-095): days only by step(), one at a time; step() tells whether a day passed. */
   stepMode: (on: boolean) => { stepMode = on; lastFrame = performance.now(); },
@@ -3463,6 +3511,7 @@ frameStartPlanet();
       improvements: play?.improvements.entries() ?? [],
       raid: play?.raids.band ? { city: play.raids.band.city, bandits: play.raids.band.bandits.map(b => ({ tile: b.tile, path: b.path.length })) } : null,
       raidAlert: play?.raidAlert ?? false,
+      learned: play ? [...play.learned] : [],
       gold: play?.gold ?? null,
       commands: play?.commands.entries.map(e => ({ day: e.day, by: e.by, kind: e.cmd.kind })) ?? [],
       research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, townAdvisor: play?.townAdvisor ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: (play && levelGoal(play.progress.openLevel)?.text) ?? null,

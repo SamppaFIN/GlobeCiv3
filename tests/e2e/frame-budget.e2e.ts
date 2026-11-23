@@ -28,7 +28,7 @@ async function start(page: Page) {
   }, BUILD);
 }
 
-/** Step to a day, every card answered by its first choice (the advisors answer theirs). */
+/** Step to a day, every card answered by its first choice (the advisors answer theirs); an advance's card by Jatka, its advisor's study ready (STORY-118). */
 async function stepTo(page: Page, until: number) {
   await page.evaluate(until => {
     const w = window as any;
@@ -36,7 +36,8 @@ async function stepTo(page: Page, until: number) {
     let stuck = 0;
     while (w.globeGame.state.day < until) {
       if (w.globeDebug.step()) { stuck = 0; continue; }
-      const b = dialogs().flatMap(d => [...d.querySelectorAll<HTMLButtonElement>('button')]).find(x => x.offsetParent && !/Sulje|Ohjaan itse/.test(x.textContent ?? ''));
+      const buttons = dialogs().flatMap(d => [...d.querySelectorAll<HTMLButtonElement>('button')]).filter(x => x.offsetParent && !x.disabled);
+      const b = buttons.find(x => x.closest('.advance-card') && x.textContent === 'Jatka') ?? buttons.find(x => !x.closest('.advance-card') && !/Sulje|Ohjaan itse/.test(x.textContent ?? ''));
       if (!b || ++stuck > 20) throw new Error(`stuck on day ${w.globeGame.state.day}`);
       b.click();
     }

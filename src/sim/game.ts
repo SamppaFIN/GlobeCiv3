@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { groundHeight } from '../game/relief';
 import { bestTile, placeAll, spots, type Ground } from '../game/placement';
-import { execute, type Actor, type Command, type CommandWorld, type PactAct, type RaidChoice } from '../game/commands';
+import { execute, type Actor, type Command, type CommandWorld, type FirstScope, type PactAct, type RaidChoice } from '../game/commands';
 import { accepts, attitudeWord, newTies, rivalMove, setState, tiesDay, BORDER_TILES } from '../game/diplomacy';
 import { acceptsTrade, factor, MAPS_EVERY, TRADE_ATTITUDE, TRADE_GOLD, tradeId, worth, type TradeItem } from '../game/trade';
 import { neighbors, pointToTile, tileCenter } from '../globe/hexTiles';
@@ -28,7 +28,7 @@ import { findPath, nearestTile, tilesInRings } from '../game/pathfinding';
 import { borderRings, cultureGain, heldByBorder, provinceCover, tileOwner, type BorderSource } from '../game/culture';
 import { connectedKinds, connectedShields, roadNetwork, strategicTiles, unconnected, type StrategicKind, type StrategicTile } from '../game/connection';
 import { FAIR_SITE, feedsCity, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
-import { ADVANCES, LUX_RATES, NEEDS, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type LuxRate, type TaxRate } from '../game/science';
+import { ADVANCES, LUX_RATES, NEEDS, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type Study, type LuxRate, type TaxRate } from '../game/science';
 import { revolutionDays } from '../game/government';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
@@ -54,7 +54,7 @@ import { pending } from './state';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, stateName, type RegionName } from '../game/names';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { buildDay, chainOpen, CHAIN_ONLY, eat, isChainBuilding, newChain, readySettlements, settlementDone, settlementStart, settlementSteps, startSite, workDay } from '../game/chains';
-import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, withMood, BUILDS, isSoldier, buy, buyCost, daysToBuild, cityDay, cityGold, cityRings, cityScience, cityYield, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type City, type CityYield, type Support } from '../game/cities';
+import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, withMood, BUILDS, isSoldier, buy, buyCost, daysToBuild, cityDay, cityGold, cityRings, cityScience, cityYield, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, BUILDINGS, type City, type CityYield, type Support } from '../game/cities';
 
 import type { MomentKind, SimEvents } from './events';
 import { TILE_COUNT } from '../globe/hexTiles';
@@ -153,6 +153,8 @@ export let discoveriesOn = true;
 export let siteOffersOn = true;
 /** Raids as well (STORY-034). */
 export let raidsOn = true;
+/** An advance's card stops the game (STORY-118); tests of other things turn it off with discoveries. */
+export let advanceCardsOn = true;
 /**
  * Coastal sea: ocean next to land. With Kartanteko units go there at a day a tile (STORY-059;
  * Freeciv civ1 units.ruleset Trireme: Map Making, move_rate 3, flag CoastStrict). Own
@@ -456,6 +458,7 @@ export function cityDays() {
     const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout' || done === 'worker') ? play!.units.spawn(done, c.tile, world, c.id) : null;
     view.notice([cityRef(c.tile, c.name), ` rakensi${isWonder(done) ? ' ihmeen' : ''}: `, made ? unitRef(made.id, made.name) : buildRef(done)]);
     if (isResourceBuilding(done)) rewardOf(c, done);
+    if (c.first === done) delete c.first;
     // The settler of a waiting site is one: the city goes on to gold, and its advisor orders
     // more if it wants them (STORY-113, own rule; Utu's review: else every city that built one
     // kept building them)
@@ -475,9 +478,11 @@ export function cityDays() {
     const opens = (Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === learned).map(b => BUILDS[b].name);
     view.notice(['Keksintö: ', advanceRef(learned), `${learned === 'mapmaking' ? ' · yksiköt kulkevat rannikkovesillä' : ''}${opens.length ? ` · ${opens.join(', ')} avautui` : ''}`]);
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
+    gained(learned);
   }
-  // With nothing chosen the people study a kind found and not known (STORY-072, own)
-  if (play.research.target === null) {
+  // With nothing chosen the people study a kind found and not known (STORY-072, own); not
+  // while an advance's card waits, as its player chooses (STORY-118)
+  if (play.research.target === null && !play.learned.length) {
     const kind = play.research.available(foundKinds).find(isKind);
     if (kind && dispatch({ kind: 'study', target: kind }, 'people')) {
       view.notice(['Kansa tutkii: ', resourceRef(kind, knownKind(kind), true)]);
@@ -681,7 +686,7 @@ function targetAt(province: number): boolean {
 /** Every act of the player and the advisors goes through here and into the log (STORY-086, rule 7). */
 /** What the commands act on (STORY-086). */
 const commandWorld = (): CommandWorld => ({
-  cities: play!.cities, research: play!.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt, answerSite, answerRaid, answerTreaty,
+  cities: play!.cities, research: play!.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt, answerSite, answerRaid, answerTreaty, answerLearned,
   setMode: modeOf, setTask: taskOf, pickSite, skipSite, sendTo: tile => play!.units.sendTo(tile, world), setTax, setLux, revolution: startRevolution, setPlan, setLine, aim: aimAt, pact: pactWith, trade: tradeWith,
 });
 export function dispatch(cmd: Command, by: Actor): boolean {
@@ -846,6 +851,7 @@ function tradeWith(k: number, giveId: string, getId: string): boolean {
       if (toPlayer) {
         p.research.known.add(item.id);
         if (p.research.target === item.id) p.research.target = null;
+        gained(item.id);
       } else r.research.known.add(item.id);
     } else if (item.kind === 'resource' && toPlayer) {
       p.research.kinds.add(item.id);
@@ -1112,7 +1118,62 @@ function rewardOf(c: City, b: ResourceBuilding) {
     p.research.known.add(r);
     if (p.research.target === r) p.research.target = null;
     view.notice(`${BUILDS[b].name}: keksintö ${ADVANCES[r].name}`);
+    gained(r);
   }
+}
+
+// ─── An advance's card (STORY-118) ────────────────
+// Sami 2026-11-23: an advance gained stops the game on a card that tells its effects, until
+// the next study is chosen; the state's advisor's choice waits ready on it. A building it
+// opened can be put first in every city or in the capital (own rules).
+
+/** An advance gained by research, ruins, trade or a resource building: its card waits. */
+function gained(a: Advance) {
+  if (advanceCardsOn && !play!.learned.includes(a)) play!.learned.push(a);
+}
+
+/**
+ * The study an advisor would choose: the one under way, else a kind found (cheap, it shows
+ * and yields; STORY-072), else the state's advisor's next advance, else the first open. Null
+ * when none is open.
+ */
+export function suggestedStudy(): Study | null {
+  const p = play!;
+  if (p.research.target !== null) return p.research.target;
+  const open = p.research.available(foundKinds);
+  const kind = open.find(isKind);
+  if (kind) return kind;
+  const advances = open.filter((s): s is Advance => !isKind(s));
+  return p.stateAdvisor === 'none' ? (advances[0] ?? null) : nextAdvance(STATE_PLANS[p.stateAdvisor].order, advances);
+}
+
+/** The buildings an advance opened that a city of the player's may still build: the card's choices to put first. */
+export function firstChoices(a: Advance): Building[] {
+  const p = play!;
+  return BUILDINGS.filter(b => NEEDS[b] === a && p.cities.some(c => startable(c).includes(b)));
+}
+
+/** The answer to the first advance card waiting: its next study and a building put first, as the learned command. */
+function answerLearned(study: Study | null, first: { build: Building; scope: FirstScope } | null): boolean {
+  const p = play!;
+  const a = p.learned[0];
+  if (!a) return false;
+  const open = p.research.available(foundKinds);
+  if (study !== null && study !== p.research.target && !open.includes(study)) return false;
+  // Nothing open is the only way to choose no study
+  if (study === null && (open.length || p.research.target !== null)) return false;
+  if (first && !firstChoices(a).includes(first.build)) return false;
+  p.learned.shift();
+  if (study !== null) p.research.target = study;
+  if (first) {
+    const capital = p.cities.find(c => c.capital) ?? p.cities[0];
+    for (const c of first.scope === 'all' ? p.cities : [capital]) {
+      if (!startable(c).includes(first.build)) continue;
+      c.first = first.build;
+      c.build = first.build;
+    }
+  }
+  return true;
 }
 
 // ─── Advisors (STORY-049, STORY-050, STORY-051) ───
@@ -1370,9 +1431,12 @@ function* advisorDay(): Generator<void, void, void> {
     if (advice && c.focus !== advice.focus) c.focus = advice.focus;
     const border = tilesInRings(c.tile, 3).some(t => Math.floor(world.cityOf(t) / 7) !== home);
     const ordered = provinceBuild(p.provinceAdvisor, { soldiers, border, available, soldier: bestSoldier(), walls: hasWalls(c), worker: builders.has(c.id) });
-    // The state's campaign goes first (STORY-064), then the province's builds
+    // The state's campaign goes first (STORY-064), then a building put first from an advance's
+    // card (STORY-118; not over a soldier against bandits on their way), then the province's builds
     const war = p.stateAdvisor === 'war' ? warBuild(c, available) : null;
-    const build = war ?? ordered ?? advice?.build ?? null;
+    if (c.first && !available.includes(c.first)) delete c.first;
+    const first = c.first && !(p.raids.band?.city === c.tile && isSoldier(c.build)) ? c.first : null;
+    const build = war ?? first ?? ordered ?? advice?.build ?? null;
     // The settler for a waiting city site is not changed in the city that builds it (STORY-113:
     // only there, or every city that ever built one kept building them, Utu's review)
     if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null && c === settlerBuilder(p.pendingSite))) {
@@ -1484,7 +1548,7 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
   const plan = STATE_PLANS[a];
   if (p.units.stateLine !== plan.line) p.units.setStateLine(plan.line, world);
   if (p.gov !== 'anarchy') p.tax = plan.tax;
-  if (p.research.target === null) {
+  if (p.research.target === null && !p.learned.length) {
     // A kind of resource first: it is cheap, and it shows and yields (STORY-072)
     const next = p.research.available(foundKinds).find(isKind) ?? nextAdvance(plan.order, p.research.available() as Advance[]);
     if (next && dispatch({ kind: 'study', target: next }, 'state')) advise(['tutkitaan: ', (isKind(next) ? resourceRef(next, knownKind(next)) : advanceRef(next))], 'state');
@@ -1583,6 +1647,7 @@ export function openRuin(tile: number, finder: number) {
     if (a) {
       play.research.known.add(a);
       if (play.research.target === a) play.research.target = null;
+      gained(a);
       got = `keksintö ${ADVANCES[a].name}`;
     } else got = gold(CONSOLATION_GOLD);
   } else if (kind === 'soldier') {
@@ -2274,10 +2339,11 @@ export function resetGame(startCity: number) {
 }
 
 /** Tests turn the ruins, the site offers and the raids off and on. */
-export function setSwitches(s: { discoveries?: boolean; siteOffers?: boolean; raids?: boolean }) {
+export function setSwitches(s: { discoveries?: boolean; siteOffers?: boolean; raids?: boolean; advanceCards?: boolean }) {
   if (s.discoveries !== undefined) discoveriesOn = s.discoveries;
   if (s.siteOffers !== undefined) siteOffersOn = s.siteOffers;
   if (s.raids !== undefined) raidsOn = s.raids;
+  if (s.advanceCards !== undefined) advanceCardsOn = s.advanceCards;
 }
 
 /** A road built by a test: the joins are worked out anew. */
@@ -2425,7 +2491,7 @@ export function startGame<U extends object>(startCity: number, saved: SaveData |
   const state = Math.floor(startCity / 49);
   const stateTiles: number[] = [];
   for (let c = state * 49; c < state * 49 + 49; c++) stateTiles.push(...cityTiles(regions, c));
-  const base: GameState = { units, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), commands: new CommandLog(), treaty: null, over: false };
+  const base: GameState = { units, province: provinceTiles, state: stateTiles, progress: startProgress(!classic), targetProvince: -1, bonuses: new Map(), found: 0, cities: [], offers: [], offered: [], lastOfferDay: -Infinity, pendingSite: null, improvements: new Improvements(), raids: new Raids(), war: new War(), rivals: RIVALS.slice(0, rivalStartStates.length).map((_, k) => new Rival(k)), raidAlert: false, gold: START_GOLD, research: classic ? new Research() : new Research({ known: [], target: null, bulbs: 0, kinds: [] }), tax: START_TAX, lux: 0, gov: 'despotism', anarchyUntil: -1, ties: RIVALS.slice(0, rivalStartStates.length).map(() => newTies()), townAdvisor: 'none', townLog: [], cityAdvisor: 'none', advisorLog: [], provinceAdvisor: 'none', provinceLog: [], stateAdvisor: 'none', stateLog: [], calmDays: 0, planetAdvisor: 'none', planetLog: [], targetState: -1, firsts: new Set(), commands: new CommandLog(), treaty: null, learned: [], over: false };
   const s: GameState & U = Object.assign(ui, base);
   play = s;
   rescanKinds();
@@ -2459,6 +2525,7 @@ export function startGame<U extends object>(startCity: number, saved: SaveData |
     commands: new CommandLog(saved.commands ?? []),
     // A proposal waiting when the game was saved waits again (STORY-095)
     treaty: saved.treaty && saved.treaty.rival < s.rivals.length ? { ...saved.treaty } : null,
+    learned: [...(saved.learned ?? [])],
   });
   clock.day = saved.day;
   for (const c of s.cities) placeAll(c, ground);
@@ -2499,6 +2566,7 @@ export function stateOf(): GameSave | null {
     research: p.research.save(), tax: p.tax, lux: p.lux, gov: p.gov, anarchyUntil: p.anarchyUntil, townAdvisor: p.townAdvisor, cityAdvisor: p.cityAdvisor, provinceAdvisor: p.provinceAdvisor, stateAdvisor: p.stateAdvisor, planetAdvisor: p.planetAdvisor, targetState: p.targetState, firsts: [...p.firsts],
     commands: p.commands.save(),
     ...(p.treaty ? { treaty: { ...p.treaty } } : {}),
+    ...(p.learned.length ? { learned: [...p.learned] } : {}),
     calmDays: p.calmDays,
   };
 }

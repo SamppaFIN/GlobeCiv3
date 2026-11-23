@@ -221,6 +221,8 @@ export interface City {
   build: Build;
   /** Buildings in the city (STORY-038). */
   buildings: Building[];
+  /** A building put first from an advance's card (STORY-118): built before the advisors' choice. */
+  first?: Building;
   /** What the citizens work for (STORY-039). */
   focus: Focus;
   /**
