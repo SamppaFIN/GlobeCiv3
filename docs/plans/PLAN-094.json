@@ -1,0 +1,45 @@
+{
+  "id": "PLAN-094",
+  "story": "STORY-085",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Node-ajuri (src/sim/run.ts, STORY-095) pelaa uuden pelin neuvonantajien varassa päivä kerrallaan. Ajuri pitää kirjaa siitä, mitä peli kertoi minäkin päivänä (Run.happened: ilmoitukset, hetket lajeineen, nousut ja kortit), eikä se muuta peliä. Mittarit lasketaan testin apumoduulissa tests/sim/autopilot.ts, ja määritelmät ovat omia: päätös on kortti, johon pelaaja vastaa (kaupunkipaikka, rosvot, kilpailijan ehdotus tai avautuvan tason neuvonantajat), eli pelaajan komento lokissa tervetulon valintojen jälkeen; tyhjä jakso on päiviä, joina peli ei kerro mitään (ei päätöstä, ilmoitusta, hetkeä eikä korttia); sekavuusindeksi on uusien järjestelmien määrä minuutin peliajassa 1×-nopeudella (40 päivää), suurin ja keskimääräinen, ja järjestelmät ovat oma lista tasojen sisällöstä tunnistimineen; minuutit ovat 1×-nopeuden peliaikaa (DAY_SECONDS). Ajetaan kolmella tavalla kuin kultaiset ajot (feed, build, roam), horisontti 900 päivää. Punainen vain, jos MVP:n nousu (kaupunkialue, lääni, valtio) ei tapahdu, ajo pysähtyy tai invariantti rikkoutuu (kulta, verot, kaupunkien koot ja ruudut, yksiköiden ruudut, tasot vain avautuvat). Raportti tulostetaan ja kirjoitetaan test-results/autopilot/seed-42.json, joten CI:n loki näyttää sen jokaisella muutoksella.",
+  "alternatives_considered": [
+    {
+      "name": "Mittarit selaimessa Playwrightilla",
+      "pros": "Sama peli kuin pelaajalla",
+      "cons": "Hidas ja ajoitusherkkä; Node ajaa saman simulaation sekunneissa",
+      "rejected_because": "STORY-095 toi saman pelin Nodeen"
+    },
+    {
+      "name": "Raja-arvot mittareille",
+      "pros": "Tahdin heikkeneminen huomattaisiin",
+      "cons": "Kriteeri: mittarit ovat raportti, eivät rajoja",
+      "rejected_because": "Storyn kriteeri 2"
+    }
+  ],
+  "files_to_change": [
+    "src/sim/run.ts",
+    "tests/sim/autopilot.ts",
+    "tests/sim/autopilot.test.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Run.happened: tapahtumat päivineen",
+      "verify": "tsc, kultaiset ajot ennallaan"
+    },
+    {
+      "step": 2,
+      "action": "Mittarit, invariantit ja kolmen tavan ajo",
+      "verify": "Raportti tulostuu; punainen vain kriteerin tapauksissa"
+    },
+    {
+      "step": 3,
+      "action": "Löydetyt jumit omiksi storyikseen",
+      "verify": "Autopilotti vihreä"
+    }
+  ],
+  "status": "approved"
+}

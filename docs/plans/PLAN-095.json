@@ -1,0 +1,39 @@
+{
+  "id": "PLAN-095",
+  "story": "STORY-113",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Juurisyy: odottavan kaupunkipaikan uudisasukkaan rakensi aina pääkaupunki (STORY-032 ja STORY-060), ja neuvonantaja ei vaihda odottavan paikan uudisasukasta. Rakentajan tuotantopainotuksella pääkaupunki jäi kokoon 1 eikä voinut antaa asukasta. Korjaus (oma sääntö): pääkaupunki rakentaa kuten ennen, kun se voi antaa asukkaan, muuten paikkaa lähin kaupunki, joka voi, ja jos sellaista ei ole, pääkaupunki kasvaa ensin. Odottava paikka siirtää uudisasukkaan sinne, kun sitä rakentava kaupunki ei voi antaa asukasta.",
+  "alternatives_considered": [
+    {
+      "name": "Pääkaupunki kasvaa ennen uudisasukasta (painotus ruokaan)",
+      "pros": "Pääkaupunki pysyy rakentajana",
+      "cons": "Ohittaa pelaajan tai Rakentajan valitseman painotuksen",
+      "rejected_because": "Muut kaupungit voivat rakentaa sen heti"
+    }
+  ],
+  "files_to_change": [
+    "src/sim/game.ts",
+    "tests/sim/jams.test.ts",
+    "tests/golden/seed42.json"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Testi, joka toistaa jumin",
+      "verify": "Punainen päivänä 75 ilman korjausta"
+    },
+    {
+      "step": 2,
+      "action": "settlerBuilder ja odottavan paikan sääntö",
+      "verify": "Testi ja autopilotti vihreitä"
+    },
+    {
+      "step": 3,
+      "action": "Kultaiset tilat",
+      "verify": "Muutos vain build- ja roam-ajoissa päivästä 100"
+    }
+  ],
+  "status": "approved"
+}
