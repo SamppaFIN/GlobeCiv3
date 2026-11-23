@@ -289,6 +289,22 @@
         "STORY-109"
       ],
       "progress": 100
+    },
+    {
+      "id": "EPIC-014",
+      "title": "Tiede ja aikakaudet",
+      "icon": "🔬",
+      "description": "Keksintö pysäyttää pelin kortilla, joka kertoo sen vaikutukset luvuin ja kysyy seuraavan tutkimuksen, ja avatun rakennuksen voi priorisoida. Tiedepuu kattaa Freecivin civ1-säännöistä kaikki 67 keksintöä seitsemällä aikakaudella, ja ydinfissio liittää ydinsodan planeettatasolle. Samin toive 2026-11-23. Suunnitelma: docs/design/tiede-ja-aikakaudet.md. Ei MVP-epicien listassa.",
+      "status": "todo",
+      "stories": [
+        "STORY-118",
+        "STORY-119",
+        "STORY-120",
+        "STORY-121",
+        "STORY-122",
+        "STORY-123"
+      ],
+      "progress": 0
     }
   ],
   "stories": [
@@ -3010,6 +3026,144 @@
       "progress": 0,
       "linked": {
         "plan": "PLAN-098",
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-118",
+      "epic": "EPIC-014",
+      "title": "Keksintökortti kertoo vaikutukset ja kysyy seuraavan tutkimuksen",
+      "type": "story",
+      "narrative": "Pelaajana haluan nähdä, mitä uusi keksintö muuttaa, ja valita seuraavan tutkimuksen, jotta tiede tuntuu valinnoilta eikä taustalla kulkevalta laskurilta.",
+      "effort": "M",
+      "depends_on": [
+        "STORY-109"
+      ],
+      "acceptance_criteria": [
+        "Kun keksintö valmistuu, peli pysähtyy kortilla, joka kertoo keksinnön kuvan ja nimen sekä jokaisen avatun asian vaikutuksen luvuin (esim. 'Kirjasto: +50 % tiedettä · 80 tuotantoa · ylläpito 1'), ja jos keksintö aloittaa aikakauden, myös sen. Sama vaikutusten lähde näkyy tiedepuussa ja Tietokirjassa.",
+        "Kortti pysyy auki ja peli pysähdyksissä, kunnes seuraava tutkimus on valittu. Kun valtion neuvonantaja hoitaa tiedettä, sen ehdotus on valmiiksi valittuna; omalla ohjauksella mitään ei ole valittu. Valinta on komento (sääntö 7), ja Node ja autopilotti vastaavat korttiin neuvonantajan valinnalla.",
+        "Kun keksintö avaa rakennuksen, kortissa on kolme valintaa: kaikki kaupungit ensin, pääkaupunki ensin tai neuvonantaja päättää. Valinta on komento, ja kaupunki rakentaa priorisoidun rakennuksen ennen kuvernöörin omaa valintaa, kunnes rakennus on valmis.",
+        "Odottava kortti tallentuu, ja vanha tallennus latautuu ilman sitä (sääntö 8)."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-119",
+      "epic": "EPIC-014",
+      "title": "Ydinsota aloitusnäytöstä",
+      "type": "story",
+      "narrative": "Pelaajana haluan avata ydinsotakokeilun aloitusnäytöstä, jotta voin pelata sitä ilman testilinkkiä myös puhelimella.",
+      "effort": "S",
+      "depends_on": [
+        "STORY-097"
+      ],
+      "acceptance_criteria": [
+        "Aloitusnäytössä on nappi, joka avaa ydinsotakokeilun samoin kuin testilinkki ?planet, ja kokeilusta pääsee takaisin aloitusnäyttöön.",
+        "Nappi ei korvaa eikä muuta tallennettua peliä."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-120",
+      "epic": "EPIC-014",
+      "title": "Seitsemän aikakautta",
+      "type": "story",
+      "narrative": "Pelaajana haluan aikakausien vaihtuvan keksintöjen myötä ja tuovan uudet neuvonantajat, jotta pitkä peli etenee näkyvinä vaiheina.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-118"
+      ],
+      "acceptance_criteria": [
+        "Aikakaudet ovat varhaisaika, rauta-aika, keskiaika, uusi aika, teollinen aika, moderni aika ja atomiaika, ja aikakausi on myöhäisin, jonka avainkeksintö tunnetaan (Rautatyö, Ruuti, Metallurgia, Teräs, Auto ja Ydinfissio; omat). Uusi aikakausi kerrotaan keksintökortissa ja kertomuksessa.",
+        "Jokainen aikakausi tuo jokaiselle 15 neuvonantajaroolille nimetyn henkilön omine bonuksineen, ja muotokuvan vaatteet ja päähine tulevat aikakaudesta. Aikakaudet ja henkilöt ovat Tietokirjassa.",
+        "Vanha tallennus latautuu, ja sen aikakausi lasketaan sen tunnetuista keksinnöistä."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-121",
+      "epic": "EPIC-014",
+      "title": "Varhaisajan, rauta-ajan ja keskiajan keksinnöt",
+      "type": "story",
+      "narrative": "Pelaajana haluan keksintöpuun jatkuvan keskiajalle asti niin, että jokainen keksintö avaa jotain, jotta jokaisella valinnalla on selvä seuraus.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-120"
+      ],
+      "acceptance_criteria": [
+        "Mystiikka sekä rauta-ajan ja keskiajan uudet keksinnöt ovat pelissä Freecivin civ1-sääntöjen vaatimuksin ja hinnoin, ja niiden rakennukset, maayksiköt, tasavalta ja ihmeet toimivat civ1:n luvuin. Lähde kirjataan koodikommenttiin, ja oma sääntö merkitään omaksi.",
+        "Jokaisella keksinnöllä on luvuin kerrottu vaikutus keksintökortissa, tiedepuussa ja Tietokirjassa, ja valtion neuvonantajien tutkimusjärjestys kattaa uudet keksinnöt.",
+        "Autopilotti nousee yhä valtiotasolle, ja kultaiset tilat kirjoitetaan uudelleen ääneen sanoen."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-122",
+      "epic": "EPIC-014",
+      "title": "Uuden ajan ja teollisen ajan keksinnöt",
+      "type": "story",
+      "narrative": "Pelaajana haluan keksintöpuun jatkuvan teolliselle ajalle, jotta myöhäinen peli tuo uusia rakennuksia, yksiköitä ja hallitusmuotoja.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-121"
+      ],
+      "acceptance_criteria": [
+        "Uuden ajan ja teollisen ajan keksinnöt ovat pelissä civ1:n vaatimuksin ja hinnoin, ja niiden rakennukset, maayksiköt, demokratia, kommunismi ja ihmeet toimivat civ1:n luvuin. Laivan tai lentokoneen avaava keksintö saa Samin päättämän vaikutuksen.",
+        "Jokaisella keksinnöllä on luvuin kerrottu vaikutus keksintökortissa, tiedepuussa ja Tietokirjassa."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
+        "implementation": null,
+        "testing": null
+      }
+    },
+    {
+      "id": "STORY-123",
+      "epic": "EPIC-014",
+      "title": "Modernin ajan ja atomiajan keksinnöt, ja ydinsota avautuu",
+      "type": "story",
+      "narrative": "Pelaajana haluan atomiajan tuovan ydinsodan planeettatasolle, jotta pitkä peli huipentuu johtajien väliseen valtapeliin.",
+      "effort": "L",
+      "depends_on": [
+        "STORY-122",
+        "STORY-119"
+      ],
+      "acceptance_criteria": [
+        "Modernin ajan ja atomiajan keksinnöt ovat pelissä civ1:n vaatimuksin ja hinnoin, ja jokaisella on luvuin kerrottu vaikutus.",
+        "Kun kansa keksii ydinfission ja planeettataso on auki, planeettatasosta tulee ydinsota, jossa pelaaja ja kilpailijat ovat johtajia omine valtioineen, ja ydinsotakokeilun säännöt pätevät. Lukitus 'tulossa myöhemmin' poistuu.",
+        "Tallennus säilyttää ydinsodan tilan, ja vanha tallennus latautuu (sääntö 8)."
+      ],
+      "status": "todo",
+      "progress": 0,
+      "linked": {
+        "plan": null,
         "implementation": null,
         "testing": null
       }
