@@ -75,6 +75,9 @@
 .start-new { min-height: 52px; font-size: 16px; gap: 10px; background: color-mix(in srgb, var(--c-bg) 60%, transparent); }
 .start-continue { min-height: 60px; font-size: 16px; gap: 10px; background: color-mix(in srgb, var(--c-bg) 60%, transparent); }
 .start-continue[hidden] { display: none; }
+/* The war of leaders, a trial (STORY-119): below the game's own buttons, quieter */
+.start-planet { min-height: var(--touch-target); font-size: 14px; gap: 8px; background: transparent; }
+.start-planet[hidden] { display: none; }
 .start-continue-text { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .start-continue-detail { font-size: 12px; color: var(--c-muted); }
 .start-progress { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--c-muted); }
@@ -567,6 +570,7 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .nuclear-kicker { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-accent-text); }
 .nuclear-day { font-size: 15px; font-weight: 500; }
 .nuclear-pause { min-height: var(--touch-target); padding: 0 14px; }
+.nuclear-leave { min-height: var(--touch-target); min-width: var(--touch-target); padding: 0; }
 .nuclear-tension { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #cfd3e5; }
 .nuclear-meter { flex: 1; height: 6px; border-radius: 3px; background: #3f424d; position: relative; }
 .nuclear-meter-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #7fb7be, #e0a458 60%, #d8737f); }

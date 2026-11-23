@@ -337,7 +337,12 @@ const lockFor = (level: number) => (level === 4 ? frames[3] * CITY_LEVEL_AT * 0.
 /** Where the camera stands at the city level: its city rises. */
 const cityViewDist = () => frames[3] * CITY_LEVEL_AT * 0.7;
 
-const startScreen = screen === 'start' ? createStartScreen(hud, newGame) : null;
+/** The seed of the address, kept when the trial of the war of leaders opens and closes (STORY-119). */
+const seedQuery = () => (params.has('seed') ? `seed=${encodeURIComponent(params.get('seed')!)}` : '');
+const startScreen = screen === 'start' ? createStartScreen(hud, newGame, () => {
+  const seed = seedQuery();
+  location.href = `${location.pathname}?planet${seed ? `&${seed}` : ''}`;
+}) : null;
 /** Radius of the start screen's planet in CSS pixels (frameStartPlanet). */
 let startRadiusPx = 1;
 
@@ -854,6 +859,11 @@ const warPanel = war ? createNuclearPanel(hud_root, {
   },
   togglePause: () => { if (war) war.paused = !war.paused; },
   setSpeed: s => { if (war) { war.speed = s; war.paused = false; } },
+  // Back to the start screen, where a saved game waits as it was (STORY-119)
+  leave: () => {
+    const seed = seedQuery();
+    location.href = `${location.pathname}${seed ? `?${seed}` : ''}`;
+  },
 }) : null;
 if (war) Object.assign(window, { globeWar: war });
 
