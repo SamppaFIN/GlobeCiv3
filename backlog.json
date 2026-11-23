@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-23T19:40:03Z",
+    "generated_at": "2026-11-23T19:46:30Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "38e0b14",
+    "git_commit": "9724797",
     "git_branch": "main",
     "language": "fi"
   },
@@ -304,7 +304,7 @@
         "STORY-122",
         "STORY-123"
       ],
-      "progress": 17
+      "progress": 33
     }
   ],
   "stories": [
@@ -3068,12 +3068,12 @@
         "Aloitusnäytössä on nappi, joka avaa ydinsotakokeilun samoin kuin testilinkki ?planet, ja kokeilusta pääsee takaisin aloitusnäyttöön.",
         "Nappi ei korvaa eikä muuta tallennettua peliä."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-100",
+        "implementation": "TICKET-IMPL-100",
+        "testing": "TICKET-TEST-100"
       }
     },
     {
