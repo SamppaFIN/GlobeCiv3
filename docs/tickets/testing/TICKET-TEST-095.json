@@ -28,8 +28,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Odottaa CI-ajoa",
-        "outcome": "not_run"
+        "result": "Vihreä: ajo 45124560991 (d52429a), Vitest 340/340 ja Playwright 113 läpi, joista 1 epävakaa (chains.e2e, meni läpi uusinnalla). Julkaistu Pagesiin.",
+        "outcome": "pass"
       },
       {
         "steps": "Utun katselmointi (Sonnet)",
