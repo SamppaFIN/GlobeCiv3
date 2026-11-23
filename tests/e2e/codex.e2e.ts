@@ -46,7 +46,9 @@ test('the Tietokirja opens from the level panel and from a link in a text, follo
   await expect(book.locator('dd')).toHaveText(['60 tuotantoa', '1 kulta päivässä', 'Keramiikka']);
   await book.getByRole('button', { name: 'Keramiikka, keksintö' }).click();
   await expect(page.locator('#codex-title')).toHaveText('Keramiikka');
-  await expect(book.locator('dd').filter({ hasText: 'Viljavarasto' }).getByRole('button', { name: 'Riippuvat puutarhat, rakennus' })).toBeVisible();
+  // Each build the advance opens on a line of its own with its numbers (STORY-118)
+  await expect(book.locator('dd').filter({ hasText: 'Viljavarasto' }).getByRole('button', { name: 'Viljavarasto, rakennus' })).toBeVisible();
+  await expect(book.locator('dd').filter({ hasText: 'kerran pelissä' }).getByRole('button', { name: 'Riippuvat puutarhat, rakennus' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('advance.png') });
   // Back, step by step, to the index
   await back.click();
