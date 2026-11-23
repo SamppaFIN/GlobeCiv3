@@ -64,7 +64,7 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Vihreä: ajo 45080208545 (merge 7836fcd), Vitest 54 tiedostoa, Playwright 114 (1,3 h); katselmoinnin korjausten ajo 45085270306 (merge 2805213), Vitest 54 tiedostoa, Playwright 111 (1,3 h)",
+        "result": "Vihreä: ajo 45080208545 (merge 7836fcd), Vitest 54 tiedostoa, Playwright 114 (1,3 h); katselmoinnin korjausten ajo 45085270306 (merge 2805213), Vitest 54 tiedostoa, Playwright 111 ja 3 vaihtelevaa, jotka menivät läpi uusinnalla: tile-card.e2e ja rich-links.e2e (heksan napautus ei avannut korttia 5 s:ssa) sekä unlock.e2e (laskuri 0/3, kun odotettiin 2/3). Napautuksen ja nousun koodi on sama kuin 7836fcd:ssä, jossa samat testit menivät läpi ensimmäisellä kerralla, joten kirjataan CI:n ajoitusvaihteluksi",
         "outcome": "pass"
       },
       {
