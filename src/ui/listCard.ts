@@ -3,7 +3,7 @@
  * rakennuksia ja ukkeleita, tarvitaan listanäkymä"). Two tabs; a city row opens its card and
  * a unit row selects the unit, both bringing it into view. A bottom sheet like the city card.
  * The third tab, Talous, tells what the realm gets a day (STORY-048), and the fourth,
- * Diplomatia, the rivals met (STORY-076).
+ * Diplomatia, the rivals met (STORY-076). The units come by province, under its name (STORY-115).
  */
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
@@ -13,7 +13,8 @@ export type ListTab = 'cities' | 'units' | 'economy' | 'diplomacy';
 export interface ListView {
   tab: ListTab;
   cities: { id: number; name: string; size: string; line: string }[];
-  units: { index: number; name: string; kind: string; line: string }[];
+  /** `group`: the province the unit stands in (STORY-115). */
+  units: { index: number; name: string; kind: string; line: string; group: string }[];
   /** Rows of the economy tab: what comes in and where it goes. */
   economy: { title: string; right: string; line: string }[];
   /** Whether the diplomacy tab shows: from the state level on (STORY-017). */
@@ -27,6 +28,14 @@ export interface ListCard {
   update(view: ListView): void;
   hide(): void;
   readonly visible: boolean;
+}
+
+/** A province's heading in the units tab: its name and how many units stand there. */
+function groupHead(name: string, n: number): HTMLElement {
+  const h = document.createElement('h3');
+  h.className = 'list-group';
+  h.textContent = `${name} · ${n} ${n === 1 ? 'yksikkö' : 'yksikköä'}`;
+  return h;
 }
 
 export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: ListTab): void; city(id: number): void; unit(index: number): void; rival(id: number): void }): ListCard {
@@ -61,12 +70,17 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
     q('.list-tab-units').textContent = `Yksiköt (${v.units.length})`;
     q<HTMLElement>('.list-tab-diplomacy').hidden = !v.diplomacyTab;
     el.querySelectorAll<HTMLInputElement>('input[name="list-tab"]').forEach(i => { i.checked = i.value === v.tab; });
-    const items: { title: string; right: string; line: string; go?: () => void }[] = v.tab === 'cities'
+    // The units by province, in the order the provinces first come (STORY-115)
+    const groups = [...new Set(v.units.map(u => u.group))];
+    const units = groups.flatMap(g => v.units.filter(u => u.group === g));
+    const items: { title: string; right: string; line: string; go?: () => void; group?: string }[] = v.tab === 'cities'
       ? v.cities.map(c => ({ title: c.name, right: c.size, line: c.line, go: () => on.city(c.id) }))
-      : v.tab === 'units' ? v.units.map(u => ({ title: u.name, right: u.kind, line: u.line, go: () => on.unit(u.index) }))
+      : v.tab === 'units' ? units.map(u => ({ title: u.name, right: u.kind, line: u.line, go: () => on.unit(u.index), group: u.group }))
       : v.tab === 'diplomacy' ? v.diplomacy.map(r => ({ title: r.name, right: r.state, line: r.line, go: () => on.rival(r.id) }))
       : v.economy;
-    rows.replaceChildren(...items.map(it => {
+    rows.replaceChildren(...items.flatMap((it, i) => {
+      // A province's name over its units
+      const head = it.group !== undefined && it.group !== items[i - 1]?.group ? [groupHead(it.group, items.filter(x => x.group === it.group).length)] : [];
       // Economy rows only tell; the others are buttons
       const b = document.createElement(it.go ? 'button' : 'div');
       if (b instanceof HTMLButtonElement) b.type = 'button';
@@ -76,7 +90,7 @@ export function createListCard(root: HTMLElement, on: { close(): void; tab(tab: 
       b.querySelector('.city-build-eta')!.textContent = it.right;
       b.querySelector('.city-build-info')!.textContent = it.line;
       if (it.go) b.addEventListener('click', it.go);
-      return b;
+      return [...head, b];
     }));
     if (!items.length) {
       const empty = document.createElement('span');

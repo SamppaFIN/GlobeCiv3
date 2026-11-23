@@ -121,6 +121,7 @@
 .city-build:disabled { opacity: 0.55; cursor: default; }
 .city-research { min-height: var(--touch-target); }
 .list-rows { display: flex; flex-direction: column; gap: 6px; }
+.list-group { margin: 6px 0 0; font-size: 12px; font-weight: 600; color: var(--c-muted); }
 .city-build.list-info { cursor: default; min-height: 0; border-color: transparent; background: color-mix(in srgb, var(--c-text) 5%, transparent); }
 .hud-row[hidden] { display: none; }
 .hud-icon { width: var(--touch-target); height: var(--touch-target); padding: 0; flex: none; }
@@ -493,6 +494,26 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
   background: var(--ink); color: var(--c-bg); font-size: 12px; font-variant-numeric: tabular-nums;
 }
 #hud.discovering .city-labels { display: none; }
+/* The player's units above the city areas (STORY-115): a dot of 14 px in a touch target, merged
+   markers with their count; placed every frame, so never a transition */
+.unit-markers { position: absolute; inset: 0; pointer-events: none; }
+.unit-marker {
+  position: absolute; left: 0; top: 0; width: var(--touch-target); height: var(--touch-target);
+  display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none;
+  color: var(--c-bg); font: inherit; cursor: pointer; pointer-events: auto; transition-property: none;
+}
+.unit-marker[hidden] { display: none; }
+.unit-marker-dot {
+  box-sizing: border-box; min-width: 14px; height: 14px; border-radius: 12px; border: 2px solid var(--c-bg);
+  background: var(--ink); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 60%, transparent);
+}
+.unit-marker-many .unit-marker-dot {
+  min-width: 24px; height: 24px; padding: 0 5px; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.unit-marker[aria-pressed="true"] .unit-marker-dot { box-shadow: 0 0 0 2px var(--c-accent-light), 0 0 10px var(--c-accent); }
+.unit-marker-over { z-index: 1; }
+#hud.discovering .unit-markers, #hud.research-open .unit-markers { display: none; }
 /* Close up a small line under the name (STORY-098) */
 .city-label-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
 .city-label-info { font-size: 11px; font-weight: 400; color: var(--c-muted); }

@@ -31,6 +31,7 @@ import { borderRings, cultureGain, HOLD_BY_BORDER } from '../game/culture';
 import { CONNECTED_SHIELD, isStrategic, type StrategicKind } from '../game/connection';
 import { FAIR_SITE, goodSite, SITE_SPACING } from '../game/sites';
 import { createCityLabels } from '../ui/cityLabels';
+import { createUnitMarkers, type UnitMark } from '../ui/unitMarkers';
 import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
@@ -699,6 +700,8 @@ function chooseSite(index: number, by: Actor = 'player') {
   if (dispatch({ kind: 'site', accept: index === 0 }, by) && index === 0 && settler) play.selected = play.units.units.indexOf(settler);
 }
 
+// Under the labels and the chips: the unit markers above the city areas (STORY-115)
+const unitMarkers = createUnitMarkers(hud_root, units => pickUnits(units));
 const cityLabels = createCityLabels(hud_root, id => {
   if (!play) return;
   // A city-state's or a tribe's label opens its hex card (STORY-063, STORY-066)
@@ -716,6 +719,17 @@ const cityLabels = createCityLabels(hud_root, id => {
   }
   openCityCard(id);
 });
+
+/**
+ * A unit marker tapped above the city areas (STORY-115): its unit is selected and the view
+ * turns to it at the same distance. A merged marker gives its units in turn (own).
+ */
+function pickUnits(units: number[]) {
+  if (!play || !units.length) return;
+  const k = units.indexOf(play.selected);
+  play.selected = units[k < 0 ? 0 : (k + 1) % units.length];
+  rig.flyTo(tileCenter(play.units.units[play.selected].tile), rig.dist, reduceMotion() ? 0 : 0.5);
+}
 
 /**
  * A city's quick panel at the level in view, the region's card closed (STORY-114), and what else
@@ -1073,7 +1087,7 @@ function updateCityLabels() {
   // The open quick panel's city keeps its label (STORY-098), placed first (STORY-114)
   const cities = labelledCities().filter(c => c.id !== quickCity);
   if (quickCity !== null && play.cities[quickCity]) cities.unshift(play.cities[quickCity]);
-  cityLabels.update(viewLevel === 0 ? [] : [
+  const labelRects = cityLabels.update(viewLevel === 0 ? [] : [
     ...cities.map(c => {
       const at = toScreen(tileCenter(c.tile));
       // Above the city's houses at the city-area level, on the city further out. At the city
@@ -1098,6 +1112,28 @@ function updateCityLabels() {
     }),
   ], viewLevel === 1 || viewLevel === 2 ? chipRects : null);
   updateCityQuick(lift);
+  updateUnitMarkers(labelRects);
+}
+
+/** The JS time of the unit markers in the last frames, for the 8 ms measure (STORY-115). */
+const markerMs: number[] = [];
+
+/** Each of the player's units as a marker at the province and state levels (STORY-115), clear of the chips and labels. */
+function updateUnitMarkers(labelRects: ScreenRect[]) {
+  const started = performance.now();
+  if (!play || (viewLevel !== 1 && viewLevel !== 2)) unitMarkers.update(null, []);
+  else {
+    // Not under the top or the bottom panel
+    const band = panelEdges();
+    const marks: UnitMark[] = play.units.units.map((u, index) => {
+      const at = toScreen(tileCenter(u.tile));
+      const shown = at !== null && at[1] > band.top && at[1] < band.bottom;
+      return { index, label: u.name, x: shown ? at[0] : null, y: shown ? at[1] : null, selected: index === play!.selected };
+    });
+    unitMarkers.update(marks, [...chipRects, ...labelRects]);
+  }
+  markerMs.push(performance.now() - started);
+  if (markerMs.length > 240) markerMs.shift();
 }
 
 // ─── The city level (STORY-069) ───────────────────
@@ -1752,7 +1788,9 @@ const listCard = createListCard(hud_root, {
     if (!play) return;
     play.listOpen = false;
     rig.flyTo(tileCenter(play.cities[id].tile), rig.dist, reduceMotion() ? 0 : 0.5);
-    play.openCity = id;
+    // Above the city areas its quick panel, as from the province card (STORY-114, STORY-115)
+    if (viewLevel === 3) play.openCity = id;
+    else quickCityAt(play.cities[id].tile);
   },
   unit: (index: number) => {
     if (!play) return;
@@ -1780,6 +1818,8 @@ function listView(): ListView {
     units: play!.units.units.map((u, index) => ({
       index, name: u.name, kind: KIND_NAMES[u.kind],
       line: unitStatus(play!.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name),
+      // By province (STORY-115)
+      group: nameOf(1, provinceOfTile(u.tile)).name,
     })),
     economy: economyRows(yields),
     diplomacy: play!.rivals.flatMap((r, k) => {
@@ -1824,7 +1864,8 @@ function economyRows(yields: CityYield[]): ListView['economy'] {
 }
 
 function updateListCard() {
-  if (!play || !play.listOpen || viewLevel !== 3 || discoveryCard.visible) {
+  // At the city area, and above it at the province and state levels (STORY-115)
+  if (!play || !play.listOpen || viewLevel === 0 || discoveryCard.visible) {
     if (listCard.visible) listCard.hide();
     return;
   }
@@ -2914,6 +2955,8 @@ function updatePlay(dt: number) {
     advisor: levelAdvisor(advisorLevel()).name,
     advisors: advisorButtons(advisorLevel()),
     own: ownHand(),
+    // The list also where the advisor runs the province or the state (STORY-115)
+    list: ownHand() || viewLevel === 1 || viewLevel === 2,
     science: play.cities.length > 0,
     research: !play.cities.length || play.researchOpen || !ownHand() ? null
       : play.research.target ? { text: `Tiede · ${studyName(play.research.target)} ${Math.min(100, Math.floor((play.research.bulbs / play.research.cost) * 100))} %`, choose: false }
@@ -3272,6 +3315,7 @@ frameStartPlanet();
   // The rows as plain text, as the tests read them; the card itself colours and links them (STORY-103)
   /** The main thread's ms in the last frames (STORY-101). */
   frameMs: () => [...frameMs],
+  markerMs: () => [...markerMs],
   /** How far into the day the clock is, 0 to 1 (STORY-101). */
   dayPart: () => clock.fraction,
   /** Frames drawn since the page opened (STORY-101). */
