@@ -1,0 +1,63 @@
+{
+  "id": "TICKET-IMPL-099",
+  "story": "STORY-118",
+  "plan": "PLAN-099",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/commands.ts",
+    "src/game/commands.test.ts",
+    "src/game/save.ts",
+    "src/game/cities.ts",
+    "src/game/codex.ts",
+    "src/game/codex.test.ts",
+    "src/sim/state.ts",
+    "src/sim/game.ts",
+    "src/sim/run.ts",
+    "src/ui/advanceCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/sim/learned.test.ts",
+    "tests/sim/acts.test.ts",
+    "tests/e2e/advance-card.e2e.ts",
+    "tests/e2e/frame-budget.e2e.ts",
+    "tests/golden/seed42.json",
+    "tests/e2e/codex.e2e.ts"
+  ],
+  "change_summary": "Saatu keksintö menee jonoon GameState.learned (gained: tutkimus, rauniot, kauppa ja resurssirakennuksen palkinto), ja pending() palauttaa päätöksen learned, joten peli pysähtyy. Komento learned valitsee seuraavan tutkimuksen ja valinnaisesti priorisoi keksinnön avaaman rakennuksen kaikkiin kaupunkeihin tai pääkaupunkiin (City.first). Neuvonantajat rakentavat City.firstin ennen omaa valintaansa (sotaretken jälkeen, ei rosvojen uhkaaman kaupungin sotilaan yli), ja kenttä poistuu rakennuksen valmistuessa. suggestedStudy on käynnissä oleva tutkimus, löydetty laji, valtion neuvonantajan seuraava tai ensimmäinen avoin, ja Node vastaa sillä. codex.ts advanceEffects antaa vaikutukset luvuin, ja keksintösivu ja tiedepuu käyttävät niitä (Avaa- ja Johtaa-rivien tilalla). Uusi src/ui/advanceCard.ts on kortti, jonka main.ts näyttää odottavasta päätöksestä; tutkimusvalinnat tulevat samasta studyOptionsista kuin tiedekortilla. globeGame.state kertoo odottavat kortit, globeDebug.study valitsee tutkimuksen ja setAdvanceCards kytkee kortin; setDiscoveries kytkee sen pois muiden pysäytysten mukana.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Command",
+      "COMMAND_KINDS",
+      "CommandWorld.answerLearned",
+      "GameState.learned",
+      "Decision",
+      "pending",
+      "City.first",
+      "validateSave",
+      "gained",
+      "suggestedStudy",
+      "firstChoices",
+      "answerLearned",
+      "advisorDay",
+      "setSwitches",
+      "advanceEffects",
+      "advancePage",
+      "studyOptions",
+      "researchView"
+    ],
+    "affected_callers": [
+      "Kaikki pelit, joissa keksintö saadaan: peli pysähtyy kortille",
+      "Kultaiset tilat ja autopilotti: kortit lisäävät päätöksiä ja learned-komentoja lokiin",
+      "Tietokirjan keksintösivu ja tiedepuu: Avaa- ja Johtaa-rivit korvautuivat vaikutusriveillä",
+      "E2E-testit, jotka eivät kytke löytöjä pois: kortti voi avautua kesken testin"
+    ],
+    "breaking_changes": [
+      "Tietokirjan keksintösivun Avaa-rivi korvautui Rakennus-, Ihme- ja Yksikkö-riveillä (codex.test päivitettiin)"
+    ],
+    "migration_needed": false
+  },
+  "commit": "38e0b14",
+  "progress": 100,
+  "notes": "Tallennuksen versio ei muuttunut: learned ja City.first ovat valinnaisia, ja vanha tallennus latautuu ilman niitä (testattu). Kultaiset tilat kirjoitettiin uudelleen, koska kortit tuovat learned-komennot lokiin; Node tulee samaan tilaan kuin selain. acts.test.ts:n odotettuihin pelaajan komentoihin lisättiin learned. codex.e2e.ts päivitettiin: keksintösivu kertoo jokaisen rakennuksen omalla rivillään."
+}

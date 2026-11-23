@@ -1,0 +1,64 @@
+{
+  "id": "PLAN-099",
+  "story": "STORY-118",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Samin valinnat 2026-11-23: kortti pysäyttää pelin aina, ja neuvonantajan valinta on valmiina; rakennukselle kolme valintaa (kaikki kaupungit ensin, pääkaupunki ensin, neuvonantaja päättää). 1) Simulaatio: jokainen saatu keksintö (tutkimus, rauniot, kauppa tai resurssirakennuksen palkinto) menee jonoon GameState.learned (gained). pending() palauttaa päätöksen 'learned', joten päivä ei kulu ennen vastausta (STORY-095). Kansa ja valtion neuvonantaja eivät valitse tutkimusta, kun kortti odottaa. Vastaus on komento { kind: 'learned', study, first } (sääntö 7): tutkimus on avoin tai käynnissä oleva, null vain kun mitään ei ole avoinna, ja first on keksinnön avaama rakennus, jonka jokin kaupunki voi aloittaa (firstChoices). first asettaa kaupungeille (kaikki tai pääkaupunki) City.first-kentän ja rakennuksen; neuvonantajien rakennuslista ottaa sen ennen läänin ja kaupungin valintaa (sotaretken jälkeen, eikä rosvojen uhkaaman kaupungin sotilaan yli), ja kenttä poistuu, kun rakennus valmistuu tai ei ole enää aloitettavissa (omat säännöt). suggestedStudy: käynnissä oleva, muuten löydetty laji, muuten valtion neuvonantajan järjestyksen seuraava, muuten ensimmäinen avoin. Node vastaa kortteihin suggestedStudyllä ilman priorisointia. 2) Vaikutukset: codex.ts advanceEffects antaa jokaisesta keksinnön avaamasta rakennuksesta, ihmeestä ja yksiköstä rivin, jossa on tarkoitus, hinta, ylläpito ja puolustus, sekä liikkeen, hallituksen, aikakauden ja johtaa-rivin. Tietokirjan keksintösivu ja tiedepuu (STORY-109) käyttävät samaa. 3) Näkymä: src/ui/advanceCard.ts on kortti (role dialog), jossa ovat keksinnön oma kuva, vaikutukset, Tutki seuraavaksi -valinta (radio), neuvonantajan ehdotus, Uusi rakennus -valinta ja Jatka, joka on pois käytöstä, kunnes tutkimus on valittu. Omalla ohjauksella mitään ei ole valittu. Kortti piirtää valintansa uudelleen vain, kun ne muuttuvat. 4) Tallennus: learned ja City.first ovat valinnaisia kenttiä (sääntö 8), ja tallennus tarkistetaan kentittäin (tietoturvasääntö 5). 5) Testit, joiden aihe on muu, kytkevät kortin pois löytöjen mukana (setDiscoveries), ja globeDebug.setAdvanceCards kytkee sen päälle.",
+  "alternatives_considered": [
+    {
+      "name": "Kortti vain ilmoituksena neuvonantajan hoitaessa tiedettä",
+      "pros": "Vähemmän pysähdyksiä",
+      "cons": "Sami valitsi pysähdyksen aina",
+      "rejected_because": "Samin valinta 2026-11-23"
+    },
+    {
+      "name": "Prioriteetti suoraan kaupungin rakennukseksi ilman City.first-kenttää",
+      "pros": "Ei uutta tallennettavaa kenttää",
+      "cons": "Neuvonantaja vaihtaisi rakennuksen seuraavana päivänä",
+      "rejected_because": "Kuvernöörien on noudatettava valintaa, kunnes rakennus valmistuu"
+    }
+  ],
+  "files_to_change": [
+    "src/game/commands.ts",
+    "src/game/save.ts",
+    "src/game/cities.ts",
+    "src/game/codex.ts",
+    "src/sim/state.ts",
+    "src/sim/game.ts",
+    "src/sim/run.ts",
+    "src/ui/advanceCard.ts (uusi)",
+    "src/ui/hud.css",
+    "src/globe/main.ts",
+    "tests/sim/learned.test.ts (uusi)",
+    "tests/e2e/advance-card.e2e.ts (uusi)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Päätös learned, komento ja priorisointi simulaatioon",
+      "verify": "Vitest: kortti odottaa, päivä ei kulu, väärä vastaus hylätään, neuvonantajan valinta, pääkaupunki ensin ja neuvonantajat pitävät sen"
+    },
+    {
+      "step": 2,
+      "action": "Vaikutusten yksi lähde",
+      "verify": "Vitest codex.test: rakennuksen ja yksikön rivi lukuineen"
+    },
+    {
+      "step": 3,
+      "action": "Kortti näkymään",
+      "verify": "E2E: oma ohjaus ja neuvonantaja, kuvakaappaukset"
+    },
+    {
+      "step": 4,
+      "action": "Tallennus",
+      "verify": "Vitest ja E2E: odottava kortti tallentuu, vanha tallennus latautuu"
+    },
+    {
+      "step": 5,
+      "action": "Kultaiset tilat uudelleen",
+      "verify": "Selain ja Node samaan tilaan"
+    }
+  ],
+  "status": "approved"
+}
