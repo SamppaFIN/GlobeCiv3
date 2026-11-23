@@ -88,8 +88,14 @@
       {
         "steps": "E2E frame-budget.e2e: päivät 300–400 3 ms:n paloissa",
         "expected": "p95 enintään 8 ms",
-        "result": "Ajossa",
-        "outcome": "not_run"
+        "result": "Neljä ajoa: mediaani 3,1 ms, p95 6,5–7,9 ms. Suurin pala oli ensin 115–129 ms (päivän ensimmäinen osa teki koko valtion kaupunkivaltiohaun kerralla), sitten 63–120 ms päivänä 399 (planeettatason ensimmäinen päivä kävi kaikki ruudut läpi jokaista uutta valtiota kohden) ja sitten 22–47 ms neuvonantajien osassa. Korjattu: haku 2 ms:n osissa, valtioiden ruudut yhdellä läpikäynnillä ja neuvonantajien päivään tauko jokaisen tason ja kaupungin jälkeen. Jäljellä 32–64 ms päivänä 399: valtion neuvonantaja laskee kerran uusien valtioiden alueiden nimet (noin 30 ms headlessissä) valloituksen jälkeisenä päivänä. Arvio, headless ilman GPU:ta 2 vCPU:lla, jossa SwiftShader kilpailee samoista ytimistä. Suurin pala oikeilla laitteilla on Samin hyväksynnässä.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E STORY-118:n haarassa (sisältää korjaukset): golden, unlock, play, advance-card, raids, codex, onboarding, science-tree, levels, save ja site-card",
+        "expected": "Vihreä",
+        "result": "Läpi; unlock.e2e:60 (tunnettu vaihtelija) ja play.e2e:57 (1×-nopeuden mittaus 1,19 s, kun raja on 1,2) läpi uusinnassa samalla buildilla",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
