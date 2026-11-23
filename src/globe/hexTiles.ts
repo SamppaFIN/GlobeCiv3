@@ -201,8 +201,48 @@ export function tileCenter(id: number, out = new THREE.Vector3()): THREE.Vector3
   return latticePoint(face, ijk[0], ijk[1], ijk[2], out);
 }
 
-/** Neighbouring tiles: 6, or 5 around a pentagon. */
+/**
+ * Each tile's neighbours, found once (STORY-117): in blocks of tiles made as they are first
+ * needed, six slots a tile and the count apart (five around a pentagon). The scouts' searches
+ * asked for the same neighbours every day, and finding them was most of a late day's time.
+ */
+const NEIGHBOR_BLOCK = 4096;
+const neighborSlots: (Int32Array | undefined)[] = [];
+const neighborCounts: (Uint8Array | undefined)[] = [];
+
+/** A tile's neighbours, found if not yet: the count, with the tiles in its six slots. */
+function neighborSlotsOf(id: number): [Int32Array, number, number] {
+  const b = Math.floor(id / NEIGHBOR_BLOCK);
+  let slots = neighborSlots[b];
+  let counts = neighborCounts[b];
+  if (!slots || !counts) {
+    slots = neighborSlots[b] = new Int32Array(NEIGHBOR_BLOCK * 6);
+    counts = neighborCounts[b] = new Uint8Array(NEIGHBOR_BLOCK);
+  }
+  const at = (id % NEIGHBOR_BLOCK) * 6;
+  let n = counts[id % NEIGHBOR_BLOCK];
+  if (!n) {
+    const found = findNeighbors(id);
+    n = found.length;
+    for (let k = 0; k < n; k++) slots[at + k] = found[k];
+    counts[id % NEIGHBOR_BLOCK] = n;
+  }
+  return [slots, at, n];
+}
+
+/** Neighbouring tiles: 6, or 5 around a pentagon. A list of its own each time, in the same order. */
 export function neighbors(id: number): number[] {
+  const [slots, at, n] = neighborSlotsOf(id);
+  return Array.from(slots.subarray(at, at + n));
+}
+
+/** Each neighbouring tile in turn, in the order neighbors() gives them, with no list made (STORY-117). */
+export function forEachNeighbor(id: number, each: (n: number) => void): void {
+  const [slots, at, n] = neighborSlotsOf(id);
+  for (let k = 0; k < n; k++) each(slots[at + k]);
+}
+
+function findNeighbors(id: number): number[] {
   const found = new Set<number>();
   for (const { face, ijk } of tileToLattice(id)) {
     for (const [di, dj, dk] of NEIGHBOR_OFFSETS) {
