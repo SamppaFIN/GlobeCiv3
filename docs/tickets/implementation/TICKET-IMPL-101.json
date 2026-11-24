@@ -1,0 +1,66 @@
+{
+  "id": "TICKET-IMPL-101",
+  "story": "STORY-120",
+  "plan": "PLAN-101",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/eras.ts (uusi)",
+    "src/game/persons.ts",
+    "src/ui/portraits.ts",
+    "src/game/history.ts",
+    "src/game/codex.ts",
+    "src/sim/game.ts",
+    "src/globe/main.ts",
+    "src/ui/advanceCard.ts",
+    "src/ui/hud.css",
+    "src/game/eras.test.ts (uusi)",
+    "src/game/persons.test.ts",
+    "src/game/bonuses.test.ts",
+    "src/game/history.test.ts",
+    "src/game/codex.test.ts",
+    "tests/sim/eras.test.ts (uusi)",
+    "tests/e2e/advance-card.e2e.ts"
+  ],
+  "change_summary": "Era laajeni seitsemään (early, iron, medieval, renaissance, industrial, modern, atomic). eras.ts: ERA_KEYS listaa avaimen vain aikakausille, joiden keksintö on pelissä (nyt rauta-aika ja Rautatyö), ADVANCE_ERA antaa jokaiselle pelin keksinnölle aikakauden, ja eraOf(known, keys) on myöhäisin aikakausi, jonka avain tunnetaan; avaintaulu on parametri testejä varten. sim/game.ts:n eraNow käyttää eraOfia, ja main.ts:n oma eraName poistui. persons.ts: 75 uutta henkilöä omine nimineen, arvonimineen ja bonuksineen (omat luvut: laji ei laske roolin sisällä, tuotot, kulta, tiede ja leipä enintään 5, puolustus enintään ×2 ja uudisasukkaan alennus enintään 30). portraits.ts: kangas ja päähine aikakausittain HEADWEAR-taulusta (sotilaalla ja muilla omansa). history.ts: ääni, avauslause, nykyhetken viite ja viimeinen rivi jokaiselle aikakaudelle (luostarin kronikka, painettu historia, sanomalehti, uutiset ja arkisto). codex.ts: Aikakausi-rivi ja keksintösivun maininta ERA_KEYSista, ja aikakausisivu kertoo alun (avain tai 'tulevat peliin myöhemmin'), kuvauksen, pelissä olevat keksinnöt ja 15 henkilöä. advanceCard.ts: kun keksintö on aikakauden avain, kortissa on alue 'Uusi aikakausi: X' ja näkymän tason kolme uutta neuvonantajaa riveinä (40 px muotokuva, nimi ja arvonimi sekä bonus tekstinä, rivi vähintään 44 px ja avaa henkilön sivun Tietokirjasta kortin päälle). Kortti avautuu otsikostaan (fokus otsikossa, vierityksen alusta), sen enimmäiskorkeus jättää puhelimella tilaa yläpaneelille, ja Jatka pysyy kortin alareunassa (sticky, umpinainen tausta).",
+  "impact_analysis": {
+    "changed_symbols": [
+      "Era",
+      "ERAS",
+      "ERA_NAMES",
+      "PEOPLE",
+      "ALL_PERSONS",
+      "ERA_KEYS",
+      "ADVANCE_ERA",
+      "eraOf",
+      "eraNow",
+      "portraitSvg",
+      "HEADWEAR",
+      "VOICES",
+      "ERA_OPENING",
+      "ERA_NOW",
+      "ERA_LAST",
+      "narrate",
+      "advanceEffects",
+      "advancePage",
+      "eraPage",
+      "AdvanceView",
+      "createAdvanceCard",
+      "updateAdvanceCard",
+      "eraOpened"
+    ],
+    "affected_callers": [
+      "Tietokirja: seitsemän aikakausisivua ja jokaisen roolin sivulla seitsemän henkilöä",
+      "Keksintökortti: Rautatyön kortti kertoo uuden aikakauden ja henkilöt; kortti avautuu otsikostaan eikä ensimmäisestä valinnasta",
+      "Kertomus: avaimettomien aikakausien äänet eivät vielä kuulu pelissä",
+      "Tallennus: kertomuksen era-tapahtuma tarkistetaan seitsemän aikakauden listasta"
+    ],
+    "breaking_changes": [
+      "Keksintökortin alkufokus siirtyi otsikkoon (oli ensimmäinen tutkimus tai Jatka)"
+    ],
+    "migration_needed": false
+  },
+  "commit": "3dc48da",
+  "progress": 100,
+  "notes": "Kultaiset tilat eivät muuttuneet, koska rauta-aika alkaa kuten ennen (Node run.test ja selaimen golden.e2e vihreinä). Tallennuksen rakenne ei muuttunut: aikakausi lasketaan tunnetuista keksinnöistä, ja chronicleEra ei tallennu, joten lataus ei kirjaa vaihtoa toiseen kertaan (testi). Era-tapahtuman aikakautta ei verrata pelin tilaan, koska se vaikuttaa vain kertomuksen ääneen (tarkoituksellinen). Testejä muutettiin storyn tarkoituksen mukaan (sanottu ääneen): henkilöiden määrä 30 → 105 (persons.test ja bonuses.test), Tietokirjan sivujen määrä ja roolisivun henkilöt (codex.test), sekä advance-card.e2e:n ensimmäinen testi kuluttaa ylijääneen tieteen ennen vastausta, koska ylijäämä opetti seuraavan keksinnön heti ja avasi uuden kortin ennen tarkistusta (vaihteli täydellä pikselisuhteella). Uusien nimien ja arvonimien yhdistelmät tarkistettiin käsin: ei tunnettujen todellisten henkilöiden nimiä."
+}
