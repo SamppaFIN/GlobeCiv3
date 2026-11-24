@@ -609,15 +609,33 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .seg-opt[hidden] { display: none; }
 
 /* An advance's card (STORY-118): the game waits on it, and the rest of the HUD steps aside */
-.advance-card { z-index: 6; max-height: 78dvh; }
+/* Below the top panel on a phone too, the era's persons included (STORY-120) */
+.advance-card { z-index: 6; max-height: min(78dvh, calc(100dvh - 190px)); }
 .advance-head { display: flex; align-items: center; gap: 12px; }
 /* The svg itself is class advance-art (advanceArt.ts), as in the science tree's nodes */
 .advance-card-art { width: 64px; height: 64px; flex: none; }
 .advance-card-art svg { display: block; }
 .advance-facts { margin: 0; }
+.advance-card #advance-title:focus { outline: none; }
 .advance-studies[hidden], .advance-firsts[hidden], .advance-more[hidden] { display: none; }
-.advance-go { min-height: var(--touch-target); }
-.advance-go:disabled { opacity: 0.5; cursor: default; }
+.advance-go { min-height: var(--touch-target); position: sticky; bottom: 0; z-index: 1; background: var(--c-surface);
+  box-shadow: 0 -10px 12px color-mix(in srgb, var(--c-surface) 90%, transparent); }
+.advance-go:hover { background: color-mix(in srgb, var(--color-accent) 12%, var(--c-surface)); }
+/* Kept at the card's bottom over the text, so solid also when it waits for a study */
+.advance-go:disabled { opacity: 1; color: var(--c-muted); border-color: var(--c-divider); cursor: default; }
+/* A new era and its persons (STORY-120): a row each, the face beside the name and the bonus in words */
+.advance-era { display: flex; flex-direction: column; gap: 6px; }
+.advance-era[hidden] { display: none; }
+.advance-era-title { margin: 0; font-size: 15px; font-weight: 600; color: var(--c-accent-text); }
+.advance-era-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.advance-era-person { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--touch-target); padding: 2px 6px;
+  border: 0; border-radius: var(--radius-md, 8px); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.advance-era-person:hover, .advance-era-person:focus-visible { background: color-mix(in srgb, var(--c-text, #e9e9ed) 8%, transparent); }
+.advance-era-person .advisor-face { flex: none; width: 40px; height: 40px; }
+.advance-era-text { display: flex; flex-direction: column; min-width: 0; }
+.advance-era-name { font-weight: 600; }
+/* The Tietokirja opens over the card from its links */
+#hud.advance-open .codex-card { z-index: 7; }
 #hud.advance-open .hud-bottom, #hud.advance-open .level-bottom, #hud.advance-open .chips,
-#hud.advance-open .city-card:not(.advance-card), #hud.advance-open .city-labels, #hud.advance-open .unit-markers,
+#hud.advance-open .city-card:not(.advance-card):not(.codex-card), #hud.advance-open .city-labels, #hud.advance-open .unit-markers,
 #hud.advance-open .city-quick, #hud.advance-open .tile-yields { display: none; }

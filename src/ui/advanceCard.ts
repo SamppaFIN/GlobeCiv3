@@ -12,7 +12,9 @@
 import type { Building } from '../game/cities';
 import type { FirstScope } from '../game/commands';
 import type { Advance, Study } from '../game/science';
+import type { Person } from '../game/persons';
 import { advanceSvg } from './advanceArt';
+import { portraitSvg } from './portraits';
 import { renderRich, type RichLinks } from './richText';
 import type { Rich } from '../game/rich';
 
@@ -33,6 +35,8 @@ export interface AdvanceView {
   firsts: { build: Building; name: string; scopes: FirstScope[] }[];
   /** Cards waiting after this one. */
   more: number;
+  /** The era the advance opens (STORY-120), and the three persons it brings to the level in view; null for other advances. */
+  era: { name: string; persons: { person: Person; bonus: string; page: string }[] } | null;
 }
 
 export interface AdvanceCard {
@@ -54,8 +58,13 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   el.innerHTML = `
     <div class="advance-head">
       <div class="advance-card-art" aria-hidden="true"></div>
-      <div class="city-titles"><span id="advance-kicker" class="city-kicker"></span><h2 id="advance-title" class="city-name"></h2></div>
+      <div class="city-titles"><span id="advance-kicker" class="city-kicker"></span><h2 id="advance-title" class="city-name" tabindex="-1"></h2></div>
     </div>
+    <section class="advance-era" aria-labelledby="advance-era-title" hidden>
+      <h3 id="advance-era-title" class="advance-era-title"></h3>
+      <span class="city-hint">Uudet neuvonantajat:</span>
+      <ul class="advance-era-people"></ul>
+    </section>
     <dl class="codex-facts advance-facts"></dl>
     <div class="city-builds advance-studies" role="radiogroup" aria-labelledby="advance-studies-label">
       <span id="advance-studies-label" class="city-build-label">Tutki seuraavaksi</span>
@@ -97,9 +106,29 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   const render = () => {
     if (!view) return;
     const v = view;
-    const key = JSON.stringify([v.options, v.suggestion, v.firsts, v.more]);
+    const key = JSON.stringify([v.options, v.suggestion, v.firsts, v.more, v.era?.name ?? null]);
     if (key !== drawn) {
       drawn = key;
+      // A new era told in words, its persons a row each that opens their page (STORY-120)
+      const era = q('.advance-era');
+      era.hidden = !v.era;
+      const people = q('.advance-era-people');
+      people.replaceChildren();
+      if (v.era) {
+        q('.advance-era-title').textContent = `Uusi aikakausi: ${v.era.name}`;
+        for (const x of v.era.persons) {
+          const li = document.createElement('li');
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'advance-era-person';
+          b.innerHTML = `<span class="advisor-face">${portraitSvg(x.person, 40)}</span><span class="advance-era-text"><span class="advance-era-name"></span><span class="advisor-bonus"></span></span>`;
+          b.querySelector('.advance-era-name')!.textContent = `${x.person.name} ${x.person.title}`;
+          b.querySelector('.advisor-bonus')!.textContent = x.bonus;
+          b.addEventListener('click', () => on.links?.page?.(x.page));
+          li.appendChild(b);
+          people.appendChild(li);
+        }
+      }
       choices.clear();
       const studies = q('.advance-studies');
       studies.querySelectorAll('.city-build').forEach(b => b.remove());
@@ -168,7 +197,10 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
         before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         el.hidden = false;
         root.classList.add('advance-open');
-        (go.disabled ? el.querySelector<HTMLButtonElement>('.advance-studies .city-build') ?? go : go).focus();
+        // The card read from its top: the focus on its title, as in the Tietokirja, so a new era and
+        // its persons are not scrolled away on a phone (STORY-120); Tab goes on to the choices
+        el.scrollTop = 0;
+        q('#advance-title').focus();
       }
     },
     hide() {

@@ -9,8 +9,9 @@ const city = (build: City['build'], shields: number): City => ({ id: 1, name: 'K
 const NONE: ActiveBonuses = {};
 
 describe('the advisors\' bonuses (STORY-107)', () => {
-  it('every one of the 30 persons has one bonus, of a kind its level has targets for, told in words', () => {
-    expect(ALL_PERSONS.length).toBe(30);
+  it('every one of the 105 persons has one bonus, of a kind its level has targets for, told in words', () => {
+    // 30 in two eras until STORY-120 brought seven eras
+    expect(ALL_PERSONS.length).toBe(105);
     const kinds: Record<string, readonly BonusKind[]> = {
       town: ['food', 'shield', 'trade', 'goods', 'defense'], city: ['food', 'shield', 'trade', 'sight', 'defense'],
       province: ['settle', 'defense'], state: ['gold', 'science'], planet: ['defense'],
