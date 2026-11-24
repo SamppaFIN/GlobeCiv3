@@ -53,7 +53,8 @@ test('the Kenraali builds an army against the nearest city-state, marches and ta
     const w = window as any;
     const i = w.globeGame.state.cities.findIndex((c: { build: string }) => c.build === 'swordsman');
     if (w.globeDebug.war().target !== t || i < 0) return false;
-    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    // By the state, not the label: the label follows the clock a frame late (CI 2026-11-24)
+    if (!w.globeGame.state.paused) (document.querySelector('.hud-pause') as HTMLButtonElement).click();
     return { i };
   }, native.tile, { timeout: 30_000 })).jsonValue()).i as number;
   const card = await page.evaluate(t => (window as any).globeDebug.tileView(t).rows.find((r: { label: string }) => r.label === 'Sotaretki')?.value, native.tile);

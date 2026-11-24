@@ -48,7 +48,8 @@ test('a city\'s chronicle names its founder, grows with its buildings, keeps its
   await page.evaluate(() => (window as any).globeDebug.fastForward(4));
   await page.waitForFunction(() => {
     if (!(window as any).globeGame.state.cities[0].buildings.includes('lumberjack')) return false;
-    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    // By the state, not the label: the label follows the clock a frame late (CI 2026-11-24)
+    if (!(window as any).globeGame.state.paused) (document.querySelector('.hud-pause') as HTMLButtonElement).click();
     return true;
   }, null, { timeout: 60_000 });
   const built = (await capital(page)).history.find((e: { kind: string }) => e.kind === 'built');

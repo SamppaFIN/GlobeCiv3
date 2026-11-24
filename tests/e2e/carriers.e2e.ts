@@ -24,7 +24,8 @@ async function runTo(page: Page, day: number) {
   await page.evaluate(() => (window as any).globeDebug.fastForward(1));
   await page.waitForFunction(d => {
     if ((window as any).globeGame.state.day < d) return false;
-    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    // By the state, not the label: the label follows the clock a frame late (CI 2026-11-24)
+    if (!(window as any).globeGame.state.paused) (document.querySelector('.hud-pause') as HTMLButtonElement).click();
     return true;
   }, day, { timeout: 60_000, polling: 'raf' });
   return page.evaluate(() => { const s = (window as any).globeGame.state; return { day: s.day, chain: s.cities[0].chain, buildings: s.cities[0].buildings }; });

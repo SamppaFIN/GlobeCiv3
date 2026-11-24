@@ -14,7 +14,8 @@ async function until(page: Page, building: string) {
   await page.evaluate(() => (window as any).globeDebug.fastForward(4));
   await page.waitForFunction(b => {
     if (!(window as any).globeGame.state.cities[0].buildings.includes(b)) return false;
-    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    // By the state, not the label: the label follows the clock a frame late (CI 2026-11-24)
+    if (!(window as any).globeGame.state.paused) (document.querySelector('.hud-pause') as HTMLButtonElement).click();
     return true;
   }, building, { timeout: 60_000 });
 }
