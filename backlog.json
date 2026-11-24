@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-24T06:45:00Z",
+    "generated_at": "2026-11-24T07:22:54Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "c643442",
+    "git_commit": "3dc48da",
     "git_branch": "main",
     "language": "fi"
   },
@@ -304,7 +304,7 @@
         "STORY-122",
         "STORY-123"
       ],
-      "progress": 33
+      "progress": 50
     }
   ],
   "stories": [
@@ -3091,12 +3091,12 @@
         "Jokainen aikakausi tuo jokaiselle 15 neuvonantajaroolille nimetyn henkilön omine bonuksineen, ja muotokuvan vaatteet ja päähine tulevat aikakaudesta. Aikakaudet ja henkilöt ovat Tietokirjassa.",
         "Vanha tallennus latautuu, ja sen aikakausi lasketaan sen tunnetuista keksinnöistä."
       ],
-      "status": "in_progress",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
         "plan": "PLAN-101",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-101",
+        "testing": "TICKET-TEST-101"
       }
     },
     {

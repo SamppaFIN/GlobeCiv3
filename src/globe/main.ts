@@ -49,7 +49,9 @@ import { RIVALS, type RivalUnit } from '../game/rivals';
 import { oklchToSrgb } from './colors';
 import { tribeBand, TRIBE_MOVE_DAYS } from '../game/nomads';
 import { advisorOfLevel, ADVISOR_LEVEL_NAMES, PLANET_ADVISORS, PLANET_ADVISOR_LIST, TOWN_ADVISORS, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
-import { ERA_NAMES, personOf, type Person } from '../game/persons';
+import { ERA_NAMES, personOf, ROLES, type Person } from '../game/persons';
+import { eraOpenedBy } from '../game/eras';
+import { describeBonus } from '../game/bonuses';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
 import { createCodexCard } from '../ui/codexCard';
@@ -78,7 +80,7 @@ import { advance } from '../game/progress';
 import { AREA_PLAN_NAMES, type AreaPlan, type StateLine } from '../game/units';
 import { createChips, createLevelPanels, createUnlockCard, type Chip, type ScreenRect } from '../ui/levelUi';
 import { isRuin, ruinAt, type Yield } from '../game/discoveries';
-import { createAdvanceCard } from '../ui/advanceCard';
+import { createAdvanceCard, type AdvanceView } from '../ui/advanceCard';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOODS, has as stockOf, readySettlements, settlementDone, settlementSteps, SETTLEMENT_SIZE, siteMissing, waitsForBase, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, BUILDS, buyCost, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, granary, isBuilding, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus } from '../game/cities';
@@ -817,6 +819,8 @@ function openCodex(key: string) {
 function closeCodex() {
   codexCard.hide();
   codexTrail = [];
+  // The advance card it covered comes back at once, the focus on the row that opened it
+  if (advanceCard.visible) advanceCard.cover(false);
 }
 
 /** The player buys in a city: the card's and the quick panel's button. */
@@ -910,9 +914,6 @@ const cityQuick = createCityQuick(hud_root, {
   },
   close: () => { quickCity = null; },
 });
-
-/** The era by its key advance (own, docs/design/tasot-ja-aikakaudet.md; what opens an era is Sami's to decide). */
-const eraName = () => (play?.research.known.has('iron') ? 'Rauta-aika' : 'Varhaisaika');
 
 /** The cities' yields, worked out once a day or when a city changes, not in every frame. */
 let yieldsCache: { key: string; yields: CityYield[] } | null = null;
@@ -1025,7 +1026,7 @@ function areaStats(cities: City[]): AreaStat[] {
 /** The level panel's view: where the view is, and when open, what is there. */
 function areaView(): AreaView {
   const p = play!;
-  const era = eraName();
+  const era = ERA_NAMES[eraNow()];
   const city = cityInView();
   const open = p.area.open;
   const advisor = { id: 'advisor', label: `Neuvonantaja: ${levelAdvisor(advisorLevel()).name}` };
@@ -2011,6 +2012,8 @@ function updateAdvanceCard() {
     if (advanceCard.visible) advanceCard.hide();
     return;
   }
+  // A page of the Tietokirja opened from the card covers it (STORY-120)
+  advanceCard.cover(codexCard.visible);
   const options = studyOptions();
   const chosen = ownHand() ? p.research.target : suggestedStudy();
   const advisor = p.stateAdvisor === 'none' ? null : STATE_ADVISORS[p.stateAdvisor].name;
@@ -2025,7 +2028,22 @@ function updateAdvanceCard() {
     suggestion: chosen === null ? null : chosen === p.research.target ? 'Tutkimus jatkuu, ellet valitse muuta.' : advisor ? `${advisor} ehdottaa tätä.` : 'Oletus: kansa tutkii tätä, ellet valitse muuta.',
     firsts: firstChoices(a).map(b => ({ build: b, name: BUILDS[b].name, scopes: firstScopes(b) })),
     more: p.learned.length - 1,
+    era: eraOpened(a),
   });
+}
+
+/** The era an advance opens, with the three persons it brings to the level in view (STORY-120). */
+function eraOpened(a: Advance): AdvanceView['era'] {
+  const era = eraOpenedBy(a);
+  if (!era) return null;
+  const level = advisorLevel();
+  return {
+    name: ERA_NAMES[era],
+    persons: ROLES[level].map(role => {
+      const person = personOf(level, role, era)!;
+      return { person, bonus: describeBonus(level, person.bonus), page: `advisor/${level}/${role}` };
+    }),
+  };
 }
 
 function researchView(): ResearchView {

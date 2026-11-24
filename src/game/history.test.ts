@@ -99,3 +99,49 @@ describe('the chronicle (STORY-106)', () => {
     expect(text(later)).toContain('temppeli');
   });
 });
+
+describe('the chronicle in seven eras (STORY-120)', () => {
+  const ERAS_NOW = { early: 'varhaisaikaa', iron: 'rauta-aikaa', medieval: 'keskiaikaa', renaissance: 'uutta aikaa', industrial: 'teollista aikaa', modern: 'modernia aikaa', atomic: 'atomiaikaa' } as const;
+  const everything = (day: number): HistoryEvent[] => [
+    { kind: 'built', day, building: 'temple' }, { kind: 'built', day: day + 1, building: 'colossus' }, { kind: 'grew', day: day + 2, size: 5 },
+    { kind: 'raid', day: day + 3, held: true, defender: { id: 7, name: 'Soturi Kalervo' }, nomads: false },
+    { kind: 'raid', day: day + 4, held: true, defender: null, nomads: true },
+    { kind: 'raid', day: day + 5, held: false, defender: null, nomads: false },
+    { kind: 'border', day: day + 6, rings: 2 }, { kind: 'taken', day: day + 7, from: 'Pohjola' },
+  ];
+
+  it('tells every kind of event in every era\'s voice, opens each era and ends in the voice of the era now', () => {
+    for (const era of Object.keys(ERAS_NOW) as (keyof typeof ERAS_NOW)[]) {
+      const log: HistoryEvent[] = [founded, ...(era === 'early' ? [] : [{ kind: 'era', day: 10, era } as HistoryEvent]), ...everything(20), { kind: 'early', until: 3, count: 4 }];
+      const story = narrate(town(log), 7, era, 'forest');
+      const last = plain(story[story.length - 1]);
+      expect(last, era).toMatch(new RegExp(`nyt eletään ${ERAS_NOW[era]}\\.$`));
+      // Every event told: no slot left open, the building and the defender named
+      expect(last, era).not.toMatch(/\{[a-z]\}/);
+      for (const want of ['temppeli', 'Kolossi', 'soturi Kalervo', 'paimentolaiset', 'rosvot', 'kahden päivämatkan', 'Pohjola', '27']) expect(last, `${era}: ${want}`).toContain(want);
+      expect(refs(story), era).toEqual(expect.arrayContaining([{ ref: 'era', name: ERAS_NOW[era], page: `era/${era}` }]));
+    }
+  });
+
+  it('tells an unnamed founder as one settler in every era, in the singular its sentences use', () => {
+    for (const era of Object.keys(ERAS_NOW) as (keyof typeof ERAS_NOW)[]) {
+      for (let seed = 0; seed < 6; seed++) {
+        const log: HistoryEvent[] = [{ ...founded, founder: null }, ...(era === 'early' ? [] : [{ kind: 'era', day: 0, era } as HistoryEvent])];
+        // The founding told in the era's voice: the era's opening first, then the founding
+        const told = text(narrate(town([...log.slice(1), log[0]]), seed, era, 'forest'));
+        expect(told, `${era} ${seed}`).toContain('eräs uudisasukas');
+        expect(told, `${era} ${seed}`).not.toContain('uudisasukkaat');
+      }
+    }
+  });
+
+  it('opens a paragraph for each era it lived through, an era passed over not among them', () => {
+    const log: HistoryEvent[] = [founded, { kind: 'era', day: 10, era: 'iron' }, { kind: 'grew', day: 12, size: 3 },
+      { kind: 'era', day: 40, era: 'renaissance' }, { kind: 'grew', day: 45, size: 5 }];
+    const story = narrate(town(log), 42, 'renaissance', 'forest');
+    expect(story.length).toBe(3);
+    expect(plain(story[1])).toMatch(/^(Sitten tuli rauta-aika|Rauta-ajan myötä)/);
+    expect(plain(story[2])).toMatch(/^(Sitten koitti uusi aika|Uuden ajan myötä)/);
+    expect(text(story)).not.toMatch(/keskiai/);
+  });
+});

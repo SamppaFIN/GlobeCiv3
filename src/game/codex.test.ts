@@ -22,7 +22,8 @@ describe('Tietokirja (STORY-104)', () => {
       ...ADVISOR_LEVELS.flatMap(l => ROLES[l].map(r => `advisor/${l}/${r}`)), ...ERAS.map(e => `era/${e}`),
     ];
     expect(codexKeys()).toEqual(['index', ...keys]);
-    expect(keys.length).toBe(28 + 9 + 15 + 11 + 7 + 15 + 2);
+    // Seven eras since STORY-120
+    expect(keys.length).toBe(28 + 9 + 15 + 11 + 7 + 15 + 7);
     for (const key of codexKeys()) {
       const p = codexPage(key)!;
       expect(p.key, key).toBe(key);
@@ -66,7 +67,9 @@ describe('Tietokirja (STORY-104)', () => {
     expect(facts('resource/horses')).toMatchObject({ Maasto: 'tasanko', 'Tuotto ruudulla': '+2 tuotanto', 'Avaa tutkimuksen': 'Ratsastus ja Pyörä', Rakennus: 'Talli' });
     expect(facts('good/bread')).toMatchObject({ Tekijä: 'Leipomo', 'Raaka-aine': 'Jauhot', Ravinto: 'Yksi ruokkii asukkaan päiväksi (2 ruokaa)' });
     expect(words(codexPage('good/bread')!.text)).toBe('Ketju: Vilja → Jauhot → Leipä.');
-    expect(facts('advisor/town/build')).toEqual({ Varhaisaika: 'Kustaa Kirvesmies: +1 tuotanto pääkaupungissa', 'Rauta-aika': 'Brita Rautanaula: +2 tuotanto pääkaupungissa' });
+    // A role's page lists its person of each of the seven eras (STORY-120)
+    expect(facts('advisor/town/build')).toMatchObject({ Varhaisaika: 'Kustaa Kirvesmies: +1 tuotanto pääkaupungissa', 'Rauta-aika': 'Brita Rautanaula: +2 tuotanto pääkaupungissa', Atomiaika: 'Jukka Automaatiosuunnittelija: +4 tuotanto pääkaupungissa' });
+    expect(Object.keys(facts('advisor/town/build'))).toHaveLength(7);
     expect(words(codexPage('era/iron')!.text)).toContain('Rautatyö');
     expect(facts('era/early').Neuvonantajat.split(', ').length).toBe(14);
   });
@@ -99,5 +102,33 @@ describe('Tietokirja (STORY-104)', () => {
     expect(goodRef('plank', 'lankkua')).toEqual({ ref: 'good', name: 'lankkua', page: 'good/plank' });
     expect(pageOf(eraRef('iron', 'rauta-aikaa'))).toBe('era/iron');
     for (const p of ALL_PERSONS) expect(codexPage(pageOf(personRef(p))!), p.id).not.toBeNull();
+  });
+});
+
+describe('the eras in the Tietokirja (STORY-120)', () => {
+  const facts = (key: string) => Object.fromEntries(codexPage(key)!.facts.map(f => [f.label, words(f.value)]));
+
+  it('has a page for each of the seven eras: how it begins, its advances in the game and its fifteen persons as links', () => {
+    expect(ERAS).toHaveLength(7);
+    for (const e of ERAS) {
+      const p = codexPage(`era/${e}`)!;
+      const people = p.facts.find(f => f.label === 'Neuvonantajat')!;
+      expect(refs(people.value).filter(r => r.ref === 'person'), e).toHaveLength(15);
+    }
+    expect(words(codexPage('era/early')!.text)).toMatch(/^Pelin alku\./);
+    expect(words(codexPage('era/iron')!.text)).toMatch(/^Alkaa, kun kansa keksii Rautatyö\./);
+    expect(facts('era/iron').Keksinnöt).toBe('Monarkia, Rakentaminen, Rautatyö ja Matematiikka');
+    // An era whose key is not in the game yet says so, and lists no advances
+    for (const e of ['medieval', 'renaissance', 'industrial', 'modern', 'atomic']) {
+      expect(words(codexPage(`era/${e}`)!.text), e).toMatch(/^Aikakauden keksinnöt tulevat peliin myöhemmin\./);
+      expect(facts(`era/${e}`).Keksinnöt, e).toBeUndefined();
+    }
+    // The index lists all seven
+    expect(refs(codexPage('index')!.facts.find(f => f.label === 'Aikakaudet')!.value)).toHaveLength(7);
+  });
+
+  it('tells the era an advance opens from the era keys, on its page and among its effects', () => {
+    expect(facts('advance/iron').Aikakausi).toBe('Rauta-aika alkaa, ja neuvonantajiksi tulevat uudet henkilöt omine bonuksineen');
+    expect(facts('advance/bronze').Aikakausi).toBeUndefined();
   });
 });

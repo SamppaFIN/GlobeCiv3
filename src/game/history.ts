@@ -71,7 +71,8 @@ const AT: Record<Terrain, string> = {
   mountains: 'vuorten juurelle', plains: 'tasangon laitaan', swamp: 'suon saarekkeelle', tundra: 'tunturin kupeeseen',
 };
 
-// Each event in the voice of its era: a myth told at the fire, then a scribe's record.
+// Each event in the voice of its era: a myth told at the fire, then a scribe's record. Inside a
+// voice, `early` is the kind of the folded first years (HistoryEvent), not the early era.
 // "{c}" is the city, "{f}" the founder, "{p}" the place, "{b}" a building, "{d}" a day, "{n}" a number, "{g}" a defender.
 const VOICES: Record<Era, Record<string, readonly string[]>> = {
   early: {
@@ -98,12 +99,89 @@ const VOICES: Record<Era, Record<string, readonly string[]>> = {
     border: ['Päivänä {d} kaupungin raja merkittiin {n} päivämatkan päähän.', 'Kirjattu päivälle {d}: kaupungin maa ulottuu nyt {n} päivämatkan päähän.'],
     early: ['Alkuvuosien {n} tapahtumaa on tiivistetty, koska vanhimmat kirjat ovat haalistuneet.'],
   },
+  // The later eras (STORY-120): a monastery's chronicle, a printed history, the newspaper, the news and the archive
+  medieval: {
+    founded: ['Kronikan mukaan {c} perustettiin {p}, ja perustajaksi kirjattiin {f}.', 'Luostarin kirjoissa kerrotaan, että {c} rakennettiin {p} ja että ensimmäisenä saapui {f}.'],
+    built: ['Päivänä {d} muurarit saivat valmiiksi rakennuksen: {b}.', 'Kronikka merkitsee päivälle {d}: valmistui {b}.', 'Päivänä {d} otettiin käyttöön {b}, ja kirkonkellot soivat.'],
+    wonder: ['Päivänä {d} valmistui {b}, ja pyhiinvaeltajat tulivat kaukaa sitä katsomaan.'],
+    grew: ['Päivänä {d} kaupungin kirkonkirjoissa oli {n} taloa.', 'Päivän {d} veroluettelossa kaupungin koko oli {n}.'],
+    held: ['Päivänä {d} {r} piirittivät kaupunkia, mutta {g} piti muurit.', 'Kronikka kertoo, että päivänä {d} {r} hyökkäsivät ja että {g} torjui heidät.'],
+    heldAlone: ['Päivänä {d} {r} lyötiin takaisin muurien juurelta.'],
+    plundered: ['Päivänä {d} {r} ryöstivät kaupungin, ja kronikoitsija kirjoitti tuhosta pitkästi.'],
+    taken: ['Päivänä {d} kaupunki antautui, ja sen avaimet luovutettiin uudelle valtiaalle.'],
+    border: ['Päivänä {d} kaupungin rajakivet pystytettiin {n} päivämatkan päähän.', 'Kronikka merkitsee päivälle {d}: kaupungin maat ulottuvat {n} päivämatkan päähän.'],
+    early: ['Varhaisilta vuosilta kronikka mainitsee {n} tapahtumaa, joista ei tiedetä enempää.'],
+  },
+  renaissance: {
+    founded: ['Painetun historian mukaan {c} perustettiin {p}, ja perustajaksi mainitaan {f}.', 'Vanhojen asiakirjojen mukaan {c} perustettiin {p}, ja ensimmäinen asukas oli {f}.'],
+    built: ['Päivänä {d} valmistui {b}, ja sen piirustukset painettiin kirjaan.', 'Asiakirjojen mukaan {b} otettiin käyttöön päivänä {d}.', 'Päivänä {d} kaupunki sai uuden rakennuksen: {b}.'],
+    wonder: ['Päivänä {d} valmistui {b}, ja matkakirjailijat kuvasivat sen koko maailmalle.'],
+    grew: ['Päivänä {d} laaditun luettelon mukaan kaupungin koko oli {n}.', 'Päivän {d} väenlaskussa kaupungin koko oli {n}.'],
+    held: ['Päivänä {d} {r} hyökkäsivät, mutta {g} löi heidät takaisin.', 'Päivänä {d} {g} torjui hyökkäyksen, jonka tekivät {r}.'],
+    heldAlone: ['Päivänä {d} {r} torjuttiin kaupungin vallien edustalla.'],
+    plundered: ['Päivänä {d} {r} ryöstivät kaupungin, ja vahingot luetteloitiin tarkasti.'],
+    taken: ['Päivänä {d} kaupunki valloitettiin ja liitettiin uuteen valtakuntaan.'],
+    border: ['Päivänä {d} kaupungin raja piirrettiin kartalle {n} päivämatkan päähän.'],
+    early: ['Ensimmäisistä vuosista on säilynyt {n} merkintää, mutta niiden sisältö on hämärä.'],
+  },
+  industrial: {
+    founded: ['Sanomalehden historiikin mukaan {c} perustettiin {p}, ja perustaja oli {f}.', 'Juhlakirjan mukaan {c} sai alkunsa, kun {f} asettui {p}.'],
+    built: ['Lehti uutisoi päivänä {d}: valmistui {b}.', 'Päivänä {d} vihittiin käyttöön {b}, ja paikalla oli suuri yleisö.', 'Päivänä {d} lehden etusivu kertoi, että {b} on valmis.'],
+    wonder: ['Päivänä {d} valmistui {b}, ja uutinen kulki lennätintä pitkin kaikkialle.'],
+    grew: ['Päivänä {d} väestönlaskenta kertoi kaupungin koon: {n}.', 'Lehden mukaan kaupungin koko oli päivänä {d} jo {n}.'],
+    held: ['Lehti kertoi päivänä {d}, että {r} hyökkäsivät ja että {g} torjui heidät.', 'Päivänä {d} {r} hyökkäsivät, mutta {g} piti puolensa.'],
+    heldAlone: ['Päivänä {d} lehti kertoi, että {r} torjuttiin.'],
+    plundered: ['Päivänä {d} {r} ryöstivät kaupungin, ja lehti julkaisi vahinkojen luettelon.'],
+    taken: ['Päivänä {d} lehti ilmoitti, että kaupunki on liitetty uuteen valtakuntaan.'],
+    border: ['Päivänä {d} lehti kertoi, että kaupungin raja ulottuu nyt {n} päivämatkan päähän.'],
+    early: ['Lehden arkistossa alkuvuosista on vain {n} lyhyttä mainintaa.'],
+  },
+  modern: {
+    founded: ['Dokumentin mukaan {c} perustettiin {p}, ja perustaja oli {f}.', 'Radio kertoi juhlalähetyksessään, että {c} perustettiin {p} ja että perustaja oli {f}.'],
+    built: ['Päivänä {d} uutisissa kerrottiin, että {b} on valmis.', 'Päivänä {d} avattiin {b}, ja radio lähetti juhlan suorana.', 'Uutisten mukaan {b} otettiin käyttöön päivänä {d}.'],
+    wonder: ['Päivänä {d} valmistui {b}, ja kuvat siitä kiersivät koko maailman.'],
+    grew: ['Päivänä {d} tilastojen mukaan kaupungin koko oli {n}.', 'Päivän {d} uutisissa kaupungin kooksi kerrottiin {n}.'],
+    held: ['Päivänä {d} {r} hyökkäsivät, mutta {g} torjui hyökkäyksen.', 'Uutiset kertoivat päivänä {d}, että {g} piti kaupungin, kun {r} hyökkäsivät.'],
+    heldAlone: ['Päivänä {d} uutiset kertoivat, että {r} torjuttiin.'],
+    plundered: ['Päivänä {d} {r} ryöstivät kaupungin, ja uutiset näyttivät tuhon.'],
+    taken: ['Päivänä {d} uutiset kertoivat, että kaupunki on liitetty uuteen valtakuntaan.'],
+    border: ['Päivänä {d} uutiset kertoivat, että kaupungin raja ulottuu {n} päivämatkan päähän.'],
+    early: ['Alkuvuosista on jäljellä {n} tapahtumaa, joista ei ole kuvaa eikä ääntä.'],
+  },
+  atomic: {
+    founded: ['Arkiston mukaan {c} perustettiin {p}, ja perustajaksi on merkitty {f}.', 'Tietokannan ensimmäinen merkintä: {c} perustettiin {p}, perustajana {f}.'],
+    built: ['Arkistomerkintä päivältä {d}: valmistui {b}.', 'Päivänä {d} otettiin käyttöön {b}, ja tieto tallennettiin arkistoon.', 'Päivänä {d} valmistui {b}.'],
+    wonder: ['Päivänä {d} valmistui {b}, ja sen kuvat lähetettiin satelliitin kautta kaikkialle.'],
+    grew: ['Päivänä {d} väestörekisteri näytti kaupungin kooksi {n}.', 'Rekisterin mukaan kaupungin koko oli päivänä {d} {n}.'],
+    held: ['Päivänä {d} {r} hyökkäsivät, ja {g} torjui hyökkäyksen.', 'Arkistomerkintä päivältä {d}: {r} torjuttiin, ja puolustajana oli {g}.'],
+    heldAlone: ['Arkistomerkintä päivältä {d}: {r} torjuttiin.'],
+    plundered: ['Päivänä {d} {r} ryöstivät kaupungin. Vahingot on kirjattu arkistoon.'],
+    taken: ['Päivänä {d} kaupunki liitettiin uuteen valtakuntaan, ja rekisterit siirrettiin.'],
+    border: ['Päivänä {d} kaupungin raja merkittiin rekisteriin {n} päivämatkan päähän.'],
+    early: ['Arkistossa on alkuvuosilta {n} tapahtumaa, joiden tiedot ovat puutteellisia.'],
+  },
 };
 const ERA_OPENING: Record<Era, readonly string[]> = {
   early: ['Ennen kirjoitusta kaikki muistettiin lauluina.'],
   iron: ['Sitten tuli rauta-aika, ja kirjurit alkoivat pitää aikakirjaa.', 'Rauta-ajan myötä kertomukset vaihtuivat aikakirjoiksi.'],
+  medieval: ['Sitten alkoi keskiaika, ja luostarien kronikoitsijat jatkoivat kertomusta.', 'Keskiajalla kaupungin vaiheet kirjattiin kronikkaan.'],
+  renaissance: ['Sitten koitti uusi aika, ja kirjapainot levittivät kaupungin historiaa.', 'Uuden ajan myötä kaupungin vaiheet painettiin kirjoiksi.'],
+  industrial: ['Sitten tuli teollinen aika, ja sanomalehdet alkoivat kertoa kaupungin elämästä.', 'Teollisella ajalla kaupungin uutiset luettiin aamun lehdestä.'],
+  modern: ['Sitten alkoi moderni aika, ja kaupungin vaiheet kerrottiin radiossa.', 'Modernina aikana kaupungin elämä kuultiin radiosta.'],
+  atomic: ['Sitten alkoi atomiaika, ja kaupungin vaiheet tallennettiin arkistoon.', 'Atomiajalla kaupungin elämä kirjattiin rekistereihin.'],
 };
-const ERA_NOW: Record<Era, Segment> = { early: eraRef('early', 'varhaisaikaa'), iron: eraRef('iron', 'rauta-aikaa') };
+const ERA_NOW: Record<Era, Segment> = {
+  early: eraRef('early', 'varhaisaikaa'), iron: eraRef('iron', 'rauta-aikaa'), medieval: eraRef('medieval', 'keskiaikaa'),
+  renaissance: eraRef('renaissance', 'uutta aikaa'), industrial: eraRef('industrial', 'teollista aikaa'),
+  modern: eraRef('modern', 'modernia aikaa'), atomic: eraRef('atomic', 'atomiaikaa'),
+};
+/** The last line, in the voice of the era now. */
+const ERA_LAST: Record<Era, string> = {
+  early: 'Tarinaa kerrotaan yhä nuotioilla, ja nyt eletään ', iron: 'Aikakirja on yhä auki, ja nyt eletään ',
+  medieval: 'Kronikka jatkuu yhä, ja nyt eletään ', renaissance: 'Historiaa painetaan yhä, ja nyt eletään ',
+  industrial: 'Lehti ilmestyy yhä, ja nyt eletään ', modern: 'Uutiset kertovat yhä, ja nyt eletään ',
+  atomic: 'Arkisto täyttyy yhä, ja nyt eletään ',
+};
 /** The songs count in words. */
 const IN_WORDS: Record<number, string> = { 3: 'kolme', 5: 'viisi', 8: 'kahdeksan' };
 /** Days of walking to the border, in the genitive both voices use. */
@@ -159,7 +237,8 @@ export function narrate(city: Pick<City, 'id' | 'name' | 'tile' | 'buildings' | 
     const v = VOICES[voice];
     switch (e.kind) {
       case 'founded': {
-        const founder: Segment = e.founder && e.founder !== 'Uudisasukas' ? term('person', midName(e.founder)) : 'uudisasukkaat';
+        // An unnamed founder is one settler, as every voice tells it in the singular (Utu's review, STORY-120)
+        const founder: Segment = e.founder && e.founder !== 'Uudisasukas' ? term('person', midName(e.founder)) : 'eräs uudisasukas';
         say(fill(pick(v.founded, seed, city.id, e), { c: name, f: founder, p: AT[e.terrain] }));
         // The log keeps the name; its kind gives the page (STORY-104)
         const kind = RESOURCE_KINDS.find(k => RESOURCES[k].name === e.resource);
@@ -191,7 +270,7 @@ export function narrate(city: Pick<City, 'id' | 'name' | 'tile' | 'buildings' | 
     }
   });
   // The last line: the city now, in the era of today
-  say([era === 'early' ? 'Tarinaa kerrotaan yhä nuotioilla, ja nyt eletään ' : 'Aikakirja on yhä auki, ja nyt eletään ', ERA_NOW[era], '.']);
+  say([ERA_LAST[era], ERA_NOW[era], '.']);
   paragraphs.push(para);
   return paragraphs;
 }

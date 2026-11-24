@@ -1,7 +1,8 @@
 /**
  * portraits.ts — the advisors' faces (STORY-105; Sami 2026-11-21: own SVG portraits). Own
  * drawing, put together from parts in the Kartografi look: the face, hair and beard come from
- * the person, the era gives the clothes and the headwear, and the role an object in a badge.
+ * the person, the era gives the clothes and the headwear (HEADWEAR, seven eras), and the role an
+ * object in a badge.
  * Nothing is stored: the same person always gets the same face. The strings are built only from
  * the constants below, never from text a save or a player gave.
  */
@@ -10,7 +11,10 @@ import type { Person } from '../game/persons';
 const SKIN = ['#e8c4a0', '#d6a77e', '#b9825c', '#8d5a3b'];
 const HAIR = ['#e2c27a', '#9a6a3c', '#4a3324', '#2a211c', '#b0532c', '#b8b4ac'];
 /** The era's cloth and its trim. */
-const CLOTH: Record<Person['era'], [string, string]> = { early: ['#6f6a4a', '#a59869'], iron: ['#3e5672', '#b8c2cf'] };
+const CLOTH: Record<Person['era'], [string, string]> = {
+  early: ['#6f6a4a', '#a59869'], iron: ['#3e5672', '#b8c2cf'], medieval: ['#6a3b3b', '#c9a94a'], renaissance: ['#2f4a3a', '#e8dcc0'],
+  industrial: ['#2a2f45', '#b0532c'], modern: ['#5a5a3c', '#9a9a7a'], atomic: ['#3d4a5c', '#7fd0e0'],
+};
 const INK = '#2a2620';
 
 /** An integer hash of the person's id (own, FNV-1a). */
@@ -50,6 +54,44 @@ const PROPS: Record<string, string> = {
 /** Explore of the planet sails, of the city area and the province walks with a map. */
 const SHIP = '<path d="M35.5 41.5 H44.5 L43 44 H37 Z" fill="#8c5a32"/><path d="M40 41 V35.5 L44 40.5 Z" fill="#efe9d8"/>';
 
+/**
+ * Each era's headwear, [a soldier's, the others'], drawn over the hair (own drawing): the early
+ * age a hood or a woollen band, the iron age a helmet or a circlet, the middle ages a kettle hat
+ * or a hood, the new age a crested helmet or a feathered beret, the industrial age a peaked cap
+ * or a top hat, the modern age a steel helmet or a flat cap, the atomic age a visored helmet or
+ * a headset (STORY-120).
+ */
+const HEADWEAR: Record<Person['era'], [(cloth: string, trim: string) => string, (cloth: string, trim: string) => string]> = {
+  early: [
+    cloth => `<path d="M14.5 21 Q14 7.5 24 7.5 Q34 7.5 33.5 21 Q31 12.5 24 12.5 Q17 12.5 14.5 21 Z" fill="${cloth}" stroke="${INK}" stroke-width="0.6"/>`,
+    (_, trim) => `<path d="M15.2 15.6 Q24 12.4 32.8 15.6" stroke="${trim}" stroke-width="1.6" fill="none"/>`,
+  ],
+  iron: [
+    () => `<path d="M14.6 18.5 Q14.6 7.2 24 7.2 Q33.4 7.2 33.4 18.5 Z" fill="#9aa3ad" stroke="${INK}" stroke-width="0.6"/><path d="M24 18.5 V23" stroke="#9aa3ad" stroke-width="1.6"/>`,
+    () => `<path d="M15.2 15.2 Q24 12.2 32.8 15.2" stroke="#c9a94a" stroke-width="1.3" fill="none"/><circle cx="24" cy="13.3" r="1" fill="#b5abfc"/>`,
+  ],
+  medieval: [
+    () => `<path d="M15 18 Q15 8.2 24 8.2 Q33 8.2 33 18 Z" fill="#8a929c" stroke="${INK}" stroke-width="0.6"/><path d="M11.5 18.3 H36.5" stroke="#8a929c" stroke-width="2.2" stroke-linecap="round"/>`,
+    cloth => `<path d="M13.5 31 Q12 7 24 7 Q36 7 34.5 31 L32 31 Q33 13 24 12.5 Q15 13 16 31 Z" fill="${cloth}" stroke="${INK}" stroke-width="0.6"/>`,
+  ],
+  renaissance: [
+    () => `<path d="M14.5 17 Q16 8 24 7.5 Q32 8 33.5 17 Z" fill="#a0a8b2" stroke="${INK}" stroke-width="0.6"/><path d="M11.5 17.6 Q24 14 36.5 17.6" stroke="#a0a8b2" stroke-width="1.8" fill="none"/><path d="M20 8.5 Q24 3.8 28 8.5" stroke="#a0a8b2" stroke-width="2.2" fill="none"/>`,
+    cloth => `<ellipse cx="22.5" cy="12" rx="10.5" ry="3.8" fill="${cloth}" stroke="${INK}" stroke-width="0.6"/><path d="M29 10.6 Q34.5 4.5 38 6.2" stroke="#efe9d8" stroke-width="1.4" fill="none" stroke-linecap="round"/>`,
+  ],
+  industrial: [
+    (cloth, trim) => `<path d="M16 15.8 L17 7.6 H31 L32 15.8 Z" fill="${cloth}" stroke="${INK}" stroke-width="0.6"/><path d="M16.6 13 H31.4" stroke="${trim}" stroke-width="1.2"/><path d="M15 16 H33" stroke="#1a1c24" stroke-width="1.8" stroke-linecap="round"/>`,
+    (_, trim) => `<rect x="17" y="3.6" width="14" height="10" fill="#1d1d22"/><rect x="17" y="10.6" width="14" height="1.6" fill="${trim}"/><path d="M13 13.8 H35" stroke="#1d1d22" stroke-width="2" stroke-linecap="round"/>`,
+  ],
+  modern: [
+    () => `<path d="M14.5 17 Q15 8.5 24 8.5 Q33 8.5 33.5 17 Z" fill="#5f6b4a" stroke="${INK}" stroke-width="0.6"/><path d="M11.5 17.2 Q24 19.6 36.5 17.2" stroke="#5f6b4a" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+    () => `<path d="M15 15.5 Q16 9 24 9 Q32 9 33 15.5 Z" fill="#6b5a44" stroke="${INK}" stroke-width="0.6"/><path d="M14 15.6 Q20 18.2 27 16.2" stroke="#6b5a44" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  ],
+  atomic: [
+    (_, trim) => `<path d="M14.5 19 Q14.5 7.5 24 7.5 Q33.5 7.5 33.5 19 Z" fill="#4a5462" stroke="${INK}" stroke-width="0.6"/><path d="M16.5 15.6 H31.5 V18.6 H16.5 Z" fill="${trim}" opacity="0.6"/>`,
+    () => `<path d="M15 20 Q15 9 24 9 Q33 9 33 20" stroke="#cfd6de" stroke-width="1.4" fill="none"/><rect x="13.2" y="18.5" width="3" height="5" rx="1.2" fill="#cfd6de"/><rect x="31.8" y="18.5" width="3" height="5" rx="1.2" fill="#cfd6de"/><path d="M15 23 Q16.5 28 21 27.6" stroke="#cfd6de" stroke-width="0.9" fill="none"/>`,
+  ],
+};
+
 /** A person's portrait as an SVG string, `size` pixels wide; decorative (aria-hidden). */
 export function portraitSvg(p: Person, size = 44): string {
   const h = hash(p.id);
@@ -69,10 +111,7 @@ export function portraitSvg(p: Person, size = 44): string {
     // A braid
     `<path d="M15 20 Q15 9.5 24 9.5 Q33 9.5 33 20 Q31 14 24 14 Q17 14 15 20 Z" fill="${hair}"/><path d="M31 19 Q34 26 31.5 32" stroke="${hair}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`,
   ][style];
-  // The early age a woollen band or a hood, the iron age a helmet for soldiers and a circlet for others
-  const headwear = p.era === 'early'
-    ? (soldier ? `<path d="M14.5 21 Q14 7.5 24 7.5 Q34 7.5 33.5 21 Q31 12.5 24 12.5 Q17 12.5 14.5 21 Z" fill="${cloth}" stroke="${INK}" stroke-width="0.6"/>` : `<path d="M15.2 15.6 Q24 12.4 32.8 15.6" stroke="${trim}" stroke-width="1.6" fill="none"/>`)
-    : (soldier ? `<path d="M14.6 18.5 Q14.6 7.2 24 7.2 Q33.4 7.2 33.4 18.5 Z" fill="#9aa3ad" stroke="${INK}" stroke-width="0.6"/><path d="M24 18.5 V23" stroke="#9aa3ad" stroke-width="1.6"/>` : `<path d="M15.2 15.2 Q24 12.2 32.8 15.2" stroke="#c9a94a" stroke-width="1.3" fill="none"/><circle cx="24" cy="13.3" r="1" fill="#b5abfc"/>`);
+  const headwear = HEADWEAR[p.era][soldier ? 0 : 1](cloth, trim);
   const prop = p.level === 'planet' && p.role === 'explore' ? SHIP : PROPS[p.role] ?? '';
   return `<svg width="${size}" height="${size}" viewBox="0 0 48 48" aria-hidden="true" focusable="false">`
     + `<circle cx="24" cy="24" r="23" fill="#2b2d3d"/>`

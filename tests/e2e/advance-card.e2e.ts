@@ -49,6 +49,8 @@ test('own hand: the card tells the effects, the game waits for a study, and a bu
   await expect(card).toBeVisible({ timeout: 30_000 });
   await expect(card.getByRole('heading', { name: 'Keramiikka' })).toBeVisible();
   await expect(card.locator('.city-kicker')).toContainText('peli pysähtyi');
+  // No era comes with it (STORY-120)
+  await expect(card.locator('.advance-era')).toBeHidden();
   // The effects with their numbers, as the Tietokirja tells them (codex.ts advanceEffects)
   const facts = card.locator('.advance-facts');
   await expect(facts).toContainText('Viljavarasto: Säilyttää puolet ruoasta');
@@ -80,6 +82,8 @@ test('own hand: the card tells the effects, the game waits for a study, and a bu
   await expect(firsts.first()).toBeFocused();
   await expect(writing).toHaveAttribute('aria-checked', 'true');
   await expect(go).toBeEnabled();
+  // The bulbs left over would learn Aakkoset at once and open its card before the check below
+  await page.evaluate(() => { const w = window as any; w.globeDebug.addBulbs(-w.globeGame.state.research.bulbs); });
   await go.click();
   await expect(card).toBeHidden();
   const s = await state(page);
@@ -146,5 +150,90 @@ test('under the state advisor its study waits ready, and a card waiting is saved
   await card.getByRole('button', { name: 'Jatka', exact: true }).click();
   await expect(card).toBeHidden();
   expect((await state(page)).research.target).not.toBeNull();
+  expect(errors).toEqual([]);
+});
+
+test('a key advance tells the new era and the level\'s three new persons, a person opens the Tietokirja, and the card fits a phone (STORY-120)', async ({ page }, testInfo) => {
+  test.setTimeout(240_000);
+  const errors: string[] = [];
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', e => errors.push(e.message));
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const ready = page.waitForEvent('console', { predicate: m => m.text().includes('3D globe ready'), timeout: 20_000 });
+  await page.goto('./?classic&seed=42');
+  await ready;
+  await page.evaluate(() => { const d = (window as any).globeDebug; d.setDiscoveries(false); d.setAdvanceCards(true); });
+  await page.getByRole('button', { name: 'Uusi peli' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.screen === 'playing', null, { timeout: 10_000 });
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  const name = page.locator('.hud-unit-name');
+  for (let i = 0; i < 3 && (await name.textContent()) !== 'Uudisasukas'; i++) {
+    const prev = (await name.textContent())!;
+    await page.locator('.hud-unit').click();
+    await expect(name).not.toHaveText(prev);
+  }
+  await page.getByRole('button', { name: 'Perusta kaupunki tähän' }).click();
+  await page.locator('.hud-speed label', { hasText: '4×' }).click();
+  await page.waitForFunction(() => (window as any).globeGame.state.cities.length === 1, null, { timeout: 60_000 });
+  await page.getByRole('button', { name: 'Tauko' }).click();
+  await page.getByRole('dialog', { name: 'Aamuranta' }).getByRole('button', { name: 'Sulje' }).click();
+
+  // Rautatyö, the iron age's key, researched to its end
+  await page.evaluate(() => { const d = (window as any).globeDebug; d.learn('bronze'); d.study('iron'); d.addBulbs(200); });
+  await page.getByRole('button', { name: 'Jatka', exact: true }).click();
+  const card = page.locator('.advance-card');
+  await expect(card).toBeVisible({ timeout: 30_000 });
+  await expect(card.getByRole('heading', { name: 'Rautatyö' })).toBeVisible();
+  // Read from its top: the title has the focus, and the era is in view on the phone
+  await expect(card.getByRole('heading', { name: 'Rautatyö' })).toBeFocused();
+  // The era in words, and the city area's three persons of the iron age, each with its bonus
+  const era = card.getByRole('region', { name: 'Uusi aikakausi: Rauta-aika' });
+  await expect(era).toBeVisible();
+  const people = era.getByRole('button');
+  await expect(people).toHaveText([/^Aatu Kastelija\+2 ruoka muissa kaupungeissa$/, /^Sohvi Kartanpiirtäjä\+1 kauppa muissa kaupungeissa$/, /^Kreeta Kilvenkantaja\s*puolustus ×1,5 rosvoja vastaan muissa kaupungeissa$/]);
+  for (const b of await people.all()) {
+    expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await expect(b).toBeInViewport();
+  }
+  // On a phone the card stays below the top panel, and the Jatka button in view at its bottom
+  const top = (await page.locator('.hud-top').boundingBox())!;
+  expect((await card.boundingBox())!.y).toBeGreaterThanOrEqual(top.y + top.height);
+  const go = card.getByRole('button', { name: 'Jatka', exact: true });
+  const box = (await go.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(640);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  await page.screenshot({ path: testInfo.outputPath('era-card-phone.png') });
+
+  // A person's row opens its page over the card: the card steps aside (out of sight and reach),
+  // and closing the page brings it back with the focus on the row (Utu's review)
+  await people.first().click();
+  const codex = page.locator('.codex-card');
+  await expect(codex).toBeVisible();
+  await expect(codex).toContainText('Aatu Kastelija');
+  await expect(card).toBeHidden();
+  expect(await card.evaluate(e => (e as HTMLElement).inert)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('era-codex-phone.png') });
+  await codex.getByRole('button', { name: 'Sulje Tietokirja' }).click();
+  await expect(codex).toBeHidden();
+  await expect(card).toBeVisible();
+  await expect(people.first()).toBeFocused();
+  // The era's own page from its link among the effects: how it begins and its fifteen persons
+  await card.locator('.advance-facts').getByRole('button', { name: 'Rauta-aika' }).click();
+  await expect(codex.getByRole('heading', { name: 'Rauta-aika' })).toBeVisible();
+  await expect(codex).toContainText('Alkaa, kun kansa keksii Rautatyö.');
+  await expect(codex).toContainText('Kaisu Linnoittaja');
+  await page.screenshot({ path: testInfo.outputPath('era-page-phone.png') });
+  await codex.getByRole('button', { name: 'Sulje Tietokirja' }).click();
+  await expect(card).toBeVisible();
+
+  // On a desktop the same card
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.screenshot({ path: testInfo.outputPath('era-card-desktop.png') });
+  // The bulbs left over would learn the next study at once and open its card: none left
+  await page.evaluate(() => { const w = window as any; w.globeDebug.addBulbs(-w.globeGame.state.research.bulbs); });
+  await card.getByRole('radiogroup', { name: 'Tutki seuraavaksi' }).getByRole('radio').first().click();
+  await go.click();
+  await expect(card).toBeHidden();
   expect(errors).toEqual([]);
 });

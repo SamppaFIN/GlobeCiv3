@@ -1,0 +1,108 @@
+{
+  "id": "TICKET-TEST-101",
+  "story": "STORY-120",
+  "implementation_ticket": "TICKET-IMPL-101",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1) ja 1 (kuvakaappaukset), siemen 42; Vitest 5 Nodessa",
+    "tooling": "Vitest, Playwright",
+    "cases": [
+      {
+        "steps": "Vitest src/game/eras.test.ts",
+        "expected": "Tyhjästä varhaisaika, Rautatyöstä rauta-aika; keksityillä avaimilla jokainen seitsemästä, hyppy yhden yli ja aikakausi ei laske; avaimeton aikakausi ei tule; jokaisella keksinnöllä on aikakausi, eikä vaatimus ole myöhemmällä aikakaudella",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest persons.test ja bonuses.test",
+        "expected": "105 henkilöä, nimet uniikit eivätkä yksiköiden etunimiä, arvonimi ei yksikön nimi eikä esikuvapelin nimi, laji kelpaa tasolle, määrä ei laske roolissa ja pysyy rajoissa, sama henkilö eri aikakaudella näyttää eri muotokuvan, ja sotilaan ja muiden päähine eroavat",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest history.test: seitsemän aikakautta",
+        "expected": "Jokainen tapahtumalaji jokaisen aikakauden äänellä ilman avoimia paikkoja, viimeinen rivi aikakauden äänellä ja viitteellä, ja hypätty aikakausi ei saa kappaletta",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest codex.test: aikakaudet",
+        "expected": "Seitsemän sivua, joilla 15 henkilöä linkkeinä, rauta-ajan keksinnöt, avaimettomat 'tulevat peliin myöhemmin', hakemistossa seitsemän, ja Rautatyön Aikakausi-rivi ERA_KEYSista",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/eras.test.ts (Node, siemen 42)",
+        "expected": "Rautatyö tuo rauta-ajan, jokainen kaupunki saa yhden era-tapahtuman, tallennettu ja ladattu peli on rauta-ajassa eikä kirjaa vaihtoa uudelleen, ja tallennus, jossa on tuntematon aikakausi, hylätään",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest koko sarja",
+        "expected": "Vihreä, kultaiset tilat ennallaan",
+        "result": "63 tiedostoa, 377 testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E advance-card.e2e: Rautatyön kortti puhelimella (360 × 640) ja työpöydällä",
+        "expected": "Alue 'Uusi aikakausi: Rauta-aika', kaupunkialueen kolme henkilöä nimineen ja bonuksineen, rivit vähintään 44 px ja näkyvissä, otsikolla fokus, kortti yläpaneelin alapuolella, Jatka näkyvissä, henkilön rivi avaa Tietokirjan kortin päälle ja sulkeminen palaa korttiin; Keramiikan kortissa ei aluetta",
+        "result": "Läpi (CI=1 ja täysi pikselisuhde). Ensimmäinen kuvakaappaus löysi kaksi vikaa: kortti ulottui puhelimella yläpaneelin alle, ja tarttuva Jatka oli läpinäkyvä ja lukukelvoton tekstin päällä; lisäksi alkufokus vieritti uuden aikakauden pois näkyvistä. Kaikki korjattiin, ja testi tarkistaa ne.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E golden, codex, science-tree, advisors, onboarding, levels, rich-links, chronicle ja state-advisors",
+        "expected": "Vihreä",
+        "result": "18/18 läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Muotokuva-arkki: kaikki 105 muotokuvaa seitsemällä rivillä (vite-node ja Chromium)",
+        "expected": "Jokaisen aikakauden vaatteet ja päähine erottuvat, sotilaat ja muut eroavat",
+        "result": "Tarkistettu kuvasta: keskiajan kypärä ja huppu, uuden ajan morioni ja sulkabaretti, teollisen ajan lakki ja silinteri, modernin ajan teräskypärä ja lippalakki sekä atomiajan visiirikypärä ja kuulokkeet",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Utun katselmointi (Sonnet) 2026-11-24: koodi ja testit kriteereittäin",
+        "expected": "Hyväksytty",
+        "result": "Hyväksytty muutoksin. Keskitaso: kortin aria-modal ja sen päälle avautuva Tietokirja olivat ristiriidassa, eikä fokus palannut riville Tietokirjan sulkeuduttua; kahden läpikuultavan kortin päällekkäisyyttä ei ollut kuvattu; tuntematon perustaja kerrottiin monikolla ('uudisasukkaat') yksikön lauseissa kaikissa seitsemässä äänessä (vika oli jo varhais- ja rauta-ajassa); Tietokirjan aikakausisivuista ei ollut kuvakaappausta. Pieni: bonusten rajat poikkesivat suunnitelman luvuista (Oppinut ja Kenraali olivat jo rauta-ajassa yli), eras.ts mainitsi Uncivin, testimuutoksen juurisyy oli kirjaamatta, arvonimi Lennättäjä, kaksi tyhjää riviä, kahdesti laskettu avain, bonuses.ts:n kommentti ja Jatkan hover pois käytöstä.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Korjaukset (Enki) ja testit: advance-card.e2e (Tietokirja kortin päällä: kortti piilossa ja inert, sulkeminen palauttaa fokuksen riville, aikakausisivu Rauta-aika linkistä, kuvakaappaukset era-codex-phone.png ja era-page-phone.png) ja history.test (nimetön perustaja jokaisella aikakaudella ja kuudella siemenellä)",
+        "expected": "Vihreä",
+        "result": "Läpi. Fokuksen palautus ei ensin toiminut: tokens.css:n vähennetyn liikkeen sääntö antaa kaikille ominaisuuksille 0,01 ms:n siirtymän, joten kortti ja sen rivit olivat vielä ensimmäisen framen piilossa, eikä rivi voinut ottaa fokusta. Kortilta ja sen sisällöltä poistettiin siirtymät. Vitest 63 tiedostoa ja 378 testiä läpi; E2E advance-card, chronicle, codex ja golden läpi.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Ajetaan mergen jälkeen",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/advance-card.e2e.ts-a-key-*/era-card-phone.png ja era-card-desktop.png (paikallinen ajo)",
+      "/home/claude/scratch/portraits/sheet.png (paikallinen muotokuva-arkki)"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Puhelimella: Rautatyön kortti kertoo rauta-ajan ja uudet neuvonantajat, ja henkilön rivi avaa Tietokirjan",
+        "checked": false
+      },
+      {
+        "item": "Tietokirjassa seitsemän aikakautta ja 105 henkilöä: nimet, arvonimet ja muotokuvat sopivat peliin",
+        "checked": false
+      },
+      {
+        "item": "Kaupungin kertomus rauta-ajassa ja muiden aikakausien äänet (luettavissa history.ts:stä, pelissä 121–123:n jälkeen)",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

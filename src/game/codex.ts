@@ -16,6 +16,7 @@ import { describeBonus } from './bonuses';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOOD_NAMES, GOODS, MEAL_FOOD, isChainBuilding, type ChainBuilding, type Good } from './chains';
 import { BUILDINGS, BUILDS, isBuilding, isResourceBuilding, isSoldier, isWonder, RESOURCE_BUILDING_LIST, RESOURCE_BUILDINGS, TERRAIN_BUILDINGS, UPKEEP, type Build, type Building, type ResourceBuilding, type TerrainBuilding } from './cities';
 import { ALL_PERSONS, ERA_NAMES, ERAS, ROLES, type Era, type Person } from './persons';
+import { ADVANCE_ERA, ERA_KEYS, eraOpenedBy } from './eras';
 import { defenseOf } from './raids';
 import { ADVANCE_LIST, ADVANCES, KIND_TERRAIN, NEEDS, opensFrom, RESOURCE_KINDS, STUDY_COST, studyName, type Advance } from './science';
 import { RESOURCES, TERRAIN_RULES, type ResourceKind } from './terrainTypes';
@@ -213,7 +214,8 @@ export function advanceEffects(a: Advance): Page['facts'] {
   }
   if (a === 'mapmaking') facts.push({ label: 'Liike', value: ['Yksiköt kulkevat rannikkovesillä ruudun päivässä'] });
   if (a === 'monarchy') facts.push({ label: 'Hallitus', value: ['Vallankumous Monarkiaan: ruudut tuottavat täysin, ja yksiköt maksavat ylläpitoa alusta asti'] });
-  if (a === 'iron') facts.push({ label: 'Aikakausi', value: [eraRef('iron'), ' alkaa, ja neuvonantajiksi tulevat uudet henkilöt omine bonuksineen'] });
+  const era = eraOpenedBy(a);
+  if (era) facts.push({ label: 'Aikakausi', value: [eraRef(era), ' alkaa, ja neuvonantajiksi tulevat uudet henkilöt omine bonuksineen'] });
   const next = ADVANCE_LIST.filter(n => ADVANCES[n].needs.includes(a));
   if (next.length) facts.push({ label: 'Johtaa', value: list(next.map(n => advanceRef(n))) });
   return facts;
@@ -224,7 +226,7 @@ function advancePage(a: Advance, known: KnownKind): Page {
   const rewardOf = RESOURCE_BUILDING_LIST.filter(b => RESOURCE_BUILDINGS[b].reward === a);
   const more: Segment[] = a === 'mapmaking' ? ['Yksiköt kulkevat rannikkovesillä.']
     : a === 'monarchy' ? ['Kansa voi tehdä vallankumouksen Monarkiaan.']
-    : a === 'iron' ? [eraRef('iron'), ' alkaa.'] : [];
+    : eraOpenedBy(a) ? [eraRef(eraOpenedBy(a)!), ' alkaa.'] : [];
   const facts: Page['facts'] = [
     { label: 'Vaatii', value: ADVANCES[a].needs.length ? list(ADVANCES[a].needs.map(n => advanceRef(n))) : ['ei aiempia keksintöjä'] },
   ];
@@ -283,12 +285,30 @@ function advisorPage(level: AdvisorLevel, role: string): Page {
   };
 }
 
+/** What each era is like, after how it begins (own, STORY-120). */
+const ERA_TEXT: Record<Era, string> = {
+  early: 'Kaupunkien tarinat kerrotaan nuotioilla lauluina.',
+  iron: 'Kirjurit pitävät aikakirjaa, ja kaupunkien vaiheet kirjataan päivältä päivälle.',
+  medieval: 'Luostarien kronikoitsijat kirjaavat kaupunkien vaiheet, ja muurit ja linnat suojaavat kansaa.',
+  renaissance: 'Kirjapainot levittävät historiaa, ja purjelaivat kulkevat valtamerten yli.',
+  industrial: 'Tehtaat ja rautatiet muuttavat kaupungit, ja sanomalehdet kertovat niiden elämästä.',
+  modern: 'Radio kertoo uutiset, ja koneet kulkevat maalla ja ilmassa.',
+  atomic: 'Atomin voima on kansan käsissä, ja kaupunkien vaiheet tallentuvat arkistoihin.',
+};
+
 function eraPage(e: Era): Page {
   const people = ALL_PERSONS.filter(p => p.era === e);
-  const text: Segment[] = e === 'early' ? ['Pelin alku. Neuvonantajina ovat varhaisajan henkilöt.']
-    : ['Alkaa, kun kansa keksii ', advanceRef('iron'), '. Neuvonantajiksi tulevat uudet henkilöt omine bonuksineen.'];
+  const key = ERA_KEYS[e];
+  const begins: Segment[] = e === 'early' ? ['Pelin alku. ']
+    : key ? ['Alkaa, kun kansa keksii ', advanceRef(key), '. ']
+    : ['Aikakauden keksinnöt tulevat peliin myöhemmin. '];
+  const advances = ADVANCE_LIST.filter(a => ADVANCE_ERA[a] === e);
+  const facts: Page['facts'] = [];
+  if (advances.length) facts.push({ label: 'Keksinnöt', value: list(advances.map(a => advanceRef(a))) });
+  facts.push({ label: 'Neuvonantajat', value: list(people.map(personRef)) });
   return {
-    key: `era/${e}`, kicker: 'Aikakausi', title: ERA_NAMES[e], text,
-    facts: [{ label: 'Neuvonantajat', value: list(people.map(personRef)) }],
+    key: `era/${e}`, kicker: 'Aikakausi', title: ERA_NAMES[e],
+    text: [...begins, ERA_TEXT[e], ' Neuvonantajina ovat aikakauden henkilöt omine bonuksineen.'],
+    facts,
   };
 }

@@ -37,6 +37,7 @@ import { RANSOM_GOLD, tribeBand, tribeCamp, tribeOf, tribeRaids, TRIBE_REACH, ty
 import { armyNeeded, attackWins, ATTACK, ATTACKERS, MAX_ARMY, isAttacker, warRoll, type WarEvent, type WarWorld } from '../game/war';
 import { ADVISOR_LEVELS, chainAdvice, PLANET_ADVISOR_LIST, planetTarget, townAdvice, TOWN_ADVISOR_LIST, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
 import { personOf, type Era } from '../game/persons';
+import { eraOf } from '../game/eras';
 import { CITY_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, STATE_PLANS, cityAdvice, expeditionTarget, provinceGoalTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { advanceRef, buildRef, resourceRef } from '../game/codex';
 import { city as cityRef, unit as unitRef, type Rich, type Segment } from '../game/rich';
@@ -1612,7 +1613,8 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
 }
 
 /** The era of the people: the iron age with Rautatyö (own, until Sami decides the era's condition). */
-export const eraNow = (): Era => (play?.research.known.has('iron') ? 'iron' : 'early');
+/** The era now: the latest whose key advance is known (STORY-120, eras.ts). */
+export const eraNow = (): Era => (play ? eraOf(play.research.known) : 'early');
 
 /** The chosen advisor of a level. */
 export function chosenAdvisor(level: AdvisorLevel): string {

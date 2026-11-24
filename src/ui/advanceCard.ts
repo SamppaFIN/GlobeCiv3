@@ -12,7 +12,9 @@
 import type { Building } from '../game/cities';
 import type { FirstScope } from '../game/commands';
 import type { Advance, Study } from '../game/science';
+import type { Person } from '../game/persons';
 import { advanceSvg } from './advanceArt';
+import { portraitSvg } from './portraits';
 import { renderRich, type RichLinks } from './richText';
 import type { Rich } from '../game/rich';
 
@@ -33,12 +35,19 @@ export interface AdvanceView {
   firsts: { build: Building; name: string; scopes: FirstScope[] }[];
   /** Cards waiting after this one. */
   more: number;
+  /** The era the advance opens (STORY-120), and the three persons it brings to the level in view; null for other advances. */
+  era: { name: string; persons: { person: Person; bonus: string; page: string }[] } | null;
 }
 
 export interface AdvanceCard {
   /** Show the card, or update it: a card of the same advance keeps the player's choices. */
   show(view: AdvanceView): void;
   hide(): void;
+  /**
+   * The Tietokirja open over the card (STORY-120, Utu's review): the card steps aside, out of
+   * sight and of reach, and when it comes back the focus returns to the row that opened the page.
+   */
+  cover(covered: boolean): void;
   readonly visible: boolean;
 }
 
@@ -54,8 +63,13 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   el.innerHTML = `
     <div class="advance-head">
       <div class="advance-card-art" aria-hidden="true"></div>
-      <div class="city-titles"><span id="advance-kicker" class="city-kicker"></span><h2 id="advance-title" class="city-name"></h2></div>
+      <div class="city-titles"><span id="advance-kicker" class="city-kicker"></span><h2 id="advance-title" class="city-name" tabindex="-1"></h2></div>
     </div>
+    <section class="advance-era" aria-labelledby="advance-era-title" hidden>
+      <h3 id="advance-era-title" class="advance-era-title"></h3>
+      <span class="city-hint">Uudet neuvonantajat:</span>
+      <ul class="advance-era-people"></ul>
+    </section>
     <dl class="codex-facts advance-facts"></dl>
     <div class="city-builds advance-studies" role="radiogroup" aria-labelledby="advance-studies-label">
       <span id="advance-studies-label" class="city-build-label">Tutki seuraavaksi</span>
@@ -70,6 +84,9 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   const go = q<HTMLButtonElement>('.advance-go');
   let view: AdvanceView | null = null;
+  /** The person's row that opened the Tietokirja over the card, and whether the card is covered. */
+  let opener: HTMLButtonElement | null = null;
+  let covered = false;
   /** Where the focus was before the card: it goes back there (Utu's review). */
   let before: HTMLElement | null = null;
   let study: Study | null = null;
@@ -97,9 +114,29 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   const render = () => {
     if (!view) return;
     const v = view;
-    const key = JSON.stringify([v.options, v.suggestion, v.firsts, v.more]);
+    const key = JSON.stringify([v.options, v.suggestion, v.firsts, v.more, v.era?.name ?? null]);
     if (key !== drawn) {
       drawn = key;
+      // A new era told in words, its persons a row each that opens their page (STORY-120)
+      const era = q('.advance-era');
+      era.hidden = !v.era;
+      const people = q('.advance-era-people');
+      people.replaceChildren();
+      if (v.era) {
+        q('.advance-era-title').textContent = `Uusi aikakausi: ${v.era.name}`;
+        for (const x of v.era.persons) {
+          const li = document.createElement('li');
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'advance-era-person';
+          b.innerHTML = `<span class="advisor-face">${portraitSvg(x.person, 40)}</span><span class="advance-era-text"><span class="advance-era-name"></span><span class="advisor-bonus"></span></span>`;
+          b.querySelector('.advance-era-name')!.textContent = `${x.person.name} ${x.person.title}`;
+          b.querySelector('.advisor-bonus')!.textContent = x.bonus;
+          b.addEventListener('click', () => { opener = b; on.links?.page?.(x.page); });
+          li.appendChild(b);
+          people.appendChild(li);
+        }
+      }
       choices.clear();
       const studies = q('.advance-studies');
       studies.querySelectorAll('.city-build').forEach(b => b.remove());
@@ -168,10 +205,23 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
         before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
         el.hidden = false;
         root.classList.add('advance-open');
-        (go.disabled ? el.querySelector<HTMLButtonElement>('.advance-studies .city-build') ?? go : go).focus();
+        // The card read from its top: the focus on its title, as in the Tietokirja, so a new era and
+        // its persons are not scrolled away on a phone (STORY-120); Tab goes on to the choices
+        el.scrollTop = 0;
+        q('#advance-title').focus();
       }
     },
+    cover(on) {
+      if (on === covered) return;
+      covered = on;
+      el.inert = on;
+      el.style.visibility = on ? 'hidden' : '';
+      // The row that opened the page takes the focus back (hud.css: the card has no transition)
+      if (!on && opener?.isConnected && !el.hidden) opener.focus();
+      if (!on) opener = null;
+    },
     hide() {
+      if (covered) this.cover(false);
       const had = el.contains(document.activeElement);
       el.hidden = true;
       view = null;
