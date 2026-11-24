@@ -19,7 +19,7 @@
    kuvernöörit noudattavat sitä, kunnes rakennus on valmis.
 5. **Ydinsota avautuu** (Samin viesti 15:34).
 
-## Oletukset, jotka Sami vahvistaa (kysymys keskeytyi)
+## Oletukset (kysymys keskeytyi; Sami vahvisti ne 2026-11-24)
 
 | Kysymys | Oletus | Vaihtoehto |
 |---|---|---|
@@ -102,7 +102,7 @@ Yksityiskohdat ja niiden kysymykset ovat STORY-123:n suunnitelmassa.
 
 ## Avoimet kysymykset
 
-1. Yllä olevan taulukon oletukset (laivat, ydinsota, henkilöt, järjestys ja MVP).
+1. ~~Yllä olevan taulukon oletukset (laivat, ydinsota, henkilöt, järjestys ja MVP).~~ Ratkaistu 2026-11-24: Sami valitsi oletukset. Aikakausien avaimet tulevat peliin keksintöineen storyissa 121–123 (PLAN-101).
 2. Avainkeksinnöt: Ruuti, Metallurgia, Teräs, Auto ja Ydinfissio. Höyryvoima, jota
    tasot-ja-aikakaudet.md ehdotti, ei ole ketjussa: sen voi keksiä ennen metallurgiaa.
 3. Saastuminen pois vai mukaan.

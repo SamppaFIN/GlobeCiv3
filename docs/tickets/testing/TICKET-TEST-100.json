@@ -22,8 +22,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Ajetaan mergen jälkeen",
-        "outcome": "not_run"
+        "result": "GitHub Actions ajo 45254681918 (commit c643442, sisältää STORY-117:n korjaukset, STORY-118:n ja sen korjaukset sekä STORY-119:n): Vitest 61 tiedostoa ja 365 testiä, Playwright 122 läpi, joista 2 vaihtelijaa uusinnassa läpi (chains.e2e:22 kivivarasto 1 eikä 0, kun louhos ehti tuottaa ennen lukua; play.e2e:57 1×-päivä 1,19 s rajan 1,2 alla, sama vaihtelija kuin ennen). Välissä ajettu ee66bca (STORY-117 ennen katselmoinnin korjauksia) oli punainen: province-goal.e2e ja province.e2e, jotka menivät läpi korjausten jälkeen. Pages julkaistiin c643442:sta.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-23T19:46:30Z",
+    "generated_at": "2026-11-24T06:45:00Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "9724797",
+    "git_commit": "c643442",
     "git_branch": "main",
     "language": "fi"
   },
@@ -3087,14 +3087,14 @@
         "STORY-118"
       ],
       "acceptance_criteria": [
-        "Aikakaudet ovat varhaisaika, rauta-aika, keskiaika, uusi aika, teollinen aika, moderni aika ja atomiaika, ja aikakausi on myöhäisin, jonka avainkeksintö tunnetaan (Rautatyö, Ruuti, Metallurgia, Teräs, Auto ja Ydinfissio; omat). Uusi aikakausi kerrotaan keksintökortissa ja kertomuksessa.",
+        "Aikakaudet ovat varhaisaika, rauta-aika, keskiaika, uusi aika, teollinen aika, moderni aika ja atomiaika, ja aikakausi on myöhäisin, jonka avainkeksintö tunnetaan (Rautatyö, Ruuti, Metallurgia, Teräs, Auto ja Ydinfissio; omat). Avaimet tulevat peliin keksintöineen storyissa 121–123, joten tämän storyn jälkeen pelissä tavataan varhaisaika ja rauta-aika ja muut aikakaudet Tietokirjassa (Sami 2026-11-24). Uusi aikakausi kerrotaan keksintökortissa ja kertomuksessa.",
         "Jokainen aikakausi tuo jokaiselle 15 neuvonantajaroolille nimetyn henkilön omine bonuksineen, ja muotokuvan vaatteet ja päähine tulevat aikakaudesta. Aikakaudet ja henkilöt ovat Tietokirjassa.",
         "Vanha tallennus latautuu, ja sen aikakausi lasketaan sen tunnetuista keksinnöistä."
       ],
-      "status": "todo",
+      "status": "in_progress",
       "progress": 0,
       "linked": {
-        "plan": null,
+        "plan": "PLAN-101",
         "implementation": null,
         "testing": null
       }

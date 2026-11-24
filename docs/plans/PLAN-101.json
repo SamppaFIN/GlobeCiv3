@@ -1,0 +1,84 @@
+{
+  "id": "PLAN-101",
+  "story": "STORY-120",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-23",
+  "approach": "Aikakausien runko ja henkilöt nyt, avainkeksinnöt aikakausiensa keksintöjen mukana storyissa 121–123. 1) Aikakaudet: persons.ts:n Era laajenee seitsemään (early, iron, medieval, renaissance, industrial, modern, atomic; Varhaisaika, Rauta-aika, Keskiaika, Uusi aika, Teollinen aika, Moderni aika ja Atomiaika). Uusi ERA_KEYS listaa aikakauden avainkeksinnön vain niille aikakausille, joiden keksintö on jo pelissä: nyt rauta-aika ja Rautatyö. Storyt 121, 122 ja 123 lisäävät Ruudin, Metallurgian, Teräksen, Auton ja Ydinfission sitä mukaa kuin ne tulevat peliin, joten Advance-tyyppi pysyy tarkkana eikä peliin tule keksintöjä ilman vaikutusta. eraOf(known, keys = ERA_KEYS) on myöhäisin aikakausi, jonka avain tunnetaan, ja eraNow käyttää sitä; avaintaulu on parametri, jotta testi ajaa kaikki seitsemän aikakautta keksityillä avaimilla. Oma tutkimus kulkee ketjua pitkin, mutta kauppa ja resurssirakennuksen palkinto voivat antaa keksinnön ilman sen vaatimuksia, joten aikakausi voi hypätä yhden yli: silloin kertomus kirjaa uuden aikakauden ja välistä jäänyt aikakausi jää kokematta (oma sääntö, kirjataan). Uusi ADVANCE_ERA: Record<Advance, Era> kertoo jokaisen pelissä olevan keksinnön aikakauden docs/design/tiede-ja-aikakaudet.md:n taulukon mukaan (oma jako). main.ts:n oma eraName (known.has('iron')) poistuu, ja sen paikalla on ERA_NAMES[eraNow()]. Jokainen 'early ? … : rauta'-ehto (kertomuksen viimeinen rivi, muotokuvan päähine ja Tietokirjan aikakausisivu) korvataan Record<Era, …>-taululla, jonka TypeScript pakottaa täyteen. Kultaiset tilat eivät muutu, koska rauta-aika alkaa kuten ennen. 2) Henkilöt: PEOPLE saa jokaiselle 15 roolille viisi uutta henkilöä (75), omat nimet ja arvonimet, jotka eivät ole yksiköiden etunimiä (GIVEN_NAMES) eivätkä todellisten henkilöiden nimiä. Jokaisella on yksi bonus samoista lajeista kuin nyt, ja määrä kasvaa aikakausittain (omat luvut, kalibroidaan pelissä): tuotot, kulta, tiede ja leipä 1, 2, 2, 3, 3, 4 ja 4; puolustus ×1,25, 1,5, 1,5, 1,75, 1,75, 2 ja 2; uudisasukas 10, 20, 20, 25, 25, 30 ja 30 tuotantoa halvempi (enintään 30, joten uudisasukas maksaa aina vähintään 10); näkö 1–3 rengasta. Laji kelpaa aina tasonsa kohteisiin (bonuses.ts). Nimet tarkistetaan käsin, ettei yksikään ole tunnetun todellisen henkilön nimi. 3) Muotokuvat: portraits.ts saa jokaiselle aikakaudelle oman kankaan ja reunuksen sekä päähineen sotilaalle ja muille (keskiaika kypärä ja huppu, uusi aika morioni ja baretti, teollinen aika lakki ja silinteri, moderni aika teräskypärä ja lippalakki, atomiaika visiirikypärä ja kuulokkeet). Omaa piirrosta, ei esikuvia. 4) Kertomus: history.ts saa jokaiselle aikakaudelle oman äänen kaikille tapahtumalajeille ja avauslauseen (keskiaika luostarin aikakirja, uusi aika painettu historia, teollinen aika sanomalehti, moderni aika uutiset, atomiaika arkisto), ja kaupunkien kertomus kirjaa aikakauden vaihdon kuten nyt. 5) Keksintökortti: kun saatu keksintö on aikakauden avain, kortin yläreunassa on rivi 'Uusi aikakausi: X', ja sen alla ovat pelaajan nykyisen tason kolme uutta neuvonantajaa yhdellä rivillä: 40 px:n muotokuva (aria-hidden) ja nimi, arvonimi ja bonus tekstinä, ja koko rivi on vähintään 44 px korkea linkki Tietokirjaan. Rivi on tekstiä eikä pelkkää väriä (WCAG 1.4.1), ja kortin tutkimusvalinnat ja Jatka näkyvät puhelimella (360 × 640) ilman koko sivun vieritystä: kortti vierittää sisältöään, ja Jatka on sen alapalkissa. 6) Tietokirja: seitsemän aikakauden sivua: mistä aikakausi alkaa (avainkeksintö, kun se on pelissä, muuten 'tulee peliin myöhemmin'), sen keksinnöt, jotka ovat pelissä, ja sen 15 henkilöä. advanceEffectsin Aikakausi-rivi tulee ERA_KEYSista eikä ole enää Rautatyön erikoistapaus. 7) Tallennus: rakenne ei muutu (sääntö 8). Aikakausi lasketaan tunnetuista keksinnöistä, ja kertomuksen era-tapahtuma tarkistetaan laajennetusta ERAS-listasta, joten vanha tallennus latautuu sellaisenaan (testi). Era-tapahtuman aikakautta ei verrata pelin tilaan, koska se vaikuttaa vain kertomuksen ääneen (kirjataan tarkoitukselliseksi). chronicleEra ei tallennu, joten lataus ei kirjaa vaihtoa toiseen kertaan (testi). Sami hyväksyi suunnitelman 2026-11-24: avaimet storyissa 121–123, 75 henkilöä, laivoille ja lentokoneille oma maavaikutus (STORY-122 ja 123), ja epic tehdään ennen STORY-014:ää eikä se ole MVP:ssä. Utu katselmoi suunnitelman Anun sijasta (hyväksytty muutoksin, löydökset yllä).",
+  "alternatives_considered": [
+    {
+      "name": "Kaikki 67 keksintöä tiedepuuhun jo nyt ilman vaikutuksia",
+      "pros": "Kaikki seitsemän aikakautta ovat pelattavissa heti, ja tiedepuu on valmis",
+      "cons": "52 keksintöä, joilla ei ole muuta vaikutusta kuin seuraava keksintö, vastoin Samin toivetta selkeistä vaikutuksista; jokainen tarvitsisi heti kuvan ja lausahduksen (STORY-109), joten story kasvaisi kolminkertaiseksi; storyt 121–123 menettäisivät rajansa",
+      "rejected_because": "Keksintö ilman vaikutusta on kuollut valinta. Avain tulee peliin aikakautensa vaikutusten kanssa."
+    },
+    {
+      "name": "Henkilöt kunkin aikakauden storyssa (121–123) eikä nyt",
+      "pros": "Jokainen story on kokonainen aikakausi; ei henkilöitä, joita ei vielä tavata pelissä",
+      "cons": "STORY-120:n toinen kriteeri vaatii henkilöt nyt, ja muotokuvien vaatteet suunnitellaan yhtenä sarjana helpommin",
+      "rejected_because": "Kriteeri ja yhtenäinen ilme. Tietokirja näyttää henkilöt jo nyt."
+    },
+    {
+      "name": "Aikakausi tieteen määrästä tai keksintöjen lukumäärästä",
+      "pros": "Ei riipu yksittäisestä keksinnöstä",
+      "cons": "Sami valitsi avainkeksinnöt",
+      "rejected_because": "Samin valinta 2026-11-23"
+    }
+  ],
+  "files_to_change": [
+    "src/game/persons.ts",
+    "src/game/bonuses.ts (vain kommentti omista luvuista)",
+    "src/game/science.ts (ADVANCE_ERA)",
+    "src/ui/portraits.ts",
+    "src/game/history.ts",
+    "src/game/codex.ts",
+    "src/sim/game.ts (eraOf, eraNow)",
+    "src/ui/advanceCard.ts",
+    "src/ui/hud.css",
+    "src/globe/main.ts (eraName pois)",
+    "src/game/persons.test.ts",
+    "src/game/history.test.ts",
+    "src/game/codex.test.ts",
+    "src/game/save.test.ts",
+    "tests/e2e/advance-card.e2e.ts",
+    "tests/e2e/codex.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Seitsemän aikakautta, ERA_KEYS ja ADVANCE_ERA; eraOf(known, keys) ja eraNow avaimista; main.ts:n eraName pois",
+      "verify": "Vitest: eraOf tyhjästä on varhaisaika ja Rautatyöstä rauta-aika; keksityillä avaimilla jokainen seitsemästä aikakaudesta, hyppy yhden yli ja aikakausi, joka ei laske; aikakausi, jonka avain ei ole pelissä, ei tule; jokaisella keksinnöllä on aikakausi; kultaiset tilat ennallaan Nodessa ennen ja jälkeen (run.test)"
+    },
+    {
+      "step": 2,
+      "action": "75 uutta henkilöä bonuksineen",
+      "verify": "Vitest persons.test: 105 henkilöä (kovakoodattu 30 muuttuu 105:ksi, sanotaan ääneen), nimet uniikkeja eivätkä yksiköiden etunimiä tai yksikkölajien nimiä, ei esikuvapelien nimiä, laji kelpaa tason kohteisiin, uudisasukkaan alennus enintään 30, ja määrä ei laske saman lajin sisällä saman roolin ketjussa"
+    },
+    {
+      "step": 3,
+      "action": "Muotokuvien vaatteet ja päähineet aikakausittain",
+      "verify": "Vitest: sama henkilö eri aikakausilla antaa eri SVG:n (vaatteet ja päähine), ja SVG on vain vakioista koottu; kuvakaappaus Tietokirjan aikakausisivuista"
+    },
+    {
+      "step": 4,
+      "action": "Kertomuksen äänet ja avauslauseet viidelle uudelle aikakaudelle",
+      "verify": "Vitest history.test: jokainen tapahtumalaji jokaisella aikakaudella, viimeinen rivi jokaisella aikakaudella omalla äänellään, ja kertomus, jossa aikakausi vaihtuu kahdesti, kertoo kummankin avauksen"
+    },
+    {
+      "step": 5,
+      "action": "Uusi aikakausi keksintökorttiin",
+      "verify": "E2E advance-card: Rautatyön kortti kertoo uuden aikakauden tekstinä ja tason kolme uutta neuvonantajaa nimineen ja bonuksineen; muun keksinnön kortissa ei ole riviä; puhelimella (360 × 640) tutkimusvalinnat ja Jatka näkyvät; kuvakaappaukset puhelimella ja työpöydällä"
+    },
+    {
+      "step": 6,
+      "action": "Tietokirjan aikakausisivut ja advanceEffectsin Aikakausi-rivi",
+      "verify": "Vitest codex.test ja E2E codex: seitsemän sivua, henkilöt linkkeinä, avaimeton aikakausi kertoo tulevansa myöhemmin, ja advanceEffectsin Aikakausi-rivi tulee ERA_KEYSista"
+    },
+    {
+      "step": 7,
+      "action": "Tallennus ja koko sarja",
+      "verify": "Vitest save.test: vanha tallennus, jonka kertomuksessa on era-tapahtuma, latautuu, tuntematon aikakausi hylätään, eikä lataus kirjaa aikakauden vaihtoa toiseen kertaan; koko Vitest ja E2E (golden, codex, advance-card, science-tree) vihreinä"
+    }
+  ],
+  "status": "approved"
+}
