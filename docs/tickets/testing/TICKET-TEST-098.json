@@ -96,6 +96,12 @@
         "expected": "Vihreä",
         "result": "Läpi; unlock.e2e:60 (tunnettu vaihtelija) ja play.e2e:57 (1×-nopeuden mittaus 1,19 s, kun raja on 1,2) läpi uusinnassa samalla buildilla",
         "outcome": "pass"
+      },
+      {
+        "steps": "CI-löydös 2026-11-24 (ajo 45400505033, feef51b): war.e2e.ts aikakatkaistiin, koska peli kulki maaliskuvassa tauon jälkeen. Vitest dayQueue.test.ts: päivä kesken ja yksi jonossa, sitten kymmenen framea tauolla",
+        "expected": "Kesken oleva päivä lasketaan loppuun, eikä uutta ala",
+        "result": "Vanhalla logiikalla punainen (toinen päivä alkoi tauolla), korjauksen jälkeen vihreä; koko Vitest 65 tiedostoa ja 402 testiä vihreinä",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

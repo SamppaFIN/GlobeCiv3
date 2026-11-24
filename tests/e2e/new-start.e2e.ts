@@ -82,7 +82,8 @@ test('a new game flies down to the city level of a built capital; the ready sett
   await page.waitForFunction(() => {
     const b: string[] = (window as any).globeGame.state.cities[0].buildings;
     if (!['lumberjack', 'sawmill', 'quarry'].every(x => b.includes(x))) return false;
-    (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement | null)?.click();
+    // By the state, not the label: the label follows the clock a frame late (CI 2026-11-24)
+    if (!(window as any).globeGame.state.paused) (document.querySelector('.hud-pause') as HTMLButtonElement).click();
     return true;
   }, null, { timeout: 60_000 });
   await expect(page.locator('.hud-meter-value')).toHaveText(/^[12] \/ 3$/);

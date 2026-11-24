@@ -25,7 +25,8 @@ const pause = async (page: Page) => {
 const pauseWhenLost = (page: Page, tile: number) => page.waitForFunction(t => {
   const w = window as any;
   if (w.globeGame.state.cities.some((c: { tile: number }) => c.tile === t)) return false;
-  if (!w.globeGame.state.paused) (document.querySelector('button[aria-label="Tauko"]') as HTMLButtonElement).click();
+  // By the state, not the label: the label follows the clock a frame late (CI 2026-11-24)
+  if (!w.globeGame.state.paused) (document.querySelector('.hud-pause') as HTMLButtonElement).click();
   return true;
 }, tile, { timeout: 60_000 });
 

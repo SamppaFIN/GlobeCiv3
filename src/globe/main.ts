@@ -85,6 +85,7 @@ import { createAdvanceCard, type AdvanceView } from '../ui/advanceCard';
 import { createDiscoveryCard, type ChoiceKind } from '../ui/discoveryCard';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOODS, has as stockOf, readySettlements, settlementDone, settlementSteps, SETTLEMENT_SIZE, siteMissing, waitsForBase, BUILD_DAYS, type Good } from '../game/chains';
 import { cityLuxury, isWonder, sizeLimit, SIZE_LIMIT, tileOutput, BUILDS, buyCost, cityGold, cityRings, cityScience, cityYield, daysToBuild, daysToGrow, granary, isBuilding, CITY_RINGS, UPKEEP, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, type City, type CityYield, type Focus } from '../game/cities';
+import { frameDays, type DayWork } from '../game/dayQueue';
 import { createCityCard, type CityView } from '../ui/cityCard';
 
 // ─── Scene setup ──────────────────────────────────
@@ -2987,16 +2988,15 @@ const tileSpacing = () => (RADIUS * Math.acos(1 / Math.sqrt(5))) / 330;
  */
 let stepMode = false;
 
-/**
- * Days that passed and wait to be worked out (STORY-117): a day goes over several frames, at
- * most DAY_BUDGET_MS of each, so a late game does not stutter at every day's turn. The budget is
- * 3 ms and not 4: a part of a day, one unit's search at most, takes up to about 5 ms (Node,
- * days 300–330), and the slice that ends with it stays within the frame's 8 ms (Utu's review).
- */
+/** Days that passed and wait to be worked out a slice a frame (STORY-117, dayQueue.ts). */
 let daysDue = 0;
-/** At most this many days wait in the queue (own): a slow device plays slower rather than works days out in one frame. */
-const MAX_DAYS_DUE = 2;
-const DAY_BUDGET_MS = 3;
+const dayWork: DayWork = {
+  running: () => dayRunning(),
+  start: () => startDay(++clock.day),
+  step: ms => stepDay(ms),
+  held: () => !!play && (pending(play).length > 0 || unlockCard.visible),
+  now: () => performance.now(),
+};
 /** The play update's JS time in the last frames, for the 8 ms measure (STORY-117). */
 const playMs: number[] = [];
 /** The slices of the stepped days when measured (STORY-117): the budget, and each slice's time. */
@@ -3028,24 +3028,12 @@ function updatePlay(dt: number) {
     // The clock's days wait in a queue, and the clock's day is the one last begun, so that a
     // command and a save take the day the game is on (Utu's review: the clock ran ahead of the
     // days worked out). A device too slow for the queue plays slower rather than stutters (own).
+    let fresh = 0;
     if (!blocked) {
-      const days = clock.advance(dt);
-      clock.day -= days;
-      daysDue = Math.min(MAX_DAYS_DUE, daysDue + days);
+      fresh = clock.advance(dt);
+      clock.day -= fresh;
     }
-    // A pause or a card: the days after it wait as before
-    if ((blocked || clock.paused) && !dayRunning()) daysDue = 0;
-    const started = performance.now();
-    while (dayRunning() || (daysDue > 0 && !pending(play).length && !unlockCard.visible)) {
-      const left = DAY_BUDGET_MS - (performance.now() - started);
-      if (left <= 0) break;
-      if (!dayRunning()) {
-        daysDue--;
-        startDay(++clock.day);
-      }
-      if (!stepDay(left)) break;
-    }
-    if (!dayRunning() && (pending(play).length || unlockCard.visible)) daysDue = 0;
+    daysDue = frameDays(daysDue, fresh, clock.paused, !!blocked, dayWork);
   }
   play.selected = Math.max(0, play.units.units.indexOf(selectedUnit));
   // The cards an advisor answers itself, also those waiting in a loaded game
