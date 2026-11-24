@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-24T13:09:05Z",
+    "generated_at": "2026-11-24T13:19:54Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "ecdcd64",
+    "git_commit": "feef51b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -273,7 +273,7 @@
         "STORY-126",
         "STORY-127"
       ],
-      "progress": 67
+      "progress": 100
     },
     {
       "id": "EPIC-013",
@@ -3260,12 +3260,12 @@
         "Mykistysnappi on ydinsodan paneelissa, valinta säilyy käynnistysten välillä, eikä ääni soi, kun välilehti on taustalla.",
         "Äänet eivät koske varsinaiseen peliin, ja ydinsota toimii myös ilman Web Audiota."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-104",
+        "implementation": "TICKET-IMPL-104",
+        "testing": "TICKET-TEST-104"
       }
     }
   ]

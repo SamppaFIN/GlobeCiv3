@@ -42,6 +42,7 @@ import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '.
 import { createCityQuick } from '../ui/cityQuick';
 import { createWarPanel, type CityRef } from '../ui/nuclearPanel';
 import { StrikeLayer } from './strikes';
+import { createSounds } from '../ui/sound';
 import { economy, type CityEconomy } from '../game/economy';
 import { heldIn, type Conquest } from '../game/conquest';
 import { nativeStrength, type NativeCity } from '../game/cityStates';
@@ -840,6 +841,8 @@ function buyCity(c: City) {
 // globe (the seed's). The war goes in rounds as the old game's did (src/game/nuclear.ts), and
 // its flights and blasts are drawn in this scene (src/globe/strikes.ts, rule 1).
 const strikes = planetTrial ? new StrikeLayer(RADIUS) : null;
+// The war's sounds: made only in the trial, started by the first tap (STORY-127)
+const sounds = planetTrial ? createSounds() : null;
 if (strikes) scene.add(strikes.group);
 const warPanel = planetTrial && strikes ? (() => {
   const seed = params.has('seed') ? Number(params.get('seed')) : 42;
@@ -879,6 +882,7 @@ const warPanel = planetTrial && strikes ? (() => {
       rig.flyTo(mid.normalize(), dist, reduceMotion() ? 0 : 0.6 / speed);
     },
     clear: () => strikes.clear(),
+    sounds: sounds!,
     tint: list => tiles.setStateTints(list && list.map(t => ({ state: t.state, color: new THREE.Color(t.color), amount: t.amount }))),
     reduceMotion,
     // Back to the start screen, where a saved game waits as it was (STORY-119)
@@ -889,7 +893,7 @@ const warPanel = planetTrial && strikes ? (() => {
   }, seed, realms);
 })() : null;
 // For tests: the war, and the flights and blasts running
-if (warPanel) Object.assign(window, { globeWar: Object.assign(warPanel, { strikes: () => strikes?.state, layer: strikes }) });
+if (warPanel) Object.assign(window, { globeWar: Object.assign(warPanel, { strikes: () => strikes?.state, layer: strikes, sound: () => ({ started: sounds!.started, muted: sounds!.muted }) }) });
 
 function updateWar(_dt: number) {
   if (!warPanel || !strikes) return;

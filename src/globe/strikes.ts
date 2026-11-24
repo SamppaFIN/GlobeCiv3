@@ -249,10 +249,10 @@ export class StrikeLayer {
   }
 
   /** Flights and blasts running now, for tests: their kind and age in seconds. */
-  get state(): { flights: { kind: FlightKind; age: number; shown: number; end: number }[]; blasts: { age: number; small: boolean }[] } {
+  get state(): { flights: { kind: FlightKind; age: number; shown: number; end: number; start: number; seconds: number }[]; blasts: { age: number; small: boolean }[] } {
     const now = performance.now();
     return {
-      flights: this.flights.map(f => ({ kind: f.kind, age: (now - f.start) / 1000, shown: f.shown, end: f.end })),
+      flights: this.flights.map(f => ({ kind: f.kind, age: (now - f.start) / 1000, shown: f.shown, end: f.end, start: f.start, seconds: f.seconds })),
       blasts: this.blasts.map(b => ({ age: (now - b.start) / 1000, small: b.small })),
     };
   }
