@@ -45,6 +45,8 @@ export interface RegionEntry {
   firstChild: number;
   /** Number of listed children (0..7). */
   childCount: number;
+  /** The region's own id at its level (a state's 0 … 361). */
+  id: number;
 }
 
 export class Regions {
@@ -181,11 +183,11 @@ export class Regions {
    */
   entriesForTile(tile: Tile): RegionEntry[] {
     const entries: RegionEntry[] = [];
-    const add = (center: THREE.Vector3, level: RegionLevel, parent: number) => {
-      entries.push({ center, level, parent, firstChild: 0, childCount: 0 });
+    const add = (center: THREE.Vector3, level: RegionLevel, parent: number, id: number) => {
+      entries.push({ center, level, parent, firstChild: 0, childCount: 0, id });
       return entries.length - 1;
     };
-    const stateSlots = this.near(tile, 0).slice(0, MAX_TILE_REGIONS).map(([, id]) => ({ id, slot: add(this.centers[0][id], 0, -1) }));
+    const stateSlots = this.near(tile, 0).slice(0, MAX_TILE_REGIONS).map(([, id]) => ({ id, slot: add(this.centers[0][id], 0, -1, id) }));
     let parents = stateSlots;
     for (const level of [1, 2] as RegionLevel[]) {
       if (tile.level < FIRST_TILE_LEVEL[level]) break;
@@ -197,7 +199,7 @@ export class Regions {
         if (!kids.length || entries.length + kids.length > MAX_TILE_REGIONS) continue;
         entries[p.slot].firstChild = entries.length;
         entries[p.slot].childCount = kids.length;
-        for (const id of kids) next.push({ id, slot: add(this.centers[level][id], level, p.slot) });
+        for (const id of kids) next.push({ id, slot: add(this.centers[level][id], level, p.slot, id) });
       }
       parents = next;
     }
