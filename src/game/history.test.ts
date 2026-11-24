@@ -123,6 +123,18 @@ describe('the chronicle in seven eras (STORY-120)', () => {
     }
   });
 
+  it('tells an unnamed founder as one settler in every era, in the singular its sentences use', () => {
+    for (const era of Object.keys(ERAS_NOW) as (keyof typeof ERAS_NOW)[]) {
+      for (let seed = 0; seed < 6; seed++) {
+        const log: HistoryEvent[] = [{ ...founded, founder: null }, ...(era === 'early' ? [] : [{ kind: 'era', day: 0, era } as HistoryEvent])];
+        // The founding told in the era's voice: the era's opening first, then the founding
+        const told = text(narrate(town([...log.slice(1), log[0]]), seed, era, 'forest'));
+        expect(told, `${era} ${seed}`).toContain('eräs uudisasukas');
+        expect(told, `${era} ${seed}`).not.toContain('uudisasukkaat');
+      }
+    }
+  });
+
   it('opens a paragraph for each era it lived through, an era passed over not among them', () => {
     const log: HistoryEvent[] = [founded, { kind: 'era', day: 10, era: 'iron' }, { kind: 'grew', day: 12, size: 3 },
       { kind: 'era', day: 40, era: 'renaissance' }, { kind: 'grew', day: 45, size: 5 }];

@@ -1,8 +1,8 @@
 /**
  * eras.ts — the seven eras and what opens them (STORY-120; Sami 2026-11-23: all the eras, each
  * opened by a key advance). Freeciv's civ1 rules have no eras, so the split, the order and the
- * keys are own (docs/design/tiede-ja-aikakaudet.md): the order follows the eras of the fifth
- * game (Unciv) joined to the two the game already had, and each key needs the one before it.
+ * keys are own (docs/design/tiede-ja-aikakaudet.md): the order is the common one of history,
+ * joined to the two eras the game already had, and each key needs the one before it.
  *
  * A key is listed only once its advance is in the game: the iron age now, and the gunpowder,
  * metallurgy, steel, automobile and nuclear fission keys with their eras' advances in
@@ -24,6 +24,9 @@ export const ADVANCE_ERA: Record<Advance, Era> = {
   wheel: 'early', writing: 'early', law: 'early', mapmaking: 'early', currency: 'early',
   iron: 'iron', mathematics: 'iron', monarchy: 'iron', construction: 'iron',
 };
+
+/** The era an advance opens: the one whose key it is, if any. */
+export const eraOpenedBy = (a: Advance): Era | undefined => ERAS.find(e => ERA_KEYS[e] === a);
 
 /**
  * The era now: the latest whose key is known. Own research follows the chain, but trade and a

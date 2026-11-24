@@ -43,6 +43,11 @@ export interface AdvanceCard {
   /** Show the card, or update it: a card of the same advance keeps the player's choices. */
   show(view: AdvanceView): void;
   hide(): void;
+  /**
+   * The Tietokirja open over the card (STORY-120, Utu's review): the card steps aside, out of
+   * sight and of reach, and when it comes back the focus returns to the row that opened the page.
+   */
+  cover(covered: boolean): void;
   readonly visible: boolean;
 }
 
@@ -79,6 +84,9 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
   const q = <T extends HTMLElement>(s: string) => el.querySelector<T>(s)!;
   const go = q<HTMLButtonElement>('.advance-go');
   let view: AdvanceView | null = null;
+  /** The person's row that opened the Tietokirja over the card, and whether the card is covered. */
+  let opener: HTMLButtonElement | null = null;
+  let covered = false;
   /** Where the focus was before the card: it goes back there (Utu's review). */
   let before: HTMLElement | null = null;
   let study: Study | null = null;
@@ -124,7 +132,7 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
           b.innerHTML = `<span class="advisor-face">${portraitSvg(x.person, 40)}</span><span class="advance-era-text"><span class="advance-era-name"></span><span class="advisor-bonus"></span></span>`;
           b.querySelector('.advance-era-name')!.textContent = `${x.person.name} ${x.person.title}`;
           b.querySelector('.advisor-bonus')!.textContent = x.bonus;
-          b.addEventListener('click', () => on.links?.page?.(x.page));
+          b.addEventListener('click', () => { opener = b; on.links?.page?.(x.page); });
           li.appendChild(b);
           people.appendChild(li);
         }
@@ -203,7 +211,17 @@ export function createAdvanceCard(root: HTMLElement, on: { answer(study: Study |
         q('#advance-title').focus();
       }
     },
+    cover(on) {
+      if (on === covered) return;
+      covered = on;
+      el.inert = on;
+      el.style.visibility = on ? 'hidden' : '';
+      // The row that opened the page takes the focus back (hud.css: the card has no transition)
+      if (!on && opener?.isConnected && !el.hidden) opener.focus();
+      if (!on) opener = null;
+    },
     hide() {
+      if (covered) this.cover(false);
       const had = el.contains(document.activeElement);
       el.hidden = true;
       view = null;

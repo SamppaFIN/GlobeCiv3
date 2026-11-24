@@ -16,7 +16,7 @@ import { describeBonus } from './bonuses';
 import { CHAIN_BUILDINGS, CHAIN_RULES, GOOD_NAMES, GOODS, MEAL_FOOD, isChainBuilding, type ChainBuilding, type Good } from './chains';
 import { BUILDINGS, BUILDS, isBuilding, isResourceBuilding, isSoldier, isWonder, RESOURCE_BUILDING_LIST, RESOURCE_BUILDINGS, TERRAIN_BUILDINGS, UPKEEP, type Build, type Building, type ResourceBuilding, type TerrainBuilding } from './cities';
 import { ALL_PERSONS, ERA_NAMES, ERAS, ROLES, type Era, type Person } from './persons';
-import { ADVANCE_ERA, ERA_KEYS } from './eras';
+import { ADVANCE_ERA, ERA_KEYS, eraOpenedBy } from './eras';
 import { defenseOf } from './raids';
 import { ADVANCE_LIST, ADVANCES, KIND_TERRAIN, NEEDS, opensFrom, RESOURCE_KINDS, STUDY_COST, studyName, type Advance } from './science';
 import { RESOURCES, TERRAIN_RULES, type ResourceKind } from './terrainTypes';
@@ -214,7 +214,7 @@ export function advanceEffects(a: Advance): Page['facts'] {
   }
   if (a === 'mapmaking') facts.push({ label: 'Liike', value: ['Yksiköt kulkevat rannikkovesillä ruudun päivässä'] });
   if (a === 'monarchy') facts.push({ label: 'Hallitus', value: ['Vallankumous Monarkiaan: ruudut tuottavat täysin, ja yksiköt maksavat ylläpitoa alusta asti'] });
-  const era = ERAS.find(e => ERA_KEYS[e] === a);
+  const era = eraOpenedBy(a);
   if (era) facts.push({ label: 'Aikakausi', value: [eraRef(era), ' alkaa, ja neuvonantajiksi tulevat uudet henkilöt omine bonuksineen'] });
   const next = ADVANCE_LIST.filter(n => ADVANCES[n].needs.includes(a));
   if (next.length) facts.push({ label: 'Johtaa', value: list(next.map(n => advanceRef(n))) });
@@ -226,7 +226,7 @@ function advancePage(a: Advance, known: KnownKind): Page {
   const rewardOf = RESOURCE_BUILDING_LIST.filter(b => RESOURCE_BUILDINGS[b].reward === a);
   const more: Segment[] = a === 'mapmaking' ? ['Yksiköt kulkevat rannikkovesillä.']
     : a === 'monarchy' ? ['Kansa voi tehdä vallankumouksen Monarkiaan.']
-    : ERAS.some(e => ERA_KEYS[e] === a) ? [eraRef(ERAS.find(e => ERA_KEYS[e] === a)!), ' alkaa.'] : [];
+    : eraOpenedBy(a) ? [eraRef(eraOpenedBy(a)!), ' alkaa.'] : [];
   const facts: Page['facts'] = [
     { label: 'Vaatii', value: ADVANCES[a].needs.length ? list(ADVANCES[a].needs.map(n => advanceRef(n))) : ['ei aiempia keksintöjä'] },
   ];

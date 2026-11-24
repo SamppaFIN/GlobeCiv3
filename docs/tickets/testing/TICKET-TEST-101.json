@@ -62,6 +62,18 @@
         "outcome": "pass"
       },
       {
+        "steps": "Utun katselmointi (Sonnet) 2026-11-24: koodi ja testit kriteereittäin",
+        "expected": "Hyväksytty",
+        "result": "Hyväksytty muutoksin. Keskitaso: kortin aria-modal ja sen päälle avautuva Tietokirja olivat ristiriidassa, eikä fokus palannut riville Tietokirjan sulkeuduttua; kahden läpikuultavan kortin päällekkäisyyttä ei ollut kuvattu; tuntematon perustaja kerrottiin monikolla ('uudisasukkaat') yksikön lauseissa kaikissa seitsemässä äänessä (vika oli jo varhais- ja rauta-ajassa); Tietokirjan aikakausisivuista ei ollut kuvakaappausta. Pieni: bonusten rajat poikkesivat suunnitelman luvuista (Oppinut ja Kenraali olivat jo rauta-ajassa yli), eras.ts mainitsi Uncivin, testimuutoksen juurisyy oli kirjaamatta, arvonimi Lennättäjä, kaksi tyhjää riviä, kahdesti laskettu avain, bonuses.ts:n kommentti ja Jatkan hover pois käytöstä.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Korjaukset (Enki) ja testit: advance-card.e2e (Tietokirja kortin päällä: kortti piilossa ja inert, sulkeminen palauttaa fokuksen riville, aikakausisivu Rauta-aika linkistä, kuvakaappaukset era-codex-phone.png ja era-page-phone.png) ja history.test (nimetön perustaja jokaisella aikakaudella ja kuudella siemenellä)",
+        "expected": "Vihreä",
+        "result": "Läpi. Fokuksen palautus ei ensin toiminut: tokens.css:n vähennetyn liikkeen sääntö antaa kaikille ominaisuuksille 0,01 ms:n siirtymän, joten kortti ja sen rivit olivat vielä ensimmäisen framen piilossa, eikä rivi voinut ottaa fokusta. Kortilta ja sen sisällöltä poistettiin siirtymät. Vitest 63 tiedostoa ja 378 testiä läpi; E2E advance-card, chronicle, codex ja golden läpi.",
+        "outcome": "pass"
+      },
+      {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
         "result": "Ajetaan mergen jälkeen",

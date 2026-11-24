@@ -609,8 +609,11 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .seg-opt[hidden] { display: none; }
 
 /* An advance's card (STORY-118): the game waits on it, and the rest of the HUD steps aside */
-/* Below the top panel on a phone too, the era's persons included (STORY-120) */
+/* Below the top panel on a phone too, the era's persons included (STORY-120). No transition in it:
+   tokens.css's reduced-motion rule would keep it and its rows hidden for a frame after the
+   Tietokirja over it closes, and the row could not take the focus back */
 .advance-card { z-index: 6; max-height: min(78dvh, calc(100dvh - 190px)); }
+.advance-card, .advance-card * { transition-property: none; }
 .advance-head { display: flex; align-items: center; gap: 12px; }
 /* The svg itself is class advance-art (advanceArt.ts), as in the science tree's nodes */
 .advance-card-art { width: 64px; height: 64px; flex: none; }
@@ -620,7 +623,8 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .advance-studies[hidden], .advance-firsts[hidden], .advance-more[hidden] { display: none; }
 .advance-go { min-height: var(--touch-target); position: sticky; bottom: 0; z-index: 1; background: var(--c-surface);
   box-shadow: 0 -10px 12px color-mix(in srgb, var(--c-surface) 90%, transparent); }
-.advance-go:hover { background: color-mix(in srgb, var(--color-accent) 12%, var(--c-surface)); }
+.advance-go:hover:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 12%, var(--c-surface)); }
+.advance-go:disabled:hover { background: var(--c-surface); }
 /* Kept at the card's bottom over the text, so solid also when it waits for a study */
 .advance-go:disabled { opacity: 1; color: var(--c-muted); border-color: var(--c-divider); cursor: default; }
 /* A new era and its persons (STORY-120): a row each, the face beside the name and the bonus in words */

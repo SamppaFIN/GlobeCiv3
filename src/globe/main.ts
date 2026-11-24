@@ -49,8 +49,8 @@ import { RIVALS, type RivalUnit } from '../game/rivals';
 import { oklchToSrgb } from './colors';
 import { tribeBand, TRIBE_MOVE_DAYS } from '../game/nomads';
 import { advisorOfLevel, ADVISOR_LEVEL_NAMES, PLANET_ADVISORS, PLANET_ADVISOR_LIST, TOWN_ADVISORS, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type AdvisorLevel, type PlanetAdvisor, type TownAdvisor } from '../game/advisors';
-import { ERA_NAMES, ERAS, personOf, ROLES, type Person } from '../game/persons';
-import { ERA_KEYS } from '../game/eras';
+import { ERA_NAMES, personOf, ROLES, type Person } from '../game/persons';
+import { eraOpenedBy } from '../game/eras';
 import { describeBonus } from '../game/bonuses';
 import { CITY_ADVISORS, CITY_ADVISOR_LIST, PROVINCE_ADVISORS, PROVINCE_ADVISOR_LIST, STATE_ADVISORS, STATE_ADVISOR_LIST, type CityAdvisor, type ProvinceAdvisor, type StateAdvisor } from '../game/advisors';
 import { createAdvisorCard, type AdvisorView } from '../ui/advisorCard';
@@ -819,6 +819,8 @@ function openCodex(key: string) {
 function closeCodex() {
   codexCard.hide();
   codexTrail = [];
+  // The advance card it covered comes back at once, the focus on the row that opened it
+  if (advanceCard.visible) advanceCard.cover(false);
 }
 
 /** The player buys in a city: the card's and the quick panel's button. */
@@ -912,7 +914,6 @@ const cityQuick = createCityQuick(hud_root, {
   },
   close: () => { quickCity = null; },
 });
-
 
 /** The cities' yields, worked out once a day or when a city changes, not in every frame. */
 let yieldsCache: { key: string; yields: CityYield[] } | null = null;
@@ -2011,6 +2012,8 @@ function updateAdvanceCard() {
     if (advanceCard.visible) advanceCard.hide();
     return;
   }
+  // A page of the Tietokirja opened from the card covers it (STORY-120)
+  advanceCard.cover(codexCard.visible);
   const options = studyOptions();
   const chosen = ownHand() ? p.research.target : suggestedStudy();
   const advisor = p.stateAdvisor === 'none' ? null : STATE_ADVISORS[p.stateAdvisor].name;
@@ -2031,7 +2034,7 @@ function updateAdvanceCard() {
 
 /** The era an advance opens, with the three persons it brings to the level in view (STORY-120). */
 function eraOpened(a: Advance): AdvanceView['era'] {
-  const era = ERAS.find(e => ERA_KEYS[e] === a);
+  const era = eraOpenedBy(a);
   if (!era) return null;
   const level = advisorLevel();
   return {

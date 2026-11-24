@@ -76,7 +76,7 @@ const PEOPLE: Record<AdvisorLevel, Record<string, Record<Era, [string, string, B
     explore: {
       early: ['Taneli', 'Tienraivaaja', 'sight', 1], iron: ['Sohvi', 'Kartanpiirtäjä', 'trade', 1],
       medieval: ['Jaakko', 'Pyhiinvaeltaja', 'sight', 2], renaissance: ['Sofia', 'Karttojen kaivertaja', 'trade', 2],
-      industrial: ['Viktor', 'Maanmittausinsinööri', 'sight', 2], modern: ['Tauno', 'Lennättäjä', 'trade', 3], atomic: ['Pertti', 'Satelliittikuvaaja', 'sight', 3],
+      industrial: ['Viktor', 'Maanmittausinsinööri', 'sight', 2], modern: ['Tauno', 'Sähköttäjä', 'trade', 3], atomic: ['Pertti', 'Satelliittikuvaaja', 'sight', 3],
     },
     defend: {
       early: ['Erkki', 'Portinvartija', 'defense', 1.25], iron: ['Kreeta', 'Kilvenkantaja', 'defense', 1.5],

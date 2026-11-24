@@ -205,13 +205,26 @@ test('a key advance tells the new era and the level\'s three new persons, a pers
   expect(box.y).toBeGreaterThanOrEqual(0);
   await page.screenshot({ path: testInfo.outputPath('era-card-phone.png') });
 
-  // A person's row opens its page over the card, and closing it returns to the card
+  // A person's row opens its page over the card: the card steps aside (out of sight and reach),
+  // and closing the page brings it back with the focus on the row (Utu's review)
   await people.first().click();
   const codex = page.locator('.codex-card');
   await expect(codex).toBeVisible();
   await expect(codex).toContainText('Aatu Kastelija');
+  await expect(card).toBeHidden();
+  expect(await card.evaluate(e => (e as HTMLElement).inert)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('era-codex-phone.png') });
   await codex.getByRole('button', { name: 'Sulje Tietokirja' }).click();
   await expect(codex).toBeHidden();
+  await expect(card).toBeVisible();
+  await expect(people.first()).toBeFocused();
+  // The era's own page from its link among the effects: how it begins and its fifteen persons
+  await card.locator('.advance-facts').getByRole('button', { name: 'Rauta-aika' }).click();
+  await expect(codex.getByRole('heading', { name: 'Rauta-aika' })).toBeVisible();
+  await expect(codex).toContainText('Alkaa, kun kansa keksii Rautatyö.');
+  await expect(codex).toContainText('Kaisu Linnoittaja');
+  await page.screenshot({ path: testInfo.outputPath('era-page-phone.png') });
+  await codex.getByRole('button', { name: 'Sulje Tietokirja' }).click();
   await expect(card).toBeVisible();
 
   // On a desktop the same card

@@ -9,7 +9,9 @@
  *  - the state: the treasury and the research
  *  - the planet: the rivals' attacks on the player's cities
  *
- * The player's own hand has no bonus. Every number is own (rule 4), to be calibrated in play.
+ * The player's own hand has no bonus. Every number is own (rule 4), to be calibrated in play:
+ * the seven eras' persons (STORY-120, persons.ts) keep a kind's amount from falling in a role,
+ * and bound it to 5 a day, a defense of ×2 and a settler's discount of 30.
  */
 import type { AdvisorLevel } from './advisors';
 

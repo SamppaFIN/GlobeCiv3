@@ -237,7 +237,8 @@ export function narrate(city: Pick<City, 'id' | 'name' | 'tile' | 'buildings' | 
     const v = VOICES[voice];
     switch (e.kind) {
       case 'founded': {
-        const founder: Segment = e.founder && e.founder !== 'Uudisasukas' ? term('person', midName(e.founder)) : 'uudisasukkaat';
+        // An unnamed founder is one settler, as every voice tells it in the singular (Utu's review, STORY-120)
+        const founder: Segment = e.founder && e.founder !== 'Uudisasukas' ? term('person', midName(e.founder)) : 'eräs uudisasukas';
         say(fill(pick(v.founded, seed, city.id, e), { c: name, f: founder, p: AT[e.terrain] }));
         // The log keeps the name; its kind gives the page (STORY-104)
         const kind = RESOURCE_KINDS.find(k => RESOURCES[k].name === e.resource);

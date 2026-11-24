@@ -47,7 +47,10 @@
       "AdvanceView",
       "createAdvanceCard",
       "updateAdvanceCard",
-      "eraOpened"
+      "eraOpened",
+      "eraOpenedBy",
+      "AdvanceCard.cover",
+      "closeCodex"
     ],
     "affected_callers": [
       "Tietokirja: seitsemän aikakausisivua ja jokaisen roolin sivulla seitsemän henkilöä",
@@ -62,5 +65,5 @@
   },
   "commit": "3dc48da",
   "progress": 100,
-  "notes": "Kultaiset tilat eivät muuttuneet, koska rauta-aika alkaa kuten ennen (Node run.test ja selaimen golden.e2e vihreinä). Tallennuksen rakenne ei muuttunut: aikakausi lasketaan tunnetuista keksinnöistä, ja chronicleEra ei tallennu, joten lataus ei kirjaa vaihtoa toiseen kertaan (testi). Era-tapahtuman aikakautta ei verrata pelin tilaan, koska se vaikuttaa vain kertomuksen ääneen (tarkoituksellinen). Testejä muutettiin storyn tarkoituksen mukaan (sanottu ääneen): henkilöiden määrä 30 → 105 (persons.test ja bonuses.test), Tietokirjan sivujen määrä ja roolisivun henkilöt (codex.test), sekä advance-card.e2e:n ensimmäinen testi kuluttaa ylijääneen tieteen ennen vastausta, koska ylijäämä opetti seuraavan keksinnön heti ja avasi uuden kortin ennen tarkistusta (vaihteli täydellä pikselisuhteella). Uusien nimien ja arvonimien yhdistelmät tarkistettiin käsin: ei tunnettujen todellisten henkilöiden nimiä."
+  "notes": "Kultaiset tilat eivät muuttuneet, koska rauta-aika alkaa kuten ennen (Node run.test ja selaimen golden.e2e vihreinä). Tallennuksen rakenne ei muuttunut: aikakausi lasketaan tunnetuista keksinnöistä, ja chronicleEra ei tallennu, joten lataus ei kirjaa vaihtoa toiseen kertaan (testi). Era-tapahtuman aikakautta ei verrata pelin tilaan, koska se vaikuttaa vain kertomuksen ääneen (tarkoituksellinen). Testejä muutettiin storyn tarkoituksen mukaan (sanottu ääneen): henkilöiden määrä 30 → 105 (persons.test ja bonuses.test), Tietokirjan sivujen määrä ja roolisivun henkilöt (codex.test), sekä advance-card.e2e:n ensimmäinen testi kuluttaa ylijääneen tieteen ennen vastausta, koska ylijäämä opetti seuraavan keksinnön heti ja avasi uuden kortin ennen tarkistusta (vaihteli täydellä pikselisuhteella). Uusien nimien ja arvonimien yhdistelmät tarkistettiin käsin: ei tunnettujen todellisten henkilöiden nimiä. Utun katselmoinnin jälkeen: kun henkilön rivi avaa Tietokirjan kortin päälle, kortti väistyy (piilossa ja inert, cover), ja Tietokirjan sulkeminen palauttaa sen ja fokuksen riville; kortilla ja sen sisällöllä ei ole siirtymiä, koska vähennetyn liikkeen sääntö piti ne piilossa framen ajan. Nimetön perustaja on kaikissa äänissä 'eräs uudisasukas' eikä monikko, mikä korjaa myös varhais- ja rauta-ajan aiemman virheen. Suunnitelmasta poiketen Oppineen tiede on 1, 3, 3, 4, 4, 5, 5 ja Kenraalin kulta 2, 3, 3, 3, 4, 4, 5, koska rauta-ajan arvot olivat jo suunnitelman sarjaa korkeammat eivätkä saa laskea; raja on 5. Advance-card.e2e:n ensimmäisen testin vaihtelu: ylijäänyt tiede opetti seuraavan keksinnön heti; pikselisuhteella 0,5 tarkistus ehti ennen seuraavaa päivää, täydellä pikselisuhteella ei, joten vaihtelu oli olemassa jo STORY-118:ssa. Arvonimi Lennättäjä muuttui Sähköttäjäksi, eras.ts ei enää mainitse Uncivia (järjestys on historian yleinen), ja eraOpenedBy laskee avaimen kerran."
 }
