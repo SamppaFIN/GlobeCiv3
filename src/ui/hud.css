@@ -597,7 +597,7 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .nw-round { font-size: 15px; font-weight: 500; }
 .nw-skip[hidden] { display: none; }
 .nw .nw-leave { min-width: var(--touch-target); padding: 0; }
-.nw-leaders { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.nw-leaders { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
 .nw-leader {
   position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px;
   border-radius: 8px; background: #2a2c35; border-top: 3px solid var(--leader); font-size: 11px; text-align: center;
@@ -609,7 +609,7 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 .nw-leader-cities, .nw-leader-doing { color: var(--c-muted); font-size: 10.5px; }
 .nw-leader-doing:empty { display: none; }
 .nw-stance { min-height: var(--touch-target); width: 100%; padding: 0 2px; font-size: 10.5px; line-height: 1.1; }
-.nw-name-short { display: none; }
+.nw-name-short { display: none; overflow-wrap: anywhere; }
 .nw-leader-face svg { width: 32px; height: 32px; }
 .nw-pop-stance { min-height: var(--touch-target); font-size: 13px; }
 /* On a phone the row is compact: short names, small faces, and the stance in a country's bubble */
@@ -667,6 +667,7 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
   position: absolute; left: 0; top: 0; width: min(264px, calc(100vw - 8px)); margin: 20px 0 0 calc(min(264px, calc(100vw - 8px)) / -2);
   display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--leader);
   background: var(--c-surface); box-shadow: 0 8px 28px #000a; pointer-events: auto; z-index: 3;
+  max-height: calc(100dvh - 16px); overflow-y: auto;
 }
 .nw-pop.above { margin-top: 0; translate: 0 calc(-100% - 20px); }
 .nw-pop[hidden] { display: none; }
@@ -685,6 +686,8 @@ button.rich-link:focus-visible { outline: 2px solid var(--c-accent-light); outli
 }
 .nw-end-title { margin: 0; font-size: 22px; }
 .nw-end-line { margin: 0; font-style: italic; color: #cfd3e5; }
+.nw-end-note { margin: 0; font-size: 13px; color: var(--c-accent-text); }
+.nw-gallery-title:focus { outline: none; }
 .nw-scores { margin: 0; padding: 0 0 0 20px; text-align: left; font-size: 13px; line-height: 1.6; font-variant-numeric: tabular-nums; }
 .nw-end-foot { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 

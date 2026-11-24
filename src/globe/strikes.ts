@@ -71,6 +71,12 @@ export class StrikeLayer {
   /** For tests and screenshots only: everything this many times slower (1: real time). */
   slow = 1;
   private readonly tmp = new THREE.Vector3();
+  private readonly side = new THREE.Vector3();
+  private readonly headAt = new THREE.Vector3();
+  private readonly aheadAt = new THREE.Vector3();
+  private readonly hereAt = new THREE.Vector3();
+  /** One ring for every blast, scaled per blast. */
+  private readonly ringGeometry = new THREE.RingGeometry(0.7, 1, 48);
   private readonly tmp2 = new THREE.Vector3();
 
   constructor(radius: number) {
@@ -178,9 +184,10 @@ export class StrikeLayer {
 
   /** The point at share t of a flight, at its height over the globe. */
   private at(f: Flight, t: number, out: THREE.Vector3): THREE.Vector3 {
-    out.copy(f.from).lerp(f.to, t).normalize();
-    // A near-antipodal pair would lerp through the centre: bend it round the from point's side
-    if (out.lengthSq() < 0.5) out.copy(f.from).multiplyScalar(1 - t).addScaledVector(f.to, t).add(this.tmp2.set(0, 1, 0)).normalize();
+    out.copy(f.from).lerp(f.to, t);
+    // A near-antipodal pair would lerp through the centre: bend it round a side (before normalising)
+    if (out.lengthSq() < 0.25) out.add(this.side.copy(f.from).cross(f.to).lengthSq() > 1e-6 ? this.side.normalize().multiplyScalar(Math.sin(Math.PI * t)) : this.side.set(0, Math.sin(Math.PI * t), 0));
+    out.normalize();
     const h = f.kind === 'missile' ? this.radius * (0.06 + 0.32 * f.angle / Math.PI) * Math.sin(Math.PI * t)
       : f.kind === 'bomber' ? this.radius * (0.025 + 0.02 * Math.sin(Math.PI * t))
         : this.radius * 0.05 * Math.sin(Math.PI * t);
@@ -233,7 +240,7 @@ export class StrikeLayer {
         this.sprite(this.tex.puff, '#6f5a4a', false, 21), // dust at the foot
       ]),
     ];
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.7, 1, 48), new THREE.MeshBasicMaterial({ map: this.tex.ring, color: '#ffd6a0', transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+    const ring = new THREE.Mesh(this.ringGeometry, new THREE.MeshBasicMaterial({ map: this.tex.ring, color: '#ffd6a0', transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
     ring.renderOrder = 19;
     ring.visible = !small;
     this.group.add(ring);
@@ -262,7 +269,6 @@ export class StrikeLayer {
       s.material.dispose();
     }
     this.group.remove(b.ring);
-    b.ring.geometry.dispose();
     (b.ring.material as THREE.Material).dispose();
   }
 
@@ -284,6 +290,11 @@ export class StrikeLayer {
       // Reduced motion: no flight, only its end for a moment
       const t = reduceMotion ? f.end : Math.min(f.end, raw);
       f.shown = t;
+      // Reduced motion: a stopped weapon bursts at once where it was stopped
+      if (reduceMotion && f.end < 1 && !f.done) {
+        f.done = true;
+        this.burst(this.at(f, f.end, new THREE.Vector3()), now);
+      }
       // A stopped weapon bursts in the air where it was stopped
       if (raw >= f.end && f.end < 1 && !f.done) {
         f.done = true;
@@ -307,11 +318,11 @@ export class StrikeLayer {
         f.line.geometry.computeBoundingSphere();
         (f.line.material as THREE.LineBasicMaterial).opacity = (f.kind === 'bomber' ? 0.5 : 0.9) * (raw > f.end ? 1 - (raw - f.end) / 0.15 : 1);
       }
-      const head = this.at(f, t, this.tmp.clone());
+      const head = this.at(f, t, this.headAt);
       const flying = raw < f.end;
       // The heading on the screen, for the missile's and the plane's nose
-      const ahead = this.at(f, Math.min(1, t + 0.02), new THREE.Vector3()).project(camera);
-      const here = head.clone().project(camera);
+      const ahead = this.at(f, Math.min(1, t + 0.02), this.aheadAt).project(camera);
+      const here = this.hereAt.copy(head).project(camera);
       const heading = Math.atan2(ahead.y - here.y, (ahead.x - here.x) * camera.aspect) - Math.PI / 2;
       if (f.kind === 'missile' || f.kind === 'bomber') {
         const missile = f.kind === 'missile';
@@ -337,8 +348,7 @@ export class StrikeLayer {
           const u = t - back * (missile ? 0.45 : 0.3);
           const fadeOut = raw > f.end ? 1 - clamp01((raw - f.end) / 0.15) : 1;
           if (u <= 0.005) { s.visible = false; return; }
-          const at = this.at(f, u, new THREE.Vector3());
-          s.position.copy(at);
+          const at = this.at(f, u, s.position);
           s.scale.setScalar((missile ? 10 + 16 * back : 4 + 3 * back) * perPx);
           s.material.opacity = (missile ? 0.85 : 0.7) * (1 - back) * fadeOut;
           s.visible = facing(at) && s.material.opacity > 0.02;
@@ -346,8 +356,7 @@ export class StrikeLayer {
       } else {
         f.head.forEach((s, i) => {
           const u = clamp01(t - (i / PEOPLE_DOTS) * 0.35) / 0.65;
-          const at = this.at(f, Math.min(1, u), new THREE.Vector3());
-          s.position.copy(at);
+          const at = this.at(f, Math.min(1, u), s.position);
           s.scale.setScalar(7 * perPx);
           s.visible = facing(at) && u > 0 && u < 1;
         });

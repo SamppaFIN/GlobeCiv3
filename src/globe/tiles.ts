@@ -55,6 +55,10 @@ function faceTexture(): THREE.DataTexture {
 }
 
 /** Per-tile codes (terrainTypes.ts tileCode) as an 8-bit integer texture, filled on demand. */
+// The region code w holds the first child's slot × 8 + the count below 1024, and a state's id
+// × 1024 above it (STORY-126): the slots must stay below 128 for the two not to mix
+if (MAX_TILE_REGIONS * 8 > 1024) throw new Error('MAX_TILE_REGIONS too large for the region code');
+
 /** The states' colours: 512 × 1 RGBA bytes, nearest, all zero (STORY-126). */
 function stateTintTexture(): THREE.DataTexture {
   const tex = new THREE.DataTexture(new Uint8Array(512 * 4), 512, 1, THREE.RGBAFormat, THREE.UnsignedByteType);

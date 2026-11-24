@@ -76,8 +76,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Ajetaan mergen jälkeen",
-        "outcome": "not_run"
+        "result": "Vihreä: GitHub Actions -ajo commitille 8f2b275 (merge, 2026-11-24) meni läpi, Vitest, Playwright ja Pages-julkaisu.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],

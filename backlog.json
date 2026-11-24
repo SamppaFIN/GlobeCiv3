@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-24T07:22:54Z",
+    "generated_at": "2026-11-24T13:09:05Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "3dc48da",
+    "git_commit": "ecdcd64",
     "git_branch": "main",
     "language": "fi"
   },
@@ -273,7 +273,7 @@
         "STORY-126",
         "STORY-127"
       ],
-      "progress": 33
+      "progress": 67
     },
     {
       "id": "EPIC-013",
@@ -3237,12 +3237,12 @@
         "Sama siemen ja samat pelaajan komennot tuottavat saman sodan (sääntö 7), ja sota päättyy, kun johtajia on jäljellä yksi tai ei yhtään: loppukortti kertoo voittajan ja pisteet.",
         "Puhelimella (360×640) galleria, paneeli ja puhekuplat mahtuvat, kosketuskohteet ovat vähintään 44 px, ja kaikki tieto on myös tekstinä (WCAG 2.1 AA)."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-103",
+        "implementation": "TICKET-IMPL-103",
+        "testing": "TICKET-TEST-103"
       }
     },
     {

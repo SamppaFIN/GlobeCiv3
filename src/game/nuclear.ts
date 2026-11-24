@@ -459,8 +459,9 @@ function commit(w: War, o: Order) {
   if (offends(w, o)) {
     for (let i = 0; i < PLAYER; i++) {
       const h = w.leaders[i].hostility;
-      h[PLAYER] = h[PLAYER] < 0x4df8 ? h[PLAYER] + PENALTY : MAX;
-      for (let j = 0; j < PLAYER; j++) h[j] = h[j] <= -0x4df8 ? -MAX : h[j] - PENALTY;
+      // As in the reconstruction's 16-bit words: just under the bound the sum wraps round
+      h[PLAYER] = h[PLAYER] < 0x4df8 ? w16(h[PLAYER] + PENALTY) : MAX;
+      for (let j = 0; j < PLAYER; j++) h[j] = h[j] <= -0x4df8 ? -MAX : w16(h[j] - PENALTY);
     }
   }
   switch (o.kind) {
@@ -610,6 +611,7 @@ function mishap(w: War, events: WarEvent[], by: number): boolean {
     a.cities[from].people -= moved;
     // Own: never back to the leader itself (the original's scan can wrap round to it)
     const others = w.leaders.map((_, t) => t).filter(t => t !== by && alive(w.leaders[t]));
+    // The target lives (resolve), so there is always another
     const to = others[roll(w, others.length)];
     const city = pick(w, 1, w.leaders[to]);
     w.leaders[to].cities[city].people += moved;
@@ -682,6 +684,9 @@ function resolve(w: War, events: WarEvent[], i: number) {
       strike(w, events, i, false);
       break;
     case 'propaganda':
+      // Own: talk to a leader who fell earlier this round comes to nothing (no oddity, nobody
+      // moves), so a fallen leader never gets people back
+      if (!alive(w.leaders[a.target])) break;
       if (!mishap(w, events, i)) propaganda(w, events, i);
       break;
     case 'loadMissile':
@@ -716,14 +721,15 @@ export function play(w: War, o: Order): WarEvent[] | null {
   drift(w);
   const events: WarEvent[] = [];
   const queue: number[] = [];
+  // Revenge in the order of the falls, up to five a round (the reconstruction's bound); a
+  // leader always falls once, so five is every leader
+  let avenged = 0;
   for (let i = 0; i < LEADERS; i++) {
     if (!alive(w.leaders[i])) continue;
     const before = w.leaders.map(alive);
     resolve(w, events, i);
     fallen(w, events, before, queue);
-    // Revenge in the order of the falls, up to five falls a round (the reconstruction's bound)
-    for (let n = 0; queue.length && n < 5; n++) avenge(w, events, queue.shift()!, queue);
-    queue.length = 0;
+    while (queue.length && avenged < 5) { avenge(w, events, queue.shift()!, queue); avenged++; }
   }
   // The builders build; own: the player's goods come at the round's end as the computer's do
   for (let i = 0; i < LEADERS; i++) {

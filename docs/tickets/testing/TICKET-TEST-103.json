@@ -1,0 +1,113 @@
+{
+  "id": "TICKET-TEST-103",
+  "story": "STORY-126",
+  "implementation_ticket": "TICKET-IMPL-103",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1) ja 1 (kuvakaappaukset), siemen 42; Vitest 5 Nodessa",
+    "tooling": "Vitest, Playwright",
+    "cases": [
+      {
+        "steps": "Vitest src/game/nuclear.test.ts: uusi sota",
+        "expected": "Väkiluvut luonteen rajoissa siemenillä 1–30, aloitusvarastot luonteittain ja pelaajalla, arvaamaton rakentaa kahdesti (12 tavaraa), ja sama siemen, vastustajat ja käskyt tuottavat saman sodan",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: taulut",
+        "expected": "Tuotannon rajat, iskutaulun jokainen heitto (myös 2 pommikoneella, 6 ja 12 100 Mt:n kärjellä), sattumien jakauma (75 loikkareita sadasta) ja luonteen kaupunkivalinta",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: pelaajan käskyt",
+        "expected": "Ohjus ladataan ja laukaistaan seuraavalla kierroksella ja kärjen pitää mahtua, pommikone lentää kuormansa verran, torjunta: luokka 0 pysäyttää ohjuksen, luokka 1 myös pommikoneen ja vain itseen suunnatun, purku ja kaksi rakennusta peräkkäin suututtavat, asenne ei ole kierros",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: kierros",
+        "expected": "Propaganda siirtää 1–10 miljoonaa tai muuttuu sattumaksi, väki vain siirtyy tai kuolee (paitsi vauvabuumi ja ufo), kukistunut iskee takaisin enintään neljästi pommikone ensin ja ei toimi sen jälkeen, kukistunut ei saa väkeä takaisin 200 sodassa eikä mikään sota kaada, voittaja −1 löytyy, sodat päättyvät kierrosrajaan mennessä, sotilas iskee enemmän kuin puhuu ja propagandisti puhuu enemmän, pisteet ja kierrosraja",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest: johtajat",
+        "expected": "Kymmenen johtajaa, kaksi kustakin luonteesta, omat värit ja nimet, jokaisella tilanteella vähintään kolme repliikkiä ja samat avaimet antavat saman repliikin",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E planet-trial.e2e: työpöytä 1280 × 800",
+        "expected": "Galleria (10 johtajaa, 44 px), neljä vastustajaa ja arvonta, viisi johtajaa riveinä, kaupunkimerkit pallolla, ohjuksen lataus ja laukaisu listasta, lento kestää seinäkellolla 1,6–3,5 s, loki kertoo kohteen, maan napautus avaa kuplan ja propaganda lähtee siitä, kokonainen toisto ja ohitus päättyvät sodan tilaan, 44 px, loppukortti voittajineen, pisteineen ja fokuksineen, ei konsolivirheitä",
+        "result": "Läpi (CI=1), Utun katselmoinnin korjausten jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: puhelin 360 × 640",
+        "expected": "Galleria mahtuu ja 44 px, rivi mahtuu pisimmillä nimillä ilman ylivuotoa, kupla ruudulla ja 44 px, asenne kuplassa, propaganda kuplasta ja ohitus",
+        "result": "Läpi (CI=1), Utun katselmoinnin korjausten jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: vähennetty liike",
+        "expected": "Jokainen nähty lento piirretään heti loppuunsa, ja kuplan repliikki on kokonainen kuten lokissa",
+        "result": "Läpi (CI=1), Utun katselmoinnin korjausten jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E: ilman ?planet ei sotaa, ja STORY-119:n aloitusnäytön nappi avaa gallerian ja paluu säilyttää tallennuksen",
+        "expected": "Läpi",
+        "result": "Läpi (CI=1), Utun katselmoinnin korjausten jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Sääntö 4: repliikit, nimet ja kaupungit rekonstruktiota vasten (grep -F, Utu)",
+        "expected": "Ei osumia",
+        "result": "Ei osumia, paitsi yleissana Propaganda (toimintonimi). 264 merkkijonoa ja 382 sanaa tarkistettu.",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Kuvakaappaukset: sienipilvi, lennot, valtakuntien värit ja maan kupla (hidastettuina) sekä galleria ja puhelin",
+        "expected": "Animaatiot näkyvät, ja valtakunnat erottuvat väreistään",
+        "result": "Katsottu ja lähetetty Samille",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E levels, hexTiles, region-card ja smoke (varjostimen alueen koodi muuttui)",
+        "expected": "Rajat, valinta, konteksti ja heksat ennallaan",
+        "result": "Läpi (7 testiä, CI=1)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest koko sarja",
+        "expected": "Vihreä",
+        "result": "Läpi: 64 tiedostoa, 399 testiä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Koko E2E-sarja CI:ssä",
+        "expected": "Vihreä",
+        "result": "Ajetaan mergen jälkeen",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "war-gallery.png",
+      "war-start.png",
+      "war-missile.png",
+      "war-pop.png",
+      "war-end.png",
+      "phone-gallery.png",
+      "phone-war.png",
+      "phone-pop.png",
+      "phone-playback.png"
+    ]
+  },
+  "human_acceptance": {
+    "approved_by": null,
+    "date": null,
+    "notes": "Sami pelaa kokeilun Pagesista puhelimella ja työpöydällä ja kertoo, onko se hauska."
+  }
+}

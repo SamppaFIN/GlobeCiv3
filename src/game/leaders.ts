@@ -41,8 +41,8 @@ export const TEMPERS: Record<Profile, { name: string; text: string }> = {
 export const PERSONAS: Persona[] = [
   { id: 'paukku', name: 'Presidentti Paukku', cities: ['Paukkula', 'Jysäys', 'Kolinamäki', 'Räminä', 'Pamausniemi'], profile: 0, color: '#e0a458', motto: 'Lupaa suuria ja pitää kovaa ääntä.',
     look: { skin: '#f0c9a0', hair: '#9a9a9a', head: 'round', top: 'bowler', face: ['moustache', 'medals'] } },
-  { id: 'ukonvaaja', name: 'Puheenjohtaja Ukonvaaja', cities: ['Ukkosvaara', 'Suunnitelmala', 'Tehdaskylä', 'Kiintiömäki', 'Pöytäkirjala'], profile: 0, color: '#a3c46c', motto: 'Viisivuotissuunnitelma joka viikko.',
-    look: { skin: '#e3b48c', hair: '#3a3a3a', head: 'round', top: 'cap', face: ['glasses', 'medals'] } },
+  { id: 'ukonvaaja', name: 'Puheenjohtaja Ukonvaaja', cities: ['Ukkosvaara', 'Kokouskylä', 'Nuijamäki', 'Esityslista', 'Pöytäkirjala'], profile: 0, color: '#a3c46c', motto: 'Kokous jatkuu, kunnes joku painaa nappia.',
+    look: { skin: '#e3b48c', hair: '#8a6a4a', head: 'round', top: 'bald', face: ['glasses', 'medals'] } },
   { id: 'ruutiparta', name: 'Kenraali Ruutiparta', cities: ['Ruutila', 'Kasarmikylä', 'Marssimaa', 'Rivistö', 'Univormula'], profile: 1, color: '#d8737f', motto: 'Parta täynnä ruutia, taskut täynnä ohjuksia.',
     look: { skin: '#d9a07a', hair: '#5b4636', head: 'square', top: 'cap', face: ['beard', 'medals'] } },
   { id: 'rautakoura', name: 'Marsalkka Rautakoura', cities: ['Rautasatama', 'Pihtilä', 'Ruuvivaara', 'Vasaraniemi', 'Alasinkylä'], profile: 1, color: '#b98b6e', motto: 'Puristaa rauhanneuvottelut kasaan.',
@@ -52,12 +52,12 @@ export const PERSONAS: Persona[] = [
   { id: 'paasaus', name: 'Puhemies Paasaus', cities: ['Puhela', 'Saarnamäki', 'Jaarittelu', 'Pitkäpuhe', 'Kuulijala'], profile: 2, color: '#8fa8d8', motto: 'Puhe kestää, kunnes kuulijat loikkaavat.',
     look: { skin: '#b97f5a', hair: '#cfcfcf', head: 'long', top: 'bald', face: ['moustache', 'scarf'] } },
   { id: 'arpanen', name: 'Diktaattori Arpanen', cities: ['Arpakylä', 'Noppaniemi', 'Sattumala', 'Kolikkovaara', 'Ehkälä'], profile: 3, color: '#c79bd8', motto: 'Päättää asiat nopalla, joskus kahdella.',
-    look: { skin: '#e8bc94', hair: '#1f1f1f', head: 'round', top: 'tuft', face: ['moustache', 'medals'] } },
+    look: { skin: '#e8bc94', hair: '#c94f2e', head: 'round', top: 'tuft', face: ['glasses', 'medals'] } },
   { id: 'tuuliviiri', name: 'Tohtori Tuuliviiri', cities: ['Tuuliranta', 'Viirimäki', 'Pyörremaa', 'Mielijohde', 'Käänteenkylä'], profile: 3, color: '#9ccfa0', motto: 'Aamulla rauha, illalla raketit.',
     look: { skin: '#f4dcc4', hair: '#f2f2f2', head: 'long', top: 'curls', face: ['monocle'] } },
   { id: 'kuura', name: 'Kuningatar Kuura', cities: ['Kuuralinna', 'Huurrevaara', 'Jääpalatsi', 'Kristallikylä', 'Talvihovi'], profile: 4, color: '#d9d0f5', motto: 'Hymyilee kylmästi ja kruunaa itsensä uudelleen.',
     look: { skin: '#f6e2d2', hair: '#e9e4f7', head: 'long', top: 'crown', face: ['pearls'] } },
-  { id: 'mahtipontinen', name: 'Maharuhtinas Mahtipontinen', cities: ['Mahtimäki', 'Kultasali', 'Pöyhkeälä', 'Komeusniemi', 'Ylväslinna'], profile: 4, color: '#e6c36a', motto: 'Palatsi joka kaupungissa, ja kaksi pääkaupungissa.',
+  { id: 'poyhkea', name: 'Arkkiherttua Pöyhkeä', cities: ['Mahtimäki', 'Kultasali', 'Pöyhkeälä', 'Komeusniemi', 'Ylväslinna'], profile: 4, color: '#e6c36a', motto: 'Palatsi joka kaupungissa, ja kaksi pääkaupungissa.',
     look: { skin: '#a8714f', hair: '#3b2b20', head: 'square', top: 'plume', face: ['beard', 'medals'] } },
 ];
 

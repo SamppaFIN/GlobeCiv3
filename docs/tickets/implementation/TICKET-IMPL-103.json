@@ -1,0 +1,58 @@
+{
+  "id": "TICKET-IMPL-103",
+  "story": "STORY-126",
+  "plan": "PLAN-103",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/game/nuclear.ts (kirjoitettu uudelleen)",
+    "src/game/leaders.ts (uusi)",
+    "src/ui/leaderPortraits.ts (uusi)",
+    "src/globe/strikes.ts (uusi)",
+    "src/ui/nuclearPanel.ts (kirjoitettu uudelleen)",
+    "src/globe/main.ts",
+    "src/globe/tiles.ts",
+    "src/globe/regions.ts",
+    "src/ui/hud.css",
+    "src/game/nuclear.test.ts (kirjoitettu uudelleen)",
+    "tests/e2e/planet-trial.e2e.ts (kirjoitettu uudelleen)"
+  ],
+  "change_summary": "Ydinsotakokeilu (?planet) kirjoitettiin uudelleen vanhan Amiga-pelin säännöin rekonstruktiosta NuclearWar-ReNuked-Web (commit 691fa2b, vain säännöt ja luvut). nuclear.ts: viisi johtajaa, pelaaja ratkaisussa viimeisenä, viisi kaupunkia kullakin ja väkiluku luonteen mukaan; varasto (kärjet 10–100 Mt, ohjukset neljää luokkaa, pommikoneet 50 ja 100 Mt, torjunta kahta lajia); kierros: pelaajan käsky (komento), tekoälyjen suunnittelu (chooseFoe, planDefense, planWeapons, planPropaganda ja luonteen todennäköisyystaulu), asenteiden ajelehtiminen 16-bittisine sanoineen, ratkaisu järjestyksessä tapahtumaluetteloksi ja rakentajien tuotanto; iskutaulu 2d6 (strikeTable), torjunta (stops), propagandan sattumat (mishapOf), kosto neljällä iskulla, pelaajan rangaistus, pisteet ja kierrosraja 100. Omat poikkeukset on merkitty koodiin ja PLAN-103:n own_rules-kohtaan. leaders.ts: kymmenen keksittyä karikatyyrijohtajaa (kaksi kustakin viidestä luonteesta) nimineen, kaupunkeineen, mottoineen ja vähintään kolmella repliikillä tilannetta kohden; repliikki valitaan siemenestä, kierroksesta ja tapahtuman järjestyksestä (choose), ei sodan satunnaisuudesta. leaderPortraits.ts: omat SVG-kasvot viidellä mielialalla. strikes.ts: ohjuksen kaari savuvanoineen, pommikone vanoineen, propagandan väki, torjunnan ilmaräjähdys ja sienipilvi shokkirenkaineen samassa scenessä, seinäkellon mukaan, vähennetyllä liikkeellä vain loppu. nuclearPanel.ts: galleria, johtajarivi, käskyt valikoista ja listoista, kaupunkimerkit pallolla, maan napautuksen toimintokupla (Samin pyyntö 2026-11-24), toisto puhekuplin ja kirjoituskone-efektein, loki (aria-live kokonaisin rivein), ohitus (nappi tai napautus) ja loppukortti. tiles.ts: väri jokaisen valtion päälle (stateTint, 512 × 1 -tekstuuri) ja valtion tunniste alueen koodissa (w = lapsikoodi + 1024 × valtio); regions.ts: alueen oma tunniste. main.ts: valtakunnat (pääkaupunki ja neljä lähintä maavaltiota), kamera kääntyy iskun reitille, napautus pallolla menee sodalle, ja tasopalkki on piilossa.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "War",
+      "Warlord",
+      "Order",
+      "WarEvent",
+      "newWar",
+      "play",
+      "canOrder",
+      "offends",
+      "strikeTable",
+      "stops",
+      "mishapOf",
+      "madeItem",
+      "pick",
+      "score",
+      "loaded",
+      "PERSONAS",
+      "TEMPERS",
+      "lineOf",
+      "leaderFace",
+      "StrikeLayer",
+      "createWarPanel",
+      "TileManager.setStateTints",
+      "RegionEntry.id",
+      "regionUniforms"
+    ],
+    "affected_callers": [
+      "Ydinsotakokeilu ?planet ja aloitusnäytön nappi (STORY-119)",
+      "Laattojen varjostin: alueen koodi luetaan % 1024, ja väri on pois päältä sodan ulkopuolella (stateTintOn 0)",
+      "Pallon napautus (onTap) menee sodalle vain ?planet-tilassa"
+    ],
+    "risk": "Keskitaso: varjostimen alueen koodi muuttui kaikilla tasoilla (vanha arvo on 1024:n alapuolella, joten % 1024 on sodan ulkopuolella identiteetti; tiles.ts tarkistaa rajan). Tallennus ei muuttunut: kokeilu ei tallennu."
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Utun katselmoinnin jälkeen: propaganda aiemmin samalla kierroksella kukistuneeseen ei tee mitään (loikkarit herättivät kukistuneen 33 kertaa 400 sodassa, ja maastamuutto kaatui, kun muita ei ollut), kosto on rajattu viiteen kierroksessa, rangaistus kiertää 16-bittisesti kuten lähteessä, ohitus näyttää kokonaisen repliikin ja päättää laskeutumisen ennen tyhjennystä, napautus pallolla ohittaa toiston, fokus siirtyy galleriasta käskyihin ja kuplasta takaisin, puhelimen rivi mahtuu pisimmilläkin nimillä, kupla pysyy ruudulla, vähennetyllä liikkeellä torjunta räjähtää heti, ja framessa ei luoda vektoreita eikä räjähdyksessä geometriaa. Kolme johtajaa muutettiin, jotta yksikään ei muistuta oikeaa henkilöä tai kansaa: Ukonvaajan motto ja kaupungit (ei suunnitelmataloutta) ja päähine, Arpasen viikset silmälaseiksi, ja Maharuhtinas Mahtipontinen on nyt Arkkiherttua Pöyhkeä. Vähennetty liike toistaa tapahtumat ilman lentoja kolminkertaisella nopeudella, ja jokainen näyttää vain loppunsa; Sami päättää, riittääkö tämä kriteerin 3 'vain lopputulos'."
+}

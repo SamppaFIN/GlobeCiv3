@@ -279,6 +279,41 @@ describe('a round', () => {
     expect(after.some(e => 'by' in e && e.by === 1 && e.kind !== 'strike')).toBe(false);
   });
 
+  it('a fallen leader never gets people back, and no war throws (200 wars, propagandists too)', () => {
+    // Utu's review: defectors to a leader who fell earlier in the round brought it back
+    for (let seed = 1; seed <= 200; seed++) {
+      const profiles = (seed % 2 ? [2, 2, 2, 2, 0] : [(seed % 5), ((seed + 1) % 5), ((seed + 2) % 5), ((seed + 3) % 5), 0]) as Profile[];
+      const w = war(seed, profiles);
+      const fell = new Set<number>();
+      // A passive player: talks and builds in turn
+      for (let n = 0; w.winner === null && n < LAST_ROUND + 5; n++) {
+        const me = w.leaders[PLAYER];
+        const foe = [0, 1, 2, 3].find(i => alive(w.leaders[i]));
+        const city = foe === undefined ? -1 : w.leaders[foe].cities.findIndex(c => c.people > 0);
+        const o: Order = !alive(me) ? { kind: 'watch' } : n % 2 && foe !== undefined ? { kind: 'propaganda', leader: foe, city } : { kind: 'build' };
+        const events = play(w, o)!;
+        expect(events).not.toBeNull();
+        for (const e of events) {
+          for (const i of fell) expect(e.people[i].every(x => x === 0)).toBe(true);
+          if (e.kind === 'fall') fell.add(e.who);
+        }
+      }
+      expect(w.winner).not.toBeNull();
+    }
+  });
+
+  it('a war can end with nobody left: the winner is −1', () => {
+    let found = false;
+    for (let seed = 1; seed <= 400 && !found; seed++) {
+      const w = wholeWar(seed, [(seed % 5) as Profile, ((seed + 2) % 5) as Profile, ((seed + 4) % 5) as Profile, ((seed + 1) % 5) as Profile, 0]);
+      if (w.winner === -1) {
+        found = true;
+        expect(w.leaders.every(l => !alive(l))).toBe(true);
+      }
+    }
+    expect(found).toBe(true);
+  });
+
   it('every war of the computer\'s leaders ends within the round limit (seeds 1–20)', () => {
     const rounds: number[] = [];
     for (let seed = 1; seed <= 20; seed++) {

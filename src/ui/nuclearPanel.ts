@@ -68,7 +68,9 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
   const gallery = el('section', 'nw-gallery');
   gallery.setAttribute('aria-label', 'Valitse vastustajat');
   const gHead = el('div', 'nw-gallery-head');
-  gHead.append(el('p', 'nw-kicker', 'Ydinsota · kokeilu'), el('h2', 'nw-gallery-title', 'Valitse neljä vastustajaa'));
+  const gTitle = el('h2', 'nw-gallery-title', 'Valitse neljä vastustajaa');
+  gTitle.tabIndex = -1;
+  gHead.append(el('p', 'nw-kicker', 'Ydinsota · kokeilu'), gTitle);
   const gHint = el('p', 'nw-gallery-hint', 'Jokaisella on oma luonteensa. Sinä olet viides johtaja.');
   const cards = el('div', 'nw-cards');
   cards.setAttribute('role', 'group');
@@ -208,6 +210,8 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
     say(PLAYER, null, 'Viisi johtajaa, viisi kaupunkia kullakin. Viimeinen pystyssä oleva voittaa.', 'calm');
     renderOrders();
     renderRow();
+    // The focus goes on with the player, to the first order
+    orders.querySelector<HTMLButtonElement>('.nw-act')?.focus();
   }
 
   function buildRow() {
@@ -411,7 +415,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
   }
 
   function give(o: Order) {
-    if (!war) return;
+    if (!war || phase !== 'orders') return;
     closePop();
     const events = play(war, o);
     if (!events) return;
@@ -484,7 +488,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
       case 'propaganda': {
         doingSeen[e.by] = '';
         const from = { leader: e.target, city: e.from };
-        say(e.by, 'propaganda', '', 'smug', `${millions(e.moved)} muutti kaupungista ${cityName(from)}.`);
+        say(e.by, 'propaganda', '', 'smug', e.moved > 0 ? `${millions(e.moved)} muutti kaupungista ${cityName(from)}.` : `Kaupungista ${cityName(from)} ei muuttanut ketään.`);
         stage.look(from, { leader: e.by, city: e.to }, speed);
         return 0.6 + flown(stage.fly('people', from, { leader: e.by, city: e.to }, personas[e.by].color, speed, false));
       }
@@ -562,8 +566,9 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
 
   function skip() {
     if (phase !== 'playback' || !war) return;
-    stage.clear();
     finishStep();
+    stage.clear();
+    if (typing) speechText.textContent = typing.text;
     for (; eventNo < queue.length; eventNo++) {
       const e = queue[eventNo];
       if (e.kind === 'load') doingSeen[e.by] = e.what === 'missile' ? 'loadMissile' : 'loadBomber';
@@ -599,16 +604,26 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
       chosen.length = 0;
       seed = seed + 1;
       war = null;
+      moods.fill('calm');
+      doingSeen.fill('');
+      typing = null;
+      pending = null;
+      queue = [];
+      act = null;
+      target = null;
       phase = 'gallery';
       stage.tint(null);
       gallery.hidden = false;
       log.replaceChildren();
       renderGallery();
+      gTitle.focus();
     });
     const leave = button('btn-ghost nw-leave-end', 'Aloitusnäyttöön', () => stage.leave());
     const foot = el('div', 'nw-end-foot');
     foot.append(again, leave);
-    endCard.append(face, h, line, list, foot);
+    endCard.append(face, h, line);
+    if (queue.some(e => e.kind === 'end' && e.byScore)) endCard.append(el('p', 'nw-end-note', `Kierrosraja täyttyi: eniten pisteitä sai ${w >= 0 ? personas[w].name : 'ei kukaan'}.`));
+    endCard.append(list, foot);
     endCard.hidden = false;
     again.focus();
   }
@@ -641,8 +656,11 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
   };
 
   /** A bubble at a city: what can be done to it now, each a whole order at a tap. */
-  function openPop(at: CityRef) {
+  /** Where the focus was before the bubble opened, for it to return to. */
+  let popOpener: HTMLElement | null = null;
+  function openPop(at: CityRef, focusStance = false) {
     if (!war || phase !== 'orders') return;
+    if (pop.hidden) popOpener = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     const me = war.leaders[PLAYER];
     const city = war.leaders[at.leader].cities[at.city];
     pop.replaceChildren();
@@ -681,7 +699,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
         if (!war) return;
         play(war, { kind: 'stance', leader: at.leader, stance: ((st + 3) % 5) - 2 });
         renderRow();
-        openPop(at);
+        openPop(at, true);
       });
       actions.append(stance);
     }
@@ -696,11 +714,16 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
     actions.append(more);
     pop.append(actions, close);
     pop.hidden = false;
-    (actions.querySelector('button:not(:disabled)') as HTMLButtonElement | null)?.focus();
+    (focusStance ? pop.querySelector<HTMLButtonElement>('.nw-pop-stance') : actions.querySelector<HTMLButtonElement>('button:not(:disabled)'))?.focus();
   }
   function closePop() {
+    if (pop.hidden) return;
+    const back = pop.contains(document.activeElement);
     pop.hidden = true;
     popAt = null;
+    // The focus returns where it was, or to the orders
+    if (back) (popOpener?.isConnected && !popOpener.closest('[hidden]') ? popOpener : orders.querySelector<HTMLButtonElement>('button:not(:disabled)'))?.focus();
+    popOpener = null;
   }
   pop.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
 
@@ -732,8 +755,12 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
         // Kept on the screen, and above the city in the lower half
         const half = Math.min(132, window.innerWidth / 2 - 4);
         const x = Math.min(Math.max(at[0], half + 4), window.innerWidth - half - 4);
-        pop.classList.toggle('above', at[1] > window.innerHeight * 0.5);
-        pop.style.transform = `translate(${x}px, ${at[1]}px)`;
+        // Below the city when it fits, else above it, and never off the screen
+        const height = pop.offsetHeight;
+        const above = at[1] + 20 + height > window.innerHeight - 8 && at[1] - 20 - height >= 8;
+        pop.classList.toggle('above', above);
+        const y = above ? at[1] : Math.min(at[1], Math.max(8, window.innerHeight - 8 - height - 20));
+        pop.style.transform = `translate(${x}px, ${y}px)`;
       }
     }
     // The marks follow the globe
@@ -754,6 +781,8 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
     give: (o: Order) => give(o),
     /** A tap on the globe at a state: a realm's city opens its bubble. Returns whether it was one. */
     tapState: (state: number) => {
+      // A tap on the globe during the playback skips it (STORY-126 criterion 3)
+      if (phase === 'playback') { skip(); return true; }
       const at = cityOf(state);
       if (!at || phase !== 'orders') return phase !== 'gallery';
       openPop(at);

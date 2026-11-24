@@ -87,7 +87,10 @@
     "Pelaajan rakennus tuottaa kierroksen lopussa kuten tekoälyjen.",
     "Kierrosraja 100, jonka jälkeen paras pistemäärä voittaa (autopeli siemenillä 1–40: 37–78 kierrosta).",
     "Tekoälyn propaganda- ja asetaulun indeksointi säilyy rekonstruktion mukaisena (rivi = vastustajan vihamielisyys + 2, sarake = luonne; engine.hpp:n kutsukohta). Testi varmistaa, että sotilas iskee enemmän kuin puhuu ja propagandisti puhuu enemmän.",
-    "Ei lennossa törmääviä aseita."
+    "Ei lennossa törmääviä aseita.",
+    "Isku tyhjään kaupunkiin kerrotaan omana tuloksenaan (ruins); rekonstruktiossa se on tavallinen osuma ilman uhreja.",
+    "Propaganda johtajaan, joka kukistui aiemmin samalla kierroksella, ei tee mitään (ei sattumaa eikä siirtoa), joten kukistunut ei saa väkeä takaisin (Utun katselmointi: loikkarit herättivät kukistuneen).",
+    "Identity 9 (pakotettu propaganda) jätetään pois, koska johtajat ovat omia."
   ],
   "presentation": "Logiikka laskee kierroksen kerralla tapahtumaluetteloksi, ja paneeli vain toistaa sen: ohitus ja vähennetty liike näyttävät saman lopputuloksen. Repliikit valitaan sodan siemenestä, kierroksesta ja tapahtuman järjestysnumerosta (ei pelin satunnaisuudesta eikä Math.random()). Kohde valitaan listasta (myös näppäimistöllä) tai pallolta. Kirjoituskone-efekti näkyy, mutta aria-live saa vain valmiin repliikin; vähennetyllä liikkeellä repliikki näkyy heti. PulseLayer saa lajin blast; kaaret ovat poolattuja Line-olioita kiinteällä puskurilla, ja yhtä aikaa lentää enintään kolme asetta.",
   "review": {
@@ -95,5 +98,10 @@
     "date": "2026-11-24",
     "verdict": "hyväksytty muutoksin",
     "resolved": "Taulut ja omat säännöt kirjattu (kohdat tables ja own_rules), kierrosraja 100, ratkaisujärjestys, komentoloki, esitys tapahtumaluettelosta, listavalinta ja aria-live. Utun ehdottama jako kolmeen storyyn hoidetaan kahtena katselmointina (säännöt, sitten käyttöliittymä), koska kokeilun on toimittava mainissa joka mergen jälkeen. Identity 9 jätetään pois."
+  },
+  "review_impl": {
+    "by": "Utu ☀️ (Sonnet 5.5)",
+    "date": "2026-11-24",
+    "verdict": "hyväksytty muutoksin"
   }
 }

@@ -27,14 +27,26 @@ async function tapFoeCountry(page: Page): Promise<string> {
   throw new Error('no foe country in view');
 }
 
-async function startWar(page: Page) {
+/** The people each leader's row shows equal the war's own. */
+async function rowMatchesWar(page: Page) {
+  const shown = await page.locator('.nw-leader-people').allTextContents();
+  const real = await page.evaluate(() => (window as any).globeWar.war.leaders.map((l: any) => l.cities.reduce((s: number, c: any) => s + c.people, 0)));
+  expect(shown).toEqual(real.map((n: number) => `${n} milj.`));
+}
+
+async function startWar(page: Page, names?: RegExp[]) {
   const gallery = page.getByRole('region', { name: 'Valitse vastustajat' });
   await expect(gallery.getByRole('group', { name: 'Johtajat' }).getByRole('button')).toHaveCount(10);
-  await gallery.getByRole('button', { name: /Kenraali Ruutiparta/ }).click();
-  await gallery.getByRole('button', { name: /Ministeri Megafoni/ }).click();
-  await expect(gallery.getByText('Valittu 2 / 4')).toBeVisible();
-  await expect(gallery.getByRole('button', { name: 'Sotaan!' })).toBeDisabled();
-  await gallery.getByRole('button', { name: 'Arvo loput' }).click();
+  for (const b of await gallery.getByRole('button').all()) if (await b.isVisible()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  if (names) {
+    for (const n of names) await gallery.getByRole('button', { name: n }).click();
+  } else {
+    await gallery.getByRole('button', { name: /Kenraali Ruutiparta/ }).click();
+    await gallery.getByRole('button', { name: /Ministeri Megafoni/ }).click();
+    await expect(gallery.getByText('Valittu 2 / 4')).toBeVisible();
+    await expect(gallery.getByRole('button', { name: 'Sotaan!' })).toBeDisabled();
+    await gallery.getByRole('button', { name: 'Arvo loput' }).click();
+  }
   await expect(gallery.getByText('Valittu 4 / 4')).toBeVisible();
   await gallery.getByRole('button', { name: 'Sotaan!' }).click();
   await expect(gallery).toBeHidden();
@@ -71,6 +83,8 @@ test('?planet: four opponents from the gallery, a missile loaded and launched on
   await expect(war.getByRole('button', { name: 'Ohita' })).toBeVisible();
   await roundDone(page);
   await expect(war.getByRole('list', { name: 'Tapahtumat' }).getByRole('listitem').first()).toBeVisible();
+  // A whole playback ends where the war is
+  await rowMatchesWar(page);
 
   // Launch it at a foe's city from the list; the flight lasts its seconds on the wall clock (rule 5)
   await disarm(page);
@@ -113,6 +127,8 @@ test('?planet: four opponents from the gallery, a missile loaded and launched on
   expect(await page.evaluate(() => (window as any).globeWar.war.orders.at(-1).kind)).toBe('propaganda');
   await war.getByRole('button', { name: 'Ohita' }).click();
   expect(await phase(page)).toBe('orders');
+  // A skip ends where a whole playback does
+  await rowMatchesWar(page);
   for (const b of await war.getByRole('button').all()) if (await b.isVisible()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
 
   // To the end at once: the end card tells the winner and the scores
@@ -128,6 +144,8 @@ test('?planet: four opponents from the gallery, a missile loaded and launched on
   await expect(end).toBeVisible();
   await expect(end.getByRole('heading')).toContainText('Voittaja: Kenraali Ruutiparta');
   await expect(end.getByRole('list', { name: 'Pisteet' }).getByRole('listitem')).toHaveCount(5);
+  await expect(end.getByRole('button', { name: 'Uusi sota' })).toBeFocused();
+  for (const b of await end.getByRole('button').all()) expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   await page.screenshot({ path: testInfo.outputPath('war-end.png') });
   expect(errors).toEqual([]);
 });
@@ -141,12 +159,18 @@ test('?planet on a phone: the gallery fits, the row is compact, a country\'s bub
   await page.goto('./?planet&seed=42');
   await r;
   await page.screenshot({ path: testInfo.outputPath('phone-gallery.png') });
-  const war = await startWar(page);
+  // The leaders with the longest short names (Utu's review)
+  const war = await startWar(page, [/Kenraali Ruutiparta/, /Marsalkka Rautakoura/, /Tohtori Tuuliviiri/, /Puheenjohtaja Ukonvaaja/]);
   // The five leaders fit side by side without scrolling sideways
   const row = war.getByRole('list', { name: 'Johtajat' });
   const rowBox = (await row.boundingBox())!;
   expect(rowBox.x + rowBox.width).toBeLessThanOrEqual(360);
-  for (const li of await row.getByRole('listitem').all()) expect((await li.boundingBox())!.x + (await li.boundingBox())!.width).toBeLessThanOrEqual(352.5);
+  for (const li of await row.getByRole('listitem').all()) {
+    const b = (await li.boundingBox())!;
+    expect(b.x + b.width).toBeLessThanOrEqual(352.5);
+    // No name runs out of its column
+    expect(await li.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  }
   await page.screenshot({ path: testInfo.outputPath('phone-war.png') });
 
   const panelTop = (await war.boundingBox())!.y;
