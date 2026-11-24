@@ -40,8 +40,8 @@ import { GOVERNMENTS, governed } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
 import { createCityQuick } from '../ui/cityQuick';
-import { act as leaderAct, day as leaderDay, newWar, type NuclearWorld } from '../game/nuclear';
-import { createNuclearPanel } from '../ui/nuclearPanel';
+import { createWarPanel, type CityRef } from '../ui/nuclearPanel';
+import { StrikeLayer } from './strikes';
 import { economy, type CityEconomy } from '../game/economy';
 import { heldIn, type Conquest } from '../game/conquest';
 import { nativeStrength, type NativeCity } from '../game/cityStates';
@@ -244,6 +244,11 @@ function onTap(clientX: number, clientY: number) {
   const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
   // Ray against the sphere itself: works at every zoom level; at the city level against the risen ground
   const hit = cityLevel.pick(ndc) ?? rig.raycast(ndc);
+  // In the nuclear war a tap on a country opens what can be done to it (STORY-126)
+  if (warPanel) {
+    if (hit) warPanel.tapState(regions.stateOf(hit));
+    return;
+  }
   if (play && viewLevel === 3 && tapPlay(clientX - rect.left, clientY - rect.top, rect.width, rect.height, hit)) return;
   const ref = hit ? regionAt(regions, hit, viewLevel) : null;
   if (ref && sameRegion(ref, selection)) fly(diveTarget(regions, ref, frames));
@@ -407,7 +412,8 @@ if (startScreen) {
     }
   });
 }
-levelBar.setVisible(screen === 'free');
+// The nuclear war's own panel tells where you are: no level bar under its speech (STORY-126)
+levelBar.setVisible(screen === 'free' && !planetTrial);
 
 // ─── Fog of war (STORY-024) ───────────────────────
 // In the game everything not yet mapped is fog; ?free shows the world as it is.
@@ -829,11 +835,13 @@ function buyCity(c: City) {
   if (dispatch({ kind: 'buy', city: c.tile }, 'player')) discoveryCard.notice([cityRef(c.tile, c.name), ' osti: ', buildRef(c.build), ` · ${price} kultaa`]);
 }
 
-// ─── The war of leaders, a trial (?planet, STORY-097) ─
-// Five leaders, the player first, each with a realm of six land states around a capital
-// spread over the globe (the seed's). Days pass by the clock (Sami: the day clock), one act
-// a leader every few days; the world's tension opens the missiles (src/game/nuclear.ts).
-const war = planetTrial ? (() => {
+// ─── The nuclear war, a trial (?planet, STORY-126) ─
+// Five leaders, the player last, each with five land states around a capital spread over the
+// globe (the seed's). The war goes in rounds as the old game's did (src/game/nuclear.ts), and
+// its flights and blasts are drawn in this scene (src/globe/strikes.ts, rule 1).
+const strikes = planetTrial ? new StrikeLayer(RADIUS) : null;
+if (strikes) scene.add(strikes.group);
+const warPanel = planetTrial && strikes ? (() => {
   const seed = params.has('seed') ? Number(params.get('seed')) : 42;
   const centers = regions.centers[0];
   const land = centers.map((c, s) => (terrainOf(pointToTile(c)) !== 'ocean' ? s : -1)).filter(s => s >= 0);
@@ -845,56 +853,49 @@ const war = planetTrial ? (() => {
       return d > best.d ? { s, d } : best;
     }, { s: -1, d: -1 }).s);
   }
-  // Each realm: its capital and the five land states nearest to it not yet taken
+  // Each realm: its capital and the four land states nearest to it not yet taken
   const taken = new Set(capitals);
   const realms = capitals.map(c => [c]);
-  for (let round = 0; round < 5; round++) {
+  for (let round = 0; round < 4; round++) {
     realms.forEach(r => {
       const s = land.filter(x => !taken.has(x)).sort((a, b) => centers[r[0]].angleTo(centers[a]) - centers[r[0]].angleTo(centers[b]))[0];
       if (s !== undefined) { r.push(s); taken.add(s); }
     });
   }
-  return { world: newWar(seed, realms), clock: 0, paused: false, speed: 1, seen: 0 };
+  const point = (t: CityRef) => centers[realms[t.leader][t.city]];
+  return createWarPanel(hud_root, {
+    cityAt: t => toScreen(point(t)),
+    fly: (kind, from, to, color, speed, stopped) => strikes.launch(kind, point(from), point(to), color, performance.now(), speed, stopped),
+    blast: (at, cls, small) => strikes.blast(point(at), cls, performance.now(), small),
+    pulse: (kind, at) => moment(kind, pointToTile(point(at))),
+    // The camera turns to the middle of the way and steps out enough to see both ends
+    look: (from, to, speed) => {
+      const a = point(from);
+      const b = point(to);
+      const mid = a.clone().add(b);
+      if (mid.lengthSq() < 1e-6) mid.copy(a);
+      const half = Math.min(THREE.MathUtils.degToRad(78), a.angleTo(b) / 2 + THREE.MathUtils.degToRad(14));
+      const dist = Math.min(RADIUS * 3.2, Math.max(RADIUS * 2, RADIUS / Math.cos(half) - RADIUS));
+      rig.flyTo(mid.normalize(), dist, reduceMotion() ? 0 : 0.6 / speed);
+    },
+    clear: () => strikes.clear(),
+    tint: list => tiles.setStateTints(list && list.map(t => ({ state: t.state, color: new THREE.Color(t.color), amount: t.amount }))),
+    reduceMotion,
+    // Back to the start screen, where a saved game waits as it was (STORY-119)
+    leave: () => {
+      const seed = seedQuery();
+      location.href = `${location.pathname}${seed ? `?${seed}` : ''}`;
+    },
+  }, seed, realms);
 })() : null;
+// For tests: the war, and the flights and blasts running
+if (warPanel) Object.assign(window, { globeWar: Object.assign(warPanel, { strikes: () => strikes?.state, layer: strikes }) });
 
-const warPanel = war ? createNuclearPanel(hud_root, {
-  act: a => {
-    if (war && leaderAct(war.world, 0, a) && a.kind !== 'build') moment(a.kind === 'missile' ? 'raid' : 'find', pointToTile(regions.centers[0][war.world.leaders[a.to].states[0]]));
-  },
-  togglePause: () => { if (war) war.paused = !war.paused; },
-  setSpeed: s => { if (war) { war.speed = s; war.paused = false; } },
-  // Back to the start screen, where a saved game waits as it was (STORY-119)
-  leave: () => {
-    const seed = seedQuery();
-    location.href = `${location.pathname}${seed ? `?${seed}` : ''}`;
-  },
-}) : null;
-if (war) Object.assign(window, { globeWar: war });
-
-function updateWar(dt: number) {
-  if (!war || !warPanel) return;
-  const w: NuclearWorld = war.world;
-  if (!war.paused && w.winner === null) {
-    // A day in 1.5 s at 1×, as the game's clock
-    war.clock += (dt * war.speed) / 1.5;
-    while (war.clock >= 1 && w.winner === null) {
-      war.clock -= 1;
-      const before = w.log[0];
-      leaderDay(w);
-      // The computer's missiles flash on their target's capital
-      for (const line of w.log) {
-        if (line === before) break;
-        const hit = line.startsWith('Ohjusisku') ? w.leaders.find(l => line.includes(`→ ${l.name},`)) : undefined;
-        if (hit) moment('raid', pointToTile(regions.centers[0][hit.states[0]]));
-      }
-    }
-  }
-  const capitals = w.leaders.map(l => toScreen(regions.centers[0][l.states[0]]));
-  const dots = w.leaders.flatMap(l => l.states.slice(1).flatMap(s => {
-    const at = toScreen(regions.centers[0][s]);
-    return at ? [{ leader: l.id, at }] : [];
-  }));
-  warPanel.update(w, war.paused, war.speed, { capitals, dots });
+function updateWar(_dt: number) {
+  if (!warPanel || !strikes) return;
+  const now = performance.now();
+  warPanel.update(now);
+  strikes.update(now, camera, window.innerHeight, reduceMotion());
 }
 
 // ─── Level panel and city quick panels (STORY-098) ─

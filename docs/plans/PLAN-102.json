@@ -1,0 +1,104 @@
+{
+  "id": "PLAN-102",
+  "story": "STORY-121",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-24",
+  "approach": "Ehdotus: STORY-121 jaetaan kahtia. STORY-121 tuo varhaisajan ja rauta-ajan uudet keksinnöt (seitsemän), ja uusi STORY-124 keskiajan yhdeksän keksintöä Ruudin avaimineen. Kumpikin on L-kokoinen, koska jokainen keksintö tuo säännön, kuvan, lausahduksen ja testit. STORY-121:n keksinnöt Freecivin civ1-säännöin (data/civ1, commit 04852fb): Mystiikka (Hautajaisriitit) avaa ihmeen Ennustajan temppeli (300 tuotantoa: temppeli rauhoittaa yhden lisää jokaisessa kaupungissa; vanhenee, kun Uskonto tunnetaan), Lukutaito (Kirjoitus ja Lakikokoelma) avaa ihmeen Suuri kirjasto (300: keksintö, jonka vähintään kaksi kilpailijaa tuntee, tulee pelaajalle), Kaupankäynti (Rahatalous ja Lakikokoelma) avaa Karavaanin (50 tuotantoa, puolustus 1), joka vie tuotantonsa kaupungin keskeneräiseen ihmeeseen, Filosofia (Mystiikka ja Lukutaito), Tasavalta (Lakikokoelma ja Lukutaito) avaa vallankumouksen Tasavaltaan (+1 kauppa ruutuun, jossa on kauppaa; uudisasukas syö 2 ruokaa; jokainen sotilas kotivaltion ulkopuolella tekee kotikaupungissaan yhden tyytymättömän), Tähtitiede (Mystiikka ja Matematiikka) avaa ihmeen Tähtitorni (300: +100 % tiedettä kaupungissa) ja Siltojenrakennus (Rautatyö ja Rakentaminen). Civ1:ssä Filosofia ja Siltojenrakennus eivät avaa mitään, joten ne saavat omat vaikutukset Samin valinnan mukaan (oletus: Filosofia antaa ilmaisen keksinnön, jos yksikään kilpailija ei tunne sitä vielä, ja Siltojenrakennus antaa teille +1 liikkeen, eli yksikkö kulkee tiellä kaksi ruutua päivässä; molemmat omia sääntöjä). Nimet ovat omia (sääntö 4). Jokaisella uudella keksinnöllä on oma SVG-kuva (advanceArt.ts), selitys ja tarkistettu lausahdus tekijänoikeudesta vapaasta teoksesta Enkin suomennoksena lähteineen (advanceLore.ts), ja advanceEffects kertoo vaikutukset luvuin keksintökortissa, tiedepuussa ja Tietokirjassa. Valtion neuvonantajien tutkimusjärjestykset (STATE_PLANS) ja kilpailijoiden RIVAL_ORDER kattavat uudet keksinnöt, ja Laajentaja ja Oppinut tekevät vallankumouksen Tasavaltaan, kun se tunnetaan, Kenraali pysyy Monarkiassa (oma). ADVANCE_ERA saa uudet keksinnöt (Mystiikka varhaisaikaan, muut rauta-aikaan). Tallennus: Advance-lista laajenee, joten vanha tallennus kelpaa sellaisenaan (sääntö 8, testi), ja hallitus 'republic' lisätään tarkistukseen. Kultaiset tilat kirjoitetaan uudelleen ääneen sanoen, koska tutkimusjärjestys muuttuu, ja autopilotin on yhä noustava valtiotasolle.",
+  "alternatives_considered": [
+    {
+      "name": "Kaikki 16 keksintöä yhdessä storyssa",
+      "pros": "Keskiaika aukeaa yhdellä kertaa",
+      "cons": "Noin 16 sääntöä, 16 kuvaa ja 16 lausahdusta yhdessä katselmoinnissa; kultaiset tilat muuttuvat kerralla paljon, ja virheen juurisyy on vaikea löytää",
+      "rejected_because": "Ehdotettu jako pitää storyt katselmoitavina; Sami päättää"
+    },
+    {
+      "name": "Filosofia ja Siltojenrakennus pelkkinä välivaiheina",
+      "pros": "Ei omia sääntöjä",
+      "cons": "Keksintö ilman vaikutusta on kuollut valinta, ja Sami toivoi selkeää vaikutusta jokaiselle",
+      "rejected_because": "Samin toive 2026-11-23"
+    },
+    {
+      "name": "Karavaanille myös kauppareitit",
+      "pros": "Civ1:n kauppa kokonaan",
+      "cons": "Uusi järjestelmä (reitit, tuotto ja tekoäly); kasvattaa storyn ylisuureksi",
+      "rejected_because": "Reitit voi lisätä omana storynaan myöhemmin, jos Sami haluaa"
+    }
+  ],
+  "files_to_change": [
+    "src/game/science.ts (Advance, ADVANCES, NEEDS)",
+    "src/game/cities.ts (BUILDS, karavaani ja ihmeet)",
+    "src/game/eras.ts (ADVANCE_ERA)",
+    "src/game/government.ts (Tasavalta)",
+    "src/game/advisors.ts (STATE_PLANS)",
+    "src/game/rivals.ts (RIVAL_ORDER)",
+    "src/game/codex.ts (advanceEffects, ihmeiden ja hallituksen rivit)",
+    "src/game/advanceLore.ts",
+    "src/ui/advanceArt.ts",
+    "src/game/save.ts (hallitus)",
+    "src/sim/game.ts (ihmeiden vaikutukset, Suuri kirjasto, Filosofia, karavaani, tasavallan tyytymättömyys, tiet)",
+    "tests/golden/seed42.json (uudelleen, sanotaan ääneen)",
+    "src/game/*.test.ts ja tests/sim/*.test.ts (uudet testit)",
+    "tests/e2e/science-tree.e2e.ts ja advance-card.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Keksinnöt ja niiden vaatimukset science.ts:ään ja ADVANCE_ERA:an",
+      "verify": "Vitest: vaatimukset ja hinnat civ1:n mukaan, jokaisella aikakausi, ja vanha tallennus kelpaa"
+    },
+    {
+      "step": 2,
+      "action": "Ihmeet (Ennustajan temppeli, Suuri kirjasto, Tähtitorni) ja vanheneminen",
+      "verify": "Vitest: temppeli rauhoittaa kaksi, vanhenee Uskonnosta; kirjasto antaa kahden kilpailijan keksinnön; tähtitorni +100 % tiedettä"
+    },
+    {
+      "step": 3,
+      "action": "Karavaani ja sen tuotanto ihmeeseen (komento)",
+      "verify": "Vitest: karavaani lisää 50 tuotantoa ihmeeseen, ei muuhun, ja neuvonantaja käyttää sitä"
+    },
+    {
+      "step": 4,
+      "action": "Tasavalta: vallankumous, kauppa, uudisasukkaan ruoka, sotilaiden tyytymättömyys ja neuvonantajat",
+      "verify": "Vitest: luvut civ1:n mukaan, tallennus ja Kenraali pysyy Monarkiassa"
+    },
+    {
+      "step": 5,
+      "action": "Filosofia ja Siltojenrakennus (omat säännöt Samin valinnan mukaan)",
+      "verify": "Vitest: ilmainen keksintö vain ensimmäiselle; tiellä kaksi ruutua päivässä"
+    },
+    {
+      "step": 6,
+      "action": "Kuvat, selitykset ja tarkistetut lausahdukset seitsemälle keksinnölle; vaikutusrivit",
+      "verify": "Vitest advanceLore ja codex; E2E science-tree ja advance-card kuvakaappauksin"
+    },
+    {
+      "step": 7,
+      "action": "Tutkimusjärjestykset, kultaiset tilat ja autopilotti",
+      "verify": "Selain ja Node samaan tilaan, autopilotti nousee valtiotasolle 900 päivässä, koko Vitest ja E2E vihreinä"
+    }
+  ],
+  "status": "draft",
+  "decisions": [
+    "Sami 2026-11-24: STORY-121 jaetaan kolmeen. STORY-121: Mystiikka, Lukutaito, Tähtitiede, Kaupankäynti, Filosofia ja Siltojenrakennus, kolme ihmettä ja karavaani. Uusi STORY-125: Tasavalta ja hallitusten uudistus civ1:n säännöin (senaatti päätetään sen suunnitelmassa). Uusi STORY-124: keskiaika ja Ruuti.",
+    "Sami 2026-11-24: Filosofialle oma vaikutus (ilmainen keksintö ensimmäiselle, jota yksikään kilpailija ei vielä tunne). Siltojenrakennus: teiden rakennus kestää puolet päivistä (oma). Karavaani vie tuotantonsa vain ihmeisiin."
+  ],
+  "review": {
+    "by": "Utu ☀️ (Sonnet 5.5, Anun sijasta)",
+    "date": "2026-11-24",
+    "verdict": "hyväksytty muutoksin",
+    "findings": [
+      "Vakava: Mystiikka itse lisää temppelin rauhoitusta (civ1 effect_temple_1), ja Ennustaja +1 ja Mystiikan kanssa +1, eli 1/2/3/4. cityMood tarvitsee rakenteen gardens-lipun tilalle.",
+      "Vakava: Tasavalta on oma kokonaisuus (senaatti, Empire_Size_Base 13, vallankumous Monarkiasta, revolutionTo, ei-sotilaalliset yksiköt eivät tee tyytymättömiä, uudisasukkaan ruoka GOVERNMENTS-taulukkoon). Siirretty STORY-125:een.",
+      "Vakava: tiet eivät nopeuta liikettä; Siltojenrakennuksen oma vaikutus vaihdettiin teiden rakennusaikaan.",
+      "Vakava: Ennustajan vanheneminen (Uskonto, World, survives) siirtyy STORY-124:ään; hasWonder pysyy totena vanhentuneelle.",
+      "Keskitaso: Kopernikuksen torni civ1: +100 %, +50 % kirjastolla ja +50 % yliopistolla (effects.ruleset); cityScience summaa bonukset.",
+      "Keskitaso: Suuri kirjasto kahden kilpailijan tuntema keksintö, vaatimukset täyttyvät, resurssikeksinnöt ohitetaan, tarkistus kiinteästi päivän lopussa, gained() ja kortti, ei ketjua Filosofian kanssa.",
+      "Keskitaso: Filosofian keksintö on tutkimuskohde, muuten suggestedStudy(), muuten ADVANCE_LIST-järjestys; kaikki saantitavat; kerran.",
+      "Keskitaso: karavaani UnitKind ja save.ts:n UNIT_KINDS, ylläpito 0 (supportOf), rakennuttaja ja kohde neuvonantajalle, +50 vain keskeneräiseen ihmeeseen ja enintään hintaan, komento {kind:'help', unit, city}.",
+      "Keskitaso: save.ts:n BUILDINGS/BUILDS-kopio ja pariteettitesti; karavaanin määränpää validoidaan.",
+      "Pieni: ADVANCE_LIST-järjestys muuttaa raunioita ja tiedepuuta; kovakoodatut lukumäärät testeissä; eras.ts-kommentti; backlogin riippuvuudet; lausahdusten lähteet luonnoksena tarkistettaviksi; autopilotin nousu enintään noin 20 % myöhemmin."
+    ]
+  },
+  "next": "Enki kirjoittaa lähestymistavan ja vaiheet uudelleen päätösten ja katselmoinnin mukaan, ja Sami hyväksyy. Työ odottaa Nuclear War -uusintaa (Samin prioriteetti 1, 2026-11-24)."
+}

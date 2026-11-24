@@ -1,0 +1,99 @@
+{
+  "id": "PLAN-103",
+  "story": "STORY-126",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-24",
+  "approach": "Ydinsotakokeilu kirjoitetaan uudelleen vanhan Amiga-pelin Nuclear Warin mekaniikoin. Lähteenä on rekonstruktio github.com/leetlamer/NuclearWar-ReNuked-Web (commit 691fa2b, wasm/src/game/game_rules.cpp, ai_controller.cpp ja revenge_system.hpp). Repolla ei ole lisenssiä, ja se sisältää alkuperäisen pelin kuvat, äänet ja tekstit, joten siitä otetaan vain säännöt ja luvut (sääntö 4): koodi, nimet, tekstit, kasvot ja äänet ovat omia. Kokeilu ei koske varsinaiseen peliin eikä tallennukseen.\n\nSäännöt (src/game/nuclear.ts, kokonaan uusi): viisi johtajaa, pelaaja ratkaisujärjestyksessä viimeisenä kuten alkuperäisessä. Jokaisella johtajalla on viisi kaupunkia, ja väkiluku miljoonina on luonteen mukaan rekonstruktion arvoilla (luonne 0: 10–35, 1: 15–30, 2: 20–35, 3: 1–50, 4: 5–40; pelaaja kuten luonne 0). Varasto: kärjet neljää kokoa (10, 20, 50 ja 100 megatonnia, vaikutus 2, 5, 10 ja 25 miljoonaa + d6), ohjukset neljää luokkaa (kantavat luokkansa kokoisen kärjen), pommikoneet kahta (kuorma 50 tai 100 megatonnia ja useita lentoja, kunnes kuorma loppuu) ja torjunta kahta (ensimmäinen pysäyttää ohjukset, toinen myös pommikoneet). Aloitusvarasto luonteen mukaan, pelaajalla yksi 10 megatonnin kärki, yksi ohjus ja yksi torjunta.\n\nKierros: pelaaja valitsee tekonsa (komento), tekoälyt suunnittelevat järjestyksessä rekonstruktion säännöin (vihamielisin vastustaja, luonteen todennäköisyystaulut propagandalle ja aseille, torjunta, kun vihamielisin on laukaisemassa, ja rakentaminen, kun aseita on liian vähän), asenteet päivittyvät, ja teot ratkaistaan järjestyksessä tapahtumaluetteloksi. Rakentaminen tuottaa (kaupungit + 1) tavaraa rekonstruktion arvontataulun mukaan. Propaganda siirtää 1–10 miljoonaa kohteen kaupungista omaan, mutta 30 %:n todennäköisyydellä tapahtuu sattuma: kaupunki tyhjenee, paino putoaa, ufo tuplaa suurimman kaupungin, väestönkasvu, lehmä tappaa kohteesta 5–25 miljoonaa, maanjäristys tyhjentää oman kaupungin, säteily vie jokaisesta omasta kaupungista 1–5 miljoonaa, maastamuutto tai loikkarit, jotka siirtyvät kohteelle (yleisin). Isku heittää 2d6 (seitsemän heitetään uudelleen): 2 suutari, 3 ohi, 4 −2, 5 +1, 8 +2, 9 +5, 10 +10, 11 ×2 ja 12 ×3 (100 megatonnin kärjellä koko kaupunki), enintään kaupungin väkiluku. Kukistuneen johtajan kosto: neljä viimeistä iskua, ensin ilmassa olevat pommikoneet ja sitten ohjukset, vuorotellen eloonjääneisiin. Pelaajan rangaistus kuten alkuperäisessä: ladatun aseen purkaminen tai kaksi rakennuskierrosta peräkkäin lisää muiden vihamielisyyttä pelaajaan. Sota päättyy, kun eloonjääneitä on enintään yksi. Pisteet: väkiluku + 25 × (kaupungit − 1).\n\nOmat poikkeukset (merkitään koodiin): oma siemenellinen satunnaislukugeneraattori alkuperäisen LCG:n sijaan, ei lennossa törmääviä aseita, pelaajan rakennus tuottaa kierroksen lopussa kuten tekoälyjen, ja kaupungit ja niiden nimet tulevat pallolta. Jos autopelaus näyttää loputtomia sotia, kierrosraja lisätään omana sääntönä mittauksen perusteella.\n\nJohtajat (src/game/leaders.ts): kymmenen keksittyä karikatyyriä, kaksi kustakin rekonstruktion viidestä luonteesta: tasapainoinen haukka, sotilas, propagandisti, arvaamaton ja sekalainen. Nimet ovat omia sanaleikkejä (ehdotus: Kenraali Ruutiparta, Marsalkka Rautakoura, Ministeri Megafoni, Puhemies Paasaus, Diktaattori Arpanen, Tohtori Tuuliviiri, Kuningatar Kuura, Maharuhtinas Mahtipontinen, Presidentti Paukku ja Puheenjohtaja Ukonvaaja). Kullakin on oma väri ja omat repliikit tilanteittain (rakennus, propaganda, lataus, laukaisu, osuma, torjunta, sattuma, kukistuminen ja voitto), vähintään kolme kustakin, eikä yksikään viittaa oikeaan ihmiseen, kansaan tai valtioon. Kasvot (src/ui/leaderPortraits.ts) ovat omia SVG-karikatyyrejä viidellä mielialalla (tyyni, ylpeä, vihainen, pelokas ja kukistunut).\n\nPallo (sääntö 1): nykyiset kaukaiset pääkaupungit, ja jokaisen valtakunnan neljä lähintä maavaltiota ovat johtajan kaupungit, joissa näkyvät nimi ja väkiluku. Uusi kerros src/globe/strikes.ts piirtää samaan sceneen ohjuksen kaaren (korkeus noin 0,25 R, 1,8 s), pommikoneen matalan reitin (3,5 s), propagandan pisteinä kulkevat ihmiset ja torjunnan pamauksen. Räjähdys käyttää PulseLayeria. Kesto seuraa seinäkelloa, nopeus 1× tai 2×, napautus ohittaa, ja vähennetty liike näyttää lopputuloksen ilman lentoa.\n\nPaneeli (src/ui/nuclearPanel.ts, uusi): aloitusgalleria (neljä vastustajaa, Arvo loput ja Sotaan), johtajarivi kasvoineen, väkilukuineen ja aseineen, pelaajan valikko (teko, sitten luokka ja kohdekaupunki pallolta tai listasta) ja Valmis, tapahtumien toisto puhekuplin (kirjoituskone-efekti), tapahtumaloki tekstinä ja loppukortti. Puhelimella valikko on alapaneelissa ja kasvorivi ylhäällä.\n\nKomennot (sääntö 7): pelaajan teko on sarjallistettava olio, ja sama siemen, samat vastustajat ja samat teot tuottavat saman sodan. Testi pelaa sodan läpi komennoilla kahdesti.",
+  "alternatives_considered": [
+    {
+      "name": "Alkuperäisen WebAssembly-moottorin upotus",
+      "pros": "Täsmälleen alkuperäiset säännöt",
+      "cons": "Repolla ei ole lisenssiä ja se kantaa alkuperäisen kuvat, äänet ja tekstit; ei GPL-yhteensopiva eikä liity palloon",
+      "rejected_because": "Osio 3 ja sääntö 4"
+    },
+    {
+      "name": "Oikeiden nykyjohtajien parodiat",
+      "pros": "Samin toive 2026-11-24, alkuperäisen henki",
+      "cons": "Keksityt repliikit ja ydiniskut oikeiden ihmisten suuhun ja tunnistettavat kasvot",
+      "rejected_because": "Enki ei tee oikeista ihmisistä hahmoja; tilalle keksityt karikatyyrit"
+    },
+    {
+      "name": "Oma 2D-kartta",
+      "pros": "Lähempänä Amigan ilmettä",
+      "cons": "Rikkoo säännön 1, eikä liity myöhemmin oikeaan peliin (STORY-123)",
+      "rejected_because": "Samin valinta: pallolla"
+    }
+  ],
+  "files_to_change": [
+    "src/game/nuclear.ts (uusi sääntömoottori)",
+    "src/game/leaders.ts (uusi: johtajat ja repliikit)",
+    "src/ui/leaderPortraits.ts (uusi: kasvot)",
+    "src/globe/strikes.ts (uusi: lennot pallolla)",
+    "src/ui/nuclearPanel.ts (uusi paneeli)",
+    "src/ui/hud.css",
+    "src/globe/main.ts (kokeilun kytkentä)",
+    "src/game/nuclear.test.ts",
+    "src/globe/pulses.ts (laji blast)",
+    "tests/e2e/planet-trial.e2e.ts (uudelleen; STORY-119:n testi säilyy)",
+    "src/ui/startScreen.ts (tarvittaessa teksti)"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Sääntömoottori: väkiluvut, varasto, tuotanto, tekoälyn suunnittelu, asenteet, isku, torjunta, propaganda ja sattumat, kosto, rangaistus, loppu ja pisteet",
+      "verify": "Vitest (22 testiä, tehty haarassa): taulujen rajat, aloitusvarastot ja väkiluvut, torjuntaluokat, pommikoneen lennot, kosto, rangaistus, deterministinen sota, autopeli siemenillä 1–20 päättyy, sotilas iskee ja propagandisti puhuu, pisteet ja kierrosraja"
+    },
+    {
+      "step": 2,
+      "action": "Johtajat, repliikit ja kasvot viidellä mielialalla",
+      "verify": "Vitest: kymmenen johtajaa, kaksi kustakin luonteesta, jokaisella tilanteella vähintään kolme repliikkiä; kuvakaappaus gallerian kasvoista"
+    },
+    {
+      "step": 3,
+      "action": "Lennot pallolla (strikes.ts) ja kaupunkien merkit",
+      "verify": "E2E: ohjuksen kaari ja pommikoneen reitti näkyvät, kesto mitataan sivun sisältä, vähennetty liike ohittaa lennon"
+    },
+    {
+      "step": 4,
+      "action": "Paneeli: galleria, valikko, toisto puhekuplin, loki ja loppukortti",
+      "verify": "E2E työpöydällä ja puhelimella: galleria → neljä vastustajaa → lataus ja laukaisu → väkiluku laskee → loppukortti, 44 px:n kohteet, ei konsolivirheitä, kuvakaappaukset"
+    },
+    {
+      "step": 5,
+      "action": "Vanhan kokeilun jänniteluvut ja testit pois, STORY-097:n kriteerit korvautuvat",
+      "verify": "Koko Vitest ja E2E vihreinä, aloitusnäytön nappi avaa uuden kokeilun"
+    }
+  ],
+  "status": "approved",
+  "tables": {
+    "people": "Kaupungin väkiluku miljoonina luonteen mukaan: 0: 10–35, 1: 15–30, 2: 20–35, 3: 1–50, 4: 5–40; pelaaja kuten 0.",
+    "stock": "Aloitusvarasto: luonne 0 kärjet {1,3,0,0}, ohjukset {1,3,0,0}, torjunta {1,0}; 1 kärjet {1,2,2,0}, ohjukset {1,1,1,0}, pommikone {1,0}; 2 kärjet ja ohjukset {3,0,0,0}, torjunta {1,1}; 3 rakentaa kahdesti; 4 kärjet ja ohjukset {2,2,0,0}; pelaaja yksi 10 Mt:n kärki, yksi ohjus ja yksi torjunta.",
+    "build": "Rakennus tekee (elävät kaupungit + 1) tavaraa: d100 ≤55 kärki (luokka ≤25/≤65/≤90/muu), ≤80 ohjus (≤20/≤55/≤85/muu), ≤95 pommikone (>60 luokka 1), muuten torjunta (>60 luokka 1).",
+    "weapons": "Kärjet 10, 20, 50 ja 100 Mt, räjähdys 2, 5, 10 ja 25 miljoonaa + d6. Ohjus kantaa luokkansa kokoisen kärjen, pommikone 50 tai 100 Mt useana lentona. Torjunta: luokka 0 ohjukset, luokka 1 myös pommikoneet, vain kierroksella, jolla se otetaan käyttöön.",
+    "strike": "2d6, seitsemän heitetään uudelleen: 2 suutari (pommikone putoaa), 3 ohi (pommikone jatkaa), 4 −2, 5 +1, 6 sellaisenaan, 8 +2, 9 +5, 10 +10, 11 ×2, 12 ×3 tai 100 Mt:n kärjellä koko kaupunki; enintään kaupungin väkiluku. Pysäytetty pommikone putoaa kuormineen.",
+    "propaganda": "1–10 miljoonaa kohteen kaupungista omaan (pelaajalla pienimpään); 29 %:n todennäköisyydellä (portti <30) sattuma korvaa propagandan: d100 1–4 kaupunki katoaa, 5–6 paino, 7–8 ufo tuplaa suurimman, 9–13 vauvabuumi +5…25, 14–18 lehmä −5…25 kohteesta, 19–20 maanjäristys, 21–23 laskeuma 1–5 joka kaupungista, 24–25 maastamuutto toiselle johtajalle, 26–100 loikkarit kohteelle.",
+    "ai": "Vihamielisyys ±32767, rajat ±9000 ja ±18000. Vihamielisin elävä on vastustaja (tasapelit arvalla, toiseksi vihamielisin pienellä todennäköisyydellä). Propagandan todennäköisyys rivin (vastustajan vihamielisyys −2…2) ja luonteen mukaan taulusta, muuten aseet; aseiden lataus vaatii ohjuksia ja pommikoneita yhteensä ≥3 ja kärkiä ≥3, muuten rakennetaan. Kohdekaupunki: 0 viimeinen elävä, 1 suurin, 2 pienin, 3 ja 4 arpa. Asenteet ja tapahtumataulut kuten rekonstruktiossa 16-bittisine sanoineen; luonne 3 heiluttaa vihamielisyyttä ±2 × 9000 joka kierroksen jälkeen. Pelaajan rangaistus ±0x3332 (13106).",
+    "order": "Pelaaja antaa käskyn ensin, sitten tekoälyt suunnittelevat järjestyksessä 0–3 ja näkevät pelaajan teon; ratkaisu järjestyksessä 0–3 ja pelaaja viimeisenä. Rakentajat rakentavat kierroksen lopussa.",
+    "revenge": "Kukistunut iskee enintään neljästi: ensin ladattu pommikone, jolla on kuormaa (pienin sopiva kärki), sitten ohjukset pienimmästä luokasta pienimmällä sopivalla kärjellä, kohteet kierrossa ja kaupunki arvalla. Enintään viisi kukistumista kierrosta kohden.",
+    "score": "Väkiluku + 25 × (elävät kaupungit − 1), kukistuneella 0."
+  },
+  "own_rules": [
+    "Oma siemenellinen generaattori (mulberry32) alkuperäisen LCG:n sijaan.",
+    "Tekoälyn ohjus kantaa luokkansa kokoisen kärjen ja pommikone vain mahtuvan kärjen kuten pelaajalla (alkuperäinen antaa tekoälylle suurimman kärjen kapasiteetin ja sallii ylikuorman).",
+    "Tekoäly ottaa torjunnan käyttöön jo suunnitellua iskua vastaan vain, kun isku on suunnattu siihen; ladattuun aseeseen vastataan kuten alkuperäisessä.",
+    "Vauvabuumi tulee omaan suurimpaan kaupunkiin, maastamuutto ei koskaan itseen, pienimmän kaupungin valinnassa ei ole 255 miljoonan rajaa, ja tekoäly ilman kohdekaupunkia odottaa.",
+    "Kukistunut ei toimi koston jälkeen, ja sen pisteet ovat 0.",
+    "Pelaajan rakennus tuottaa kierroksen lopussa kuten tekoälyjen.",
+    "Kierrosraja 100, jonka jälkeen paras pistemäärä voittaa (autopeli siemenillä 1–40: 37–78 kierrosta).",
+    "Tekoälyn propaganda- ja asetaulun indeksointi säilyy rekonstruktion mukaisena (rivi = vastustajan vihamielisyys + 2, sarake = luonne; engine.hpp:n kutsukohta). Testi varmistaa, että sotilas iskee enemmän kuin puhuu ja propagandisti puhuu enemmän.",
+    "Ei lennossa törmääviä aseita."
+  ],
+  "presentation": "Logiikka laskee kierroksen kerralla tapahtumaluetteloksi, ja paneeli vain toistaa sen: ohitus ja vähennetty liike näyttävät saman lopputuloksen. Repliikit valitaan sodan siemenestä, kierroksesta ja tapahtuman järjestysnumerosta (ei pelin satunnaisuudesta eikä Math.random()). Kohde valitaan listasta (myös näppäimistöllä) tai pallolta. Kirjoituskone-efekti näkyy, mutta aria-live saa vain valmiin repliikin; vähennetyllä liikkeellä repliikki näkyy heti. PulseLayer saa lajin blast; kaaret ovat poolattuja Line-olioita kiinteällä puskurilla, ja yhtä aikaa lentää enintään kolme asetta.",
+  "review": {
+    "by": "Utu ☀️ (Sonnet 5.5, Anun sijasta)",
+    "date": "2026-11-24",
+    "verdict": "hyväksytty muutoksin",
+    "resolved": "Taulut ja omat säännöt kirjattu (kohdat tables ja own_rules), kierrosraja 100, ratkaisujärjestys, komentoloki, esitys tapahtumaluettelosta, listavalinta ja aria-live. Utun ehdottama jako kolmeen storyyn hoidetaan kahtena katselmointina (säännöt, sitten käyttöliittymä), koska kokeilun on toimittava mainissa joka mergen jälkeen. Identity 9 jätetään pois."
+  }
+}

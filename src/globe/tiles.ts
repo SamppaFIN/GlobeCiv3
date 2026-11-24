@@ -55,6 +55,15 @@ function faceTexture(): THREE.DataTexture {
 }
 
 /** Per-tile codes (terrainTypes.ts tileCode) as an 8-bit integer texture, filled on demand. */
+/** The states' colours: 512 × 1 RGBA bytes, nearest, all zero (STORY-126). */
+function stateTintTexture(): THREE.DataTexture {
+  const tex = new THREE.DataTexture(new Uint8Array(512 * 4), 512, 1, THREE.RGBAFormat, THREE.UnsignedByteType);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.needsUpdate = true;
+  return tex;
+}
+
 function codeTexture(): THREE.DataTexture {
   const height = Math.ceil(TILE_COUNT / TILE_TEX_WIDTH);
   const tex = new THREE.DataTexture(new Uint8Array(TILE_TEX_WIDTH * height), TILE_TEX_WIDTH, height, THREE.RedIntegerFormat, THREE.UnsignedByteType);
@@ -288,6 +297,9 @@ const fragmentShader = /* glsl */ `
   uniform vec3 sunDir;
   uniform vec3 tint;
   uniform float tintAmount;
+  // A colour over each state (rgb, a: how much), the nuclear war's realms (STORY-126)
+  uniform sampler2D stateTint;
+  uniform float stateTintOn;
   varying float vBase;
   varying vec3 vLocal;
   varying vec3 vNormal;
@@ -582,7 +594,7 @@ const fragmentShader = /* glsl */ `
           // Far from any border: the hint approximates the distance well enough for the glow
           borders[level] = vHint[level];
           slots[level] = slot;
-          int code = int(regionData[slot].w);
+          int code = int(regionData[slot].w) % 1024;
           from = code / 8;
           count = code - from * 8;
           continue;
@@ -605,7 +617,7 @@ const fragmentShader = /* glsl */ `
         }
         borders[level] = border;
         slots[level] = slot;
-        int code = int(regionData[slot].w);
+        int code = int(regionData[slot].w) % 1024;
         from = code / 8;
         count = code - from * 8;
       }
@@ -628,6 +640,16 @@ const fragmentShader = /* glsl */ `
           if (tileRegion[l] != r1[l]) b = e1;
           if (tileRegion[l] != r2[l]) b = min(b, e2);
           if (b < 1e30) tileBorders[l] = b;
+        }
+      }
+
+      // The realms' colours under the borders: the state from the tile texture near, the
+      // state slot's id far (STORY-126)
+      if (stateTintOn > 0.5) {
+        int sid = snapT >= 0.5 ? tileRegion[0] : (slots[0] >= 0 ? int(regionData[slots[0]].w) / 1024 : -1);
+        if (sid >= 0) {
+          vec4 st = texelFetch(stateTint, ivec2(sid, 0), 0);
+          color = mix(color, st.rgb, st.a);
         }
       }
 
@@ -821,6 +843,9 @@ export class TileManager {
   readonly screenUp = { value: new THREE.Vector3(0, 1, 0) };
   /** 1 draws the fog of war (the game), 0 not (?free). */
   readonly fogOn = { value: 0 };
+  /** A colour over each state, 512 × 1 RGBA (STORY-126), and 1 when any is set. */
+  private readonly stateTint = { value: stateTintTexture() };
+  private readonly stateTintOn = { value: 0 };
   /** Kinds of resource the people know, a bit per terrain in TERRAINS order (STORY-072). */
   readonly knownResources = { value: (1 << TERRAINS.length) - 1 };
   /** Coarse fog map (fogMap.ts): 255 where mapped. */
@@ -968,6 +993,8 @@ export class TileManager {
         surfaceOf: { value: surfaceOf },
         screenUp: this.screenUp,
         fogOn: this.fogOn,
+        stateTint: this.stateTint,
+        stateTintOn: this.stateTintOn,
         knownResources: this.knownResources,
         fogMap: this.fogMap,
         tileWorldCenter: { value: node.center },
@@ -1008,9 +1035,27 @@ export class TileManager {
     const data = new Float32Array(MAX_TILE_REGIONS * 4);
     const radii = new THREE.Vector2();
     if (!this.regions) return { stateCount: { value: 0 }, regionData: { value: data }, regionRadii: { value: radii } };
-    localEntries.forEach((e, k) => data.set([e.center.x, e.center.y, e.center.z, e.firstChild * 8 + e.childCount], k * 4));
+    // w: the first child's slot × 8 + the child count, and for a state its id × 1024 (STORY-126:
+    // the war's colour by state); 361 × 1024 + 1023 is well inside a float's exact integers
+    localEntries.forEach((e, k) => data.set([e.center.x, e.center.y, e.center.z, e.firstChild * 8 + e.childCount + (e.level === 0 ? e.id * 1024 : 0)], k * 4));
     radii.set(this.regions.inradius[1] * this.radius, this.regions.inradius[2] * this.radius);
     return { stateCount: { value: Regions.stateCount(entries) }, regionData: { value: data }, regionRadii: { value: radii } };
+  }
+
+  /**
+   * Colours over states, `amount` 0 … 1 (the nuclear war's realms, STORY-126), or none. The
+   * colour is raw sRGB as the shader's output is not colour-managed.
+   */
+  setStateTints(tints: { state: number; color: THREE.Color; amount: number }[] | null): void {
+    const tex = this.stateTint.value;
+    const data = tex.image.data as Uint8Array;
+    data.fill(0);
+    for (const t of tints ?? []) {
+      if (t.state < 0 || t.state >= 512) continue;
+      data.set([t.color.r * 255, t.color.g * 255, t.color.b * 255, Math.max(0, Math.min(1, t.amount)) * 255].map(Math.round), t.state * 4);
+    }
+    tex.needsUpdate = true;
+    this.stateTintOn.value = tints && tints.length ? 1 : 0;
   }
 
   private dispose(node: TileNode): void {
