@@ -1,0 +1,33 @@
+{
+  "id": "TICKET-IMPL-104",
+  "story": "STORY-127",
+  "plan": "PLAN-104",
+  "implemented_by_model": "Opus 5.5 (Enki)",
+  "status": "review",
+  "files_changed": [
+    "src/ui/sound.ts (uusi)",
+    "src/ui/sound.test.ts (uusi)",
+    "src/ui/nuclearPanel.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/planet-trial.e2e.ts"
+  ],
+  "change_summary": "sound.ts syntetisoi ydinsodan äänet Web Audiolla oskillaattoreista ja kohinasta ilman äänitiedostoja: laukaisu, pommikone, räjähdys (kesto kärjen koon mukaan), ilmaräjähdys, propagandatorvi, kirjoituskone (enintään yksi naksahdus 40 ms:ssa), tehdas, lehmä, paino, maanjäristys, ufo, kukistuminen ja voitto. AudioContext luodaan vasta käyttäjän ensimmäisestä napautuksesta tai näppäimestä, se pysähtyy taustalla ja jatkaa, kun välilehti palaa, ja ilman Web Audiota kutsut eivät tee mitään. Mykistys säilyy localStoragessa (try/catch). Paneeli soittaa äänen tapahtumien kohdalla, ja otsikkorivillä on Mykistä-nappi (aria-pressed, 44 px). Äänet ovat vain kokeilussa (?planet), eikä peli lataa niitä muuten.",
+  "impact_analysis": {
+    "changed_symbols": [
+      "createSounds",
+      "SoundKind",
+      "keptMute",
+      "keepMute",
+      "typeDue",
+      "WarStage.sounds"
+    ],
+    "affected_callers": [
+      "Ydinsotakokeilu ?planet"
+    ],
+    "risk": "Pieni: äänet ovat vain kokeilussa, ja ilman Web Audiota kaikki on hiljaa."
+  },
+  "commit": null,
+  "progress": 100,
+  "notes": "Kohinan alkukohta arvotaan Math.random()illa, mikä koskee vain ääntä eikä pelin logiikkaa (sääntö 7). STORY-126:n lennon kestotesti korjattiin samassa haarassa: se mittasi lennon katoamiseen asti, ja hidas frame (noin 1 s SwiftShaderissa) venytti mittauksen 3,7 s:iin. Nyt testi tarkistaa jokaisessa framessa, että piirretty osuus vastaa seinäkelloa framen omalla aikaleimalla (sääntö 5). Testin muutos sanottiin ääneen."
+}

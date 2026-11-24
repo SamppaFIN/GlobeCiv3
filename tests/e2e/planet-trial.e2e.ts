@@ -94,23 +94,31 @@ test('?planet: four opponents from the gallery, a missile loaded and launched on
   const aim = (await targets.first().textContent())!.split(' · ')[0];
   await targets.first().click();
   await expect(war.locator('.nw-summary')).toContainText('ohjuksella kohti kaupunkia');
-  const seconds = page.evaluate(() => new Promise<number>(done => {
-    let start = 0;
-    const look = () => {
+  // Every frame draws the missile's share of the way by the wall clock at the frame's own time
+  // (rule 5): a slow frame neither stretches nor shortens it
+  const frames = page.evaluate(() => new Promise<{ shown: number; due: number; seconds: number }[]>(done => {
+    const seen: { shown: number; due: number; seconds: number }[] = [];
+    let started = false;
+    const look = (ts: number) => {
       const f = (window as any).globeWar.strikes().flights.find((x: any) => x.kind === 'missile');
-      if (f && !start) start = performance.now() - f.age * 1000;
-      if (start && !f) return done((performance.now() - start) / 1000);
+      if (f) {
+        started = true;
+        if (f.shown > 0) seen.push({ shown: f.shown, due: Math.min(f.end, (ts - f.start) / 1000 / f.seconds), seconds: f.seconds });
+      } else if (started) return done(seen);
       requestAnimationFrame(look);
     };
-    look();
+    requestAnimationFrame(look);
   }));
   await war.getByRole('button', { name: 'Valmis' }).click();
   await page.waitForFunction(() => (window as any).globeWar.strikes().flights.some((f: any) => f.kind === 'missile'), null, { timeout: 60_000 });
   await page.screenshot({ path: testInfo.outputPath('war-missile.png') });
-  // 1.8 s at 1× and the trail's fade; the slow machine's frames do not stretch it
-  const flew = await seconds;
-  expect(flew).toBeGreaterThan(1.6);
-  expect(flew).toBeLessThan(3.5);
+  const seen = await frames;
+  expect(seen.length).toBeGreaterThan(0);
+  for (const f of seen) {
+    expect(f.seconds).toBeCloseTo(1.8, 5);
+    expect(Math.abs(f.shown - f.due)).toBeLessThan(0.02);
+  }
+  expect(seen.at(-1)!.shown).toBe(1);
   await roundDone(page);
   expect(await page.evaluate(() => (window as any).globeWar.war.orders.at(-1).kind)).toBe('launch');
   // The log tells where the player's warhead went
@@ -231,6 +239,37 @@ test('?planet with reduced motion: no flights in the air and whole lines at once
   const said = await page.locator('.nw-speech-text').textContent();
   const logged = await war.getByRole('list', { name: 'Tapahtumat' }).getByRole('listitem').allTextContents();
   expect(logged.some(l => l.includes(said!))).toBe(true);
+});
+
+test('?planet: the sounds start only at the first tap, and a muted war stays muted (STORY-127)', async ({ page }) => {
+  test.setTimeout(150_000);
+  const errors: string[] = [];
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', e => errors.push(e.message));
+  await page.setViewportSize({ width: 1280, height: 800 });
+  let r = ready(page);
+  await page.goto('./?planet&seed=42');
+  await r;
+  // No sound before the player has done anything
+  expect(await page.evaluate(() => (window as any).globeWar.sound().started)).toBe(false);
+  const war = await startWar(page);
+  expect(await page.evaluate(() => (window as any).globeWar.sound().started)).toBe(true);
+  const mute = war.getByRole('button', { name: 'Mykistä' });
+  await expect(mute).toHaveAttribute('aria-pressed', 'false');
+  expect((await mute.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  await mute.click();
+  await expect(mute).toHaveAttribute('aria-pressed', 'true');
+  // A round with sounds muted plays as before
+  await page.evaluate(() => (window as any).globeWar.give({ kind: 'build' }));
+  await page.waitForFunction(() => (window as any).globeWar.phase === 'playback');
+  await war.getByRole('button', { name: 'Ohita' }).click();
+  // The choice is kept for the next visit
+  r = ready(page);
+  await page.reload();
+  await r;
+  await startWar(page);
+  await expect(page.getByRole('region', { name: 'Ydinsota' }).getByRole('button', { name: 'Mykistä' })).toHaveAttribute('aria-pressed', 'true');
+  expect(errors).toEqual([]);
 });
 
 test('the trial leaves the game alone: no war without ?planet', async ({ page }) => {

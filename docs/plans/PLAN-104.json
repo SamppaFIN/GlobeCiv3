@@ -1,0 +1,37 @@
+{
+  "id": "PLAN-104",
+  "story": "STORY-127",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-24",
+  "approach": "Uusi src/ui/sound.ts syntetisoi kaikki äänet Web Audiolla oskillaattoreista ja kohinasta, ilman äänitiedostoja (osio 3: ei aineistoja ilman lisenssiä). AudioContext luodaan vasta käyttäjän ensimmäisestä napautuksesta tai näppäimestä, ja se pysähtyy (suspend), kun välilehti menee taustalle. Ilman Web Audiota kaikki kutsut ovat tyhjiä, ja sota toimii samoin.\n\nÄänet (omat): laukaisu (kohinan purske ja nouseva saha 200→1200 Hz), pommikone (kaksi matalaa vireestä poikkeavaa sahaa ja tremolo), räjähdys (kohina alipäästön läpi 2000→80 Hz ja matala jysähdys, kesto kärjen koon mukaan), torjunta (lyhyt pamaus), propagandatorvi (kolmen nuotin kanttiaaltofanfaari), kirjoituskone (lyhyt kaistanpäästetty naksahdus, enintään yksi 40 ms:ssa), tehdas (kaksi metallista kalahdusta), lehmä (saha 140→110 Hz formanttisuotimen ja vibraton läpi), paino (laskeva vihellys ja tömähdys), maanjäristys (matala kumina), ufo (huojuva siniaalto), kukistuminen (laskeva sointu) ja voitto (nouseva fanfaari).\n\nPaneeli kutsuu ääntä tapahtumien kohdalla (stage.sound). Mykistysnappi on ydinsodan paneelin otsikkorivillä (aria-pressed, 44 px), ja valinta säilyy localStoragessa (try/catch). Äänenvoimakkuus on maltillinen (master 0,35), ja vähennetty liike ei vaikuta ääniin.",
+  "alternatives_considered": [
+    {
+      "name": "Äänitiedostot vapaista kirjastoista",
+      "pros": "Realistisemmat äänet",
+      "cons": "Lisenssien tarkistus ja THIRD-PARTY-NOTICES, latausaika",
+      "rejected_because": "Samin valinta: omat syntetisoidut"
+    }
+  ],
+  "files_to_change": [
+    "src/ui/sound.ts (uusi)",
+    "src/ui/sound.test.ts (uusi)",
+    "src/ui/nuclearPanel.ts",
+    "src/globe/main.ts",
+    "src/ui/hud.css",
+    "tests/e2e/planet-trial.e2e.ts"
+  ],
+  "open_questions": [],
+  "steps": [
+    {
+      "step": 1,
+      "action": "sound.ts: ääniluettelo, mykistys ja sen säilyminen, ei ääntä ennen elettä eikä taustalla",
+      "verify": "Vitest: ilman AudioContextia kutsut eivät heitä; mykistyksen tallennus ja luku; kirjoituskoneen tahti; jokaisella tapahtumalla ääni"
+    },
+    {
+      "step": 2,
+      "action": "Kytkentä paneeliin ja mykistysnappi",
+      "verify": "E2E: mykistysnappi vaihtaa tilan ja tila säilyy uudelleenlatauksessa, AudioContext syntyy vasta napautuksesta, ei konsolivirheitä"
+    }
+  ],
+  "status": "approved"
+}

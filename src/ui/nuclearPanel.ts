@@ -14,6 +14,7 @@ import {
 } from '../game/nuclear';
 import { choose, lineOf, mishapText, outcomeText, PERSONAS, personaOf, PLAYER_PERSONA, TEMPERS, type Mood, type Persona, type Say } from '../game/leaders';
 import { leaderFace } from './leaderPortraits';
+import type { SoundKind } from './sound';
 
 export interface CityRef { leader: number; city: number }
 
@@ -35,6 +36,8 @@ export interface WarStage {
   tint(tints: { state: number; color: string; amount: number }[] | null): void;
   reduceMotion(): boolean;
   leave(): void;
+  /** The war's own sounds (STORY-127): made in sound.ts, muted at the player's choice. */
+  sounds: { play(kind: SoundKind, size?: number): void; readonly muted: boolean; setMuted(muted: boolean): void };
 }
 
 export type WarPhase = 'gallery' | 'orders' | 'playback' | 'end';
@@ -48,6 +51,9 @@ const BOMBER_NAMES = ['Haukka', 'Kotka'];
 const DOING_TEXT: Partial<Record<string, string>> = { loadMissile: 'Ohjus ladattu', loadBomber: 'Pommikone ilmassa', bomb: 'Pommikone ilmassa', defend: 'Torjunta valmiina', build: 'Rakentaa' };
 
 type Act = 'build' | 'propaganda' | 'loadMissile' | 'loadBomber' | 'strike' | 'defend';
+
+/** Each oddity's sound (STORY-127). */
+const MISHAP_SOUND: Record<string, SoundKind> = { cow: 'cow', weight: 'weight', quake: 'quake', ufo: 'ufo', vanish: 'ufo', fallout: 'quake', boom: 'horn', exodus: 'horn', defect: 'horn' };
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -134,9 +140,15 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
   const speedBtn = button('btn-ghost nw-speed', '1×', () => { speed = speed === 1 ? 2 : 1; speedBtn.textContent = `${speed}×`; speedBtn.setAttribute('aria-label', `Nopeus ${speed}×`); });
   speedBtn.setAttribute('aria-label', 'Nopeus 1×');
   const skipBtn = button('btn-ghost nw-skip', 'Ohita', () => skip());
+  // Mute, kept between visits (STORY-127)
+  const muteBtn = button('btn-ghost nw-mute', 'Mykistä', () => {
+    stage.sounds.setMuted(!stage.sounds.muted);
+    muteBtn.setAttribute('aria-pressed', String(stage.sounds.muted));
+  });
+  muteBtn.setAttribute('aria-pressed', String(stage.sounds.muted));
   const leaveBtn = button('btn-ghost nw-leave', '×', () => stage.leave());
   leaveBtn.setAttribute('aria-label', 'Aloitusnäyttöön');
-  head.append(title, speedBtn, skipBtn, leaveBtn);
+  head.append(title, muteBtn, speedBtn, skipBtn, leaveBtn);
 
   const row = el('ul', 'nw-leaders');
   row.setAttribute('aria-label', 'Johtajat');
@@ -465,15 +477,18 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
       case 'load':
         doingSeen[e.by] = e.what === 'missile' ? 'loadMissile' : 'loadBomber';
         say(e.by, 'load', '', 'smug', e.what === 'missile' ? `Lataa ohjuksen ${MISSILE_NAMES[e.cls]}.` : `Pommikone ${BOMBER_NAMES[e.cls]} nousee ilmaan.`);
+        stage.sounds.play('factory');
         return 1.8;
       case 'defend':
         doingSeen[e.by] = 'defend';
         say(e.by, 'defend', '', 'calm', `${DEFENSE_NAMES[e.cls]} valmiina.`);
         stage.pulse('find', capital(e.by));
+        stage.sounds.play('factory');
         return 1.6;
       case 'build':
         doingSeen[e.by] = 'build';
         say(e.by, 'build', '', 'calm', 'Tehtaat käyntiin.');
+        stage.sounds.play('factory');
         return 1.3;
       case 'made': {
         if (e.by !== PLAYER) { narrate(`${name(e.by)}: tehtaat valmistivat ${Object.values(e.made).flat().reduce((s, n) => s + n, 0)} asetta.`); return 0.8; }
@@ -490,6 +505,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
         const from = { leader: e.target, city: e.from };
         say(e.by, 'propaganda', '', 'smug', e.moved > 0 ? `${millions(e.moved)} muutti kaupungista ${cityName(from)}.` : `Kaupungista ${cityName(from)} ei muuttanut ketään.`);
         stage.look(from, { leader: e.by, city: e.to }, speed);
+        stage.sounds.play('horn');
         return 0.6 + flown(stage.fly('people', from, { leader: e.by, city: e.to }, personas[e.by].color, speed, false));
       }
       case 'mishap': {
@@ -497,6 +513,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
         const at = e.city >= 0 ? { leader: e.leader, city: e.city } : capital(e.leader);
         const text = mishapText(e.mishap, war.seed, war.round, eventNo);
         const mood: Mood = e.mishap === 'ufo' || e.mishap === 'boom' ? 'smug' : 'scared';
+        stage.sounds.play(MISHAP_SOUND[e.mishap]);
         say(e.by, null, text, mood, e.moved ? (e.mishap === 'ufo' || e.mishap === 'boom' ? `+${millions(e.moved)}` : `${millions(e.moved)} ${e.to ? 'lähti' : 'menetettiin'}.`) : '');
         if (e.to) {
           stage.look(at, e.to, speed);
@@ -514,6 +531,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
         const warhead = e.warhead >= 0 ? `${MEGATONS[e.warhead]} Mt` : 'tyhjä';
         say(e.by, e.revenge ? 'fall' : 'strike', '', e.revenge ? 'fallen' : 'angry', `${e.revenge ? 'Kosto: ' : ''}${warhead} kohti kaupunkia ${cityName(to)}.`);
         stage.look(from, to, speed);
+        stage.sounds.play(e.delivery === 'missile' ? 'launch' : 'bomber');
         const flight = flown(stage.fly(e.delivery, from, to, personas[e.by].color, speed, e.outcome === 'stopped' || e.outcome === 'crash'));
         pending = { e, at: performance.now() + (flight * 1000) / speed };
         return flight + (e.outcome === 'hit' ? 2.4 : 1.3);
@@ -521,6 +539,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
       case 'fall':
         doingSeen[e.who] = '';
         say(e.who, 'fall', '', 'fallen', `${name(e.who)} kukistui.`);
+        stage.sounds.play('fall');
         return 2.0;
       case 'end':
         return 0.2;
@@ -538,13 +557,18 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
     const text = outcomeText(e.outcome, war.seed, war.round, eventNo);
     if (e.outcome === 'hit' || e.outcome === 'ruins') {
       stage.blast(to, Math.max(0, e.warhead), false);
+      stage.sounds.play('blast', Math.max(0, e.warhead));
       shown = e.people.map(r => [...r]);
       const struck = e.target;
       if (e.loss > 0) say(struck, 'struck', '', shown[struck].some(n => n > 0) ? (e.loss > 20 ? 'scared' : 'angry') : 'fallen', `${text} ${millions(e.loss)} menehtyi kaupungissa ${war.leaders[e.target].cities[e.city].name}.`);
       else narrate(text);
     } else if (e.outcome === 'stopped') {
+      stage.sounds.play('burst');
       say(e.target, 'defend', '', 'smug', text);
-    } else narrate(text);
+    } else {
+      if (e.outcome === 'crash') stage.sounds.play('burst');
+      narrate(text);
+    }
     renderRow();
     renderMarks();
   }
@@ -625,6 +649,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
     if (queue.some(e => e.kind === 'end' && e.byScore)) endCard.append(el('p', 'nw-end-note', `Kierrosraja täyttyi: eniten pisteitä sai ${w >= 0 ? personas[w].name : 'ei kukaan'}.`));
     endCard.append(list, foot);
     endCard.hidden = false;
+    stage.sounds.play(w >= 0 ? 'win' : 'fall');
     again.focus();
   }
 
@@ -732,6 +757,7 @@ export function createWarPanel(root: HTMLElement, stage: WarStage, seed: number,
     if (phase === 'gallery' || !war) return;
     if (typing) {
       const n = Math.min(typing.text.length, Math.ceil((typing.text.length * (now - typing.start)) / typing.ms));
+      if (n > (speechText.textContent ?? '').length) stage.sounds.play('type');
       speechText.textContent = typing.text.slice(0, n);
       if (n >= typing.text.length) typing = null;
     }

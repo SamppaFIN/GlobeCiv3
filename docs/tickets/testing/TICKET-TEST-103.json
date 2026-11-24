@@ -39,7 +39,7 @@
       },
       {
         "steps": "E2E planet-trial.e2e: työpöytä 1280 × 800",
-        "expected": "Galleria (10 johtajaa, 44 px), neljä vastustajaa ja arvonta, viisi johtajaa riveinä, kaupunkimerkit pallolla, ohjuksen lataus ja laukaisu listasta, lento kestää seinäkellolla 1,6–3,5 s, loki kertoo kohteen, maan napautus avaa kuplan ja propaganda lähtee siitä, kokonainen toisto ja ohitus päättyvät sodan tilaan, 44 px, loppukortti voittajineen, pisteineen ja fokuksineen, ei konsolivirheitä",
+        "expected": "Galleria (10 johtajaa, 44 px), neljä vastustajaa ja arvonta, viisi johtajaa riveinä, kaupunkimerkit pallolla, ohjuksen lataus ja laukaisu listasta, ohjuksen lento kestää 1,8 s ja jokainen frame piirtää osuutensa seinäkellon mukaan framen omalla aikaleimalla (korjattu STORY-127:n haarassa: ensimmäinen versio mittasi katoamiseen asti, ja hidas frame venytti mittausta), loki kertoo kohteen, maan napautus avaa kuplan ja propaganda lähtee siitä, kokonainen toisto ja ohitus päättyvät sodan tilaan, 44 px, loppukortti voittajineen, pisteineen ja fokuksineen, ei konsolivirheitä",
         "result": "Läpi (CI=1), Utun katselmoinnin korjausten jälkeen",
         "outcome": "pass"
       },
