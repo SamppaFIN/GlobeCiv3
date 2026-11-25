@@ -38,6 +38,8 @@ interface Flight {
   done: boolean;
   /** The share of the way drawn at the last frame. */
   shown: number;
+  /** Drawn at its end on a frame: a slow frame does not take it away before it was seen to arrive. */
+  arrived: boolean;
 }
 
 interface Blast { at: THREE.Vector3; start: number; size: number; parts: THREE.Sprite[]; ring: THREE.Mesh; small: boolean; air?: THREE.Vector3 }
@@ -202,7 +204,7 @@ export class StrikeLayer {
     const seconds = FLIGHT_S[kind] / speed;
     const f: Flight = {
       kind, from: from.clone().normalize(), to: to.clone().normalize(), start: now, seconds, end: stopped ? STOP_AT : 1,
-      line: kind === 'people' ? null : this.line(kind === 'missile' ? color : '#efe9d8'), head: [], angle: from.angleTo(to), done: false, shown: 0,
+      line: kind === 'people' ? null : this.line(kind === 'missile' ? color : '#efe9d8'), head: [], angle: from.angleTo(to), done: false, shown: 0, arrived: false,
     };
     if (kind === 'missile') {
       f.head.push(this.sprite(this.tex.glow, color, true), this.sprite(this.tex.rocket, '#ffffff', false, 22));
@@ -290,6 +292,11 @@ export class StrikeLayer {
       // Reduced motion: no flight, only its end for a moment
       const t = reduceMotion ? f.end : Math.min(f.end, raw);
       f.shown = t;
+      // The fade after the end begins once the end has been drawn: on a slow frame that jumps
+      // past it, the weapon is drawn at its target for that frame and goes on the next (CI 2026-11-24)
+      const arrived = f.arrived;
+      f.arrived = t >= f.end;
+      const past = arrived ? Math.max(0, raw - f.end) : 0;
       // Reduced motion: a stopped weapon bursts at once where it was stopped
       if (reduceMotion && f.end < 1 && !f.done) {
         f.done = true;
@@ -301,7 +308,7 @@ export class StrikeLayer {
         this.burst(this.at(f, f.end, new THREE.Vector3()), now);
       }
       // Reduced motion: the end shows for a moment of wall time, not a share of the flight
-      if (reduceMotion ? (now - f.start) / 1000 / this.slow >= 0.35 : raw >= f.end + 0.15) {
+      if (reduceMotion ? (now - f.start) / 1000 / this.slow >= 0.35 : raw >= f.end + 0.15 && arrived) {
         this.flights.splice(this.flights.indexOf(f), 1);
         this.release(f);
         continue;
@@ -316,7 +323,7 @@ export class StrikeLayer {
         pos.needsUpdate = true;
         f.line.geometry.setDrawRange(0, n);
         f.line.geometry.computeBoundingSphere();
-        (f.line.material as THREE.LineBasicMaterial).opacity = (f.kind === 'bomber' ? 0.5 : 0.9) * (raw > f.end ? 1 - (raw - f.end) / 0.15 : 1);
+        (f.line.material as THREE.LineBasicMaterial).opacity = (f.kind === 'bomber' ? 0.5 : 0.9) * (1 - clamp01(past / 0.15));
       }
       const head = this.at(f, t, this.headAt);
       const flying = raw < f.end;
@@ -346,7 +353,7 @@ export class StrikeLayer {
         puffs.forEach((s, i) => {
           const back = (i + 1) / puffs.length;
           const u = t - back * (missile ? 0.45 : 0.3);
-          const fadeOut = raw > f.end ? 1 - clamp01((raw - f.end) / 0.15) : 1;
+          const fadeOut = 1 - clamp01(past / 0.15);
           if (u <= 0.005) { s.visible = false; return; }
           const at = this.at(f, u, s.position);
           s.scale.setScalar((missile ? 10 + 16 * back : 4 + 3 * back) * perPx);
