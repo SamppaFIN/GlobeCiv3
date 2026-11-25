@@ -27,7 +27,7 @@
     ],
     "risk": "Pieni: äänet ovat vain kokeilussa, ja ilman Web Audiota kaikki on hiljaa."
   },
-  "commit": null,
+  "commit": "a75430a",
   "progress": 100,
   "notes": "Kohinan alkukohta arvotaan Math.random()illa, mikä koskee vain ääntä eikä pelin logiikkaa (sääntö 7). STORY-126:n lennon kestotesti korjattiin samassa haarassa: se mittasi lennon katoamiseen asti, ja hidas frame (noin 1 s SwiftShaderissa) venytti mittauksen 3,7 s:iin. Nyt testi tarkistaa jokaisessa framessa, että piirretty osuus vastaa seinäkelloa framen omalla aikaleimalla (sääntö 5). Testin muutos sanottiin ääneen."
 }

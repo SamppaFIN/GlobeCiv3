@@ -34,8 +34,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Ajetaan mergen jälkeen",
-        "outcome": "not_run"
+        "result": "a75430a (ajo 45402378167) ja daccda4 (45429089062) punaisia saman planet-trial:121-vian takia kuin TICKET-TEST-103; äänitestit itse menivät läpi. Uusi ajo odottaa.",
+        "outcome": "fail"
       }
     ],
     "console_findings": [],

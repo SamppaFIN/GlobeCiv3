@@ -99,11 +99,19 @@ test('?planet: four opponents from the gallery, a missile loaded and launched on
   const frames = page.evaluate(() => new Promise<{ shown: number; due: number; seconds: number }[]>(done => {
     const seen: { shown: number; due: number; seconds: number }[] = [];
     let started = false;
+    let stalled = false;
     const look = (ts: number) => {
       const f = (window as any).globeWar.strikes().flights.find((x: any) => x.kind === 'missile');
       if (f) {
         started = true;
         if (f.shown > 0) seen.push({ shown: f.shown, due: Math.min(f.end, (ts - f.start) / 1000 / f.seconds), seconds: f.seconds });
+        // One frame stalls past the flight's end, as on a slow runner: the missile is still drawn
+        // at its target before it goes (CI 2026-11-24)
+        if (!stalled && f.shown > 0.3) {
+          stalled = true;
+          const until = performance.now() + 2500;
+          while (performance.now() < until);
+        }
       } else if (started) return done(seen);
       requestAnimationFrame(look);
     };
