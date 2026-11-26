@@ -1,9 +1,9 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-26T17:29:19Z",
+    "generated_at": "2026-11-26T23:19:58Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
-    "git_commit": "feef51b",
+    "git_commit": "45aa45b",
     "git_branch": "main",
     "language": "fi"
   },
@@ -3211,12 +3211,12 @@
         "Vallankumous on mahdollinen myös Monarkiasta Tasavaltaan ja komento kertoo kohteen; vanha komentoloki ja vanha tallennus anarkiassa latautuvat (sääntö 8). Laajentaja ja Oppinut siirtyvät Tasavaltaan, Kenraali pysyy Monarkiassa.",
         "Autopilotti nousee yhä valtiotasolle enintään noin 20 % myöhemmin kuin ennen, ja kultaiset tilat kirjoitetaan uudelleen ääneen sanoen."
       ],
-      "status": "in_progress",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
         "plan": "PLAN-105",
-        "implementation": null,
-        "testing": null
+        "implementation": "TICKET-IMPL-105",
+        "testing": "TICKET-TEST-105"
       }
     },
     {
