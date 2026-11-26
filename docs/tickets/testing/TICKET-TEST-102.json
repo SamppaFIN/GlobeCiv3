@@ -110,7 +110,25 @@
         "outcome": "pass"
       },
       {
-        "steps": "CI: korjausten jälkeinen ajo mainissa",
+        "steps": "CI: korjausten jälkeinen ajo mainissa (ajo 45887153941, commit 5bebf87)",
+        "expected": "Vihreä",
+        "result": "Punainen: conquest.e2e:116 ja :130 sekä unlock.e2e:60 punaisia uusinnankin jälkeen, play.e2e:57 ja unit-markers.e2e:86 vaihtelivat. Edellisessä ajossa (45868983044) samat conquest- ja unlock-testit menivät läpi, ja 5bebf87 muutti vain testejä.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "conquest.e2e: luotain paikallisesti (siemen 5): kortti tuli 7–28 s:n kuluttua viimeisestä kaupungista, 3/4 ajossa yli testin 5 s",
+        "expected": "Taso nousee kesken olevan päivän lopussa (STORY-117), ja päivä, joka alkoi ennen valtausta, käy ensin läpi naapurivaltioiden kaupunkivaltioiden haun palan framessa; testi odottaa korttia nyt 60 s (sanottu ääneen)",
+        "result": "4/4 läpi korjauksen jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "unlock.e2e:60: epäonnistuneen ajon tila",
+        "expected": "Tiedustelijan kaupunkipaikan kortti tuli ennen kolmatta kaupunkia ja pysäytti pelin, joten taso ei noussut sen alla; se, tuleeko kortti ensin, riippuu frameista. Testi sulkee kaupunkipaikat pois kuten muut tasotestit (sanottu ääneen)",
+        "result": "3/3 läpi korjauksen jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI: conquest- ja unlock-korjausten jälkeinen ajo mainissa",
         "expected": "Vihreä",
         "result": "Ei vielä ajettu",
         "outcome": "not_run"
