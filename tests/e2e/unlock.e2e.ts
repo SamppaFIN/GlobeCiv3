@@ -60,6 +60,9 @@ const arriveWithChips = (page: Page, level: number) => page.evaluate(l => new Pr
 test('three ready settlements open the province level (STORY-092; the old start\'s cities count as they stand): the goal on the meter, its gold, and a card that stops the game (STORY-087)', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
+  // A scout's city site would stop the game with its card before the third city, and the level
+  // would not rise under it: whether one comes first depends on the frames (CI 2026-11-26)
+  await page.evaluate(() => (window as any).globeDebug.setSiteOffers(false));
   // The city area's goal on the meter; mapping all of the home province opens nothing (the old start: its cities count as they stand)
   await expect(page.locator('.hud-goal')).toHaveText('TavoiteKolme valmista settlementtiä+60 kultaa');
   await expect(page.locator('.hud-meter-value')).toHaveText('0 / 3 valmiina');
@@ -80,7 +83,9 @@ test('three ready settlements open the province level (STORY-092; the old start\
   const gold = (await state(page)).gold;
   expect(await foundIn(page)).not.toBeNull();
   const card = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos' }) });
-  await expect(card).toBeVisible();
+  // The level rises at the end of a day under way (STORY-117), some seconds of frames without a
+  // GPU (CI 2026-11-26), so the card is waited for, not expected at once
+  await expect(card).toBeVisible({ timeout: 60_000 });
   await expect(card).toContainText('Uusi tavoite: Pidä neljä kotivaltion lääniä (1 / 4).');
   const s = await state(page);
   expect([s.openLevel, s.gold, s.goal]).toEqual([2, gold + 60, 'Pidä neljä kotivaltion lääniä']);

@@ -71,7 +71,10 @@ async function conquer(page: Page, testInfo: TestInfo) {
 
   // The seventh conquers the state: the planet opens, and so do the neighbouring states
   await page.evaluate(id => (window as any).globeDebug.foundIn(id), provinces[6]);
-  await expect(page.getByRole('heading', { name: 'Valtio vallattu, zoomaa ulos' })).toBeVisible();
+  // The level rises at the end of a day under way (STORY-117), and a day that began before the
+  // conquest first scans the neighbours' city-states, a slice a frame: some seconds without a
+  // GPU (CI 2026-11-26), so the card is waited for, not expected at once
+  await expect(page.getByRole('heading', { name: 'Valtio vallattu, zoomaa ulos' })).toBeVisible({ timeout: 60_000 });
   expect((await page.evaluate(() => (window as any).globeGame.state)).openLevel).toBe(0);
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
   await arrive(page, 0);
@@ -158,6 +161,7 @@ test('a province without land counts as held, so a home state with sea provinces
     return Array.from({ length: 7 }, (_, k) => w.globeDebug.foundIn(home * 7 + k)).filter((t: number | null) => t !== null).length;
   });
   expect(founded).toBe(5);
-  await expect(page.getByRole('heading', { name: 'Valtio vallattu, zoomaa ulos' })).toBeVisible();
+  // At the end of a day under way, as above (CI 2026-11-26)
+  await expect(page.getByRole('heading', { name: 'Valtio vallattu, zoomaa ulos' })).toBeVisible({ timeout: 60_000 });
   expect(errors).toEqual([]);
 });
