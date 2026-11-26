@@ -3191,7 +3191,7 @@
       "status": "todo",
       "progress": 0,
       "linked": {
-        "plan": null,
+        "plan": "PLAN-106",
         "implementation": null,
         "testing": null
       }

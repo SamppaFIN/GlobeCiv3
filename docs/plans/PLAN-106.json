@@ -1,0 +1,136 @@
+{
+  "id": "PLAN-106",
+  "story": "STORY-124",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-27",
+  "approach": "Keskiaika tulee peliin Freecivin civ1-säännöin (data/civ1/techs.ruleset, buildings.ruleset, units.ruleset ja effects.ruleset, commit 04852fb). Yhdeksän keksintöä vanhojen perään: Insinööritaito (Pyörä ja Rakentaminen), Feodalismi (Muuraus ja Monarkia), Uskonto (Filosofia ja Kirjoitus), Yliopisto (Matematiikka ja Filosofia), Pankkitoiminta (Kaupankäynti ja Tasavalta), Lääketiede (Filosofia ja Kaupankäynti), Ritarilaitos (Feodalismi ja Ratsastus), Keksiminen (Insinööritaito ja Lukutaito) ja Ruuti (Keksiminen ja Rautatyö). Ruuti on keskiajan avain (eras.ts ERA_KEYS), ja yhdeksän kuuluu keskiaikaan. Rakennukset: katedraali (Uskonto, 160 tuotantoa, ylläpito 3, rauhoittaa 4: effect_cathedral Make_Content 4), yliopisto (Yliopisto, 160, ylläpito 3, vaatii kirjaston, +50 % tiedettä) ja pankki (Pankkitoiminta, 120, ylläpito 3, vaatii torin, +50 % kultaa ja ylellisyyttä). Ihmeet: Michelangelon kappeli (Uskonto, 300; civ1: rauhoittaa 4 lisää vain omassa kaupungissaan, jos siinä on katedraali, effect_michelangelos_chapel range City; kysymys 6), Bachin katedraali (Uskonto, 400: pakottaa 2 tyytymätöntä tyytyväiseksi kaikissa kaupungeissa; Freecivissä mantereella, peli ei tunne mantereita) ja Shakespearen teatteri (Lääketiede, 400: ei tyytymättömiä kaupungissaan, No_Unhappy). Ihmeet vanhenevat civ1:n pareittain: Ennustajan temppeli Uskonnosta, Suuri muuri Ruudista ja Riippuvat puutarhat Keksimisestä. Freecivissä vanhenemisen laukaisee keksintö, jonka kuka tahansa pelaaja on joskus tuntenut (obsolete_by \"World\", survives: game.info.global_advances); suosituksena on oma sääntö \"pelaajan oma tieto\" (kysymys 5). Vanhentuneen ihmeen vaikutus ja kulttuuri lakkaavat (common/requirements.c: rakennusvaatimus on epätosi, kun improvement_obsolete), jo kertynyt kulttuuri jää, ihme pysyy rakennettuna, eikä sitä voi enää rakentaa. Vanhenemistaulukko kattaa myös myöhemmät parit (Kolossi/Sähkö, Tähtitorni/Auto, Suuri kirjasto ja Shakespeare/Elektroniikka, Michelangelo/Kommunismi), jotta STORY-122 ja 123 eivät avaa mekanismia uudelleen. Yksiköt: muskettisoturi (Ruuti, 30 tuotantoa, hyökkäys 2, puolustus 3) on uusi puolustaja, ja ritari (Ritarilaitos, 40, hyökkäys 4, puolustus 2) uusi hyökkääjä. Kulttuuri civ2civ3:n History-luvuin: katedraali 3, yliopisto 2, Michelangelo 4, Bach 4 ja Shakespeare 3. Rakennettavuus kootaan yhteen funktioon canBuild(kaupunki, laji, tieto), jota käyttävät neuvonantajat (startable), kaupunkikortti ja komento build: keksintö, edellytysrakennus (kirjasto yliopistolle ja tori pankille, uusi mekanismi), ihmeen ainutkertaisuus ja vanheneminen. Kun ihme vanhenee kesken rakentamisen, kaupunki vaihtaa kultaan, ja kertynyt tuotanto jää varastoon (oma), ja matkalla olevat karavaanit vapautuvat (caravanFree). Bonukset lasketaan Freecivin tapaan yhteen eikä kertoen: tori ja pankki +100 % (×2), ja tieteen kirjasto, yliopisto ja tähtitorni ja niiden parilisät samoin; Kultaa ei saa bonusta. Mieliala Freecivin järjestyksessä (citizen_happy_wonders): ihmeiden onnelliset, niiden jäännös Bachin pakotettuun tyytyväisyyteen, ja Shakespearen kaupungissa ei tyytymättömiä. Keksintökortti, tiedepuu ja Tietokirja kertovat myös menetyksen luvuin (\"Menetät: ...\"), kun keksintö vanhentaa ihmeen. Hyökkääjät järjestetään hyökkäysarvon mukaan, joten ritari (4) korvaa sotavaunut (4) mutta ei ohita katapulttia (6). Keksintö Yliopisto nimetään Yliopistolaitokseksi, jotta se ei sekoitu rakennukseen Yliopisto.",
+  "alternatives_considered": [
+    {
+      "name": "Kasarmi ja oikeustalo mukaan",
+      "pros": "civ1:n rakennukset kokonaan",
+      "cons": "Ne eivät ole keskiajan rakennuksia (kasarmi ei vaadi keksintöä ja oikeustalo vaatii Lakikokoelman), ja ne antavat veteraaniyksiköitä ja vähentävät korruptiota, joita pelissä ei ole",
+      "rejected_because": "Rakennus ilman vaikutusta olisi tyhjä valinta (kysymys 3)"
+    },
+    {
+      "name": "King Richardin ristiretki, Leonardon paja, Marco Polo ja Sun Tzu civ2civ3:sta",
+      "pros": "Alkuperäisen Civ I:n keskiajan ihmeet, ja civ2civ3 on jo kulttuurin lähde",
+      "cons": "Ne eivät ole Freecivin civ1-sääntösarjassa (commit 04852fb), ja ne tarvitsevat järjestelmiä, joita pelissä ei ole (veteraanit, yksiköiden päivitys ja lähetystöt)",
+      "rejected_because": "Taso on Civ I:n taso, ja järjestelmät puuttuvat"
+    },
+    {
+      "name": "Bachin katedraali vain samalla maa-alueella",
+      "pros": "Lähempänä Freecivin mannerrajausta",
+      "cons": "Peli ei tunne mantereita, ja maa-alueen haku jokaiselle kaupungille joka päivä maksaisi",
+      "rejected_because": "Kaikki kaupungit on yksinkertainen ja selitettävä (kysymys 4)"
+    },
+    {
+      "name": "Vanhojen yksiköiden päivitys (Freeciv upgrade_unit)",
+      "pros": "Ruudin hetkellä vanhat sotilaat voisi päivittää muskettisotureiksi",
+      "cons": "Päivitys maksaa kultaa ja vaatii oman käyttöliittymän ja neuvonantajien logiikan",
+      "rejected_because": "Jätetään pois tietoisesti; Vartija ostaa uhatun kaupungin muskettisoturin kuten ennen sotilaan (STORY-108)"
+    }
+  ],
+  "files_to_change": [
+    "src/game/science.ts ja src/game/eras.ts (yhdeksän keksintöä, keskiajan avain)",
+    "src/game/cities.ts (katedraali, yliopisto, pankki, kolme ihmettä, muskettisoturi; cityMood, tiede, kulta ja ylellisyys; vanhentuminen)",
+    "src/game/war.ts ja src/game/units.ts (ritari ja muskettisoturi; vanhentuneet yksiköt)",
+    "src/game/culture.ts (History)",
+    "src/sim/game.ts (usko ja vanhentuminen, bestSoldier, neuvonantajien rakennukset)",
+    "src/game/save.ts (listat)",
+    "src/game/advisors.ts ja src/game/rivals.ts (tutkimusjärjestykset)",
+    "src/game/codex.ts, src/game/advanceLore.ts ja src/ui/advanceArt.ts (vaikutusrivit, lausahdukset ja kuvat)",
+    "src/globe/unitLayer.ts (ritarin ja muskettisoturin hahmot)",
+    "testit: src/game/*.test.ts, tests/sim/medieval.test.ts (uusi), tests/e2e/medieval.e2e.ts (uusi), määriä tarkistavat E2E-testit (rakennettavat, keksinnöt ja viivat), tests/golden/seed42.json",
+    "src/game/raids.ts ja src/game/cityStates.ts (puolustus: muskettisoturi)",
+    "src/globe/main.ts ja src/ui/*.ts (kaupunkikortin rakennettavat, rosvokortin teksti, muurin piirto, menetysrivit)",
+    "src/game/commands.ts (build validoidaan canBuildilla)"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "Yhdeksän keksintöä vaatimuksineen ADVANCE_LISTin loppuun, keskiaika ADVANCE_ERAan ja Ruuti ERA_KEYSiin; henkilöt ja muotokuvat ovat jo STORY-120:ssa",
+      "verify": "Vitest: vaatimukset civ1:n mukaan, aikakaudet, vaatimukset eivät myöhemmällä aikakaudella, Ruuti avaa keskiajan"
+    },
+    {
+      "step": 2,
+      "action": "canBuild yhteen paikkaan (startable, kaupunkikortti ja komento build) ja edellytysrakennusten mekanismi; vanhenemistaulukko kaikille ihmeille; vanhentuneen ihmeen vaikutus ja kulttuuri lakkaavat (faith, hasWalls, templeCalms, HISTORY, rosvot ja kilpailijoiden puolustus), kesken oleva vaihtaa kultaan ja karavaanit vapautuvat",
+      "verify": "Vitest ja Node: taulukkotesti ennen ja jälkeen (vaikutus, rakennettavuus, rakennettu pysyy, kulttuuri lakkaa, kesken oleva vaihtuu, karavaani vapautuu); canBuild antaa saman vastauksen kaikille kolmelle; komentoloki ei hyväksy vanhentunutta tai edellytystä vailla olevaa rakennusta"
+    },
+    {
+      "step": 3,
+      "action": "Katedraali, yliopisto ja pankki; bonukset yhteenlaskuna; kulttuuri",
+      "verify": "Vitest: katedraali 4; kaikki kahdeksan yhdistelmää kirjasto/yliopisto/tähtitorni ja tori/pankki; Kultaa ei saa bonusta"
+    },
+    {
+      "step": 4,
+      "action": "Michelangelon kappeli, Bachin katedraali ja Shakespearen teatteri; mielialan järjestys Freecivin mukaan (puutarhojen jäännös, Bach tasavallan poissaolon jälkeen, Shakespeare)",
+      "verify": "Vitest cityMood: Michelangelo kysymyksen 6 mukaan, Bach 2 myös sotilaiden tekemille tyytymättömille, Shakespeare estää levottomuuden"
+    },
+    {
+      "step": 5,
+      "action": "Muskettisoturi ja ritari; vanhentuneet yksiköt (kysymys 1); ATTACKERS hyökkäysarvon mukaan; kaikki kovakoodatut soturipaikat (bestSoldier, soldiersIn, raids defenseOf, cityStates, rauniot, rosvokortin teksti, UNIT_BUILDS, tallennus ja Tietokirja)",
+      "verify": "Vitest ja Node: rakennettavat yksiköt Ruudin ja Ritarilaitoksen jälkeen, vanhat säilyvät, muskettisoturi puolustaa 3:lla, warNeed ja warBuild valitsevat saman, Kenraali ei rakenna ritaria katapultin sijaan"
+    },
+    {
+      "step": 6,
+      "action": "Kuvat, selitykset ja lähteistä tarkistetut lausahdukset yhdeksälle keksinnölle; vaikutus- ja menetysrivit keksintökorttiin, tiedepuuhun ja Tietokirjaan; yksiköiden hahmot",
+      "verify": "Vitest codex.test: jokaisella uudella rakennuksella, ihmeellä ja yksiköllä sivu ja kuva; Utu tarkistaa lausahdusten lähteet"
+    },
+    {
+      "step": 7,
+      "action": "Neuvonantajien ja kilpailijoiden tutkimusjärjestykset; neuvonantajat rakentavat katedraalin, kun kaupunki olisi kasvaessaan levoton ja kassa kestää ylläpidon, yliopiston kirjaston jälkeen Oppineen ja tieteen kaupungeissa, ja pankin torin jälkeen, kun kulta riittää ylläpitoon (omat ehdot)",
+      "verify": "Vitest advisors.test; Node: neuvonantaja ei rakenna ja myy samaa rakennusta uudelleen ylläpidon takia"
+    },
+    {
+      "step": 8,
+      "action": "Tallennus: uudet lajit listoihin; vanha tallennus latautuu; tuntematon laji hylätään",
+      "verify": "Vitest save.test ja pariteettitesti"
+    },
+    {
+      "step": 9,
+      "action": "Kultaiset tilat kirjoitetaan selaimessa uudelleen (sanotaan ääneen), autopilotti ajetaan, ja pitkä Node-peli tutkii Ruutiin asti ilman jumia",
+      "verify": "Node tulee samaan tilaan; valtiotaso aukeaa enintään noin 20 % myöhemmin kuin päivinä 189, 184 ja 296; pitkä peli saavuttaa keskiajan"
+    },
+    {
+      "step": 10,
+      "action": "E2E: keskiajan kortti menetysriveineen, rakennukset ja yksiköt; ennen pushia haku kaikista E2E-testeistä, jotka laskevat rakennettavia, keksintöjä, vaihtoehtoja tai viivoja (STORY-121:n oppi), ja koko sarja; Utun katselmointi ja CI",
+      "verify": "TICKET-TEST-106: kaikki tapaukset pass tai kirjattu; CI vihreä"
+    }
+  ],
+  "status": "draft",
+  "own_rules": [
+    "Bachin katedraali koskee kaikkia pelaajan kaupunkeja (Freecivissä mantereen kaupunkeja; peli ei tunne mantereita).",
+    "Kaikki yksiköt liikkuvat ruudun päivässä kuten ennen (STORY-064), myös ritari, jonka civ1:n liike on 2.",
+    "Kesken oleva vanhentunut ihme vaihtuu kultaan, ja kertynyt tuotanto jää varastoon.",
+    "Neuvonantajien ehdot katedraalille, yliopistolle ja pankille.",
+    "Vanhojen yksiköiden päivitystä ei ole."
+  ],
+  "open_questions": [
+    "Kysymys 1, vanhentuneet yksiköt: (a, suositus) civ1: kun muskettisoturi on rakennettavissa, soturia, falangia, miekkamiestä ja ratsumiestä ei voi enää rakentaa, ja ritari korvaa sotavaunut; jo rakennetut pysyvät. (b) Kaikki pysyvät rakennettavina.",
+    "Kysymys 2, Feodalismi, Insinööritaito ja Keksiminen eivät avaa Freecivin civ1-sääntösarjassa mitään muuta kuin seuraavia keksintöjä (Keksiminen vanhentaa Riippuvat puutarhat). (a, suositus) Ei omia vaikutuksia: kortti kertoo, mihin keksintö johtaa. (b) Omat pienet vaikutukset kuten Filosofialle; Enki ehdottaa ne erikseen.",
+    "Kysymys 3, kasarmi ja oikeustalo: (a, suositus) jätetään pois, koska veteraaneja ja korruptiota ei ole pelissä. (b) Ne tulevat omien järjestelmiensä storyissa.",
+    "Kysymys 4, Bachin katedraali: (a, suositus) kaikki kaupungit (oma yksinkertaistus). (b) Vain pääkaupungin kanssa samalla maa-alueella olevat kaupungit.",
+    "Kysymys 5, vanhenemisen laukaisija: (a, suositus) oma sääntö: ihme vanhenee, kun pelaaja itse tuntee keksinnön. (b) Freecivin tapaan: kun kuka tahansa, myös kilpailija, on tuntenut sen.",
+    "Kysymys 6, Michelangelon kappeli: (a) civ1: +4 vain omassa kaupungissaan, jos siinä on katedraali (300 tuotantoa yhteen kaupunkiin on heikko). (b) civ2civ3: +3 jokaisessa kaupungissa, jossa on katedraali (lähde on jo käytössä kulttuurissa)."
+  ],
+  "next": "Sami vastaa kysymyksiin 1–6 ja hyväksyy suunnitelman (L-koko), sitten Enki toteuttaa.",
+  "review": {
+    "by": "Utu ☀️ (Sonnet 5.5, Anun sijasta)",
+    "date": "2026-11-27",
+    "verdict": "hyväksytty muutoksin",
+    "findings": [
+      "Vakava V1: vanhenemisen laukaisija on lähteessä maailma (World, global_advances), ei pelaaja, ja \"survives\" tarkoittaa sitä.",
+      "Vakava V2: rakentamaton ja kesken oleva ihme, kolme eriytynyttä rakennettavuuden tarkistusta (startable, kortti ja komento), edellytysrakennukset ja vaikutusten katkaisu.",
+      "Vakava V3: tallennuksen ja uusinnan testit.",
+      "Keskisuuri K1: Michelangelon alue (City) vs. helptext ja civ2civ3.",
+      "Keskisuuri K2: bonukset lasketaan Freecivissä yhteen.",
+      "Keskisuuri K3: mielialan järjestys (puutarhojen jäännös, Bach ja Shakespeare).",
+      "Keskisuuri K4 ja K5: vanhenemisen menetykset kortissa ja Ruudin hetken puolustus.",
+      "Keskisuuri K6: hyökkääjien järjestys ja ritarin rooli.",
+      "Keskisuuri K7: neuvonantajien rakennusehdot ja ylläpitosilmukka.",
+      "Keskisuuri K8: kovakoodatut soturipaikat ja puuttuvat tiedostot.",
+      "Pienet: hylättyjen vaihtoehtojen perustelut, Lääketiede, nimien törmäys, vanhenemistaulukko, pitkä peli Ruutiin ja Tähtitornin lisä."
+    ]
+  },
+  "review_resolution": "V1: kysymys 5 ja sanamuodon korjaus. V2: canBuild, edellytysrakennukset, vanhenemistaulukko ja vaikutusten katkaisu vaiheessa 2. V3: vaihe 8. K1: kysymys 6. K2–K8: lähestymistapaan ja vaiheisiin 2–7. Pienet: vaihtoehtojen perustelut korjattu, keksintö Yliopistolaitos, pitkä Node-peli vaiheessa 9."
+}
