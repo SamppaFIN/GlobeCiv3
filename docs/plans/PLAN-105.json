@@ -91,15 +91,33 @@
   "status": "approved",
   "own_rules": [
     "Kenraali ei tee vallankumousta Tasavallasta takaisin Monarkiaan (oma: neuvonantajan vaihto ei aiheuta anarkiaa).",
-    "Laajentaja ja Oppinut tekevät vallankumouksen Monarkiasta Tasavaltaan (storyn kriteeri).",
     "Kilpailijoilla ei ole hallitusmuotoja, joten Tasavalta koskee vain pelaajaa (kuten Monarkia).",
-    "Senaattia ei ole (Samin valinta 2026-11-26; civ1:ssä Has_Senate estää rauhan rikkomisen)."
+    "Senaattia ei ole (Samin valinta 2026-11-26; civ1:ssä Has_Senate estää rauhan rikkomisen).",
+    "Hyökkääjät palaavat lähimpään omaan kaupunkiin, kun sotaretkeä ei ole (Sami 2026-11-26).",
+    "Laajentaja ja Oppinut odottavat Tasavaltaa (Sami 2026-11-26)."
   ],
   "open_questions": [],
-  "next": "Enki toteuttaa yhdeksässä vaiheessa, ja Utun suunnitelmakatselmoinnin löydökset käsitellään ennen toteutuksen katselmointia.",
+  "next": "Enki toteutti (commit 37872ff), ja Utu katselmoi toteutuksen.",
   "decisions": [
     "Sami 2026-11-26: ei senaattia.",
     "Sami 2026-11-26: poissa olevat sotilaat civ1:n mukaan: jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa yhden tyytymättömän. STORY-125:n ensimmäinen kriteeri muuttuu tämän mukaiseksi.",
-    "Sami 2026-11-26: valtakunnan koko civ1:n mukaan (raja 13 ja askel 10), ja suunnitelma hyväksyttiin muuten sellaisenaan; Enki kertoo, jos Utun katselmointi muuttaa jotain."
-  ]
+    "Sami 2026-11-26: valtakunnan koko civ1:n mukaan (raja 13 ja askel 10), ja suunnitelma hyväksyttiin muuten sellaisenaan; Enki kertoo, jos Utun katselmointi muuttaa jotain.",
+    "Sami 2026-11-26 (Utun löydös S2): kun sotaretkeä ei ole, hyökkääjät palaavat lähimpään omaan kaupunkiin kaikissa hallitusmuodoissa (oma sääntö).",
+    "Sami 2026-11-26 (Utun löydös S5): Laajentaja ja Oppinut odottavat Tasavaltaa eivätkä tee vallankumousta Monarkiaan; Tasavallan tie (Kirjoitus, Lukutaito ja Tasavalta) tulee niiden järjestyksessä Monarkian paikalle, ja Monarkia jää loppuun."
+  ],
+  "review": {
+    "by": "Utu ☀️ (Sonnet 5.5, Anun sijasta)",
+    "date": "2026-11-26",
+    "verdict": "hyväksytty muutoksin",
+    "findings": [
+      "Vakava S1: vallankumous vain Itsevaltiudesta ja Monarkiasta tekisi Tasavallasta umpikujan.",
+      "Vakava S2: sotaretken jälkeen hyökkääjät jäävät kentälle, ja Tasavallassa jokainen tekisi pysyvän tyytymättömän.",
+      "Keskisuuri S3: cityMoodin suora kutsu (kasvun ennuste) ja kaupunkikortin tekstit (uudisasukkaiden ruoka, poissa olevat yksiköt).",
+      "Keskisuuri S4: revolution-komennon kohde ja tallennuksen revolutionTo validoitava (vain Monarkia ja Tasavalta, vain anarkiassa).",
+      "Keskisuuri S5: neuvonantajan polku, kun vain Monarkia tunnetaan.",
+      "Keskisuuri S6: autopilotti ei ehdi Tasavaltaan; tarvitaan pidempi Node-testi.",
+      "Pieni: vartijatesti, käyttöliittymän nappitekstit, keksintöjen määrät, aikakausi, determinismi ja lähteen merkinnät (Rapture_Grow koskee vain Tasavaltaa ja Demokratiaa; tiede-ja-aikakaudet.md:n verokatot eivät ole civ1:stä)."
+    ]
+  },
+  "review_resolution": "S1: vallankumous mistä tahansa muusta kuin anarkiasta mihin tahansa tunnettuun (revolutionTargets). S2 ja S5: Samin päätökset (hyökkääjät palaavat, Laajentaja ja Oppinut odottavat Tasavaltaa). S3: kasvun ennuste saa poissa olevat, ja kaupunkikortti kertoo uudisasukkaiden ruoan ja poissa olevat yksiköt. S4: komennon kohde ja revolutionTo validoidaan, ja vanha komento ja tallennus ovat Monarkia (save.test). S6: tests/sim/republic.test.ts pelaa kolme neuvonantajaa 500 päivää: Oppinut päätyy Tasavaltaan, eikä kukaan ei-toivottuun; Laajentajan ja Kenraalin kaupungit tekevät tuskin kauppaa, joten ne eivät ehdi kumpaankaan (kirjattu testitikettiin). Pienet: vartijatesti tuntee revolutionTo:n, Monarkian nappi- ja lokitekstit säilyivät, määrät päivitettiin ääneen sanoen, ja lähteen merkinnät ovat government.ts:n kommentissa."
 }

@@ -1982,10 +1982,10 @@ function updateScienceTree() {
 /** The government and what it means (STORY-047). */
 function governmentLine(): string {
   const p = play!;
-  if (p.gov === 'anarchy') return `Hallitus: Anarkia vielä ${Math.max(1, p.anarchyUntil - clock.day)} pv · ei veroja eikä tiedettä, kaikki kauppa ylellisyyteen`;
+  if (p.gov === 'anarchy') return `Hallitus: Anarkia vielä ${Math.max(1, p.anarchyUntil - clock.day)} pv, sitten ${GOVERNMENTS[p.revolutionTo ?? 'monarchy'].name} · ei veroja eikä tiedettä, kaikki kauppa ylellisyyteen`;
   if (p.gov === 'monarchy') return 'Hallitus: Monarkia · ruudut tuottavat täysin, ei ilmaisia yksiköitä, sotilaat rauhoittavat enintään kolme';
-  if (p.gov === 'republic') return 'Hallitus: Tasavalta · +1 kauppaa ruutuun, jolla on kauppaa, uudisasukas syö 2 ruokaa, sotilaat eivät rauhoita, ja jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa tyytymättömän';
-  return `Hallitus: ${GOVERNMENTS.despotism.name} · ruudun yli kahden tuotosta menee yksi hukkaan${p.research.known.has('monarchy') || p.research.known.has('republic') ? '' : '. Monarkia-tutkimus avaa paremman.'}`;
+  if (p.gov === 'republic') return 'Hallitus: Tasavalta · +1 kauppaa ruutuun, jolla on kauppaa, ei ilmaisia yksiköitä, uudisasukas syö 2 ruokaa, sotilaat eivät rauhoita, ja jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa tyytymättömän';
+  return `Hallitus: ${GOVERNMENTS.despotism.name} · ruudun yli kahden tuotosta menee yksi hukkaan${p.research.known.has('monarchy') || p.research.known.has('republic') ? '' : '. Monarkia- tai Tasavalta-tutkimus avaa paremman.'}`;
 }
 
 /** The studies open, with their price and what they open: the research card's and an advance card's choices. */

@@ -29,7 +29,7 @@ test('the science tree: its own button, every advance by what it needs, and each
   const tree = page.getByRole('dialog', { name: 'Tiedepuu' });
   await expect(tree).toBeVisible();
   await expect(tree.locator('.science-rates')).toContainText('tunnetaan 0 / 22');
-  // Twenty-one advances since STORY-121, and a line from each need (twenty-two needs in all)
+  // Twenty-two advances since STORY-125, and a line from each need (twenty-four needs in all)
   const nodes = tree.locator('.science-node');
   await expect(nodes).toHaveCount(22);
   await expect(tree.locator('.science-line')).toHaveCount(24);

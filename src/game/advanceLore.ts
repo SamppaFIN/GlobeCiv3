@@ -137,6 +137,6 @@ export const ADVANCE_LORE: Record<Advance, Lore> = {
   },
   republic: {
     what: 'Kansa valitsee keskuudestaan johtajat, joiden on pysyttävä suosiossa. Vapaat kansalaiset käyvät kauppaa kaikkialla, mutta sota kaukana kotoa ei ole heidän mieleensä.',
-    quote: { text: 'Valtio on siis kansan asia. Kansa ei kuitenkaan ole mikä tahansa ihmisjoukko, joka on koottu miten tahansa, vaan suuri joukko, jonka yhdistää yhteinen käsitys oikeudesta ja yhteinen etu.', who: 'Cicero', where: 'Valtiosta 1.39' },
+    quote: { text: 'Valtio on siis kansan asia. Kansa ei kuitenkaan ole mikä tahansa ihmisjoukko, joka on koottu miten tahansa, vaan suuri joukko, jonka yhdistää yhteinen käsitys oikeudesta ja yhteinen etu.', who: 'Cicero', where: 'Valtiosta (De re publica) 1.39' },
   },
 };

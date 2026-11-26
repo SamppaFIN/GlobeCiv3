@@ -208,15 +208,16 @@ export function provinceBuild(advisor: ProvinceAdvisor, n: { soldiers: number; b
 
 /*
  * The state level (STORY-051): one of three runs the realm's science, taxes and line, the
- * revolution to Monarchy, and the state's target province. Sami chose that science belongs here.
+ * revolution, and the state's target province. Sami chose that science belongs here.
  *
  *   Laajentaja  the state line Laajentuminen, tax 50 %, advances for growth first, and the
  *               nearest province without a city as the target (STORY-016: a city holds it)
  *   Oppinut     the state line Tutkimus, tax 30 %, writing and trade first
  *   Kenraali    the state line Puolustus, tax 70 %, bronze and masonry first; it buys the
  *               soldier or walls a city under threat is building when the treasury allows
- * Each one starts the revolution to Monarchy once it is known, and puts trade into luxury a
- * step at a time while a city is in disorder, and back a step after ten calm days.
+ * Kenraali starts the revolution to Monarchy once it is known, and Laajentaja and Oppinut wait
+ * for the Republic and turn to it once it is known (STORY-125, Sami 2026-11-26). Each puts trade
+ * into luxury a step at a time while a city is in disorder, and back a step after ten calm days.
  */
 export type StateAdvisor = 'none' | 'expand' | 'science' | 'war';
 export const STATE_ADVISOR_LIST: readonly StateAdvisor[] = ['none', 'expand', 'science', 'war'];

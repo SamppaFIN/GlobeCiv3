@@ -1561,8 +1561,10 @@ function* advisorDay(): Generator<void, void, void> {
     planetAdvisorDay();
     yield;
   }
-  armyHome();
-  if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
+  if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') {
+    armyHome();
+    return;
+  }
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
   // The campaign first: a city taken today gets its yields with the others
@@ -1570,6 +1572,8 @@ function* advisorDay(): Generator<void, void, void> {
     warDay();
     yield;
   }
+  // After the campaign, so that an army the Kenraali gathers today is not sent home first
+  armyHome();
   const yields = cityYields();
   if (p.stateAdvisor !== 'none') {
     stateAdvisorDay(p.stateAdvisor, yields);
@@ -1919,8 +1923,10 @@ const armyCities = (tile: number) => {
 const unitPath = (from: number, to: number) => findPath(from, to, id => world.travel!(id));
 /** Campaign paths found not to exist, by city, target and sea travel: a search for one costs up to 20 000 tiles (not saved). */
 const noWay = new Set<string>();
+/** A way's key in noWay: the game's seed too, as a run in Node plays several games one after another. */
+const wayKey = (from: number, to: number) => `${game?.seed}>${from}>${to}>${canSail()}`;
 function reachable(from: number, to: number): boolean {
-  const key = `${from}>${to}>${canSail()}`;
+  const key = wayKey(from, to);
   if (noWay.has(key)) return false;
   if (unitPath(from, to) !== null) return true;
   noWay.add(key);
@@ -1982,11 +1988,11 @@ const warWorld: WarWorld = {
   },
 };
 
-/** The Kenraali's campaign day: the target, the army gathering, and the fights. */
 /**
  * With no campaign under way (no target, or the state's advisor is not the Kenraali), attackers
  * outside a city walk to the player's nearest city they can reach (own, Sami 2026-11-26: after a
  * campaign they stood in the field, and under the Republic each made one citizen unhappy for good).
+ * The cities are tried nearest first; one found out of reach is not tried again (noWay).
  */
 function armyHome() {
   const p = play!;
@@ -1994,15 +2000,22 @@ function armyHome() {
   const cities = new Set(p.cities.map(c => c.tile));
   for (const u of army()) {
     if (cities.has(u.tile) || u.path.length) continue;
-    const home = stagingCity(u.tile);
-    const key = home && `${u.tile}>${home.tile}>${canSail()}`;
-    if (!home || !key || noWay.has(key)) continue;
-    const path = unitPath(u.tile, home.tile);
-    if (path) u.path = path;
-    else noWay.add(key);
+    const at = tileCenter(u.tile);
+    const near = p.cities.map(c => [tileCenter(c.tile).angleTo(at), c.tile] as const).sort((a, b) => a[0] - b[0]);
+    for (const [, home] of near) {
+      const key = wayKey(u.tile, home);
+      if (noWay.has(key)) continue;
+      const path = unitPath(u.tile, home);
+      if (path) {
+        u.path = path;
+        break;
+      }
+      noWay.add(key);
+    }
   }
 }
 
+/** The Kenraali's campaign day: the target, the army gathering, and the fights. */
 function warDay() {
   const p = play!;
   // City-states and the camps of the tribes (STORY-066)

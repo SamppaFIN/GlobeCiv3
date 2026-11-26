@@ -70,6 +70,24 @@ describe('the revolution with a target (STORY-125)', () => {
   }, 120_000);
 });
 
+describe('a log with a revolution to the Republic (STORY-125, review by Utu)', () => {
+  it('plays again to the same government on the same day', () => {
+    const run = Run.play(42, ADVISORS('none'));
+    knowWithNeeds(run.state.research.known, 'republic');
+    // The advances as a command can give them: the replay knows them only from the log's own play
+    for (let i = 0; i < 2; i++) aDay(run);
+    expect(run.give({ kind: 'revolution', to: 'republic' })).toBe(true);
+    const log = run.state.commands.save();
+    const day = run.clock.day;
+    pastAnarchy(run);
+    expect(run.state.gov).toBe('republic');
+    const again = Run.replay(42, log);
+    knowWithNeeds(again.state.research.known, 'republic');
+    expect(again.until(day + 6), again.error ?? '').toBe(true);
+    expect(again.state.gov).toBe('republic');
+  }, 120_000);
+});
+
 describe('the Republic\'s rules (STORY-125, Freeciv civ1)', () => {
   it('a settler eats 2 food (the trade of a tile: government.test)', () => {
     const run = Run.play(42, ADVISORS('none'));
@@ -98,6 +116,12 @@ describe('the Republic\'s rules (STORY-125, Freeciv civ1)', () => {
     const after = moodOf(c, cityYields()[0]);
     expect(after.unhappy + after.content + after.happy).toBe(before.unhappy + before.content + before.happy);
     expect(after.unhappy).toBe(Math.min(before.unhappy + 1, before.unhappy + before.content));
+    // A phalanx and an attacker count too (both can attack, civ1 attack 1 and more)
+    const phalanx = s.units.spawn('phalanx', out, world, c.id);
+    const horseman = s.units.spawn('horseman', out, world, c.id);
+    expect(awayOf(c)).toBe(3);
+    phalanx.tile = c.tile;
+    horseman.tile = c.tile;
     // Units that cannot attack and units without a home count for nothing
     s.units.spawn('scout', out, world, c.id);
     s.units.spawn('settler', out, world, c.id);
@@ -119,6 +143,18 @@ describe('the state\'s advisors and the Republic (STORY-125)', () => {
     aDay(run);
     expect(['anarchy', 'republic']).toContain(s.gov);
     expect(s.commands.entries.some(e => e.by === 'state' && e.cmd.kind === 'revolution' && e.cmd.to === 'republic')).toBe(true);
+    pastAnarchy(run);
+    expect(s.gov).toBe('republic');
+  }, 120_000);
+
+  it('Laajentaja too waits for the Republic, also when Monarchy is known (review by Utu)', () => {
+    const run = Run.play(42, ADVISORS('expand'));
+    const s = run.state;
+    knowWithNeeds(s.research.known, 'monarchy');
+    for (let i = 0; i < 3; i++) aDay(run);
+    expect(s.gov).toBe('despotism');
+    knowWithNeeds(s.research.known, 'republic');
+    aDay(run);
     pastAnarchy(run);
     expect(s.gov).toBe('republic');
   }, 120_000);
