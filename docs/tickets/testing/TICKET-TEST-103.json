@@ -88,8 +88,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "Punainen kolmesti: feef51b (ajo 45400505033) planet-trialin vanha kestoraja 3,5 s, joka korjattiin jo 2a7eeab:ssa, ja war.e2e:n tauko (daccda4); a75430a (45402378167) ja daccda4 (45429089062) planet-trial:121, koska hidas frame hyppäsi lennon lopun yli ja ohjus katosi ennen kuin se piirtyi kohteeseen. Korjattu: ohjus piirtyy kohteessaan ennen kuin se poistuu. Testi pysäyttää nyt pääsäikeen 2,5 s kesken lennon, jolloin vika toistuu paikallisesti (vanhalla koodilla 0,375, kun pitäisi olla 1). a75430a:n ajossa conquest.e2e oli kahdesti punainen (taso ei noussut, päivä 2 tauolla), mutta daccda4:ssä vihreä, eikä vikaa saatu toistettua paikallisesti. Uusi ajo odottaa.",
-        "outcome": "fail"
+        "result": "Punainen kolmesti: feef51b (ajo 45400505033) planet-trialin vanha kestoraja 3,5 s, joka korjattiin jo 2a7eeab:ssa, ja war.e2e:n tauko (daccda4); a75430a (45402378167) ja daccda4 (45429089062) planet-trial:121, koska hidas frame hyppäsi lennon lopun yli ja ohjus katosi ennen kuin se piirtyi kohteeseen. Korjattu: ohjus piirtyy kohteessaan ennen kuin se poistuu. Testi pysäyttää nyt pääsäikeen 2,5 s kesken lennon, jolloin vika toistuu paikallisesti (vanhalla koodilla 0,375, kun pitäisi olla 1). a75430a:n ajossa conquest.e2e oli kahdesti punainen (taso ei noussut, päivä 2 tauolla), mutta daccda4:ssä vihreä, eikä vikaa saatu toistettua paikallisesti. Vihreä ajossa 45711981501 (28273d7, 1,6 h): Vitest 65 tiedostoa ja 402 testiä, E2E läpi. Kaksi vaihtelijaa meni läpi uusinnassa: rich-links.e2e.ts:31 ja tile-card.e2e.ts:9, joissa heksan napautus ei kerran avannut ruudun korttia; molemmat ovat vanhoja testejä (STORY-103 ja STORY-055), ja ne seurataan.",
+        "outcome": "pass"
       },
       {
         "steps": "Pääsäie pysähtyy 2,5 s kesken ohjuksen lennon (planet-trial.e2e.ts:56)",

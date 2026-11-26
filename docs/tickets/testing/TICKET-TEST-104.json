@@ -34,8 +34,8 @@
       {
         "steps": "Koko E2E-sarja CI:ssä",
         "expected": "Vihreä",
-        "result": "a75430a (ajo 45402378167) ja daccda4 (45429089062) punaisia saman planet-trial:121-vian takia kuin TICKET-TEST-103; äänitestit itse menivät läpi. Uusi ajo odottaa.",
-        "outcome": "fail"
+        "result": "a75430a (ajo 45402378167) ja daccda4 (45429089062) punaisia saman planet-trial:121-vian takia kuin TICKET-TEST-103; äänitestit itse menivät läpi. Vihreä ajossa 45711981501 (28273d7, 1,6 h): Vitest 65 tiedostoa ja 402 testiä, E2E läpi. Kaksi vaihtelijaa meni läpi uusinnassa: rich-links.e2e.ts:31 ja tile-card.e2e.ts:9, joissa heksan napautus ei kerran avannut ruudun korttia; molemmat ovat vanhoja testejä (STORY-103 ja STORY-055), ja ne seurataan.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
