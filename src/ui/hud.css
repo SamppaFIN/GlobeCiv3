@@ -166,6 +166,7 @@
 .hud-modes .seg-opt, .hud-tasks .seg-opt, .level-seg .seg-opt { flex: 1; min-height: var(--touch-target); justify-content: center; padding: 0 6px; }
 .hud-found { flex: 1; min-height: var(--touch-target); }
 .hud-next-site { flex: none; min-height: var(--touch-target); }
+.hud-help { flex: 1; min-height: var(--touch-target); }
 .hud-active { background: color-mix(in srgb, var(--color-accent) 22%, transparent); }
 
 /* Province and state levels (STORY-026, design 5a, 6a, 7a) */

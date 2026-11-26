@@ -74,7 +74,7 @@ const FOCUS_SCORE: Record<Focus, (y: Yield) => number> = {
  * science (STORY-040). Each needs an advance (science.ts NEEDS).
  */
 export const BUILDINGS = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', 'lumberjack', 'mill', 'bakery',
-  'harbour', 'sealery', 'canal', 'lodge', 'corral', 'farmstead', 'forge', 'stable', 'oilwell', 'jeweller', 'mint'] as const;
+  'harbour', 'sealery', 'canal', 'lodge', 'corral', 'farmstead', 'forge', 'stable', 'oilwell', 'jeweller', 'mint', 'oracle', 'greatlibrary', 'observatory'] as const;
 /**
  * The terrain buildings (STORY-070; Sami 2026-10-20, own rules): a city builds them from the
  * start where its two rings hold their terrain, each 30 shields, no upkeep, +1 food or shield
@@ -127,11 +127,11 @@ const fromResources = (city: City, key: 'food' | 'shield' | 'content' | 'gold') 
  * happy citizen in every city (Make_Happy 1, player range); Suuri muuri (Great Wall, 300,
  * Masonry): walls in every city (Defend_Bonus 200 at every city centre).
  */
-export const WONDERS = ['colossus', 'gardens', 'greatwall'] as const;
+export const WONDERS = ['colossus', 'gardens', 'greatwall', 'oracle', 'greatlibrary', 'observatory'] as const;
 export const isWonder = (b: Build): boolean => (WONDERS as readonly string[]).includes(b);
 export type Building = (typeof BUILDINGS)[number];
 export const UPKEEP: Record<Building, number> = { granary: 1, walls: 2, market: 1, library: 1, temple: 1, aqueduct: 2, colosseum: 4, colossus: 0, gardens: 0, greatwall: 0, fishery: 0, sawmill: 0, quarry: 0, field: 0, lumberjack: 0, mill: 0, bakery: 0,
-  harbour: 0, sealery: 0, canal: 0, lodge: 0, corral: 0, farmstead: 0, forge: 0, stable: 0, oilwell: 0, jeweller: 0, mint: 0 };
+  harbour: 0, sealery: 0, canal: 0, lodge: 0, corral: 0, farmstead: 0, forge: 0, stable: 0, oilwell: 0, jeweller: 0, mint: 0, oracle: 0, greatlibrary: 0, observatory: 0 };
 export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly string[]).includes(b);
 
 /**
@@ -139,7 +139,7 @@ export const isBuilding = (b: Build): b is Building => (BUILDINGS as readonly st
  * genus Convert, data/classic/buildings.ruleset commit 27a6a0c1; Civ I has none). After a
  * soldier or a building the city goes on to it (STORY-039).
  */
-export type Build = 'warrior' | 'phalanx' | 'settler' | 'scout' | 'worker' | Attacker | Building | 'coinage';
+export type Build = 'warrior' | 'phalanx' | 'settler' | 'scout' | 'worker' | 'caravan' | Attacker | Building | 'coinage';
 /** Soldiers defend their city; a phalanx twice as well (STORY-043). */
 export const isSoldier = (b: Build): b is 'warrior' | 'phalanx' => b === 'warrior' || b === 'phalanx';
 export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> = {
@@ -156,6 +156,8 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   scout: { name: 'Tiedustelija', cost: 20, pop: 0 },
   // Freeciv civ2civ3 units.ruleset Workers (STORY-093): build_cost 20, pop_cost 0, uk_shield 1, no tech
   worker: { name: 'Työläinen', cost: 20, pop: 0 },
+  // Freeciv civ1 units.ruleset Caravan (STORY-121): build_cost 50, pop_cost 0, uk_shield 0, defense 1, NonMil, HelpWonder (Trade)
+  caravan: { name: 'Karavaani', cost: 50, pop: 0 },
   granary: { name: 'Viljavarasto', cost: 60, pop: 0 },
   walls: { name: 'Muuri', cost: 120, pop: 0 },
   market: { name: 'Tori', cost: 80, pop: 0 },
@@ -191,6 +193,11 @@ export const BUILDS: Record<Build, { name: string; cost: number; pop: number }> 
   oilwell: { name: 'Öljylähde', cost: 40, pop: 0 },
   jeweller: { name: 'Koruverstas', cost: 40, pop: 0 },
   mint: { name: 'Rahapaja', cost: 40, pop: 0 },
+  // The iron age's wonders (STORY-121), Freeciv civ1 buildings.ruleset: Oracle (Mysticism),
+  // Great Library (Literacy) and Copernicus' Observatory (Astronomy), each 300 and upkeep 0
+  oracle: { name: 'Ennustajan temppeli', cost: 300, pop: 0 },
+  greatlibrary: { name: 'Suuri kirjasto', cost: 300, pop: 0 },
+  observatory: { name: 'Tähtitorni', cost: 300, pop: 0 },
 };
 
 /**
@@ -314,13 +321,29 @@ export interface Mood {
   disorder: boolean;
 }
 
+/** What the player has that every city's mood feels (player range): wonders and Mysticism. */
+export interface Faith {
+  /** Riippuvat puutarhat (STORY-045). */
+  gardens?: boolean;
+  /** Ennustajan temppeli (STORY-121). */
+  oracle?: boolean;
+  mysticism?: boolean;
+}
+
 /**
- * A city's mood: citizens over the content base are unhappy; a temple calms one
- * (Make_Content 1) and each soldier in the city one (Despotism: Martial_Law_Each 1). With no
- * luxury yet no citizen is happy, so any unhappy citizen left means civil disorder
- * (common/city.c city_unhappy: happy < unhappy).
+ * Citizens a temple calms (STORY-121, Freeciv civ1 effects.ruleset): 1 (effect_temple), and 1
+ * more with Mysticism (effect_temple_1), with the Oracle (effect_oracle) and with both
+ * (effect_oracle_mysticism): 1, 2, 2 or 4.
  */
-export function cityMood(city: City, soldiers: number, cities: number, gardens = false, luxury = 0, gov: Government = 'despotism'): Mood {
+export const templeCalms = (f: Faith) => 1 + (f.mysticism ? 1 : 0) + (f.oracle ? 1 : 0) + (f.oracle && f.mysticism ? 1 : 0);
+
+/**
+ * A city's mood: citizens over the content base are unhappy; a temple calms one or more
+ * (Make_Content, templeCalms) and each soldier in the city one (Despotism: Martial_Law_Each 1).
+ * Any unhappy citizen left over the happy ones means civil disorder (common/city.c
+ * city_unhappy: happy < unhappy).
+ */
+export function cityMood(city: City, soldiers: number, cities: number, faith: Faith = {}, luxury = 0, gov: Government = 'despotism'): Mood {
   // Entertainers come out of the content ones and are never unhappy (common/city.c citizen_base_mood)
   const spes = city.entertainers ?? 0;
   let content = Math.max(0, Math.min(city.size, baseContent(cities, gov)) - spes);
@@ -334,11 +357,11 @@ export function cityMood(city: City, soldiers: number, cities: number, gardens =
   if (lux >= 2 && unhappy > 0) { unhappy--; content++; }
   // Then the temple and the soldiers, then the gardens make a content citizen happy
   // An arena calms three (STORY-054, Freeciv civ1 effects.ruleset Colosseum Make_Content 3)
-  const buildings = (city.buildings.includes('temple') ? 1 + onBest(city, 'temple') : 0) + (city.buildings.includes('colosseum') ? 3 : 0) + fromResources(city, 'content');
+  const buildings = (city.buildings.includes('temple') ? templeCalms(faith) + onBest(city, 'temple') : 0) + (city.buildings.includes('colosseum') ? 3 : 0) + fromResources(city, 'content');
   const calmed = Math.min(unhappy, buildings + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
   unhappy -= calmed;
   content += calmed;
-  if (gardens && content > 0) { content--; happy++; }
+  if (faith.gardens && content > 0) { content--; happy++; }
   return { happy, content, unhappy, calmed, disorder: unhappy > happy };
 }
 
@@ -433,7 +456,8 @@ export function cityDay(city: City, y: CityYield, settlerOff = 0): Build | null 
   // settlers next (STORY-033) took a citizen at each growth and ate the city's food.
   // A building is there once, and the city goes on to gold after it too.
   if (isBuilding(done) && !city.buildings.includes(done)) city.buildings.push(done);
-  if (isSoldier(done) || isAttacker(done) || done === 'scout' || isBuilding(done)) city.build = 'coinage';
+  // A caravan too (STORY-121): its advisor orders the next one, if the wonder needs it
+  if (isSoldier(done) || isAttacker(done) || done === 'scout' || done === 'caravan' || isBuilding(done)) city.build = 'coinage';
   return done;
 }
 
@@ -444,9 +468,21 @@ export function cityDay(city: City, y: CityYield, settlerOff = 0): Build | null 
 export const cityGold = (city: City, y: Yield & { disorder?: boolean }, tax = 100, lux = 0) => y.disorder ? 0 :
   Math.floor(splitTrade(y.trade, tax, lux).gold * (city.buildings.includes('market') ? 1.5 : 1)) + (city.build === 'coinage' ? Math.max(0, y.shield) : 0) + fromResources(city, 'gold');
 
-/** Science a city brings a day: the rest of its trade, +50 % with a library (STORY-040), +1 with it up high (STORY-071). */
+/**
+ * A city's science bonus, added up as Freeciv adds Output_Bonus effects (effects.ruleset): a
+ * library +50 %, the Observatory (Copernicus' Observatory, STORY-121) +100 % in its city, and
+ * +50 % more when the city has both (effect_copernicus_observatory with the Library; the
+ * University's +50 % comes with the university).
+ */
+export function scienceShare(city: City): number {
+  const library = city.buildings.includes('library');
+  const observatory = city.buildings.includes('observatory');
+  return 1 + (library ? 0.5 : 0) + (observatory ? 1 : 0) + (library && observatory ? 0.5 : 0);
+}
+
+/** Science a city brings a day: the rest of its trade with its bonus (STORY-040, STORY-121), +1 with a library up high (STORY-071). */
 export const cityScience = (city: City, y: Yield & { disorder?: boolean }, tax: number, lux = 0) => y.disorder ? 0 :
-  Math.floor(splitTrade(y.trade, tax, lux).science * (city.buildings.includes('library') ? 1.5 : 1)) + onBest(city, 'library');
+  Math.floor(splitTrade(y.trade, tax, lux).science * scienceShare(city)) + onBest(city, 'library');
 
 /**
  * Pay a city's building upkeep from the treasury. When it would fall below zero, buildings

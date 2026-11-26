@@ -230,9 +230,15 @@ export const STATE_ADVISORS: Record<StateAdvisor, { name: string; does: string }
 
 /** Each advisor's state line, tax rate and order of advances. */
 export const STATE_PLANS: Record<Exclude<StateAdvisor, 'none'>, { line: StateLine; tax: number; order: Advance[] }> = {
-  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'monarchy', 'mapmaking', 'bronze', 'currency', 'masonry', 'construction', 'writing', 'horseback', 'iron', 'wheel', 'mathematics'] },
-  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'monarchy', 'pottery', 'masonry', 'construction', 'mapmaking', 'horseback', 'iron', 'wheel', 'mathematics'] },
-  war: { line: 'defend', tax: 70, order: ['bronze', 'horseback', 'iron', 'masonry', 'wheel', 'alphabet', 'mathematics', 'ceremonial', 'law', 'monarchy', 'pottery', 'currency', 'construction', 'writing', 'mapmaking'] },
+  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'monarchy', 'mapmaking', 'bronze', 'currency', 'masonry', 'construction', 'writing', 'horseback', 'iron', 'wheel', 'mathematics',
+    // STORY-121 (own order): caravans for the wonders and calmer temples for growing cities first
+    'trade', 'mysticism', 'literacy', 'bridges', 'philosophy', 'astronomy'] },
+  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'monarchy', 'pottery', 'masonry', 'construction', 'mapmaking', 'horseback', 'iron', 'wheel', 'mathematics',
+    // STORY-121 (own order): the Great Library, Philosophy's gift and the Observatory first
+    'literacy', 'mysticism', 'philosophy', 'astronomy', 'trade', 'bridges'] },
+  war: { line: 'defend', tax: 70, order: ['bronze', 'horseback', 'iron', 'masonry', 'wheel', 'alphabet', 'mathematics', 'ceremonial', 'law', 'monarchy', 'pottery', 'currency', 'construction', 'writing', 'mapmaking',
+    // STORY-121 (own order): the roads for the campaigns first
+    'bridges', 'mysticism', 'trade', 'literacy', 'astronomy', 'philosophy'] },
 };
 
 /** The next advance: the first of the order that can be researched, else any that can. */

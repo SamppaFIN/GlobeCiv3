@@ -53,6 +53,8 @@ export type Command =
   | { kind: 'learned'; study: Study | null; first: { build: Building; scope: FirstScope } | null }
   /** A unit, by its id, explores, gathers or defends (STORY-025). */
   | { kind: 'mode'; unit: number; mode: Mode }
+  /** A caravan, by its id, takes its shields to the wonder the city on the tile builds (STORY-121). */
+  | { kind: 'help'; unit: number; city: number }
   /** A settler, by its id, founds cities or improves land (STORY-033). */
   | { kind: 'task'; unit: number; task: SettlerTask }
   /** The settler's city site: this tile, or the nearest land to it (STORY-025). */
@@ -94,7 +96,7 @@ export const RAID_CHOICES: readonly RaidChoice[] = ['build', 'buy', 'later'];
 
 export type CommandKind = Command['kind'];
 export const COMMAND_KINDS: readonly CommandKind[] = ['found', 'settle', 'build', 'move', 'study', 'advise', 'buy', 'target', 'site', 'raid', 'treaty', 'learned',
-  'mode', 'task', 'pick', 'skip', 'flag', 'focus', 'tax', 'lux', 'revolution', 'plan', 'line', 'aim', 'pact', 'trade'];
+  'mode', 'task', 'pick', 'skip', 'flag', 'focus', 'tax', 'lux', 'revolution', 'plan', 'line', 'aim', 'pact', 'trade', 'help'];
 
 /** Who gave a command: the player, the people on their own, or an advisor's level. */
 export type Actor = 'player' | 'people' | 'town' | 'city' | 'province' | 'state' | 'planet';
@@ -129,6 +131,8 @@ export interface CommandWorld {
   /** The player's other acts (STORY-112): each false when it changes nothing. */
   setMode(unit: number, mode: Mode): boolean;
   setTask(unit: number, task: SettlerTask): boolean;
+  /** Send a caravan to a city's wonder; false when it is no caravan, the city builds no wonder or the way is shut. */
+  help(unit: number, city: number): boolean;
   pickSite(tile: number): boolean;
   skipSite(): boolean;
   sendTo(tile: number): boolean;
@@ -171,6 +175,8 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
       return w.setMode(cmd.unit, cmd.mode);
     case 'task':
       return w.setTask(cmd.unit, cmd.task);
+    case 'help':
+      return w.help(cmd.unit, cmd.city);
     case 'pick':
       return w.pickSite(cmd.tile);
     case 'skip':

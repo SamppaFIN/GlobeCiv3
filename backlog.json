@@ -3118,10 +3118,10 @@
         "Jokaisella keksinnöllä on luvuin kerrottu vaikutus keksintökortissa, tiedepuussa ja Tietokirjassa, oma kuva ja tarkistettu lausahdus, ja valtion neuvonantajien tutkimusjärjestys kattaa uudet keksinnöt.",
         "Autopilotti nousee yhä valtiotasolle, ja kultaiset tilat kirjoitetaan uudelleen ääneen sanoen."
       ],
-      "status": "todo",
+      "status": "in_progress",
       "progress": 0,
       "linked": {
-        "plan": null,
+        "plan": "docs/plans/PLAN-102.json",
         "implementation": null,
         "testing": null
       }

@@ -68,6 +68,7 @@ function world(): TestWorld {
     acts,
     setMode: (unit, mode) => act('mode', unit, mode),
     setTask: (unit, task) => act('task', unit, task),
+    help: (unit, city) => act('help', unit, city),
     pickSite: tile => act('pick', tile),
     skipSite: () => act('skip'),
     sendTo: tile => act('flag', tile),
@@ -212,9 +213,10 @@ describe('commands', () => {
       { kind: 'aim', state: 5 },
       { kind: 'pact', rival: 1, act: 'alliance' },
       { kind: 'trade', rival: 0, give: 'maps', get: 'advance:alphabet' },
+      { kind: 'help', unit: 6, city: CENTRE },
     ];
     expect(cmds.map(c => execute(c, w))).toEqual(cmds.map(() => true));
-    expect(w.acts).toEqual(['mode 3 gather', 'task 4 improve', `pick ${HILL}`, 'skip', `flag ${FOREST}`, 'tax 70', 'lux 20', 'revolution', 'plan 12 settle', 'line research', 'aim 5', 'pact 1 alliance', 'trade 0 maps advance:alphabet']);
+    expect(w.acts).toEqual(['mode 3 gather', 'task 4 improve', `pick ${HILL}`, 'skip', `flag ${FOREST}`, 'tax 70', 'lux 20', 'revolution', 'plan 12 settle', 'line research', 'aim 5', 'pact 1 alliance', 'trade 0 maps advance:alphabet', `help 6 ${CENTRE}`]);
     expect(execute({ kind: 'focus', city: CENTRE, focus: 'production' }, w)).toBe(true);
     expect(w.cities[0].focus).toBe('production');
     // The same focus again changes nothing, and a tile without a city has none

@@ -23,6 +23,18 @@
  *  - Boethius, The Consolation of Philosophy 2.2 (Cooper 1902): Fortune turns her wheel
  *  - Proclus, Commentary on Euclid's Elements I, 68 (Friedlein 1873; Morrow 1970): Euclid's
  *    answer to Ptolemy, no royal road to geometry
+ * STORY-121 (each checked in its source 2026-11-26):
+ *  - Heraclitus, fragment B123 Diels–Kranz (Burnet 1920, fr. 10): nature loves to hide
+ *  - Francis Bacon, Essays (1625), L. Of Studies: reading maketh a full man; conference a ready
+ *    man; and writing an exact man
+ *  - Adam Smith, The Wealth of Nations (1776), book I, chapter 2 (Cannan 1904): not from the
+ *    benevolence of the butcher, the brewer, or the baker
+ *  - Plato, Apology 38a (Jowett 1892): the unexamined life is not worth living
+ *  - Galileo, Il Saggiatore (1623) 6, from the Italian: philosophy is written in this grand
+ *    book, the universe, always open to our eyes, and it is written in the language of mathematics
+ *  - Caesar, The Gallic War 4.17 (McDevitte & Bohn 1869): to cross by boats he deemed neither
+ *    safe enough nor worthy of his own dignity or that of the Roman people, before the bridge
+ *    over the Rhine
  */
 import type { Advance } from './science';
 
@@ -93,5 +105,29 @@ export const ADVANCE_LORE: Record<Advance, Lore> = {
   mathematics: {
     what: 'Luku, mitta ja todistus. Pellot mitataan, rakennusten lujuus lasketaan ja tähtien kulku ennustetaan ennen kuin mitään nähdään.',
     quote: { text: 'Geometriaan ei ole kuninkaantietä.', who: 'Eukleides', where: 'kuningas Ptolemaiokselle Prokloksen mukaan' },
+  },
+  mysticism: {
+    what: 'Tähtien liike, unet ja enteet luetaan jumalten viesteiksi. Papit ja ennustajat kokoavat kansan temppeleihin, ja pyhät paikat rauhoittavat levottomia mieliä.',
+    quote: { text: 'Luonto rakastaa kätkeytyä.', who: 'Herakleitos', where: 'Fragmentti B123 (Diels–Kranz)' },
+  },
+  literacy: {
+    what: 'Lukemaan oppii muukin kuin kirjuri. Lait, kauppakirjat ja tarinat luetaan ääneen toreilla, ja suuri kirjasto kokoaa yhteen kaiken, mitä muut kansat tietävät.',
+    quote: { text: 'Lukeminen tekee ihmisestä täyden, keskustelu valmiin ja kirjoittaminen täsmällisen.', who: 'Francis Bacon', where: 'Esseet (1625), Opiskelusta' },
+  },
+  trade: {
+    what: 'Karavaanit kuljettavat tavaraa kaupungista toiseen. Kukin kaupunki tekee sitä, minkä osaa parhaiten, ja saa muut tavarat vaihdossa, ja yhteisvoimin nousevat suuret ihmeet.',
+    quote: { text: 'Emme odota päivällistämme teurastajan, panimomestarin tai leipurin hyväntahtoisuudesta, vaan siitä, että he katsovat omaa etuaan.', who: 'Adam Smith', where: 'Kansojen varallisuus (1776), kirja I, luku 2' },
+  },
+  philosophy: {
+    what: 'Ajattelijat kysyvät, mitä ovat hyvä, totuus ja oikeus, ja kiistelevät vastauksista julkisesti. Ensimmäinen filosofien koulu saa kokonaisen sukupolven ajattelemaan.',
+    quote: { text: 'Tutkimaton elämä ei ole ihmiselle elämisen arvoista.', who: 'Sokrates', where: 'Platon, Sokrateen puolustuspuhe 38a' },
+  },
+  astronomy: {
+    what: 'Tähtien ja planeettojen radat mitataan ja kirjataan vuodesta toiseen. Kalenteri pitää kylvöt oikeassa ajassa, ja tähtitorni tekee kaupungistaan oppineiden keskuksen.',
+    quote: { text: 'Filosofia on kirjoitettu tähän suureen kirjaan, maailmankaikkeuteen, joka on alati auki silmiemme edessä, ja se on kirjoitettu matematiikan kielellä.', who: 'Galileo Galilei', where: 'Il Saggiatore (1623), 6' },
+  },
+  bridges: {
+    what: 'Kivestä ja puusta rakennetaan siltoja jokien ja rotkojen yli. Tie ei enää kierrä estettä, ja rakentajat oppivat tekemään tiet puolessa ajassa.',
+    quote: { text: 'Laivoilla ylittämistä Caesar ei pitänyt kyllin turvallisena eikä omalle eikä Rooman kansan arvolle sopivana.', who: 'Julius Caesar', where: 'Gallian sota 4.17, ennen siltaa Reinin yli' },
   },
 };

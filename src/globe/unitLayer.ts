@@ -31,7 +31,7 @@ const rivalCss = (k: number) => `rgb(${oklchToSrgb(...(RIVALS[k].color as unknow
 /** Height above the surface, in radii: keeps the layer over the terrain without visible float. */
 const LIFT = 1e-6;
 
-type Figure = 'scout' | 'settler' | 'worker' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'rival0' | 'rival1' | 'rival2' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
+type Figure = 'scout' | 'settler' | 'worker' | 'caravan' | 'warrior' | 'phalanx' | 'horseman' | 'swordsman' | 'chariot' | 'catapult' | 'city' | 'native' | 'rival0' | 'rival1' | 'rival2' | 'camp' | 'ring' | 'flag' | 'irrigation' | 'mine' | 'bandit';
 
 /**
  * Simple figures drawn once: a pawn with a staff (scout), a pack (settler) or a spear and
@@ -138,6 +138,19 @@ function figureTexture(kind: Figure): THREE.CanvasTexture {
       g.strokeStyle = INK_DARK;
       g.lineWidth = 7;
       for (const x of [30, 46, 82, 98]) { g.beginPath(); g.moveTo(x, 100); g.lineTo(x, 120); g.stroke(); }
+    }
+    if (kind === 'caravan') {
+      // A pack animal behind the driver (STORY-121): its body, legs and neck, and a bale on its back
+      g.fillStyle = INK_DARK;
+      g.beginPath(); g.ellipse(34, 84, 26, 14, 0, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(12, 64, 7, 14, -0.4, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = INK_DARK;
+      g.lineWidth = 6;
+      for (const x of [18, 28, 42, 52]) { g.beginPath(); g.moveTo(x, 92); g.lineTo(x, 118); g.stroke(); }
+      g.fillStyle = INK_CSS;
+      g.lineWidth = 4;
+      g.beginPath(); g.rect(20, 52, 30, 22); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(20, 63); g.lineTo(50, 63); g.stroke();
     }
     if (kind === 'chariot') {
       g.strokeStyle = INK_DARK;
@@ -250,7 +263,7 @@ export class UnitLayer {
   constructor(radius: number) {
     this.radius = radius;
     this.textures = {
-      scout: figureTexture('scout'), settler: figureTexture('settler'), worker: figureTexture('worker'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
+      scout: figureTexture('scout'), settler: figureTexture('settler'), worker: figureTexture('worker'), caravan: figureTexture('caravan'), warrior: figureTexture('warrior'), phalanx: figureTexture('phalanx'),
       horseman: figureTexture('horseman'), swordsman: figureTexture('swordsman'), chariot: figureTexture('chariot'), catapult: figureTexture('catapult'),
       city: figureTexture('city'), native: figureTexture('native'), camp: figureTexture('camp'), rival0: figureTexture('rival0'), rival1: figureTexture('rival1'), rival2: figureTexture('rival2'), ring: figureTexture('ring'), flag: figureTexture('flag'),
       irrigation: figureTexture('irrigation'), mine: figureTexture('mine'), bandit: figureTexture('bandit'),

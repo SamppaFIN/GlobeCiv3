@@ -28,13 +28,13 @@ test('the science tree: its own button, every advance by what it needs, and each
   await page.getByRole('button', { name: 'Tiedepuu' }).click();
   const tree = page.getByRole('dialog', { name: 'Tiedepuu' });
   await expect(tree).toBeVisible();
-  await expect(tree.locator('.science-rates')).toContainText('tunnetaan 0 / 15');
-  // Fifteen advances, and a line from each need (eleven needs in all)
+  await expect(tree.locator('.science-rates')).toContainText('tunnetaan 0 / 21');
+  // Twenty-one advances since STORY-121, and a line from each need (twenty-two needs in all)
   const nodes = tree.locator('.science-node');
-  await expect(nodes).toHaveCount(15);
-  await expect(tree.locator('.science-line')).toHaveCount(11);
+  await expect(nodes).toHaveCount(21);
+  await expect(tree.locator('.science-line')).toHaveCount(22);
   // Each node has its picture
-  await expect(tree.locator('.science-node svg.advance-art')).toHaveCount(15);
+  await expect(tree.locator('.science-node svg.advance-art')).toHaveCount(21);
 
   // The first advance open to study is on show: its picture, what it is, what it does and a saying
   const detail = tree.locator('.science-detail');
@@ -79,7 +79,7 @@ test('the science tree: its own button, every advance by what it needs, and each
   await page.evaluate(() => (window as any).globeDebug.learn('alphabet'));
   await expect(nodes.filter({ hasText: 'Aakkoset' }).locator('.science-node-state')).toHaveText('Tunnettu');
   await expect(tree.locator('.science-line-known')).toHaveCount(4);
-  await expect(tree.locator('.science-rates')).toContainText('tunnetaan 1 / 15');
+  await expect(tree.locator('.science-rates')).toContainText('tunnetaan 1 / 21');
 
   // Escape closes it
   await page.keyboard.press('Escape');

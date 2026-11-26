@@ -199,7 +199,7 @@ describe('cities', () => {
     expect(cityMood(c, 0, 1)).toEqual({ happy: 0, content: 4, unhappy: 2, calmed: 0, disorder: true });
     expect(cityMood(c, 1, 1)).toEqual({ happy: 0, content: 5, unhappy: 1, calmed: 1, disorder: true });
     // Riippuvat puutarhat (STORY-045): a happy citizen outweighs the unhappy one
-    expect(cityMood(c, 1, 1, true)).toEqual({ happy: 1, content: 4, unhappy: 1, calmed: 1, disorder: false });
+    expect(cityMood(c, 1, 1, { gardens: true })).toEqual({ happy: 1, content: 4, unhappy: 1, calmed: 1, disorder: false });
     c.buildings.push('temple');
     expect(cityMood(c, 1, 1)).toEqual({ happy: 0, content: 6, unhappy: 0, calmed: 2, disorder: false });
     expect(cityMood(city(3), 0, 1).disorder).toBe(false);
@@ -223,13 +223,13 @@ describe('cities', () => {
   it('luxury makes citizens happy: content to happy for 2, unhappy to happy for 4, unhappy to content for 2 (Freeciv)', () => {
     const c = city(6);
     // 4 content, 2 unhappy; 8 luxury: 4 content become happy
-    expect(cityMood(c, 0, 1, false, 8)).toEqual({ happy: 4, content: 0, unhappy: 2, calmed: 0, disorder: false });
+    expect(cityMood(c, 0, 1, {}, 8)).toEqual({ happy: 4, content: 0, unhappy: 2, calmed: 0, disorder: false });
     // 2 luxury: one happy, and one happy is not enough for two unhappy
-    expect(cityMood(c, 0, 1, false, 2).disorder).toBe(true);
+    expect(cityMood(c, 0, 1, {}, 2).disorder).toBe(true);
     // A city of 5: 16 luxury make the 4 content happy (8) and the unhappy one happy too (4)
-    expect(cityMood(city(5), 0, 1, false, 16)).toMatchObject({ happy: 5, unhappy: 0, disorder: false });
+    expect(cityMood(city(5), 0, 1, {}, 16)).toMatchObject({ happy: 5, unhappy: 0, disorder: false });
     // 10 luxury: 4 happy (8), and 2 left make the unhappy one content
-    expect(cityMood(city(5), 0, 1, false, 10)).toMatchObject({ happy: 4, content: 1, unhappy: 0 });
+    expect(cityMood(city(5), 0, 1, {}, 10)).toMatchObject({ happy: 4, content: 1, unhappy: 0 });
   });
 });
 
@@ -256,6 +256,17 @@ describe('size limit and arena (STORY-054, Freeciv civ1)', () => {
     c.buildings.push('temple');
     expect(cityMood(c, 0, 1)).toMatchObject({ unhappy: 0, calmed: 4, disorder: false });
   });
+
+  it('a temple calms 1, with Mysticism or the Oracle 2, and with both 4; without a temple neither calms (STORY-121, Freeciv civ1)', () => {
+    const c = city(10);
+    c.buildings.push('temple');
+    expect(cityMood(c, 0, 1).calmed).toBe(1);
+    expect(cityMood(c, 0, 1, { mysticism: true }).calmed).toBe(2);
+    expect(cityMood(c, 0, 1, { oracle: true }).calmed).toBe(2);
+    expect(cityMood(c, 0, 1, { oracle: true, mysticism: true }).calmed).toBe(4);
+    expect([BUILDS.oracle.cost, BUILDS.greatlibrary.cost, BUILDS.observatory.cost, BUILDS.caravan.cost]).toEqual([300, 300, 300, 50]);
+    expect(cityMood(city(10), 0, 1, { oracle: true, mysticism: true }).calmed).toBe(0);
+  });
 });
 
 describe('city names (STORY-060)', () => {
@@ -276,7 +287,7 @@ describe('entertainers (STORY-061, Freeciv civ1)', () => {
     // Two out of the content ones; their 4 luxury makes the other two content ones happy
     const lux = cityLuxury(c, { food: 0, shield: 0, trade: 0 }, 50, 0);
     expect(lux).toBe(4);
-    expect(cityMood(c, 0, 1, false, lux)).toMatchObject({ happy: 2, content: 0, unhappy: 2, disorder: false });
+    expect(cityMood(c, 0, 1, {}, lux)).toMatchObject({ happy: 2, content: 0, unhappy: 2, disorder: false });
     c.buildings.push('market');
     expect(cityLuxury(c, { food: 0, shield: 0, trade: 0 }, 50, 0)).toBe(6);
   });

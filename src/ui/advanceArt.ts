@@ -104,6 +104,42 @@ const ART: Record<Advance, string> = {
     <circle cx="28" cy="40" r="7" fill="none" stroke="${ACCENT}" stroke-width="1" stroke-dasharray="2 1.6"/>
     <path d="M40 10 L30 40 M40 10 L50 40" stroke="${IRON}" stroke-width="2" stroke-linecap="round"/><circle cx="40" cy="10" r="2.4" fill="${GOLD}" stroke="${INK}" stroke-width="0.8"/>
     <path d="M34 28 Q40 31 46 28" stroke="${IRON}" stroke-width="1" fill="none"/>`,
+  // An eye in a triangle of rays over a smoking bowl (STORY-121)
+  mysticism: `<path d="M32 10 L52 44 H12 Z" fill="none" stroke="${GOLD}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M20 32 Q32 22 44 32 Q32 42 20 32 Z" fill="${PARCH}" stroke="${INK}" stroke-width="1.1"/>
+    <circle cx="32" cy="32" r="4.4" fill="${ACCENT}" stroke="${DARK}" stroke-width="0.8"/><circle cx="32" cy="32" r="1.6" fill="${DARK}"/>
+    <path d="M24 48 H40 L37 54 H27 Z" fill="${BRONZE}" stroke="${INK}" stroke-width="0.9" stroke-linejoin="round"/>
+    <path d="M29 47 Q27 44 29 41 M35 47 Q37 44 35 41" stroke="${STONE}" stroke-width="1" fill="none" opacity="0.8"/>`,
+  // An open book with lines on both pages and a bookmark
+  literacy: `<path d="M8 20 Q20 16 32 21 Q44 16 56 20 V48 Q44 44 32 49 Q20 44 8 48 Z" fill="${PARCH}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M32 21 V49" stroke="${INK}" stroke-width="1"/>
+    <path d="M13 26 Q20 24 28 27 M13 31 Q20 29 28 32 M13 36 Q20 34 28 37 M13 41 Q20 39 26 41.5" stroke="${DARK}" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <path d="M36 27 Q44 24 51 26 M36 32 Q44 29 51 31 M36 37 Q44 34 51 36" stroke="${DARK}" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <path d="M44 18 V30 L46.5 27.5 L49 30 V17.2" fill="#b0532c" stroke="${INK}" stroke-width="0.6"/>`,
+  // A pack animal with two bales and its rope
+  trade: `<path d="M14 40 Q14 30 26 30 H40 Q46 30 48 24 L52 20 L55 22 L52 30 Q50 36 46 38 V40 Z" fill="${SAND}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M18 40 V52 M24 40 V52 M38 40 V52 M44 40 V52" stroke="${SAND}" stroke-width="3" stroke-linecap="round"/>
+    <rect x="18" y="20" width="10" height="12" rx="1.6" fill="${CLAY}" stroke="${INK}" stroke-width="0.9"/><rect x="29" y="18" width="10" height="14" rx="1.6" fill="${WOOD}" stroke="${INK}" stroke-width="0.9"/>
+    <path d="M18 26 H39" stroke="${DARK}" stroke-width="0.9"/><path d="M53 22 Q60 30 58 40" stroke="${INK}" stroke-width="0.9" fill="none"/>
+    <circle cx="51" cy="23" r="0.9" fill="${DARK}"/>`,
+  // A column, a scroll at its foot and a lamp of thought
+  philosophy: `<path d="M22 14 H42 V18 H22 Z M24 18 H40 V48 H24 Z M20 48 H44 V52 H20 Z" fill="${STONE}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M28 20 V46 M32 20 V46 M36 20 V46" stroke="${DARK}" stroke-width="0.8" opacity="0.6"/>
+    <path d="M46 40 Q48 36 52 38 Q56 40 54 44 Q50 46 46 44 Z" fill="${BRONZE}" stroke="${INK}" stroke-width="0.9"/>
+    <path d="M54 38 Q56 33 53 30 Q51 34 54 38" fill="${FIRE}"/>
+    <path d="M8 50 H20 V54 H8 Z" fill="${PARCH}" stroke="${INK}" stroke-width="0.8"/>`,
+  // An armillary of rings round a sun, and a star
+  astronomy: `<circle cx="32" cy="32" r="18" fill="none" stroke="${BRONZE}" stroke-width="2"/>
+    <ellipse cx="32" cy="32" rx="18" ry="6.4" fill="none" stroke="${GOLD}" stroke-width="1.4" transform="rotate(-24 32 32)"/>
+    <ellipse cx="32" cy="32" rx="6.4" ry="18" fill="none" stroke="${INK}" stroke-width="0.9" transform="rotate(-24 32 32)"/>
+    <circle cx="32" cy="32" r="4.4" fill="${GOLD}" stroke="${DARK}" stroke-width="0.8"/>
+    <path d="M32 50 V56 M24 56 H40" stroke="${BRONZE}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M50 10 L51 13 L54 14 L51 15 L50 18 L49 15 L46 14 L49 13 Z" fill="${PARCH}"/>`,
+  // A stone arch over a river with a road on it
+  bridges: `<path d="M6 44 Q20 40 32 46 Q44 52 58 46 V56 H6 Z" fill="${SEA}" opacity="0.8"/>
+    <path d="M6 28 H58 V34 H50 Q50 46 40 46 Q32 46 32 36 Q32 46 24 46 Q14 46 14 34 H6 Z" fill="${STONE}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M6 28 H58" stroke="${SAND}" stroke-width="2.4"/>
+    <path d="M10 31 H14 M22 31 H26 M38 31 H42 M50 31 H54" stroke="${DARK}" stroke-width="0.8" opacity="0.7"/>`,
 };
 
 /** The advance's picture as an SVG of `size` pixels: its object on the round plate. */

@@ -20,7 +20,9 @@ import { ATTACKERS, War, isAttacker, type Attacker, type WarSave } from './war';
 
 export const MAX_RIVAL_CITIES = 8;
 /** What a rival researches, in turn (own): the attackers' advances early. */
-export const RIVAL_ORDER: readonly Advance[] = ['bronze', 'horseback', 'alphabet', 'masonry', 'wheel', 'iron', 'pottery', 'ceremonial', 'mathematics', 'currency', 'writing', 'law', 'monarchy', 'construction', 'mapmaking'];
+export const RIVAL_ORDER: readonly Advance[] = ['bronze', 'horseback', 'alphabet', 'masonry', 'wheel', 'iron', 'pottery', 'ceremonial', 'mathematics', 'currency', 'writing', 'law', 'monarchy', 'construction', 'mapmaking',
+  // STORY-121 (own): Philosophy last, so that the player has a chance at its gift
+  'mysticism', 'literacy', 'trade', 'astronomy', 'bridges', 'philosophy'];
 /** A rival's share of trade that becomes science (own: the player's start rate). */
 const RIVAL_TAX = 50;
 

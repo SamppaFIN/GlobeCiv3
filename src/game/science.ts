@@ -22,7 +22,8 @@
 import type { Build } from './cities';
 import { RESOURCES, TERRAINS, TERRAIN_RULES, type ResourceKind } from './terrainTypes';
 
-export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction' | 'mapmaking' | 'horseback' | 'iron' | 'wheel' | 'mathematics';
+export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction' | 'mapmaking' | 'horseback' | 'iron' | 'wheel' | 'mathematics'
+  | 'mysticism' | 'literacy' | 'trade' | 'philosophy' | 'astronomy' | 'bridges';
 
 /** An advance, or a kind of special resource to study (STORY-072). */
 export type Study = Advance | ResourceKind;
@@ -48,6 +49,17 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[]; from?: 
   iron: { name: 'Rautatyö', needs: ['bronze'], from: ['coal'] },
   wheel: { name: 'Pyörä', needs: [], from: ['horses'] },
   mathematics: { name: 'Matematiikka', needs: ['alphabet', 'masonry'] },
+  // The early and iron age's advances (STORY-121, techs.ruleset commit 04852fb), after the
+  // others so that their order (ruins, the science tree) stays: Mysticism (Ceremonial Burial),
+  // Literacy (Writing and Code of Laws), Trade (Currency and Code of Laws), Philosophy
+  // (Mysticism and Literacy), Astronomy (Mysticism and Mathematics) and Bridge Building (Iron
+  // Working and Construction)
+  mysticism: { name: 'Mystiikka', needs: ['ceremonial'] },
+  literacy: { name: 'Lukutaito', needs: ['writing', 'law'] },
+  trade: { name: 'Kaupankäynti', needs: ['currency', 'law'] },
+  philosophy: { name: 'Filosofia', needs: ['mysticism', 'literacy'] },
+  astronomy: { name: 'Tähtitiede', needs: ['mysticism', 'mathematics'] },
+  bridges: { name: 'Siltojenrakennus', needs: ['iron', 'construction'] },
 };
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 
@@ -102,7 +114,8 @@ export const studyName = (s: Study, known = false) => (isKind(s) ? (known ? RESO
 export const opensFrom = (k: ResourceKind) => ADVANCE_LIST.filter(a => ADVANCES[a].from?.includes(k));
 
 /** The advance each building and unit needs (buildings.ruleset and units.ruleset reqs). */
-export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics' };
+export const NEEDS: Partial<Record<Build, Advance>> = { granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics',
+  oracle: 'mysticism', greatlibrary: 'literacy', observatory: 'astronomy', caravan: 'trade' };
 
 /** Bulbs for the next advance when `known` advances are known. */
 export const advanceCost = (known: number) => 10 * (1 + known);

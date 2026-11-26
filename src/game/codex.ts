@@ -54,6 +54,10 @@ export const BUILD_PURPOSE: Record<Build, string> = {
   colossus: 'Ihme: +1 kauppa jokaiseen kaupungin ruutuun, jossa on kauppaa',
   gardens: 'Ihme: yksi onnellinen asukas joka kaupunkiin',
   greatwall: 'Ihme: muurin suoja kaikkiin kaupunkeihin',
+  oracle: 'Ihme: jokaisen kaupungin temppeli rauhoittaa yhden lisää, Mystiikan kanssa kaksi',
+  greatlibrary: 'Ihme: saat keksinnön, jonka kaksi kilpailijaa jo tuntee',
+  observatory: 'Ihme: kaupungin tiede +100 %, kirjaston kanssa +150 %',
+  caravan: 'Vie 50 tuotantoa kaupunkiin, joka rakentaa ihmettä',
   ...(Object.fromEntries(RESOURCE_BUILDING_LIST.map(b => [b, resourcePurpose(b)])) as Record<ResourceBuilding, string>),
   granary: 'Säilyttää puolet ruoasta, kun kaupunki kasvaa; alhaalla +1 ruoka päivässä', walls: 'Soturit kolminkertaisesti vahvempia rosvoja vastaan', market: 'Kaupasta 50 % enemmän kultaa; alhaalla +1 kauppa päivässä',
   lumberjack: 'Kaataa tukin kahdessa päivässä, metsässä joka päivä', mill: 'Jauhaa viljan jauhoiksi, ylhäällä joka päivä', bakery: 'Leipoo jauhoista leipää: leipä ruokkii asukkaan',
@@ -85,7 +89,7 @@ export type KnownKind = (k: ResourceKind) => boolean;
 const ALL_KNOWN: KnownKind = () => true;
 
 /** The unit kinds a city builds. */
-export const UNIT_KINDS: readonly Build[] = ['warrior', 'phalanx', 'scout', 'settler', 'worker', ...ATTACKERS];
+export const UNIT_KINDS: readonly Build[] = ['warrior', 'phalanx', 'scout', 'settler', 'worker', 'caravan', ...ATTACKERS];
 
 const ROLE_NAMES: Record<AdvisorLevel, Record<string, { name: string; does: string }>> = { town: TOWN_ADVISORS, city: CITY_ADVISORS, province: PROVINCE_ADVISORS, state: STATE_ADVISORS, planet: PLANET_ADVISORS };
 
@@ -214,6 +218,10 @@ export function advanceEffects(a: Advance): Page['facts'] {
   }
   if (a === 'mapmaking') facts.push({ label: 'Liike', value: ['Yksiköt kulkevat rannikkovesillä ruudun päivässä'] });
   if (a === 'monarchy') facts.push({ label: 'Hallitus', value: ['Vallankumous Monarkiaan: ruudut tuottavat täysin, ja yksiköt maksavat ylläpitoa alusta asti'] });
+  // STORY-121: Mysticism's temples (Freeciv civ1), and the own rules of Philosophy and Bridge Building
+  if (a === 'mysticism') facts.push({ label: 'Temppeli', value: [buildRef('temple'), ' rauhoittaa kaksi asukasta yhden sijaan, ja ', buildRef('oracle'), ' kanssa neljä'] });
+  if (a === 'philosophy') facts.push({ label: 'Ensimmäiselle', value: ['Ilmainen keksintö, kun yksikään kilpailija ei vielä tunne Filosofiaa'] });
+  if (a === 'bridges') facts.push({ label: 'Tiet', value: ['Tien rakentaminen kestää puolet päivistä'] });
   const era = eraOpenedBy(a);
   if (era) facts.push({ label: 'Aikakausi', value: [eraRef(era), ' alkaa, ja neuvonantajiksi tulevat uudet henkilöt omine bonuksineen'] });
   const next = ADVANCE_LIST.filter(n => ADVANCES[n].needs.includes(a));
@@ -226,6 +234,9 @@ function advancePage(a: Advance, known: KnownKind): Page {
   const rewardOf = RESOURCE_BUILDING_LIST.filter(b => RESOURCE_BUILDINGS[b].reward === a);
   const more: Segment[] = a === 'mapmaking' ? ['Yksiköt kulkevat rannikkovesillä.']
     : a === 'monarchy' ? ['Kansa voi tehdä vallankumouksen Monarkiaan.']
+    : a === 'mysticism' ? ['Temppelit rauhoittavat enemmän.']
+    : a === 'philosophy' ? ['Ensimmäinen filosofien kansa saa keksinnön ilmaiseksi.']
+    : a === 'bridges' ? ['Tiet valmistuvat puolessa ajassa.']
     : eraOpenedBy(a) ? [eraRef(eraOpenedBy(a)!), ' alkaa.'] : [];
   const facts: Page['facts'] = [
     { label: 'Vaatii', value: ADVANCES[a].needs.length ? list(ADVANCES[a].needs.map(n => advanceRef(n))) : ['ei aiempia keksintöjä'] },

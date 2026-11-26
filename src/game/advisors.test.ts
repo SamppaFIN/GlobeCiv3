@@ -1,5 +1,7 @@
 import type { ChainBuilding } from './chains';
 import { describe, expect, it } from 'vitest';
+import { RIVAL_ORDER } from './rivals';
+import { ADVANCE_LIST } from './science';
 import { chainAdvice, planetTarget, provinceGoalTarget, townAdvice, STATE_PLANS, cityAdvice, expeditionTarget, exploreTarget, luxuryStep, nextAdvance, provinceBuild, settleAreas, type CityNeeds } from './advisors';
 import type { Build } from './cities';
 import { foundCity } from './cities';
@@ -88,6 +90,12 @@ describe('state advisors', () => {
     expect(nextAdvance(STATE_PLANS.war.order, ['pottery', 'alphabet'])).toBe('alphabet');
     expect(nextAdvance(['monarchy'], ['pottery'])).toBe('pottery');
     expect(nextAdvance(STATE_PLANS.expand.order, [])).toBeNull();
+  });
+
+  it('every state advisor\'s order and the rivals\' order hold every advance once (STORY-121)', () => {
+    for (const order of [...Object.values(STATE_PLANS).map(p => p.order), RIVAL_ORDER]) {
+      expect([...order].sort()).toEqual([...ADVANCE_LIST].sort());
+    }
   });
 
   it('luxury goes up a step in disorder and back a step after ten calm days', () => {
