@@ -23,7 +23,7 @@ export const ADVANCE_ERA: Record<Advance, Era> = {
   alphabet: 'early', bronze: 'early', ceremonial: 'early', pottery: 'early', masonry: 'early', horseback: 'early',
   wheel: 'early', writing: 'early', law: 'early', mapmaking: 'early', currency: 'early', mysticism: 'early',
   iron: 'iron', mathematics: 'iron', monarchy: 'iron', construction: 'iron',
-  literacy: 'iron', trade: 'iron', philosophy: 'iron', astronomy: 'iron', bridges: 'iron',
+  literacy: 'iron', trade: 'iron', philosophy: 'iron', astronomy: 'iron', bridges: 'iron', republic: 'iron',
 };
 
 /** The era an advance opens: the one whose key it is, if any. */

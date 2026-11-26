@@ -3,6 +3,7 @@
  * choose from with their cost and what they open, how trade is split between gold and
  * science, and the advances known. A bottom sheet like the city card; the game goes on.
  */
+import { REVOLUTION_TARGETS, REVOLUTION_TO, type RevolutionTarget } from '../game/government';
 import { LUX_RATES, TAX_RATES, type Study } from '../game/science';
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
@@ -21,8 +22,8 @@ export interface ResearchView {
   lux: number;
   /** The government and its effect (STORY-047). */
   government: string;
-  /** A revolution to Monarchy can start. */
-  revolution: boolean;
+  /** The governments a revolution can start toward (STORY-047, STORY-125). */
+  revolutions: RevolutionTarget[];
   known: string;
 }
 
@@ -33,7 +34,7 @@ export interface ResearchCard {
   readonly visible: boolean;
 }
 
-export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Study): void; setTax(tax: number): void; setLux(lux: number): void; revolution(): void }): ResearchCard {
+export function createResearchCard(root: HTMLElement, on: { close(): void; choose(advance: Study): void; setTax(tax: number): void; setLux(lux: number): void; revolution(to: RevolutionTarget): void }): ResearchCard {
   const el = document.createElement('section');
   el.className = 'city-card research-card';
   el.setAttribute('role', 'dialog');
@@ -47,7 +48,7 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
     <span class="city-food research-rates"></span>
     <div class="city-growth research-gov-row">
       <span class="research-gov"></span>
-      <button class="btn btn-secondary research-revolution" type="button">Vallankumous: Monarkiaan</button>
+      ${REVOLUTION_TARGETS.map(t => `<button class="btn btn-secondary research-revolution" type="button" data-to="${t}">Vallankumous: ${REVOLUTION_TO[t]}</button>`).join('')}
     </div>
     <div class="city-growth">
       <span class="research-current"></span>
@@ -75,7 +76,7 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
   q('.city-close').addEventListener('click', on.close);
   el.querySelectorAll<HTMLInputElement>('input[name="research-tax"]').forEach(i => i.addEventListener('change', () => on.setTax(Number(i.value))));
   el.querySelectorAll<HTMLInputElement>('input[name="research-lux"]').forEach(i => i.addEventListener('change', () => on.setLux(Number(i.value))));
-  q('.research-revolution').addEventListener('click', on.revolution);
+  el.querySelectorAll<HTMLButtonElement>('.research-revolution').forEach(b => b.addEventListener('click', () => on.revolution(b.dataset.to as RevolutionTarget)));
   const options = q('.city-builds');
   let last = '';
   const update = (v: ResearchView) => {
@@ -89,7 +90,7 @@ export function createResearchCard(root: HTMLElement, on: { close(): void; choos
     q('.city-bar').setAttribute('aria-valuenow', String(pct));
     q('.research-known').textContent = v.known;
     q('.research-gov').textContent = v.government;
-    q<HTMLButtonElement>('.research-revolution').hidden = !v.revolution;
+    el.querySelectorAll<HTMLButtonElement>('.research-revolution').forEach(b => { b.hidden = !v.revolutions.includes(b.dataset.to as RevolutionTarget); });
     q('.research-hint').hidden = !v.hint;
     q('.research-hint').textContent = v.hint ?? '';
     el.querySelectorAll<HTMLInputElement>('input[name="research-tax"]').forEach(i => { i.checked = Number(i.value) === v.tax; });

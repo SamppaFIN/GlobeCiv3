@@ -297,6 +297,26 @@ describe('saved game (STORY-036)', () => {
     expect(validateSave(extra, LIMITS)!.commands![0]).toEqual({ day: 3, by: 'player', cmd: { kind: 'settle', tile: START_TILE + 5 } });
   });
 
+  it('a revolution keeps its target; an old one has none and ends in Monarchy, and a target out of anarchy is refused (STORY-125)', () => {
+    const { data } = playedSave();
+    const s: any = JSON.parse(JSON.stringify(data));
+    s.revolutionTo = 'republic';
+    s.commands.push({ day: 21, by: 'player', cmd: { kind: 'revolution', to: 'republic' } });
+    const back = validateSave(s, LIMITS)!;
+    expect(back.revolutionTo).toBe('republic');
+    expect(back.commands!.at(-1)!.cmd).toEqual({ kind: 'revolution', to: 'republic' });
+    // The old save in anarchy has no target, and its old command none either
+    const old = validateSave(JSON.parse(JSON.stringify(data)), LIMITS)!;
+    expect('revolutionTo' in old).toBe(false);
+    expect(old.commands![18].cmd).toEqual({ kind: 'revolution' });
+    // Anarchy is no target, nor a target without anarchy, nor a target in a command
+    for (const bad of [{ ...s, revolutionTo: 'anarchy' }, { ...s, gov: 'monarchy' }, { ...s, commands: [{ day: 21, by: 'player', cmd: { kind: 'revolution', to: 'despotism' } }] }]) {
+      expect(validateSave(JSON.parse(JSON.stringify(bad)), LIMITS)).toBeNull();
+    }
+    // The Republic is a government a save may be under
+    expect(validateSave({ ...JSON.parse(JSON.stringify(data)), gov: 'republic', anarchyUntil: -1 }, LIMITS)!.gov).toBe('republic');
+  });
+
   it('what stopped the game once is saved; a save from before (STORY-017) has nothing, and an unknown kind is refused', () => {
     const { data } = playedSave();
     expect(validateSave(JSON.parse(JSON.stringify(data)), LIMITS)!.firsts).toEqual(['site', 'raid']);

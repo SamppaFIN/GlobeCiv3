@@ -1,0 +1,123 @@
+{
+  "id": "PLAN-105",
+  "story": "STORY-125",
+  "author_model": "Opus 5.5 (Enki)",
+  "date": "2026-11-26",
+  "approach": "Tasavalta tulee neljänneksi hallitusmuodoksi Freecivin civ1-säännöin (data/civ1/governments.ruleset ja effects.ruleset, common/city.c, commit 04852fb). Keksintö Tasavalta vaatii Lakikokoelman ja Lukutaidon (techs.ruleset), ja se kuuluu rauta-aikaan. Säännöt: ruutu, jolla on vähintään 1 kauppa, saa +1 kauppaa (Output_Inc_Tile 1; city_tile_output lisää sen vain, kun ruutu jo tuottaa), uudisasukas syö 2 ruokaa (Upkeep_Pct ruoka 100), yksiköillä ei ole ilmaista ylläpitoa (Unit_Upkeep_Free_Per_City puuttuu, kuten Monarkiassa), sotilaat eivät rauhoita (Martial_Law puuttuu), valtakunnan koon raja on 13 kaupunkia ja askel 10 (Empire_Size_Base 13, Step 10), ja jokainen hyökkäyskykyinen yksikkö, joka on poissa kaupungista, tekee kotikaupunkiinsa yhden tyytymättömän (Unhappy_Factor 1 × uk_happy 1; unit_being_aggressive, kun civ1:n rajat ovat pois päältä, game.ruleset). Tyytymättömyys tulee Freecivin järjestyksessä sotilaiden rauhoituksen jälkeen: ensin tyytyväinen tyytymättömäksi, sitten onnellinen tyytymättömäksi kahden hinnalla ja lopuksi onnellinen tyytyväiseksi (citizen_happy_units). Senaattia (Has_Senate) ei tule peliin (Sami 2026-11-26), joten Tasavalta voi julistaa sodan kuten muut hallitusmuodot. Vallankumous on mahdollinen Itsevaltiudesta tai Monarkiasta mihin tahansa tunnettuun hallitusmuotoon, ja anarkia kestää kuten ennen 1–5 päivää. Komento revolution saa kohteen, ja kohde tallentuu anarkian ajaksi. Vanha komento ja vanha anarkiassa tehty tallennus ilman kohdetta tarkoittavat Monarkiaa (sääntö 8). Laajentaja ja Oppinut tekevät vallankumouksen Tasavaltaan, kun se tunnetaan, myös Monarkiasta, ja Kenraali tekee sen vain Itsevaltiudesta Monarkiaan kuten ennen. Kenraali ei palaa Tasavallasta Monarkiaan, jotta neuvonantajan vaihto ei aiheuta anarkiaa.",
+  "alternatives_considered": [
+    {
+      "name": "Sotilaat kotivaltion ulkopuolella (storyn kriteerin sanamuoto)",
+      "pros": "Oma valtio on turvallinen, ja tyytymättömyys tulee vain sotaretkistä",
+      "cons": "Ei civ1:n sääntö: civ1:ssä rajat ovat pois päältä, ja hyökkäyskykyinen yksikkö kaupungin ulkopuolella on aina 'hyökkäävä'. Vaatii valtion haun jokaiselle yksikölle joka päivä.",
+      "rejected_because": "Suositus on civ1:n sääntö, mutta valinta on Samin (kysymys 2)"
+    },
+    {
+      "name": "Sotilaat kulttuurirajojen ulkopuolella (Freecivin sääntö rajojen kanssa)",
+      "pros": "Freecivin oma koodi, kun rajat ovat käytössä (happyborders NATIONAL), ja pelissä on rajat (STORY-093)",
+      "cons": "Rajat näkyvät ja toimivat vasta läänitasolla, mutta hallitus kuuluu valtiotasolle; ennen läänitasoa sääntö ei toimisi",
+      "rejected_because": "Kaksi tasoa sekoittuisi yhteen sääntöön"
+    },
+    {
+      "name": "Ei senaattia",
+      "pros": "Yksinkertaisempi, ja sodan voi julistaa kuten ennen",
+      "cons": "Tasavallalta puuttuisi civ1:n tärkein haitta sodalle",
+      "rejected_because": "Suositus on senaatti Freecivin tapaan, mutta valinta on Samin (kysymys 1)"
+    },
+    {
+      "name": "Korruptio, juhlinta ja sisällissota samalla kertaa",
+      "pros": "civ1:n Tasavalta kokonaan",
+      "cons": "Korruptiota ei ole yhdessäkään pelin hallitusmuodossa (STORY-047), eikä juhlintaa (Rapture_Grow) tai sisällissotaa ole pelissä",
+      "rejected_because": "Ne koskevat kaikkia hallitusmuotoja ja kuuluvat omaan storyynsä"
+    }
+  ],
+  "files_to_change": [
+    "src/game/government.ts (Tasavalta, kaupan lisä, uudisasukkaan ruoka, sotilaiden tyytymättömyys)",
+    "src/game/science.ts ja src/game/eras.ts (keksintö Tasavalta)",
+    "src/game/cities.ts (cityMood: poissa olevat yksiköt; uudisasukkaan ruoka; baseContent)",
+    "src/game/commands.ts ja src/game/save.ts (revolution.to, revolutionTo, hallitusten lista)",
+    "src/sim/game.ts (poissa olevat yksiköt kaupungeittain, vallankumouksen kohde, anarkian loppu, valtion neuvonantajan vallankumous)",
+    "src/game/advisors.ts ja src/game/rivals.ts (tutkimusjärjestykset)",
+    "src/ui/researchCard.ts ja src/globe/main.ts (vallankumousnapit kohteittain, hallituksen teksti)",
+    "src/game/codex.ts, src/game/advanceLore.ts ja src/ui/advanceArt.ts (vaikutusrivit, lausahdus ja kuva)",
+    "testit: src/game/government.test.ts, cities.test.ts, save.test.ts, commands.test.ts, codex.test.ts, advisors.test.ts, tests/sim/republic.test.ts (uusi), tests/e2e/republic.e2e.ts (uusi), tests/golden/seed42.json"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "government.ts: Tasavalta-hallitus säännöin (tradeBonus, settlerFood, freeUnits 0, empireBase 13, martialLaw 0, awayUnhappy 1, senate) ja GOVERNMENT_LIST:n loppuun; governed() lisää +1 kauppaa ruudulle, jolla on kauppaa",
+      "verify": "Vitest: Tasavallassa 0 kaupan ruutu pysyy nollassa, 1 → 2 ja 3 → 4; Itsevaltiuden leikkaus ennallaan; vanha tallennus latautuu"
+    },
+    {
+      "step": 2,
+      "action": "Keksintö Tasavalta (Lakikokoelma ja Lukutaito) ADVANCE_LISTin loppuun, rauta-aikaan",
+      "verify": "Vitest: vaatimukset civ1:n mukaan, aikakausi, tallennuksen listat"
+    },
+    {
+      "step": 3,
+      "action": "cities.ts: uudisasukkaan ruoka hallituksen mukaan (1 tai 2), ja cityMood saa poissa olevien yksiköiden määrän, jonka tyytymättömyys tulee sotilaiden rauhoituksen jälkeen Freecivin järjestyksessä",
+      "verify": "Vitest: Tasavallassa kaksi poissa olevaa yksikköä tekee kahdesta tyytyväisestä tyytymättömiä; ilman tyytyväisiä onnellinen muuttuu kahden hinnalla; Monarkiassa ei vaikutusta"
+    },
+    {
+      "step": 4,
+      "action": "sim/game.ts: poissa olevat yksiköt kaupungeittain (kotikaupunki, hyökkäys > 0, ei kaupungin ruudulla) ja niiden vaikutus kaupungin päivään ja kortin lukuihin",
+      "verify": "Node (siemen 42): Tasavallassa kaupungin ulkopuolelle lähetetty soturi tekee kotikaupunkiinsa tyytymättömän, ja kaupunkiin palattuaan ei"
+    },
+    {
+      "step": 5,
+      "action": "Vallankumous kohteineen: komento revolution { to }, play.revolutionTo, anarkian loppu kohteeseen, ilmoitukset; vanha komento ja tallennus ilman kohdetta ovat Monarkia",
+      "verify": "Vitest ja Node: Monarkiasta Tasavaltaan, Itsevaltiudesta suoraan Tasavaltaan, tuntemattomaan ei; vanha komentoloki uusiutuu samaan tilaan; anarkiassa tehty vanha tallennus päättyy Monarkiaan"
+    },
+    {
+      "step": 6,
+      "action": "Neuvonantajat: Laajentaja ja Oppinut Tasavaltaan (myös Monarkiasta), Kenraali vain Itsevaltiudesta Monarkiaan; tutkimusjärjestykset (STATE_PLANS ja RIVAL_ORDER) kattavat Tasavallan",
+      "verify": "Vitest advisors.test: jokainen järjestys kattaa kaikki keksinnöt; Node: Oppinut päätyy Tasavaltaan ja Kenraali Monarkiaan"
+    },
+    {
+      "step": 7,
+      "action": "Käyttöliittymä: tiedekortin vallankumousnappi jokaiselle mahdolliselle kohteelle, hallituksen teksti Tasavallalle, keksintökortin ja Tietokirjan vaikutusrivit, oma kuva ja lausahdus (Cicero, De re publica 1.39)",
+      "verify": "E2E republic.e2e: keksintö, vallankumous Tasavaltaan, anarkia ja Tasavallan teksti, kohteet vähintään 44 px puhelimella; Utu tarkistaa lausahduksen lähteen"
+    },
+    {
+      "step": 8,
+      "action": "Kultaiset tilat kirjoitetaan selaimessa uudelleen (sanotaan ääneen), ja autopilotti ajetaan",
+      "verify": "Node tulee samaan tilaan kuin selain; valtiotaso aukeaa enintään noin 20 % myöhemmin kuin päivinä 189, 184 ja 288"
+    },
+    {
+      "step": 9,
+      "action": "Utun katselmointi, kaikki E2E-testit paikallisesti, joihin rakennettavien, keksintöjen tai hallitusten määrät vaikuttavat (haku toHaveCount ja määrät), ja CI",
+      "verify": "TICKET-TEST: kaikki tapaukset pass tai kirjattu; CI vihreä"
+    }
+  ],
+  "status": "approved",
+  "own_rules": [
+    "Kenraali ei tee vallankumousta Tasavallasta takaisin Monarkiaan (oma: neuvonantajan vaihto ei aiheuta anarkiaa).",
+    "Kilpailijoilla ei ole hallitusmuotoja, joten Tasavalta koskee vain pelaajaa (kuten Monarkia).",
+    "Senaattia ei ole (Samin valinta 2026-11-26; civ1:ssä Has_Senate estää rauhan rikkomisen).",
+    "Hyökkääjät palaavat lähimpään omaan kaupunkiin, kun sotaretkeä ei ole (Sami 2026-11-26).",
+    "Laajentaja ja Oppinut odottavat Tasavaltaa (Sami 2026-11-26)."
+  ],
+  "open_questions": [],
+  "next": "Enki toteutti (commit 37872ff), ja Utu katselmoi toteutuksen.",
+  "decisions": [
+    "Sami 2026-11-26: ei senaattia.",
+    "Sami 2026-11-26: poissa olevat sotilaat civ1:n mukaan: jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa yhden tyytymättömän. STORY-125:n ensimmäinen kriteeri muuttuu tämän mukaiseksi.",
+    "Sami 2026-11-26: valtakunnan koko civ1:n mukaan (raja 13 ja askel 10), ja suunnitelma hyväksyttiin muuten sellaisenaan; Enki kertoo, jos Utun katselmointi muuttaa jotain.",
+    "Sami 2026-11-26 (Utun löydös S2): kun sotaretkeä ei ole, hyökkääjät palaavat lähimpään omaan kaupunkiin kaikissa hallitusmuodoissa (oma sääntö).",
+    "Sami 2026-11-26 (Utun löydös S5): Laajentaja ja Oppinut odottavat Tasavaltaa eivätkä tee vallankumousta Monarkiaan; Tasavallan tie (Kirjoitus, Lukutaito ja Tasavalta) tulee niiden järjestyksessä Monarkian paikalle, ja Monarkia jää loppuun."
+  ],
+  "review": {
+    "by": "Utu ☀️ (Sonnet 5.5, Anun sijasta)",
+    "date": "2026-11-26",
+    "verdict": "hyväksytty muutoksin",
+    "findings": [
+      "Vakava S1: vallankumous vain Itsevaltiudesta ja Monarkiasta tekisi Tasavallasta umpikujan.",
+      "Vakava S2: sotaretken jälkeen hyökkääjät jäävät kentälle, ja Tasavallassa jokainen tekisi pysyvän tyytymättömän.",
+      "Keskisuuri S3: cityMoodin suora kutsu (kasvun ennuste) ja kaupunkikortin tekstit (uudisasukkaiden ruoka, poissa olevat yksiköt).",
+      "Keskisuuri S4: revolution-komennon kohde ja tallennuksen revolutionTo validoitava (vain Monarkia ja Tasavalta, vain anarkiassa).",
+      "Keskisuuri S5: neuvonantajan polku, kun vain Monarkia tunnetaan.",
+      "Keskisuuri S6: autopilotti ei ehdi Tasavaltaan; tarvitaan pidempi Node-testi.",
+      "Pieni: vartijatesti, käyttöliittymän nappitekstit, keksintöjen määrät, aikakausi, determinismi ja lähteen merkinnät (Rapture_Grow koskee vain Tasavaltaa ja Demokratiaa; tiede-ja-aikakaudet.md:n verokatot eivät ole civ1:stä)."
+    ]
+  },
+  "review_resolution": "S1: vallankumous mistä tahansa muusta kuin anarkiasta mihin tahansa tunnettuun (revolutionTargets). S2 ja S5: Samin päätökset (hyökkääjät palaavat, Laajentaja ja Oppinut odottavat Tasavaltaa). S3: kasvun ennuste saa poissa olevat, ja kaupunkikortti kertoo uudisasukkaiden ruoan ja poissa olevat yksiköt. S4: komennon kohde ja revolutionTo validoidaan, ja vanha komento ja tallennus ovat Monarkia (save.test). S6: tests/sim/republic.test.ts pelaa kolme neuvonantajaa 500 päivää: Oppinut päätyy Tasavaltaan, eikä kukaan ei-toivottuun; Laajentajan ja Kenraalin kaupungit tekevät tuskin kauppaa, joten ne eivät ehdi kumpaankaan (kirjattu testitikettiin). Pienet: vartijatesti tuntee revolutionTo:n, Monarkian nappi- ja lokitekstit säilyivät, määrät päivitettiin ääneen sanoen, ja lähteen merkinnät ovat government.ts:n kommentissa."
+}

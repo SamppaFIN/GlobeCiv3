@@ -25,7 +25,7 @@ import type { City } from '../game/cities';
 import type { CommandLog } from '../game/commands';
 import type { Ties } from '../game/diplomacy';
 import type { Yield } from '../game/discoveries';
-import type { Government } from '../game/government';
+import type { Government, RevolutionTarget } from '../game/government';
 import type { Improvements } from '../game/improvements';
 import type { Progress } from '../game/progress';
 import type { Raids } from '../game/raids';
@@ -73,6 +73,8 @@ export interface GameState {
   /** The government, and the day anarchy ends, or −1 (STORY-047). */
   gov: Government;
   anarchyUntil: number;
+  /** The government the anarchy leads to (STORY-125); none in an old save, which ends in Monarchy. */
+  revolutionTo?: RevolutionTarget;
   /** The ties with each rival, in the rivals' order (STORY-076). */
   ties: Ties[];
   /** The city level's advisor and what it did lately (STORY-105). */

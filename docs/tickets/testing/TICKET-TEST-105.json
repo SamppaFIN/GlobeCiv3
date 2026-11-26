@@ -1,0 +1,105 @@
+{
+  "id": "TICKET-TEST-105",
+  "story": "STORY-125",
+  "implementation_ticket": "TICKET-IMPL-105",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1), siemen 42; Vitest 5 Nodessa",
+    "tooling": "Vitest, Playwright",
+    "cases": [
+      {
+        "steps": "Vitest government.test",
+        "expected": "Tasavallassa kauppa +1 vain kauppaa tuottavalle ruudulle ja Kolossin kanssa +2; raja 13 ja askel 10 (14 → 3, 24 → 2); sotilaat eivät rauhoita; poissa olevat tekevät tyytyväisistä tyytymättömiä ja onnellisista kahden hinnalla",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest science.test ja codex.test",
+        "expected": "Tasavalta vaatii Lakikokoelman ja Lukutaidon ja on viimeisenä; Tietokirjan sivumäärä ja rauta-ajan lista (muutettu ääneen sanoen)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest save.test ja commands.test",
+        "expected": "Vallankumouksen kohde komennossa ja tallennuksessa; vanha komento ja tallennus ilman kohdetta ovat Monarkia; kohde anarkian ulkopuolella, anarkia kohteena ja tuntematon kohde hylätään; Tasavalta kelpaa hallitukseksi",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/republic.test.ts (Node, siemen 42)",
+        "expected": "Monarkiasta Tasavaltaan ja Itsevaltiudesta suoraan; tuntemattomaan ei eikä anarkiassa; kohde säilyy tallennuksessa; vanha anarkia päättyy Monarkiaan; uusinta lokista samaan hallitukseen; uudisasukas syö 2 ruokaa; poissa oleva soturi, falangi ja hyökkääjä tekevät tyytymättömän, kaupungissa ei, eikä Monarkiassa; Oppinut ja Laajentaja odottavat Tasavaltaa; Kenraali Monarkiaan eikä pois Tasavallasta; hyökkääjä palaa kaupunkiin; 500 päivän ajoissa ei-toivottua hallitusta ei tule, ja Oppinut päätyy Tasavaltaan",
+        "result": "13 testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest koko sarja ja tsc --noEmit",
+        "expected": "Vihreä, ei tyyppivirheitä",
+        "result": "67 tiedostoa, 431 testiä läpi; tsc ilman virheitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/run.test.ts: kultaiset tilat",
+        "expected": "Node tulee samaan tilaan kuin selain; roam päivinä 100 ja 200 kirjoitettiin selaimessa uudelleen (Oppineen tutkimusjärjestys, sanottu ääneen)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/autopilot.test.ts",
+        "expected": "Valtiotaso aukeaa kaikilla kolmella tavalla enintään noin 20 % myöhemmin (189, 184 ja 288 ennen)",
+        "result": "Päivät 189, 184 ja 296 (Oppinut +2,8 %)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E republic.e2e: Monarkiasta Tasavaltaan tiedekortista",
+        "expected": "Tasavallan nappi vain, kun se on mahdollinen, ja vähintään 44 px; komento ja kohde; anarkia; Tasavallan teksti; takaisin Monarkiaan on auki; ei konsolivirheitä",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E government.e2e, science-tree.e2e ja state-advisors.e2e",
+        "expected": "Monarkian vallankumous ennallaan; tiedepuussa 22 keksintöä ja 24 viivaa; Oppinut odottaa Tasavaltaa (muutettu ääneen sanoen, Samin päätös)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E koko sarja paikallisesti",
+        "expected": "Vihreä",
+        "result": "Ajossa",
+        "outcome": "not_run"
+      },
+      {
+        "steps": "CI: koko sarja mainin pushissa",
+        "expected": "Vihreä",
+        "result": "Ei vielä ajettu",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/republic.e2e.ts-*/republic-revolution.png ja republic.png (paikallinen ajo)"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Tiedekortista vallankumous Tasavaltaan ja takaisin Monarkiaan, ja hallituksen teksti on ymmärrettävä",
+        "checked": false
+      },
+      {
+        "item": "Tasavallan kauppa ja poissa olevien sotilaiden tyytymättömyys näkyvät kaupunkikortissa",
+        "checked": false
+      },
+      {
+        "item": "Laajentaja ja Oppinut odottavat Tasavaltaa, ja Kenraali menee Monarkiaan",
+        "checked": false
+      },
+      {
+        "item": "Löydös: Kenraalin ja Laajentajan valtakunnat oppivat siemenellä 42 tuskin mitään (ketjukaupungit tekevät tuskin kauppaa, ja Kenraalin vero 70 % ja ylellisyys 30 % jättävät tieteelle 0 %), joten ne eivät ehdi Monarkiaan tai Tasavaltaan: oma story?",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

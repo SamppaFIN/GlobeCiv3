@@ -208,15 +208,16 @@ export function provinceBuild(advisor: ProvinceAdvisor, n: { soldiers: number; b
 
 /*
  * The state level (STORY-051): one of three runs the realm's science, taxes and line, the
- * revolution to Monarchy, and the state's target province. Sami chose that science belongs here.
+ * revolution, and the state's target province. Sami chose that science belongs here.
  *
  *   Laajentaja  the state line Laajentuminen, tax 50 %, advances for growth first, and the
  *               nearest province without a city as the target (STORY-016: a city holds it)
  *   Oppinut     the state line Tutkimus, tax 30 %, writing and trade first
  *   Kenraali    the state line Puolustus, tax 70 %, bronze and masonry first; it buys the
  *               soldier or walls a city under threat is building when the treasury allows
- * Each one starts the revolution to Monarchy once it is known, and puts trade into luxury a
- * step at a time while a city is in disorder, and back a step after ten calm days.
+ * Kenraali starts the revolution to Monarchy once it is known, and Laajentaja and Oppinut wait
+ * for the Republic and turn to it once it is known (STORY-125, Sami 2026-11-26). Each puts trade
+ * into luxury a step at a time while a city is in disorder, and back a step after ten calm days.
  */
 export type StateAdvisor = 'none' | 'expand' | 'science' | 'war';
 export const STATE_ADVISOR_LIST: readonly StateAdvisor[] = ['none', 'expand', 'science', 'war'];
@@ -230,15 +231,17 @@ export const STATE_ADVISORS: Record<StateAdvisor, { name: string; does: string }
 
 /** Each advisor's state line, tax rate and order of advances. */
 export const STATE_PLANS: Record<Exclude<StateAdvisor, 'none'>, { line: StateLine; tax: number; order: Advance[] }> = {
-  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'monarchy', 'mapmaking', 'bronze', 'currency', 'masonry', 'construction', 'writing', 'horseback', 'iron', 'wheel', 'mathematics',
+  // STORY-125 (own orders): Laajentaja and Oppinut wait for the Republic, so its way (Writing,
+  // Literacy) comes where Monarchy was, and Monarchy after
+  expand: { line: 'expand', tax: 50, order: ['pottery', 'ceremonial', 'alphabet', 'law', 'writing', 'literacy', 'republic', 'mapmaking', 'bronze', 'currency', 'masonry', 'construction', 'horseback', 'iron', 'wheel', 'mathematics',
     // STORY-121 (own order): caravans for the wonders and calmer temples for growing cities first
-    'trade', 'mysticism', 'literacy', 'bridges', 'philosophy', 'astronomy'] },
-  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'monarchy', 'pottery', 'masonry', 'construction', 'mapmaking', 'horseback', 'iron', 'wheel', 'mathematics',
+    'trade', 'mysticism', 'bridges', 'philosophy', 'astronomy', 'monarchy'] },
+  science: { line: 'research', tax: 30, order: ['alphabet', 'writing', 'bronze', 'currency', 'ceremonial', 'law', 'literacy', 'republic', 'pottery', 'masonry', 'construction', 'mapmaking', 'horseback', 'iron', 'wheel', 'mathematics',
     // STORY-121 (own order): the Great Library, Philosophy's gift and the Observatory first
-    'literacy', 'mysticism', 'philosophy', 'astronomy', 'trade', 'bridges'] },
+    'mysticism', 'philosophy', 'astronomy', 'trade', 'bridges', 'monarchy'] },
   war: { line: 'defend', tax: 70, order: ['bronze', 'horseback', 'iron', 'masonry', 'wheel', 'alphabet', 'mathematics', 'ceremonial', 'law', 'monarchy', 'pottery', 'currency', 'construction', 'writing', 'mapmaking',
-    // STORY-121 (own order): the roads for the campaigns first
-    'bridges', 'mysticism', 'trade', 'literacy', 'astronomy', 'philosophy'] },
+    // STORY-121 and 125 (own order): the roads for the campaigns first, the Republic last
+    'bridges', 'mysticism', 'trade', 'literacy', 'astronomy', 'philosophy', 'republic'] },
 };
 
 /** The next advance: the first of the order that can be researched, else any that can. */

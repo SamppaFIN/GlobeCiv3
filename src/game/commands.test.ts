@@ -74,7 +74,7 @@ function world(): TestWorld {
     sendTo: tile => act('flag', tile),
     setTax: tax => act('tax', tax),
     setLux: lux => act('lux', lux),
-    revolution: () => act('revolution'),
+    revolution: to => act('revolution', to),
     setPlan: (area, plan) => act('plan', area, plan),
     setLine: line => act('line', line),
     aim: state => act('aim', state),
@@ -208,6 +208,7 @@ describe('commands', () => {
       { kind: 'tax', tax: 70 },
       { kind: 'lux', lux: 20 },
       { kind: 'revolution' },
+      { kind: 'revolution', to: 'republic' },
       { kind: 'plan', area: 12, plan: 'settle' },
       { kind: 'line', line: 'research' },
       { kind: 'aim', state: 5 },
@@ -216,7 +217,7 @@ describe('commands', () => {
       { kind: 'help', unit: 6, city: CENTRE },
     ];
     expect(cmds.map(c => execute(c, w))).toEqual(cmds.map(() => true));
-    expect(w.acts).toEqual(['mode 3 gather', 'task 4 improve', `pick ${HILL}`, 'skip', `flag ${FOREST}`, 'tax 70', 'lux 20', 'revolution', 'plan 12 settle', 'line research', 'aim 5', 'pact 1 alliance', 'trade 0 maps advance:alphabet', `help 6 ${CENTRE}`]);
+    expect(w.acts).toEqual(['mode 3 gather', 'task 4 improve', `pick ${HILL}`, 'skip', `flag ${FOREST}`, 'tax 70', 'lux 20', 'revolution monarchy', 'revolution republic', 'plan 12 settle', 'line research', 'aim 5', 'pact 1 alliance', 'trade 0 maps advance:alphabet', `help 6 ${CENTRE}`]);
     expect(execute({ kind: 'focus', city: CENTRE, focus: 'production' }, w)).toBe(true);
     expect(w.cities[0].focus).toBe('production');
     // The same focus again changes nothing, and a tile without a city has none

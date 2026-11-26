@@ -19,6 +19,7 @@ import type { Build, Building, City, Focus } from './cities';
 import { chainOpen, CHAIN_ONLY, isChainBuilding, startSite } from './chains';
 import { move, spots, type Ground } from './placement';
 import { LUX_RATES, NEEDS, TAX_RATES, type LuxRate, type Research, type Study, type TaxRate } from './science';
+import type { RevolutionTarget } from './government';
 import type { ResourceKind } from './terrainTypes';
 import type { AreaPlan, Mode, SettlerTask, StateLine } from './units';
 
@@ -69,8 +70,8 @@ export type Command =
   | { kind: 'tax'; tax: TaxRate }
   /** The share of trade to luxury (STORY-046). */
   | { kind: 'lux'; lux: LuxRate }
-  /** The revolution toward Monarchy (STORY-047). */
-  | { kind: 'revolution' }
+  /** The revolution toward Monarchy (STORY-047) or the Republic (STORY-125); none in an old log is Monarchy. */
+  | { kind: 'revolution'; to?: RevolutionTarget }
   /** A city area's plan: explore, settle or skip (STORY-026). */
   | { kind: 'plan'; area: number; plan: AreaPlan }
   /** The state's line (STORY-026). */
@@ -138,7 +139,7 @@ export interface CommandWorld {
   sendTo(tile: number): boolean;
   setTax(tax: TaxRate): boolean;
   setLux(lux: LuxRate): boolean;
-  revolution(): boolean;
+  revolution(to: RevolutionTarget): boolean;
   setPlan(area: number, plan: AreaPlan): boolean;
   setLine(line: StateLine): boolean;
   aim(state: number): boolean;
@@ -194,7 +195,7 @@ export function execute(cmd: Command, w: CommandWorld): boolean {
     case 'lux':
       return (LUX_RATES as readonly number[]).includes(cmd.lux) && w.setLux(cmd.lux);
     case 'revolution':
-      return w.revolution();
+      return w.revolution(cmd.to ?? 'monarchy');
     case 'plan':
       return w.setPlan(cmd.area, cmd.plan);
     case 'line':

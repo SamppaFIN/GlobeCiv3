@@ -75,9 +75,9 @@
       "units": 0
     },
     "100": {
-      "sha256": "765cb6536e911fc3b4be7700228241bae9f5820da684c2da6f4705de72497e50",
-      "play": "05387e68ceb480d8e47155aaa0e9b8564df8c35105d235e9918871cfb2e895cf",
-      "sim": "a1ab04ffc7546062473e1526a0d3748a8fb248af41a79bc10d9bf92411791782",
+      "sha256": "6dab24078ebf0377e3480588c6a10b54a6e4ee00608a4af95403991bc067ad9a",
+      "play": "3aaaf6b8c3568d244660974f4e4c1a59f2940be5ff35099b904b470448ac9803",
+      "sim": "71c917c70df1a3dbf525827eb2c36541f890ae1f440330802178197ab859925e",
       "day": 100,
       "cities": 3,
       "open": 3,
@@ -85,13 +85,13 @@
       "units": 4
     },
     "200": {
-      "sha256": "e3342ea812057b82061ca7ecb316071b123a4ccf4981a94b4196ae808478efc3",
-      "play": "e7cf88295cd6d731ebe8fb5568bb277976a6e0ea0f805c161ad1c99683c8deb2",
-      "sim": "1ba379e225b49a583e9897b77399f94d7657d04184d4072c3b25f8364955f0e4",
+      "sha256": "3c12431a15a5046cd19e8433a6334e4e8e32c9f63addf024f7852c95358122ad",
+      "play": "f39144a67621181ea60580dfdf983390aa56543e6e6fd5155a5e6ceaf5e20dba",
+      "sim": "5ae4503a99d55104bb3c81afad6d382888742ce2b797d29deb5b0c699a7763fb",
       "day": 200,
       "cities": 6,
       "open": 2,
-      "gold": 4137,
+      "gold": 3877,
       "units": 10
     }
   }

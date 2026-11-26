@@ -29,7 +29,7 @@ import { borderRings, cultureGain, heldByBorder, provinceCover, tileOwner, type 
 import { connectedKinds, connectedShields, roadNetwork, strategicTiles, unconnected, type StrategicKind, type StrategicTile } from '../game/connection';
 import { FAIR_SITE, feedsCity, goodSite, OFFER_EVERY_DAYS, QUIET_DAYS, SITE_SPACING } from '../game/sites';
 import { ADVANCES, LUX_RATES, NEEDS, RESOURCE_KINDS, isKind, opensFrom, studyName, type Advance, type Study, type LuxRate, type TaxRate } from '../game/science';
-import { revolutionDays } from '../game/government';
+import { GOVERNMENTS, REVOLUTION_TO, revolutionDays, type RevolutionTarget } from '../game/government';
 import { conquest, heldIn, type Conquest } from '../game/conquest';
 import { nativeCities, nativeStrength, NATIVE_CLEARANCE, NATIVE_SPACING, type NativeCity } from '../game/cityStates';
 import { Rival, rivalStarts, type RivalUnit, type RivalWorld } from '../game/rivals';
@@ -243,9 +243,20 @@ export function cityYields(): CityYield[] {
   });
 }
 
-/** A city's mood: its soldiers calm citizens (STORY-044); the gardens make one happy (STORY-045). */
+/** A city's mood: its soldiers calm citizens (STORY-044); the gardens make one happy (STORY-045); under the Republic its units away make them unhappy (STORY-125). */
 export const moodOf = (c: City, y: CityYield) =>
-  cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, faith(), cityLuxury(c, y, rates().tax, rates().lux), play?.gov);
+  cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, faith(), cityLuxury(c, y, rates().tax, rates().lux), play?.gov, awayOf(c));
+
+/**
+ * A city's units able to attack that stand outside a city: under the Republic each makes one of
+ * its citizens unhappy (STORY-125; Freeciv civ1 has borders off, so common/unit.c
+ * unit_being_aggressive is any attacking unit not in a city). None counts under the others.
+ */
+export function awayOf(c: City): number {
+  if (!play || !GOVERNMENTS[play.gov].awayUnhappy) return 0;
+  const cities = new Set(play.cities.map(x => x.tile));
+  return play.units.units.filter(u => u.home === c.id && (isSoldier(u.kind) || isAttacker(u.kind)) && !cities.has(u.tile)).length;
+}
 /** The tax and luxury rates in force: in anarchy all trade is luxury (STORY-047). */
 export const rates = () => (!play ? { tax: 50, lux: 0 } : play.gov === 'anarchy' ? { tax: 0, lux: 100 } : { tax: play.tax, lux: play.lux });
 /** A wonder is in one of the cities (STORY-045). */
@@ -399,11 +410,13 @@ function chainDay(c: City, citizens: number) {
 /** A day of every city: units it cannot pay for leave first (newest first), then it grows and builds. */
 export function cityDays() {
   if (!play) return;
-  // The day anarchy ends, Monarchy begins (STORY-047)
+  // The day anarchy ends, the revolution's government begins (STORY-047; STORY-125: its target,
+  // Monarchy in an old save)
   if (play.gov === 'anarchy' && clock.day >= play.anarchyUntil) {
-    play.gov = 'monarchy';
+    play.gov = play.revolutionTo ?? 'monarchy';
     play.anarchyUntil = -1;
-    view.notice('Anarkia päättyi: Monarkia on hallitusmuoto');
+    play.revolutionTo = undefined;
+    view.notice(`Anarkia päättyi: ${GOVERNMENTS[play.gov].name} on hallitusmuoto`);
     if (play.cities[0]) moment('unlock', play.cities[0].tile);
   }
   arrangeEntertainers();
@@ -1548,7 +1561,10 @@ function* advisorDay(): Generator<void, void, void> {
     planetAdvisorDay();
     yield;
   }
-  if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') return;
+  if (p.townAdvisor === 'none' && p.cityAdvisor === 'none' && p.provinceAdvisor === 'none' && p.stateAdvisor === 'none') {
+    armyHome();
+    return;
+  }
   const home = p.units.homeProvince;
   const homeAreas = Array.from({ length: 7 }, (_, k) => home * 7 + k);
   // The campaign first: a city taken today gets its yields with the others
@@ -1556,6 +1572,8 @@ function* advisorDay(): Generator<void, void, void> {
     warDay();
     yield;
   }
+  // After the campaign, so that an army the Kenraali gathers today is not sent home first
+  armyHome();
   const yields = cityYields();
   if (p.stateAdvisor !== 'none') {
     stateAdvisorDay(p.stateAdvisor, yields);
@@ -1571,7 +1589,7 @@ function* advisorDay(): Generator<void, void, void> {
     const soldiers = soldiersIn(c.tile).length;
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
-    const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, faith(), luxury, p.gov);
+    const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, faith(), luxury, p.gov, awayOf(c));
     // At the city stage the city level's advisor sets the way to the ready settlement (STORY-105, STORY-089)
     const town = p.progress.openLevel === 4;
     const advice = town ? townAdvice(p.townAdvisor, settlementDone(c.buildings, c.size)) : cityAdvice(p.cityAdvisor, c, {
@@ -1711,7 +1729,12 @@ function stateAdvisorDay(a: Exclude<StateAdvisor, 'none'>, yields: CityYield[]) 
     const next = p.research.available(foundKinds).find(isKind) ?? nextAdvance(plan.order, p.research.available() as Advance[]);
     if (next && dispatch({ kind: 'study', target: next }, 'state')) advise(['tutkitaan: ', (isKind(next) ? resourceRef(next, knownKind(next)) : advanceRef(next))], 'state');
   }
-  if (startRevolution()) advise('vallankumous Monarkiaan', 'state');
+  // Laajentaja and Oppinut wait for the Republic and turn to it once it is known, also from
+  // Monarchy (Sami 2026-11-26: one anarchy), and Kenraali to Monarchy from Despotism only, never
+  // back from the Republic (STORY-125, own)
+  const targets = revolutionTargets();
+  const to = a !== 'war' ? (targets.includes('republic') ? 'republic' : null) : p.gov === 'despotism' && targets.includes('monarchy') ? 'monarchy' : null;
+  if (to && dispatch({ kind: 'revolution', to }, 'state')) advise(`vallankumous ${REVOLUTION_TO[to]}`, 'state');
   // Luxury a step up while a city is in disorder, a step down after calm days
   const disorder = yields.some(y => y.disorder);
   p.calmDays = disorder ? 0 : p.calmDays + 1;
@@ -1783,12 +1806,23 @@ function setAdvisor(level: AdvisorLevel, id: string): boolean {
   return true;
 }
 
-/** A revolution to Monarchy once it is known: some days of anarchy first (STORY-047). */
-export function startRevolution(): boolean {
-  if (!play || !game || play.gov !== 'despotism' || !play.research.known.has('monarchy')) return false;
+/** Governments the realm can turn to now: known, and not the one it has (STORY-125). Not in anarchy. */
+export function revolutionTargets(): RevolutionTarget[] {
+  const p = play;
+  if (!p || p.gov === 'anarchy') return [];
+  return (['monarchy', 'republic'] as const).filter(t => t !== p.gov && p.research.known.has(t));
+}
+
+/**
+ * A revolution to a known government: some days of anarchy first (STORY-047). From Despotism
+ * or Monarchy, to Monarchy or the Republic (STORY-125; civ1 lets a realm turn to any it knows).
+ */
+export function startRevolution(to: RevolutionTarget = 'monarchy'): boolean {
+  if (!play || !game || !revolutionTargets().includes(to)) return false;
   play.gov = 'anarchy';
+  play.revolutionTo = to;
   play.anarchyUntil = clock.day + revolutionDays(game.seed, clock.day);
-  view.notice(`Vallankumous: anarkiaa ${play.anarchyUntil - clock.day} pv, sitten Monarkia`);
+  view.notice(`Vallankumous: anarkiaa ${play.anarchyUntil - clock.day} pv, sitten ${GOVERNMENTS[to].name}`);
   return true;
 }
 
@@ -1889,8 +1923,10 @@ const armyCities = (tile: number) => {
 const unitPath = (from: number, to: number) => findPath(from, to, id => world.travel!(id));
 /** Campaign paths found not to exist, by city, target and sea travel: a search for one costs up to 20 000 tiles (not saved). */
 const noWay = new Set<string>();
+/** A way's key in noWay: the game's seed too, as a run in Node plays several games one after another. */
+const wayKey = (from: number, to: number) => `${game?.seed}>${from}>${to}>${canSail()}`;
 function reachable(from: number, to: number): boolean {
-  const key = `${from}>${to}>${canSail()}`;
+  const key = wayKey(from, to);
   if (noWay.has(key)) return false;
   if (unitPath(from, to) !== null) return true;
   noWay.add(key);
@@ -1951,6 +1987,33 @@ const warWorld: WarWorld = {
     return 'taken';
   },
 };
+
+/**
+ * With no campaign under way (no target, or the state's advisor is not the Kenraali), attackers
+ * outside a city walk to the player's nearest city they can reach (own, Sami 2026-11-26: after a
+ * campaign they stood in the field, and under the Republic each made one citizen unhappy for good).
+ * The cities are tried nearest first; one found out of reach is not tried again (noWay).
+ */
+function armyHome() {
+  const p = play!;
+  if ((p.stateAdvisor === 'war' && p.war.target !== null) || !p.cities.length) return;
+  const cities = new Set(p.cities.map(c => c.tile));
+  for (const u of army()) {
+    if (cities.has(u.tile) || u.path.length) continue;
+    const at = tileCenter(u.tile);
+    const near = p.cities.map(c => [tileCenter(c.tile).angleTo(at), c.tile] as const).sort((a, b) => a[0] - b[0]);
+    for (const [, home] of near) {
+      const key = wayKey(u.tile, home);
+      if (noWay.has(key)) continue;
+      const path = unitPath(u.tile, home);
+      if (path) {
+        u.path = path;
+        break;
+      }
+      noWay.add(key);
+    }
+  }
+}
 
 /** The Kenraali's campaign day: the target, the army gathering, and the fights. */
 function warDay() {
@@ -2682,7 +2745,7 @@ export function startGame<U extends object>(startCity: number, saved: SaveData |
     ...(saved.rivals ? { rivals: saved.rivals.map(r => new Rival(r.id, r)) } : {}), gold: saved.gold,
     // The ties with them (STORY-076); a save from before meets them anew
     ...(saved.ties && saved.ties.length === (saved.rivals?.length ?? s.rivals.length) ? { ties: saved.ties } : saved.rivals ? { ties: saved.rivals.map(() => newTies()) } : {}),
-    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, townAdvisor: saved.townAdvisor, townLog: [], cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []), calmDays: saved.calmDays ?? 0,
+    research: new Research(saved.research), tax: saved.tax, lux: saved.lux, gov: saved.gov, anarchyUntil: saved.anarchyUntil, revolutionTo: saved.revolutionTo, townAdvisor: saved.townAdvisor, townLog: [], cityAdvisor: saved.cityAdvisor, provinceAdvisor: saved.provinceAdvisor, stateAdvisor: saved.stateAdvisor, planetAdvisor: saved.planetAdvisor, targetState: saved.targetState, firsts: new Set(saved.firsts ?? []), calmDays: saved.calmDays ?? 0,
     commands: new CommandLog(saved.commands ?? []),
     // A proposal waiting when the game was saved waits again (STORY-095)
     treaty: saved.treaty && saved.treaty.rival < s.rivals.length ? { ...saved.treaty } : null,
@@ -2725,7 +2788,7 @@ export function stateOf(): GameSave | null {
     found: p.found, cities: p.cities.map(c => ({ ...c, buildings: [...c.buildings] })), ties: p.ties.map(t => ({ ...t })), offers: p.offers.map(o => ({ ...o })), offered: [...p.offered],
     lastOfferDay: Number.isFinite(p.lastOfferDay) ? p.lastOfferDay : null, pendingSite: p.pendingSite,
     improvements: p.improvements.entries(), raids: p.raids.save(), war: p.war.save(), rivals: p.rivals.map(r => r.save()), raidAlert: p.raidAlert, gold: p.gold,
-    research: p.research.save(), tax: p.tax, lux: p.lux, gov: p.gov, anarchyUntil: p.anarchyUntil, townAdvisor: p.townAdvisor, cityAdvisor: p.cityAdvisor, provinceAdvisor: p.provinceAdvisor, stateAdvisor: p.stateAdvisor, planetAdvisor: p.planetAdvisor, targetState: p.targetState, firsts: [...p.firsts],
+    research: p.research.save(), tax: p.tax, lux: p.lux, gov: p.gov, anarchyUntil: p.anarchyUntil, ...(p.revolutionTo ? { revolutionTo: p.revolutionTo } : {}), townAdvisor: p.townAdvisor, cityAdvisor: p.cityAdvisor, provinceAdvisor: p.provinceAdvisor, stateAdvisor: p.stateAdvisor, planetAdvisor: p.planetAdvisor, targetState: p.targetState, firsts: [...p.firsts],
     commands: p.commands.save(),
     ...(p.treaty ? { treaty: { ...p.treaty } } : {}),
     ...(p.learned.length ? { learned: [...p.learned] } : {}),
