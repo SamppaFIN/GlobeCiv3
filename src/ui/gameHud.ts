@@ -53,7 +53,7 @@ export interface GameHudState {
   /** View level: the unit panel shows at the city-area level (3) only. */
   level: number;
   /** 'waiting': a settler without the site actions (behind the one choosing a site, or improving land). */
-  unit: { name: string; status: string; kind: UnitKind | 'waiting'; mode: Mode; task: SettlerTask | null } | null;
+  unit: { name: string; status: string; kind: UnitKind | 'waiting'; mode: Mode; task: SettlerTask | null; wonder?: string | null } | null;
   /** The flag tool is waiting for a tap on the map. */
   flagTool: boolean;
   /** The first city's name: the city button opens the city cards (STORY-028). */
@@ -80,6 +80,8 @@ export interface GameHudHandlers {
   setSpeed(speed: Speed): void;
   setMode(mode: Mode): void;
   setTask(task: SettlerTask): void;
+  /** Send the caravan to the nearest wonder being built (STORY-121). */
+  helpWonder(): void;
   toggleFlagTool(): void;
   found(): void;
   nextSite(): void;
@@ -138,6 +140,9 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
           ${(Object.keys(TASK_NAMES) as SettlerTask[]).map(t => `<label class="seg-opt"><input type="radio" name="hud-task" value="${t}">${TASK_NAMES[t]}</label>`).join('')}
         </div>
       </div>
+      <div class="hud-row hud-caravan">
+        <button class="btn btn-primary hud-help" type="button">Vie ihmeeseen</button>
+      </div>
       <div class="hud-row hud-settler">
         <button class="btn btn-primary hud-found" type="button">Perusta kaupunki tähän</button>
         <button class="btn btn-secondary hud-next-site" type="button">Vaihda paikka</button>
@@ -156,6 +161,7 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
   el.querySelectorAll<HTMLInputElement>('input[name="hud-task"]').forEach(i => i.addEventListener('change', () => on.setTask(i.value as SettlerTask)));
   q<HTMLButtonElement>('.hud-flag').addEventListener('click', on.toggleFlagTool);
   q<HTMLButtonElement>('.hud-found').addEventListener('click', on.found);
+  q<HTMLButtonElement>('.hud-help').addEventListener('click', on.helpWonder);
   q<HTMLButtonElement>('.hud-next-site').addEventListener('click', on.nextSite);
   q<HTMLButtonElement>('.hud-unit').addEventListener('click', on.nextUnit);
   q<HTMLButtonElement>('.hud-city').addEventListener('click', on.openList);
@@ -233,6 +239,9 @@ export function createGameHud(root: HTMLElement, on: GameHudHandlers): { update(
       q<HTMLElement>('.hud-task').hidden = s.unit.task === null;
       el.querySelectorAll<HTMLInputElement>('input[name="hud-task"]').forEach(i => { i.checked = i.value === s.unit!.task; });
       q<HTMLElement>('.hud-settler').hidden = s.unit.kind !== 'settler';
+      // A caravan's button names the city whose wonder it goes to (STORY-121)
+      q<HTMLElement>('.hud-caravan').hidden = s.unit.kind !== 'caravan' || !s.unit.wonder;
+      q<HTMLElement>('.hud-help').textContent = s.unit.wonder ? `Vie ihmeeseen: ${s.unit.wonder}` : 'Vie ihmeeseen';
       el.querySelectorAll<HTMLInputElement>('input[name="hud-mode"]').forEach(i => { i.checked = i.value === s.unit!.mode; });
       q<HTMLElement>('.hud-flag').classList.toggle('hud-active', s.flagTool);
       q<HTMLElement>('.hud-flag').setAttribute('aria-pressed', String(s.flagTool));

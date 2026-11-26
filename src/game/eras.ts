@@ -21,8 +21,9 @@ export const ERA_KEYS: Partial<Record<Era, Advance>> = { iron: 'iron' };
  */
 export const ADVANCE_ERA: Record<Advance, Era> = {
   alphabet: 'early', bronze: 'early', ceremonial: 'early', pottery: 'early', masonry: 'early', horseback: 'early',
-  wheel: 'early', writing: 'early', law: 'early', mapmaking: 'early', currency: 'early',
+  wheel: 'early', writing: 'early', law: 'early', mapmaking: 'early', currency: 'early', mysticism: 'early',
   iron: 'iron', mathematics: 'iron', monarchy: 'iron', construction: 'iron',
+  literacy: 'iron', trade: 'iron', philosophy: 'iron', astronomy: 'iron', bridges: 'iron',
 };
 
 /** The era an advance opens: the one whose key it is, if any. */

@@ -20,7 +20,23 @@ describe('science (STORY-040, Freeciv civ1)', () => {
     expect(r.available()).toContain('currency');
     expect(r.available()).toContain('iron');
     expect(r.available()).not.toContain('writing');
-    expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics' });
+    expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics',
+      oracle: 'mysticism', greatlibrary: 'literacy', observatory: 'astronomy', caravan: 'trade' });
+  });
+  it('the early and iron age advances need what Freeciv civ1 says, and come after the older ones (STORY-121)', () => {
+    expect(ADVANCES.mysticism.needs).toEqual(['ceremonial']);
+    expect(ADVANCES.literacy.needs).toEqual(['writing', 'law']);
+    expect(ADVANCES.trade.needs).toEqual(['currency', 'law']);
+    expect(ADVANCES.philosophy.needs).toEqual(['mysticism', 'literacy']);
+    expect(ADVANCES.astronomy.needs).toEqual(['mysticism', 'mathematics']);
+    expect(ADVANCES.bridges.needs).toEqual(['iron', 'construction']);
+    // The older advances keep their places, so that ruins and the tree pick as before
+    expect(ADVANCE_LIST.slice(-6)).toEqual(['mysticism', 'literacy', 'trade', 'philosophy', 'astronomy', 'bridges']);
+    expect(ADVANCE_LIST).toHaveLength(21);
+    const r = new Research();
+    r.known.add('ceremonial');
+    expect(r.available()).toContain('mysticism');
+    expect(r.available()).not.toContain('philosophy');
   });
 
   it('bulbs gather even without a target; the target is learned when they reach its cost, and the rest carries over', () => {
@@ -49,6 +65,17 @@ describe('science (STORY-040, Freeciv civ1)', () => {
     c.buildings.push('market', 'library');
     expect([cityGold(c, y, 30), cityScience(c, y, 30)]).toEqual([4, 10]);
     expect([BUILDS.library.cost, UPKEEP.library]).toEqual([80, 1]);
+  });
+
+  it('the Observatory gives its city +100 % science and +50 % more with a library, added up (STORY-121, Freeciv civ1)', () => {
+    const c = foundCity([], START);
+    const y = { food: 0, shield: 0, trade: 10 };
+    // 7 science at a 30 % tax
+    c.buildings.push('observatory');
+    expect(cityScience(c, y, 30)).toBe(14);
+    c.buildings.push('library');
+    expect(cityScience(c, y, 30)).toBe(Math.floor(7 * 3));
+    expect(UPKEEP.observatory).toBe(0);
   });
 
   it('resources (STORY-072, own): a kind found on the map is a study; until it is studied the advances from it stay shut', () => {

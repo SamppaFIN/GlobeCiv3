@@ -34,8 +34,13 @@ const WORK: Record<Terrain, TerrainWork> = {
   tundra: { irrigation: [0, 0], mine: [0, 0], road: [0, 2] },
 };
 
-/** Days of work on this terrain. */
-export const workDays = (kind: ImprovementKind, terrain: Terrain) => WORK[terrain][kind][1];
+/**
+ * Days of work on this terrain. With Bridge Building a road takes half the days, rounded up
+ * (STORY-121, own rule, Sami 2026-11-24: in Freeciv civ1 Bridge Building lets roads cross
+ * rivers, which the game has not).
+ */
+export const workDays = (kind: ImprovementKind, terrain: Terrain, bridges = false) =>
+  kind === 'road' && bridges ? Math.ceil(WORK[terrain][kind][1] / 2) : WORK[terrain][kind][1];
 /** What it adds on this terrain: food, shields or trade; 0 where it brings nothing. */
 const bonus = (kind: ImprovementKind, terrain: Terrain) => WORK[terrain][kind][0];
 
@@ -113,7 +118,7 @@ export interface Job {
  */
 export function bestJob(
   tiles: readonly number[], improvements: Improvements, terrainOf: (id: number) => Terrain,
-  neighboursOf: (id: number) => readonly number[], isWater: (id: number) => boolean,
+  neighboursOf: (id: number) => readonly number[], isWater: (id: number) => boolean, bridges = false,
 ): Job | null {
   let best: Job | null = null;
   let bestValue = 0;
@@ -123,7 +128,7 @@ export function bestJob(
       if (kind !== 'road' && improvements.has(tile, kind === 'mine' ? 'irrigation' : 'mine')) continue;
       if (!improvements.canBuild(tile, kind, terrain, neighboursOf(tile), isWater)) continue;
       const y = improvementYield(kind, terrain);
-      const days = workDays(kind, terrain);
+      const days = workDays(kind, terrain, bridges);
       const value = (2 * y.food + y.shield + y.trade) / days;
       if (value > bestValue) {
         bestValue = value;

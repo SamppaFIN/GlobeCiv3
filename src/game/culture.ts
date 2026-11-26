@@ -24,7 +24,10 @@ import { neighbors } from '../globe/hexTiles';
 import type { Building, City } from './cities';
 
 /** Culture a building adds a day (Freeciv civ2civ3 effects.ruleset, History). */
-export const HISTORY: Partial<Record<Building, number>> = { temple: 1, library: 1, colosseum: 2, colossus: 2, gardens: 2, greatwall: 3 };
+export const HISTORY: Partial<Record<Building, number>> = { temple: 1, library: 1, colosseum: 2, colossus: 2, gardens: 2, greatwall: 3,
+  // STORY-121: Great Library 3 and Copernicus' Observatory 3; civ2civ3 has no Oracle, and its
+  // Temple of Artemis (2), the wonder of temples there, stands for it (own mapping)
+  greatlibrary: 3, observatory: 3, oracle: 2 };
 /** The capital's palace (Freeciv civ2civ3 effects.ruleset, History 1 with Palace). */
 export const PALACE_HISTORY = 1;
 /** Freeciv civ2civ3 game.ruleset [borders]. */

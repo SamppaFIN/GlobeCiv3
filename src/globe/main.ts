@@ -74,7 +74,7 @@ import { validateSave, type SaveData } from '../game/save';
 import { pending, type GameState } from '../sim/state';
 import type { SimEvents } from '../sim/events';
 import { DETAIL, RADIUS } from '../sim/world';
-import { advisorsAnswer, dayBegun, daysFinishedAtOnce, firstChoices, firstScopes, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
+import { advisorsAnswer, caravanFree, dayBegun, wonderCities, daysFinishedAtOnce, firstChoices, firstScopes, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
@@ -652,6 +652,7 @@ function startPlay(startCity: number, saved?: SaveData) {
     // The player's acts are commands (STORY-112): a unit by its id
     setMode: (mode: Mode) => { const u = play?.units.units[play.selected]; if (u) dispatch({ kind: 'mode', unit: u.id, mode }, 'player'); },
     setTask: (task: SettlerTask) => { const u = play?.units.units[play.selected]; if (u) dispatch({ kind: 'task', unit: u.id, task }, 'player'); },
+    helpWonder: () => { const u = play?.units.units[play.selected]; const to = u?.kind === 'caravan' ? wonderCities(u)[0] : undefined; if (u && to) dispatch({ kind: 'help', unit: u.id, city: to.tile }, 'player'); },
     toggleFlagTool: () => { if (play) play.flagTool = !play.flagTool; },
     found: () => { const site = play?.units.currentSite(); if (site !== null && site !== undefined) dispatch({ kind: 'found', tile: site }, 'player'); },
     nextSite: () => { dispatch({ kind: 'skip' }, 'player'); },
@@ -3063,7 +3064,7 @@ function updatePlay(dt: number) {
     paused: clock.paused,
     ...meterOf(),
     level: viewLevel,
-    unit: u && ownHand() ? { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null } : null,
+    unit: u && ownHand() ? { name: u.name, status: unitStatus(play.units, u, world, id => TERRAIN_RULES[terrainOf(id)].name), kind: u.kind === 'settler' && u !== play.units.settler ? 'waiting' : u.kind, mode: u.mode, task: u.kind === 'settler' ? u.task : null, wonder: caravanFree(u) ? wonderCities(u)[0]?.name ?? null : null } : null,
     flagTool: play.flagTool,
     city: play.cities[0]?.name ?? null,
     goal: (g => g && { text: g.text, reward: g.reward })(levelGoal(play.progress.openLevel)),

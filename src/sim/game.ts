@@ -20,7 +20,7 @@ import { accepts, attitudeWord, newTies, rivalMove, setState, tiesDay, BORDER_TI
 import { acceptsTrade, factor, MAPS_EVERY, TRADE_ATTITUDE, TRADE_GOLD, tradeId, worth, type TradeItem } from '../game/trade';
 import { neighbors, pointToTile, tileCenter } from '../globe/hexTiles';
 import { Regions } from '../globe/regions';
-import { heightRange } from '../globe/terrain';
+import { hash, heightRange } from '../globe/terrain';
 import { cityTiles } from '../game/start';
 import { TileTypeTable } from '../game/terrainTypes';
 import { MapState } from '../game/mapping';
@@ -44,7 +44,7 @@ import { city as cityRef, unit as unitRef, type Rich, type Segment } from '../ga
 import { marksPassed, record } from '../game/history';
 import { defenseBonus, goldBonus, goodsBonus, scienceBonus, settleBonus, sightBonus, yieldBonus, type ActiveBonuses } from '../game/bonuses';
 import { TERRAINS, TERRAIN_RULES, RESOURCES, type ResourceKind, type Terrain } from '../game/terrainTypes';
-import { directionName, type AreaPlan, type Mode, type SettlerTask, type StateLine, type Unit, type World } from '../game/units';
+import { directionName, travel, type AreaPlan, type Mode, type SettlerTask, type StateLine, type Unit, type World } from '../game/units';
 import { bestJob, IMPROVEMENT_NAMES, workDays, type Job } from '../game/improvements';
 import { defenseOf, holdChance, raidRoll, raidStart, uprising, type RaidEvent, type RaidWorld } from '../game/raids';
 import { type FirstKind } from '../game/save';
@@ -55,7 +55,7 @@ import { pending } from './state';
 import { areaName, directionFrom, distinctNames, landscapeOf, MIDDLE, provinceName, stateName, type RegionName } from '../game/names';
 import { CONSOLATION_GOLD, RUIN_GOLD, isRuin, ruinAt, type Yield } from '../game/discoveries';
 import { buildDay, chainOpen, CHAIN_ONLY, eat, isChainBuilding, newChain, readySettlements, settlementDone, settlementStart, settlementSteps, startSite, workDay } from '../game/chains';
-import { cityLuxury, cityMood, isWonder, sizeLimit, SIZE_LIMIT, withMood, BUILDS, isSoldier, buy, buyCost, daysToBuild, cityDay, cityGold, cityRings, cityScience, cityYield, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, BUILDINGS, type City, type CityYield, type Support } from '../game/cities';
+import { cityLuxury, cityMood, type Faith, isWonder, sizeLimit, SIZE_LIMIT, withMood, BUILDS, isSoldier, buy, buyCost, daysToBuild, cityDay, cityGold, cityRings, cityScience, cityYield, foundCity, granary, isBuilding, payUpkeep, shortfall, workedTiles, workedYield, CITY_RINGS, isTerrainBuilding, TERRAIN_BUILDINGS, type TerrainBuilding, isResourceBuilding, KNOWN_REWARD_GOLD, RESOURCE_BUILDINGS, type ResourceBuilding, type Build, type Building, BUILDINGS, type City, type CityYield, type Support } from '../game/cities';
 
 import type { MomentKind, SimEvents } from './events';
 import { TILE_COUNT } from '../globe/hexTiles';
@@ -225,9 +225,9 @@ export function yieldOf(id: number, centre: boolean) {
   return { food: y.food + b.food + (centre ? 0 : imp.food), shield: y.shield + b.shield + imp.shield, trade: y.trade + b.trade + (centre ? 0 : imp.trade) };
 }
 
-/** Units a city built and still supports. */
+/** Units a city built and still supports; a caravan costs nothing (Freeciv civ1 units.ruleset Caravan uk_shield 0, STORY-121). */
 export function supportOf(c: City): Support {
-  const units = play ? play.units.units.filter(u => u.home === c.id) : [];
+  const units = play ? play.units.units.filter(u => u.home === c.id && u.kind !== 'caravan') : [];
   return { units: units.length, settlers: units.filter(u => u.kind === 'settler').length };
 }
 
@@ -245,11 +245,13 @@ export function cityYields(): CityYield[] {
 
 /** A city's mood: its soldiers calm citizens (STORY-044); the gardens make one happy (STORY-045). */
 export const moodOf = (c: City, y: CityYield) =>
-  cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, hasWonder('gardens'), cityLuxury(c, y, rates().tax, rates().lux), play?.gov);
+  cityMood(c, soldiersIn(c.tile).length, play?.cities.length ?? 1, faith(), cityLuxury(c, y, rates().tax, rates().lux), play?.gov);
 /** The tax and luxury rates in force: in anarchy all trade is luxury (STORY-047). */
 export const rates = () => (!play ? { tax: 50, lux: 0 } : play.gov === 'anarchy' ? { tax: 0, lux: 100 } : { tax: play.tax, lux: play.lux });
 /** A wonder is in one of the cities (STORY-045). */
 export const hasWonder = (w: Build) => play?.cities.some(c => c.buildings.includes(w as never)) ?? false;
+/** What every city's mood feels from the player's wonders and advances (STORY-121). */
+const faith = (): Faith => ({ gardens: hasWonder('gardens'), oracle: hasWonder('oracle'), mysticism: play?.research.known.has('mysticism') ?? false });
 /** A city's walls, or the Great Wall's in every city. */
 export const hasWalls = (c: City) => c.buildings.includes('walls') || hasWonder('greatwall');
 /** Cities told that they need an aqueduct to grow. */
@@ -278,7 +280,7 @@ function nextJob(u: Unit) {
   const nearest = play.cities.reduce((a, b) => (tileCenter(b.tile).angleTo(at) < tileCenter(a.tile).angleTo(at) ? b : a));
   const city = play.cities.find(c => c.id === u.home) ?? nearest;
   const busy = new Set(play.units.units.flatMap(o => (o !== u && o.job ? [o.job.tile] : [])));
-  const jobIn = (tiles: number[]) => bestJob(tiles.filter(t => t !== city.tile && !busy.has(t)), play!.improvements, terrainOf, neighbors, id => terrainOf(id) === 'ocean');
+  const jobIn = (tiles: number[]) => bestJob(tiles.filter(t => t !== city.tile && !busy.has(t)), play!.improvements, terrainOf, neighbors, id => terrainOf(id) === 'ocean', play!.research.known.has('bridges'));
   const i = play.cities.indexOf(city);
   return jobIn(workedByCity()[i]) ?? jobIn(workedByCity(2)[i]);
 }
@@ -418,7 +420,8 @@ export function cityDays() {
   });
   play.cities.forEach((c, i) => {
     for (let short = shortfall(c, yields[i], supportOf(c)); short; short = shortfall(c, yields[i], supportOf(c))) {
-      const own = play!.units.units.filter(u => u.home === c.id && (short === 'shield' || u.kind === 'settler'));
+      // A caravan costs no upkeep (uk_shield 0), so cutting it would not help (review by Utu)
+      const own = play!.units.units.filter(u => u.home === c.id && u.kind !== 'caravan' && (short === 'shield' || u.kind === 'settler'));
       play!.units.disband(own[own.length - 1], world);
       yields = cityYields();
     }
@@ -456,7 +459,7 @@ export function cityDays() {
       record(c, { kind: 'built', day: today(), building: done });
     }
     // A unit is named, a building a building (STORY-102, STORY-103)
-    const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout' || done === 'worker') ? play!.units.spawn(done, c.tile, world, c.id) : null;
+    const made = !isBuilding(done) && (isSoldier(done) || isAttacker(done) || done === 'settler' || done === 'scout' || done === 'worker' || done === 'caravan') ? play!.units.spawn(done, c.tile, world, c.id) : null;
     view.notice([cityRef(c.tile, c.name), ` rakensi${isWonder(done) ? ' ihmeen' : ''}: `, made ? unitRef(made.id, made.name) : buildRef(done)]);
     if (isResourceBuilding(done)) rewardOf(c, done);
     if (c.first === done) delete c.first;
@@ -688,7 +691,7 @@ function targetAt(province: number): boolean {
 /** What the commands act on (STORY-086). */
 const commandWorld = (): CommandWorld => ({
   cities: play!.cities, research: play!.research, kindsFound: foundKinds, ground, settle: settleAt, found: foundSite, advise: setAdvisor, buy: buyAt, target: targetAt, answerSite, answerRaid, answerTreaty, answerLearned,
-  setMode: modeOf, setTask: taskOf, pickSite, skipSite, sendTo: tile => play!.units.sendTo(tile, world), setTax, setLux, revolution: startRevolution, setPlan, setLine, aim: aimAt, pact: pactWith, trade: tradeWith,
+  setMode: modeOf, setTask: taskOf, help: helpAt, pickSite, skipSite, sendTo: tile => play!.units.sendTo(tile, world), setTax, setLux, revolution: startRevolution, setPlan, setLine, aim: aimAt, pact: pactWith, trade: tradeWith,
 });
 export function dispatch(cmd: Command, by: Actor): boolean {
   if (!play) return false;
@@ -726,6 +729,89 @@ function taskOf(unit: number, task: SettlerTask): boolean {
 }
 
 const pickSite = (tile: number) => play!.units.setSite(tile, world);
+
+// ─── Caravans (STORY-121) ─────────────────────────
+// Freeciv civ1 units.ruleset Caravan (commit 04852fb): 50 shields, no citizen, uk_shield 0,
+// defense 1, NonMil and HelpWonder. A caravan takes its shields to a city of the player's
+// that builds a wonder: on arrival the wonder gets them, up to its cost (own: Freeciv keeps the
+// shields over it), and the caravan is gone. One that arrives where no wonder is built waits
+// there (own) until one is begun or it is sent elsewhere. Trade routes are not in the game.
+
+/** Shields a caravan brings: its build cost (Freeciv unit_shield_value). */
+export const CARAVAN_SHIELDS = BUILDS.caravan.cost;
+
+/** A city of the player's building a wonder still short of shields. */
+const wonderShort = (c: City) => isWonder(c.build) && c.shields < BUILDS[c.build].cost;
+
+/** The cities a caravan could take its shields to, the nearest first. */
+export function wonderCities(u: Unit): City[] {
+  const at = tileCenter(u.tile);
+  return play!.cities.filter(wonderShort).sort((a, b) => at.angleTo(tileCenter(a.tile)) - at.angleTo(tileCenter(b.tile)));
+}
+
+/**
+ * A caravan free to be sent: none sent yet, or its city gave up its wonder or finished it while
+ * it walked or waited (review by Utu: it waits there, but may be sent to another wonder).
+ */
+export function caravanFree(u: Unit): boolean {
+  if (u.kind !== 'caravan') return false;
+  if (u.to === undefined) return true;
+  const c = play!.cities.find(x => x.tile === u.to);
+  return !c || !wonderShort(c);
+}
+
+function helpAt(unit: number, city: number): boolean {
+  const u = unitById(unit);
+  const c = play!.cities.find(x => x.tile === city);
+  if (!u || u.kind !== 'caravan' || !c || !wonderShort(c) || u.to === city) return false;
+  const path = u.tile === city ? [] : findPath(u.tile, city, id => travel(world, id));
+  if (!path) return false;
+  u.to = city;
+  u.path = path;
+  return true;
+}
+
+/**
+ * The state's advisor's caravans (own, STORY-121): while the capital builds a wonder, the other
+ * cities that have nothing better to build than gold build caravans for it, no more than it
+ * still needs, and a city whose caravan is no longer needed goes back to gold.
+ */
+function caravanBuild(c: City, available: Build[], wanted: Build | null): Build | null {
+  const p = play!;
+  const capital = p.cities[0];
+  if (p.stateAdvisor === 'none' || !capital || c === capital || !available.includes('caravan')) return null;
+  const now = wanted ?? c.build;
+  if (now !== 'coinage' && now !== 'caravan') return null;
+  // The shields still short, less what is on its way, waiting or being built elsewhere
+  const coming = p.units.units.filter(u => u.kind === 'caravan' && (u.to === capital.tile || caravanFree(u))).length
+    + p.cities.filter(x => x !== c && x.build === 'caravan').length;
+  const needed = wonderShort(capital) && BUILDS[capital.build].cost - capital.shields - CARAVAN_SHIELDS * coming > 0;
+  return needed ? 'caravan' : c.build === 'caravan' ? 'coinage' : null;
+}
+
+/** The caravans at their cities give their shields (after the units' day). */
+function caravansDay() {
+  const p = play!;
+  for (const u of p.units.units.filter(x => x.kind === 'caravan' && x.to !== undefined)) {
+    const c = p.cities.find(x => x.tile === u.to);
+    if (!c) { delete u.to; continue; }
+    if (u.tile !== u.to) {
+      // A way shut on the road: walked anew, or the caravan stops where it is
+      if (!u.path.length) {
+        const path = findPath(u.tile, c.tile, id => travel(world, id));
+        if (path) u.path = path;
+        else delete u.to;
+      }
+      continue;
+    }
+    if (!wonderShort(c)) continue;
+    const before = c.shields;
+    c.shields = Math.min(BUILDS[c.build].cost, c.shields + CARAVAN_SHIELDS);
+    p.units.disband(u, world);
+    view.notice([unitRef(u.id, u.name), ` toi ${c.shields - before} tuotantoa ihmeeseen `, buildRef(c.build), ' · ', cityRef(c.tile, c.name)]);
+    moment('unlock', c.tile);
+  }
+}
 
 function skipSite(): boolean {
   play!.units.nextSite();
@@ -1136,6 +1222,48 @@ function rewardOf(c: City, b: ResourceBuilding) {
 /** An advance gained by research, ruins, trade or a resource building: its card waits. */
 function gained(a: Advance) {
   if (advanceCardsOn && !play!.learned.includes(a)) play!.learned.push(a);
+  if (a === 'philosophy') philosophersStone();
+}
+
+/**
+ * Philosophy (STORY-121, own rule, Sami 2026-11-24; in Freeciv civ1 it opens only what needs
+ * it): the first to learn it, while no rival knows it, gets an advance more, however it came
+ * (research, ruins, trade or a reward, all through gained). The advance is the study under way,
+ * else the state's advisor's next one, else the first open. It is once a game without a flag:
+ * Philosophy is learned only once, and a rival that knew it first took the gift.
+ */
+function philosophersStone() {
+  const p = play!;
+  if (p.rivals.some(r => r.research.known.has('philosophy'))) return;
+  const open = p.research.available().filter((s): s is Advance => !isKind(s));
+  const t = p.research.target;
+  const free = t !== null && !isKind(t) && open.includes(t) ? t
+    : (p.stateAdvisor === 'none' ? null : nextAdvance(STATE_PLANS[p.stateAdvisor].order, open)) ?? open[0];
+  if (!free) return;
+  p.research.known.add(free);
+  if (p.research.target === free) p.research.target = null;
+  view.notice(['Filosofia, ensimmäisenä: ', advanceRef(free), ' ilmaiseksi']);
+  gained(free);
+}
+
+/**
+ * The Great Library (STORY-121, Freeciv civ1 effects.ruleset Tech_Parasite 2 and game.ruleset
+ * tech_parasite_allow_holes FALSE; server/techtools.c do_tech_parasite_effects, commit
+ * 04852fb): after the rivals' day the player gets an advance two rivals or more know and whose
+ * needs the player knows, one of them at random (here from the game's seed and the day). The
+ * city-states and tribes have no research. An advance from a resource waits for its kind, as
+ * research does (Research.available).
+ */
+function greatLibraryDay(day: number) {
+  const p = play!;
+  if (!hasWonder('greatlibrary')) return;
+  const can = p.research.available().filter((s): s is Advance => !isKind(s) && p.rivals.filter(r => r.research.known.has(s as Advance)).length >= 2);
+  if (!can.length) return;
+  const a = can[Math.min(can.length - 1, Math.floor(((hash(day, 121, 7, game!.seed) + 1) / 2) * can.length))];
+  p.research.known.add(a);
+  if (p.research.target === a) p.research.target = null;
+  view.notice([`${BUILDS.greatlibrary.name}: `, advanceRef(a), ' kilpailijoilta']);
+  gained(a);
 }
 
 /**
@@ -1213,7 +1341,7 @@ const startable = (c: City) => (Object.keys(BUILDS) as Build[]).filter(kind =>
   !shieldless(c, kind) && !(isBuilding(kind) && c.buildings.includes(kind)) && !(isWonder(kind) && hasWonder(kind)) && (NEEDS[kind] === undefined || play!.research.known.has(NEEDS[kind]!))
   && (!isTerrainBuilding(kind) || terrainNear(c, kind)) && (!isResourceBuilding(kind) || resourceNear(c, kind)) && (!UNIT_BUILDS.has(kind) || unitsOpen()) && !(kind === 'settler' && cityStage()) && !(kind === 'worker' && !provinceStage()));
 /** Units the cities build: once the city area is open; a new game's city level has none (STORY-089, Sami 2026-11-22). */
-export const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', ...ATTACKERS]);
+export const UNIT_BUILDS = new Set<Build>(['warrior', 'phalanx', 'settler', 'scout', 'caravan', ...ATTACKERS]);
 export const unitsOpen = () => !play || play.progress.openLevel < 4;
 /** A new game's first level, the city alone: the city area's systems wait for the scout (STORY-017, Sami 2026-11-20). */
 const cityStage = () => !!play && !classic && play.progress.openLevel === 4;
@@ -1305,7 +1433,7 @@ function workerJob(u: Unit): Job | null {
     const todo = [...line].reverse().find(t => !p.improvements.has(t, 'road') && !busy.has(t));
     if (todo === undefined) continue;
     joiningOf.set(u.id, r.kind);
-    return { tile: todo, kind: 'road', days: workDays('road', terrainOf(todo)) };
+    return { tile: todo, kind: 'road', days: workDays('road', terrainOf(todo), p.research.known.has('bridges')) };
   }
   joiningOf.delete(u.id);
   return null;
@@ -1443,7 +1571,7 @@ function* advisorDay(): Generator<void, void, void> {
     const soldiers = soldiersIn(c.tile).length;
     const available = startable(c);
     const luxury = cityLuxury(c, yields[i], rates().tax, rates().lux);
-    const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, hasWonder('gardens'), luxury, p.gov);
+    const bigger = cityMood({ ...c, size: c.size + 1 }, soldiers, p.cities.length, faith(), luxury, p.gov);
     // At the city stage the city level's advisor sets the way to the ready settlement (STORY-105, STORY-089)
     const town = p.progress.openLevel === 4;
     const advice = town ? townAdvice(p.townAdvisor, settlementDone(c.buildings, c.size)) : cityAdvice(p.cityAdvisor, c, {
@@ -1458,11 +1586,12 @@ function* advisorDay(): Generator<void, void, void> {
     const war = p.stateAdvisor === 'war' ? warBuild(c, available) : null;
     if (c.first && !available.includes(c.first)) delete c.first;
     const first = c.first && !keepsBuild(c) ? c.first : null;
-    const build = war ?? first ?? ordered ?? advice?.build ?? null;
+    const caravan = caravanBuild(c, available, advice?.build ?? null);
+    const build = war ?? first ?? ordered ?? caravan ?? advice?.build ?? null;
     // The settler for a waiting city site is not changed in the city that builds it (STORY-113:
     // only there, or every city that ever built one kept building them, Utu's review)
     if (build && build !== c.build && !(c.build === 'settler' && p.pendingSite !== null && c === settlerBuilder(p.pendingSite))) {
-      const by = war ? 'state' : ordered ? 'province' : town ? 'town' : 'city';
+      const by = war || (caravan !== null && build === caravan) ? 'state' : ordered ? 'province' : town ? 'town' : 'city';
       if (dispatch({ kind: 'build', city: c.tile, build }, by)) advise([cityRef(c.tile, c.name), ' rakentaa: ', buildRef(build)], by);
     }
     // The city level's advisor keeps a site going in a city of chains (STORY-088, STORY-105), whatever the level
@@ -1474,6 +1603,13 @@ function* advisorDay(): Generator<void, void, void> {
       if (price > 0 && price * 2 <= p.gold && dispatch({ kind: 'buy', city: c.tile }, 'city')) advise([cityRef(c.tile, c.name), ' osti: ', buildRef(c.build), ` (${price} kultaa)`]);
     }
     yield;
+  }
+  // The caravans waiting go to the capital's wonder (STORY-121, own)
+  const capital = p.cities[0];
+  if (p.stateAdvisor !== 'none' && capital && wonderShort(capital)) {
+    for (const u of p.units.units.filter(caravanFree)) {
+      if (dispatch({ kind: 'help', unit: u.id, city: capital.tile }, 'state')) advise([unitRef(u.id, u.name), ' kohti ihmettä: ', cityRef(capital.tile, capital.name)], 'state');
+    }
   }
   if (p.provinceAdvisor === 'settle') {
     const withCity = new Set(p.cities.map(c => world.cityOf(c.tile)));
@@ -2312,11 +2448,13 @@ function* dayPhases(day: number): Generator<void, void, void> {
   const founded = yield* p.units.dayEach(world);
   scouting = false;
   founded.forEach(t => foundAt(t, founder));
+  caravansDay();
   yield;
   cityDays();
   yield;
   chronicleEraDay();
   rivalsDay();
+  greatLibraryDay(day);
   yield;
   diplomacyDay();
   rivalWarDay();

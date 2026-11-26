@@ -22,7 +22,7 @@ import { tileCenter } from '../globe/hexTiles';
 import { ATTACKER_NAMES, isAttacker, type Attacker } from './war';
 import { givenName } from './personNames';
 
-export type UnitKind = 'scout' | 'settler' | 'worker' | 'warrior' | 'phalanx' | Attacker;
+export type UnitKind = 'scout' | 'settler' | 'worker' | 'warrior' | 'phalanx' | 'caravan' | Attacker;
 export type Mode = 'explore' | 'gather' | 'defend';
 export const MODE_NAMES: Record<Mode, string> = { explore: 'Tutki', gather: 'Kerää', defend: 'Puolusta' };
 /** Rings a scout maps around itself (the state line Tutkimus adds one). */
@@ -58,6 +58,8 @@ export interface Unit {
   /** A settler's task, and the improvement it is on with the days of work left. */
   task: SettlerTask;
   job: (Job & { left: number }) | null;
+  /** A caravan's city: the wonder it takes its shields to (STORY-121); a save from before has none. */
+  to?: number;
 }
 
 /** What units need to know about the world. */
@@ -83,7 +85,7 @@ export interface World {
 }
 
 /** Each kind's word before a character's given name (STORY-102). */
-const KIND_LABEL: Record<UnitKind, string> = { scout: 'Tiedustelija', settler: 'Uudisasukas', worker: 'Työläinen', warrior: 'Soturi', phalanx: 'Falangi', ...ATTACKER_NAMES };
+const KIND_LABEL: Record<UnitKind, string> = { scout: 'Tiedustelija', settler: 'Uudisasukas', worker: 'Työläinen', caravan: 'Karavaani', warrior: 'Soturi', phalanx: 'Falangi', ...ATTACKER_NAMES };
 
 export class Units {
   readonly units: Unit[] = [];
@@ -220,7 +222,7 @@ export class Units {
   /** A new unit on a tile: a find's scout, or a city's soldier or settler (STORY-028). */
   spawn(kind: UnitKind, tile: number, world: World, home: number | null = null): Unit {
     const n = this.units.filter(u => u.kind === kind).length + 1;
-    const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'worker' ? `Työläinen ${n}` : kind === 'warrior' ? `Soturi ${n}` : kind === 'phalanx' ? `Falangi ${n}` : isAttacker(kind) ? `${ATTACKER_NAMES[kind]} ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
+    const name = kind === 'scout' ? `Tiedustelija ${n}` : kind === 'worker' ? `Työläinen ${n}` : kind === 'warrior' ? `Soturi ${n}` : kind === 'phalanx' ? `Falangi ${n}` : kind === 'caravan' ? `Karavaani ${n}` : isAttacker(kind) ? `${ATTACKER_NAMES[kind]} ${n}` : n === 1 ? 'Uudisasukas' : `Uudisasukas ${n}`;
     this.add(kind, this.nameFor(kind, name), tile);
     const u = this.units[this.units.length - 1];
     u.home = home;
@@ -410,7 +412,7 @@ export class Units {
 }
 
 /** Days for a unit to enter a tile: by sea too once it can sail (STORY-059). */
-const travel = (world: World, id: number) => (world.travel ? world.travel(id) : world.cost(id));
+export const travel = (world: World, id: number) => (world.travel ? world.travel(id) : world.cost(id));
 
 const COMPASS = ['pohjoista', 'koillista', 'itää', 'kaakkoa', 'etelää', 'lounasta', 'länttä', 'luodetta'];
 
@@ -422,6 +424,8 @@ export function directionName(from: number, to: number): string {
 /** Status line under a unit's name (design 2b). */
 export function unitStatus(units: Units, u: Unit, world: World, terrainName: (id: number) => string): string {
   if (u.kind === 'warrior' || u.kind === 'phalanx') return 'Puolustaa kaupunkia';
+  // A caravan takes its shields to a wonder (STORY-121)
+  if (u.kind === 'caravan') return u.to === undefined ? 'Odottaa · vie tuotanto ihmeeseen' : u.path.length ? 'Kuljettaa tuotantoa ihmeeseen' : 'Odottaa ihmettä kaupungissa';
   // Attackers go where the Kenraali sends them (STORY-064)
   if (isAttacker(u.kind)) return u.path.length ? `Sotaretki · kohti ${directionName(u.tile, u.path.at(-1)!)}` : 'Valmiina sotaretkeen';
   // A worker joins a strategic resource by road, else improves land as a settler does (STORY-093)

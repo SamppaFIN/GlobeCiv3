@@ -28,7 +28,7 @@ describe('governments and moods (Freeciv civ1)', () => {
   it('each soldier calms a citizen, at most 3 under Monarchy', () => {
     const c = foundCity([], 0);
     c.size = 9;
-    expect(cityMood(c, 5, 1, false, 0, 'despotism')).toMatchObject({ calmed: 5, unhappy: 0 });
-    expect(cityMood(c, 5, 1, false, 0, 'monarchy')).toMatchObject({ calmed: 3, unhappy: 2, disorder: true });
+    expect(cityMood(c, 5, 1, {}, 0, 'despotism')).toMatchObject({ calmed: 5, unhappy: 0 });
+    expect(cityMood(c, 5, 1, {}, 0, 'monarchy')).toMatchObject({ calmed: 3, unhappy: 2, disorder: true });
   });
 });

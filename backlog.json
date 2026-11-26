@@ -1,7 +1,7 @@
 {
   "_meta": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-24T13:19:54Z",
+    "generated_at": "2026-11-26T17:29:19Z",
     "generated_by": "init-project v1.0 (uusintahaastattelu 2026-11-19)",
     "git_commit": "feef51b",
     "git_branch": "main",
@@ -2847,7 +2847,7 @@
       "acceptance_criteria": [
         "Yläpaneelissa on oma Tiedepuu-nappi, kun pelaajalla on kaupunki, ja se avaa sivun, jossa kaikki keksinnöt ovat sarakkeissa sen mukaan, mitä ne vaativat, ja vaatimuksista kulkee viiva.",
         "Jokaisella keksinnöllä on oma kuva, selitys siitä, mitä se on ja mitä se pelissä tekee, ja aito historiallinen lausahdus tekijöineen ja teoksineen. Lähteet ja suomennoksen tausta kirjataan koodikommenttiin.",
-        "Tutkittavissa olevan keksinnön voi valita sivulta tutkittavaksi komentona, ja sivu toimii puhelimella: sarakkeet mahtuvat leveyteen, ja kohteet ovat vähintään 44 px."
+        "Tutkittavissa olevan keksinnön voi valita sivulta tutkittavaksi komentona, ja sivu toimii puhelimella: puu vierii sivuttain ja avautuu valitun keksinnön kohdalta (Sami 2026-11-26), ja kohteet ovat vähintään 44 px."
       ],
       "status": "review",
       "progress": 100,
@@ -3118,12 +3118,12 @@
         "Jokaisella keksinnöllä on luvuin kerrottu vaikutus keksintökortissa, tiedepuussa ja Tietokirjassa, oma kuva ja tarkistettu lausahdus, ja valtion neuvonantajien tutkimusjärjestys kattaa uudet keksinnöt.",
         "Autopilotti nousee yhä valtiotasolle, ja kultaiset tilat kirjoitetaan uudelleen ääneen sanoen."
       ],
-      "status": "todo",
-      "progress": 0,
+      "status": "review",
+      "progress": 100,
       "linked": {
-        "plan": null,
-        "implementation": null,
-        "testing": null
+        "plan": "PLAN-102",
+        "implementation": "TICKET-IMPL-102",
+        "testing": "TICKET-TEST-102"
       }
     },
     {

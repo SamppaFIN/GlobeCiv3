@@ -122,13 +122,13 @@ export interface SaveData {
 /** Ranges the save is checked against. */
 export interface SaveLimits { tiles: number; cityAreas: number }
 
-const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'worker', 'warrior', 'phalanx', ...ATTACKERS];
+export const UNIT_KINDS: readonly UnitKind[] = ['scout', 'settler', 'worker', 'warrior', 'phalanx', 'caravan', ...ATTACKERS];
 const MODES: readonly Mode[] = ['explore', 'gather', 'defend'];
 const TASKS: readonly SettlerTask[] = ['found', 'improve'];
 const PLANS: readonly AreaPlan[] = ['explore', 'settle', 'skip'];
 const LINES: readonly StateLine[] = ['expand', 'research', 'defend'];
-const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', 'lumberjack', 'mill', 'bakery', ...RESOURCE_BUILDING_LIST];
-const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', 'worker', ...ATTACKERS, ...BUILDINGS, 'coinage'];
+export const BUILDINGS: readonly Building[] = ['granary', 'walls', 'market', 'library', 'temple', 'aqueduct', 'colosseum', 'colossus', 'gardens', 'greatwall', 'fishery', 'sawmill', 'quarry', 'field', 'lumberjack', 'mill', 'bakery', ...RESOURCE_BUILDING_LIST, 'oracle', 'greatlibrary', 'observatory'];
+export const BUILDS: readonly Build[] = ['warrior', 'phalanx', 'settler', 'scout', 'worker', 'caravan', ...ATTACKERS, ...BUILDINGS, 'coinage'];
 const FOCUSES: readonly Focus[] = ['food', 'balanced', 'production'];
 const RIVAL_UNITS: readonly RivalUnit['kind'][] = ['settler', 'warrior', ...ATTACKERS];
 /** Freeciv GAME_DEFAULT_GOLD (common/game.h). */
@@ -189,6 +189,7 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         // The player's other acts (STORY-112)
         case 'mode': return { kind, unit: int(c.unit, 'unit'), mode: oneOf(c.mode, MODES, 'mode') };
         case 'task': return { kind, unit: int(c.unit, 'unit'), task: oneOf(c.task, TASKS, 'task') };
+        case 'help': return { kind, unit: int(c.unit, 'unit'), city: tile(c.city) };
         case 'pick':
         case 'flag': return { kind, tile: tile(c.tile) };
         case 'skip':
@@ -312,6 +313,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
           tile: tile(x.tile), mode: oneOf(x.mode, MODES, 'mode'), path: tiles(x.path, 10_000), wait: int(x.wait, 'wait', 0, 100),
           carrying: bool(x.carrying, 'carrying'), gathered: int(x.gathered, 'gathered'),
           home: orNull(x.home, h => int(h, 'home', 0, limits.cityAreas)), task: oneOf(x.task, TASKS, 'task'), job,
+          // A caravan's city (STORY-121): a tile, and none in a save from before
+          ...(x.to === undefined ? {} : { to: tile(x.to) }),
         };
       }, 10_000),
       camp: tile(u.camp),

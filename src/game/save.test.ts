@@ -4,7 +4,8 @@ import { pointToTile, tileCenter, TILE_COUNT } from '../globe/hexTiles';
 import { Improvements } from './improvements';
 import { MapState } from './mapping';
 import { Raids } from './raids';
-import { SAVE_VERSION, validateSave, type SaveData } from './save';
+import { BUILDS as CITY_BUILDS, BUILDINGS as CITY_BUILDINGS, isBuilding } from './cities';
+import { BUILDINGS, BUILDS, SAVE_VERSION, UNIT_KINDS, validateSave, type SaveData } from './save';
 import { Units, type World } from './units';
 
 const LIMITS = { tiles: TILE_COUNT, cityAreas: 17738 };
@@ -324,5 +325,14 @@ describe('saved game (STORY-036)', () => {
     expect(s).toEqual(data);
     expect('extra' in s || 'onclick' in s.cities[0]).toBe(false);
     expect(({} as any).polluted).toBeUndefined();
+  });
+});
+
+describe('the lists of a save (STORY-121, review by Utu)', () => {
+  it('know every building, build and unit kind of the game, so that a new one cannot be left out', () => {
+    expect([...BUILDINGS].sort()).toEqual([...CITY_BUILDINGS].sort());
+    expect([...BUILDS].sort()).toEqual(Object.keys(CITY_BUILDS).sort());
+    const units = Object.keys(CITY_BUILDS).filter(b => !isBuilding(b as never) && b !== 'coinage');
+    expect([...UNIT_KINDS].sort()).toEqual(units.sort());
   });
 });
