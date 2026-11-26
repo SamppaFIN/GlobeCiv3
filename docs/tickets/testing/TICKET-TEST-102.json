@@ -86,7 +86,31 @@
         "outcome": "pass"
       },
       {
-        "steps": "CI: koko sarja mainin pushissa",
+        "steps": "CI: koko sarja mainin pushissa (ajo 45868983044, merge 8e6fe72)",
+        "expected": "Vihreä",
+        "result": "Punainen: 125 läpi, 2 punaista ja 2 vaihtelevaa. buildings.e2e:21 ja city.e2e:69 odottivat kaupunkikortissa 21 rakennettavaa, kun STORY-121 toi neljä lisää (karavaani ja kolme ihmettä); paikallinen ajo ei kattanut niitä. Vaihtelevat chains.e2e:23 ja play.e2e:57 menivät läpi uusinnassa.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "Korjaus: buildings.e2e:21 ja city.e2e:69 rakennettavien määrä 21 → 25 ja 20 → 24 (sanottu ääneen), paikallinen ajo",
+        "expected": "Läpi",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "chains.e2e:23 toistettiin paikallisesti: 2/6 punaista uudella koodilla, 0/3 ennen STORY-121:tä (3a6abbe); luotain näytti louhoksen valmistuneen päivänä 7 ja tilan luetun päivänä 8",
+        "expected": "Peli kirjaa kiven oikein: louhos ehti louhia päivän ennen taukoa, koska 4×-nopeudella kaksi päivää voi valmistua samassa framessa (STORY-117). Testi oletti tilan luettavan samana päivänä, joten se vaatii nyt, ettei kiveä ole enempää kuin louhoksen päivät (sanottu ääneen)",
+        "result": "3/3 läpi korjauksen jälkeen",
+        "outcome": "pass"
+      },
+      {
+        "steps": "play.e2e:57 toistettiin ennen STORY-121:tä (3a6abbe)",
+        "expected": "Vaihtelu oli olemassa jo ennen tätä storya",
+        "result": "1/3 punaisena jo 3a6abbe:llä (4×-nopeuden suhde odotus > 1,2), joten vaihtelu ei tule STORY-121:stä; kirjattu, ei muutettu",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI: korjausten jälkeinen ajo mainissa",
         "expected": "Vihreä",
         "result": "Ei vielä ajettu",
         "outcome": "not_run"

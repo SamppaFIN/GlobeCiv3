@@ -87,8 +87,8 @@ test('the settler founds the capital on the tapped tile; the city card shows its
   // the pause, and the city gone on to gold)
   // Eight units (Falangi: STORY-043, four attackers: STORY-064, Tiedustelija: STORY-070), seven buildings (STORY-038, 040, 044, 054),
   // the Louhos of the hills round the city (STORY-070), the Paja of its coal (STORY-073), three
-  // wonders (STORY-045) and Kultaa (STORY-039)
-  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(21);
+  // wonders (STORY-045) and Kultaa (STORY-039), and the caravan and three more wonders (STORY-121)
+  await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio')).toHaveCount(25);
   await expect(card.getByRole('radiogroup', { name: 'Rakenna' }).getByRole('radio', { name: /^Paja/ })).toContainText('Hiili alueella: +2 tuotanto päivässä; valmistuessa keksintö Rautatyö');
   await expect(buildOption(card, 'aqueduct')).toContainText('vaatii: Rakentaminen');
   await expect(buildOption(card, 'warrior')).toContainText('10 tuotantoa · Puolustaa kaupunkia rosvoilta');

@@ -64,9 +64,12 @@ test('the capital builds of planks and stone: the base first, from the starting 
   await sites.getByRole('radio', { name: /^Louhos/ }).click();
   await until(page, 'quarry');
   c = await capital(page);
-  // The starting stock built the base exactly; the lumberjack has felled logs meanwhile
+  // The starting stock built the base exactly; the lumberjack has felled logs meanwhile. At 4×
+  // two days may finish in one frame (STORY-117), so the quarry may have cut stone for a day or
+  // so before the pause: no more stone than its days (CI 2026-11-26)
   expect(c.chain.stock.plank ?? 0).toBeLessThanOrEqual(2);
-  expect(c.chain.stock.stone ?? 0).toBe(0);
+  const quarried = (await state(page)).day - c.history.find((e: { kind: string; building?: string }) => e.kind === 'built' && e.building === 'quarry').day;
+  expect(c.chain.stock.stone ?? 0).toBeLessThanOrEqual(quarried);
   await expect(sites.getByRole('radio', { name: /^Pelto/ })).toBeEnabled();
   // The buildings were the player's commands, and each stands on a tile at the city level
   expect((await state(page)).commands.filter((e: { by: string; kind: string }) => e.by === 'player' && e.kind === 'build')).toHaveLength(2);
