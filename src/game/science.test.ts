@@ -23,6 +23,16 @@ describe('science (STORY-040, Freeciv civ1)', () => {
     expect(NEEDS).toEqual({ granary: 'pottery', walls: 'masonry', market: 'currency', library: 'writing', phalanx: 'bronze', temple: 'ceremonial', aqueduct: 'construction', colosseum: 'construction', colossus: 'bronze', gardens: 'pottery', greatwall: 'masonry', horseman: 'horseback', swordsman: 'iron', chariot: 'wheel', catapult: 'mathematics',
       oracle: 'mysticism', greatlibrary: 'literacy', observatory: 'astronomy', caravan: 'trade' });
   });
+  it('the Republic needs Code of Laws and Literacy, and comes last (STORY-125, civ1 techs.ruleset)', () => {
+    expect(ADVANCES.republic).toEqual({ name: 'Tasavalta', needs: ['law', 'literacy'] });
+    expect(ADVANCE_LIST.at(-1)).toBe('republic');
+    const r = new Research();
+    for (const a of ['alphabet', 'writing', 'law'] as const) r.known.add(a);
+    expect(r.available()).not.toContain('republic');
+    r.known.add('literacy');
+    expect(r.available()).toContain('republic');
+  });
+
   it('the early and iron age advances need what Freeciv civ1 says, and come after the older ones (STORY-121)', () => {
     expect(ADVANCES.mysticism.needs).toEqual(['ceremonial']);
     expect(ADVANCES.literacy.needs).toEqual(['writing', 'law']);
@@ -31,8 +41,8 @@ describe('science (STORY-040, Freeciv civ1)', () => {
     expect(ADVANCES.astronomy.needs).toEqual(['mysticism', 'mathematics']);
     expect(ADVANCES.bridges.needs).toEqual(['iron', 'construction']);
     // The older advances keep their places, so that ruins and the tree pick as before
-    expect(ADVANCE_LIST.slice(-6)).toEqual(['mysticism', 'literacy', 'trade', 'philosophy', 'astronomy', 'bridges']);
-    expect(ADVANCE_LIST).toHaveLength(21);
+    expect(ADVANCE_LIST.slice(-7, -1)).toEqual(['mysticism', 'literacy', 'trade', 'philosophy', 'astronomy', 'bridges']);
+    expect(ADVANCE_LIST).toHaveLength(22);
     const r = new Research();
     r.known.add('ceremonial');
     expect(r.available()).toContain('mysticism');

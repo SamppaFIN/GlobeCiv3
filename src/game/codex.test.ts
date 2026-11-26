@@ -23,7 +23,7 @@ describe('Tietokirja (STORY-104)', () => {
     ];
     expect(codexKeys()).toEqual(['index', ...keys]);
     // Seven eras since STORY-120; three wonders, the caravan and six advances more since STORY-121
-    expect(keys.length).toBe(31 + 10 + 21 + 11 + 7 + 15 + 7);
+    expect(keys.length).toBe(31 + 10 + 22 + 11 + 7 + 15 + 7);
     for (const key of codexKeys()) {
       const p = codexPage(key)!;
       expect(p.key, key).toBe(key);
@@ -117,7 +117,7 @@ describe('the eras in the Tietokirja (STORY-120)', () => {
     }
     expect(words(codexPage('era/early')!.text)).toMatch(/^Pelin alku\./);
     expect(words(codexPage('era/iron')!.text)).toMatch(/^Alkaa, kun kansa keksii Rautatyö\./);
-    expect(facts('era/iron').Keksinnöt).toBe('Monarkia, Rakentaminen, Rautatyö, Matematiikka, Lukutaito, Kaupankäynti, Filosofia, Tähtitiede ja Siltojenrakennus');
+    expect(facts('era/iron').Keksinnöt).toBe('Monarkia, Rakentaminen, Rautatyö, Matematiikka, Lukutaito, Kaupankäynti, Filosofia, Tähtitiede, Siltojenrakennus ja Tasavalta');
     // An era whose key is not in the game yet says so, and lists no advances
     for (const e of ['medieval', 'renaissance', 'industrial', 'modern', 'atomic']) {
       expect(words(codexPage(`era/${e}`)!.text), e).toMatch(/^Aikakauden keksinnöt tulevat peliin myöhemmin\./);

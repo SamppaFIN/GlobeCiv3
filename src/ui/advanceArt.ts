@@ -140,6 +140,14 @@ const ART: Record<Advance, string> = {
     <path d="M6 28 H58 V34 H50 Q50 46 40 46 Q32 46 32 36 Q32 46 24 46 Q14 46 14 34 H6 Z" fill="${STONE}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
     <path d="M6 28 H58" stroke="${SAND}" stroke-width="2.4"/>
     <path d="M10 31 H14 M22 31 H26 M38 31 H42 M50 31 H54" stroke="${DARK}" stroke-width="0.8" opacity="0.7"/>`,
+  // A ballot urn with a tablet dropping in, under a columned roof
+  republic: `<path d="M14 22 L32 12 L50 22 Z" fill="${STONE}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M16 22 H48 V25 H16 Z" fill="${STONE}" stroke="${INK}" stroke-width="0.8"/>
+    <path d="M18 25 V50 M46 25 V50" stroke="${STONE}" stroke-width="3.2"/>
+    <path d="M24 34 Q24 30 32 30 Q40 30 40 34 L38 50 H26 Z" fill="${CLAY}" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M28 33 H36" stroke="${DARK}" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="30" y="24" width="4" height="7" rx="0.6" fill="${PARCH}" stroke="${INK}" stroke-width="0.6"/>
+    <path d="M14 50 H50 V53 H14 Z" fill="${STONE}" stroke="${INK}" stroke-width="0.8"/>`,
 };
 
 /** The advance's picture as an SVG of `size` pixels: its object on the round plate. */

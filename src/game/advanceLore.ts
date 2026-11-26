@@ -37,6 +37,9 @@
  *  - Caesar, The Gallic War 4.17 (McDevitte & Bohn 1869): to cross by boats he deemed neither
  *    safe enough nor worthy of his own dignity or that of the Roman people, before the bridge
  *    over the Rhine
+ *  - Cicero, De re publica 1.39 (1.25.39), from the Latin (STORY-125): the commonwealth is the
+ *    people's affair; a people is not any gathering of humans assembled in any way, but a
+ *    gathering of many joined by agreement on right and by sharing in advantage (Scipio speaks)
  */
 import type { Advance } from './science';
 
@@ -131,5 +134,9 @@ export const ADVANCE_LORE: Record<Advance, Lore> = {
   bridges: {
     what: 'Kivestä ja puusta rakennetaan siltoja jokien ja rotkojen yli. Tie ei enää kierrä estettä, ja rakentajat oppivat tekemään tiet puolessa ajassa.',
     quote: { text: 'Laivoilla ylittämistä Caesar ei pitänyt kyllin turvallisena eikä omalle eikä Rooman kansan arvolle sopivana.', who: 'Julius Caesar', where: 'Gallian sota 4.17, ennen siltaa Reinin yli' },
+  },
+  republic: {
+    what: 'Kansa valitsee keskuudestaan johtajat, joiden on pysyttävä suosiossa. Vapaat kansalaiset käyvät kauppaa kaikkialla, mutta sota kaukana kotoa ei ole heidän mieleensä.',
+    quote: { text: 'Valtio on siis kansan asia. Kansa ei kuitenkaan ole mikä tahansa ihmisjoukko, joka on koottu miten tahansa, vaan suuri joukko, jonka yhdistää yhteinen käsitys oikeudesta ja yhteinen etu.', who: 'Cicero', where: 'Valtiosta 1.39' },
   },
 };

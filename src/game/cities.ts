@@ -339,11 +339,12 @@ export const templeCalms = (f: Faith) => 1 + (f.mysticism ? 1 : 0) + (f.oracle ?
 
 /**
  * A city's mood: citizens over the content base are unhappy; a temple calms one or more
- * (Make_Content, templeCalms) and each soldier in the city one (Despotism: Martial_Law_Each 1).
+ * (Make_Content, templeCalms) and each soldier in the city one (Despotism: Martial_Law_Each 1),
+ * and under the Republic each of its units away makes one unhappy (`away`).
  * Any unhappy citizen left over the happy ones means civil disorder (common/city.c
  * city_unhappy: happy < unhappy).
  */
-export function cityMood(city: City, soldiers: number, cities: number, faith: Faith = {}, luxury = 0, gov: Government = 'despotism'): Mood {
+export function cityMood(city: City, soldiers: number, cities: number, faith: Faith = {}, luxury = 0, gov: Government = 'despotism', away = 0): Mood {
   // Entertainers come out of the content ones and are never unhappy (common/city.c citizen_base_mood)
   const spes = city.entertainers ?? 0;
   let content = Math.max(0, Math.min(city.size, baseContent(cities, gov)) - spes);
@@ -361,6 +362,12 @@ export function cityMood(city: City, soldiers: number, cities: number, faith: Fa
   const calmed = Math.min(unhappy, buildings + Math.min(soldiers, GOVERNMENTS[gov].martialLaw));
   unhappy -= calmed;
   content += calmed;
+  // Then its units away from home, under the Republic one unhappy each (STORY-125; common/city.c
+  // citizen_happy_units): content to unhappy, then happy to unhappy for 2, then happy to content
+  let cost = away * GOVERNMENTS[gov].awayUnhappy;
+  for (; cost > 0 && content > 0; cost--) { content--; unhappy++; }
+  for (; cost > 1 && happy > 0; cost -= 2) { happy--; unhappy++; }
+  for (; cost > 0 && happy > 0; cost--) { happy--; content++; }
   if (faith.gardens && content > 0) { content--; happy++; }
   return { happy, content, unhappy, calmed, disorder: unhappy > happy };
 }
@@ -407,7 +414,8 @@ export function cityYield(city: City, yieldOf: YieldOf, taken?: ReadonlySet<numb
     food: y.food,
     shield: y.shield - Math.max(0, support.units - GOVERNMENTS[gov].freeUnits),
     trade: y.trade,
-    surplus: y.food - FOOD_PER_CITIZEN * city.size - support.settlers,
+    // A settler eats 1 food, 2 under the Republic (STORY-125)
+    surplus: y.food - FOOD_PER_CITIZEN * city.size - support.settlers * GOVERNMENTS[gov].settlerFood,
   };
 }
 

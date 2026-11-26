@@ -3207,14 +3207,14 @@
         "STORY-121"
       ],
       "acceptance_criteria": [
-        "Tasavalta (Lakikokoelma ja Lukutaito) on pelissä civ1:n vaatimuksin ja säännöin: +1 kauppa ruutuun, jossa on kauppaa, uudisasukas syö 2 ruokaa, ja jokainen hyökkäyskykyinen yksikkö kotivaltion ulkopuolella tekee kotikaupunkiinsa yhden tyytymättömän. Senaatista ja valtakunnan koosta päätetään suunnitelmassa.",
+        "Tasavalta (Lakikokoelma ja Lukutaito) on pelissä civ1:n vaatimuksin ja säännöin: +1 kauppa ruutuun, jossa on kauppaa, uudisasukas syö 2 ruokaa, ja jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa yhden tyytymättömän, ja valtakunnan koon raja on 13 kaupunkia. Senaattia ei ole (Sami 2026-11-26).",
         "Vallankumous on mahdollinen myös Monarkiasta Tasavaltaan ja komento kertoo kohteen; vanha komentoloki ja vanha tallennus anarkiassa latautuvat (sääntö 8). Laajentaja ja Oppinut siirtyvät Tasavaltaan, Kenraali pysyy Monarkiassa.",
         "Autopilotti nousee yhä valtiotasolle enintään noin 20 % myöhemmin kuin ennen, ja kultaiset tilat kirjoitetaan uudelleen ääneen sanoen."
       ],
-      "status": "todo",
+      "status": "in_progress",
       "progress": 0,
       "linked": {
-        "plan": null,
+        "plan": "PLAN-105",
         "implementation": null,
         "testing": null
       }

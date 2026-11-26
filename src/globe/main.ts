@@ -36,7 +36,7 @@ import { createTileYields } from '../ui/tileYields';
 import { createResearchCard, type ResearchView } from '../ui/researchCard';
 import { createListCard, type ListTab, type ListView } from '../ui/listCard';
 import { ADVANCES, ADVANCE_LIST, NEEDS, isKind, opensFrom, studyName, treeLayout, type Advance, type LuxRate, type Study, type TaxRate } from '../game/science';
-import { GOVERNMENTS, governed } from '../game/government';
+import { GOVERNMENTS, governed, type RevolutionTarget } from '../game/government';
 import { createTileCard, type TileView } from '../ui/tileCard';
 import { createAreaPanel, type AreaPanel, type AreaStat, type AreaView } from '../ui/areaPanel';
 import { createCityQuick } from '../ui/cityQuick';
@@ -74,7 +74,7 @@ import { validateSave, type SaveData } from '../game/save';
 import { pending, type GameState } from '../sim/state';
 import type { SimEvents } from '../sim/events';
 import { DETAIL, RADIUS } from '../sim/world';
-import { advisorsAnswer, caravanFree, dayBegun, wonderCities, daysFinishedAtOnce, firstChoices, firstScopes, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
+import { advisorsAnswer, awayOf, caravanFree, revolutionTargets, dayBegun, wonderCities, daysFinishedAtOnce, firstChoices, firstScopes, suggestedStudy, dayRunning, opponentsNow, saveState, startDay, stepDay, CITY_LEVEL_RINGS, bind, startGame, game, levelState, prepareDay, raidPlan, rise, riseCheck, roadBuilt, setGame, setSwitches, simulateDay, NO_YIELD, TILE_ANGLE, type TribeNow, UNIT_BUILDS, weighTrade, areaShare, army, bordersNow, canSail, chosenAdvisor, cityDetail, cityYields, coastal, conquestNow, dispatch, eraNow, foundAt, foundKinds, ground, hasWonder, homeState, idleSettler, joinedShields, joiningOf, joinsNow, kindAt, kindMask, knownKind, knownRivalCities, moodOf, nameOf, nativeAt, nativeMs, nativeSyncMs, natives, nearCitiesOf, nearForeign, peopleStudy, provinceHasLand, provinceOfTile, provinceShare, provinceStage, rates, resourceNear, reveal, rivalCityAt, rivalStartStates, scanNatives, sendTribe, setTargetState, shieldless, soldiersIn, startRaid, stateNameOf, stateShare, stateStage, supportOf, terrainNear, terrainOf, tilesOfArea, tilesOfState, tribeAt, tribesNow, unitsOpen, unreachable, visibleNatives, visibleRivalCities, visibleTribes, warNeed, workedByCity, workerBuilders, world, yieldOf } from '../sim/game';
 import { clearSave, loadSave, storeSave } from '../game/saveStore';
 import { createGameHud, type AdvisorButton, type GameHudState } from '../ui/gameHud';
 import { advance } from '../game/progress';
@@ -1627,6 +1627,9 @@ function cityView(c: City, y: CityYield): CityView {
   const grow = daysToGrow(c, y);
   const price = buyCost(c);
   const settlers = supportOf(c).settlers;
+  // A settler eats 1 food, 2 under the Republic (STORY-125)
+  const settlerFood = settlers * GOVERNMENTS[play!.gov].settlerFood;
+  const away = awayOf(c);
   const rings = cityRings(c.size);
   const nextSize = rings === 1 ? 2 : rings === 2 ? 5 : null;
   // How to grow faster, when it is slow
@@ -1634,19 +1637,21 @@ function cityView(c: City, y: CityYield): CityView {
     ...(c.focus !== 'food' ? ['valitse Ruoka'] : []),
     'kastele peltoja (uudisasukas: Kehitä)',
     ...(c.buildings.includes('granary') ? [] : ['rakenna viljavarasto']),
-    ...(settlers ? [`uudisasukkaat syövät ${settlers} ruokaa: lähetä ne perustamaan kaupunkeja`] : []),
+    ...(settlers ? [`uudisasukkaat syövät ${settlerFood} ruokaa: lähetä ne perustamaan kaupunkeja`] : []),
   ];
   return {
     ...(() => {
       const m = moodOf(c, y);
       return {
-        moodText: `Asukkaat: ${m.happy ? `${m.happy} ${m.happy === 1 ? 'onnellinen' : 'onnellista'} · ` : ''}${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}${c.entertainers ? ` · ${c.entertainers} ${c.entertainers === 1 ? 'viihdyttäjä' : 'viihdyttäjää'}` : ''}`,
+        moodText: `Asukkaat: ${m.happy ? `${m.happy} ${m.happy === 1 ? 'onnellinen' : 'onnellista'} · ` : ''}${m.content} ${m.content === 1 ? 'tyytyväinen' : 'tyytyväistä'}${m.unhappy ? ` · ${m.unhappy} ${m.unhappy === 1 ? 'tyytymätön' : 'tyytymätöntä'}` : ''}${m.calmed ? ` (${m.calmed} rauhoitettu)` : ''}${c.entertainers ? ` · ${c.entertainers} ${c.entertainers === 1 ? 'viihdyttäjä' : 'viihdyttäjää'}` : ''}${away ? ` · ${away} ${away === 1 ? 'yksikkö' : 'yksikköä'} poissa kaupungista tekee tyytymättömiä` : ''}`,
         disorder: m.disorder
-          ? 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Neljä asukasta on tyytyväisiä; jokainen kaupungissa oleva sotilas ja temppeli rauhoittavat yhden lisää, ja ylellisyys (Tutkimus-kortissa) tekee asukkaista onnellisia.'
+          ? play!.gov === 'republic'
+            ? 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Tasavallassa sotilaat eivät rauhoita, ja jokainen kaupungin hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee tyytymättömän; temppeli rauhoittaa, ja ylellisyys (Tutkimus-kortissa) tekee asukkaista onnellisia.'
+            : 'Levottomuuksia: ei kasvua, tuotantoa, kultaa eikä tiedettä. Neljä asukasta on tyytyväisiä; jokainen kaupungissa oleva sotilas ja temppeli rauhoittavat yhden lisää, ja ylellisyys (Tutkimus-kortissa) tekee asukkaista onnellisia.'
           : null,
       };
     })(),
-    foodText: `Ruokaa ${y.food} · asukkaat syövät ${2 * c.size}${settlers ? ` · uudisasukkaat ${settlers}` : ''} · varastossa ${c.food}/${granary(c.size)}`,
+    foodText: `Ruokaa ${y.food} · asukkaat syövät ${2 * c.size}${settlers ? ` · uudisasukkaat ${settlerFood}` : ''} · varastossa ${c.food}/${granary(c.size)}`,
     focus: c.focus,
     areaText: `Alue ${rings} ${rings === 1 ? 'rengas' : 'rengasta'}${nextSize ? ` · laajenee koossa ${nextSize}` : ''}`,
     hint: c.size >= sizeLimit(c) ? `Koko ${SIZE_LIMIT} on raja: kaupunki kasvaa vasta vesijohdon kanssa${play!.research.known.has('construction') ? '' : ' (Rakentaminen-tutkimus)'}.`
@@ -1923,7 +1928,7 @@ const researchCard = createResearchCard(hud_root, {
   choose: (advance: Study) => { dispatch({ kind: 'study', target: advance }, 'player'); },
   setTax: (tax: number) => { dispatch({ kind: 'tax', tax: tax as TaxRate }, 'player'); },
   setLux: (lux: number) => { dispatch({ kind: 'lux', lux: lux as LuxRate }, 'player'); },
-  revolution: () => { dispatch({ kind: 'revolution' }, 'player'); },
+  revolution: (to: RevolutionTarget) => { dispatch({ kind: 'revolution', to }, 'player'); },
 });
 
 // The science tree (STORY-109): the advances by what they need, each with its picture, what it
@@ -1979,7 +1984,8 @@ function governmentLine(): string {
   const p = play!;
   if (p.gov === 'anarchy') return `Hallitus: Anarkia vielä ${Math.max(1, p.anarchyUntil - clock.day)} pv · ei veroja eikä tiedettä, kaikki kauppa ylellisyyteen`;
   if (p.gov === 'monarchy') return 'Hallitus: Monarkia · ruudut tuottavat täysin, ei ilmaisia yksiköitä, sotilaat rauhoittavat enintään kolme';
-  return `Hallitus: ${GOVERNMENTS.despotism.name} · ruudun yli kahden tuotosta menee yksi hukkaan${p.research.known.has('monarchy') ? '' : '. Monarkia-tutkimus avaa paremman.'}`;
+  if (p.gov === 'republic') return 'Hallitus: Tasavalta · +1 kauppaa ruutuun, jolla on kauppaa, uudisasukas syö 2 ruokaa, sotilaat eivät rauhoita, ja jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa tyytymättömän';
+  return `Hallitus: ${GOVERNMENTS.despotism.name} · ruudun yli kahden tuotosta menee yksi hukkaan${p.research.known.has('monarchy') || p.research.known.has('republic') ? '' : '. Monarkia-tutkimus avaa paremman.'}`;
 }
 
 /** The studies open, with their price and what they open: the research card's and an advance card's choices. */
@@ -1990,6 +1996,7 @@ function studyOptions(): { advance: Study; name: string; cost: string; opens: st
     ...(Object.keys(NEEDS) as Build[]).filter(b => NEEDS[b] === a).map(b => BUILDS[b].name),
     ...(Object.keys(ADVANCES) as Advance[]).filter(n => ADVANCES[n].needs.includes(a)).map(n => `tutkimuksen ${ADVANCES[n].name}`),
     ...(a === 'monarchy' ? ['hallitusmuodon Monarkia'] : []),
+    ...(a === 'republic' ? ['hallitusmuodon Tasavalta'] : []),
     ...(a === 'mapmaking' ? ['kulun rannikkovesillä'] : []),
   ];
   return r.available(foundKinds).map(a => ({
@@ -2070,7 +2077,7 @@ function researchView(): ResearchView {
     tax: play!.tax,
     lux: play!.lux,
     government: governmentLine(),
-    revolution: play!.gov === 'despotism' && play!.research.known.has('monarchy'),
+    revolutions: revolutionTargets(),
     known: r.known.size ? `Tunnetut: ${[...r.known].map(a => ADVANCES[a].name).join(', ')}` : 'Ei vielä keksintöjä',
   };
 }
@@ -3537,7 +3544,7 @@ frameStartPlanet();
       learned: play ? [...play.learned] : [],
       gold: play?.gold ?? null,
       commands: play?.commands.entries.map(e => ({ day: e.day, by: e.by, kind: e.cmd.kind })) ?? [],
-      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, townAdvisor: play?.townAdvisor ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: (play && levelGoal(play.progress.openLevel)?.text) ?? null,
+      research: play ? { ...play.research.save(), cost: play.research.cost } : null, tax: play?.tax ?? null, lux: play?.lux ?? null, gov: play?.gov ?? null, revolutionTo: play?.revolutionTo ?? null, townAdvisor: play?.townAdvisor ?? null, cityAdvisor: play?.cityAdvisor ?? null, provinceAdvisor: play?.provinceAdvisor ?? null, tileOpen: play?.tileOpen ?? null, stateAdvisor: play?.stateAdvisor ?? null, planetAdvisor: play?.planetAdvisor ?? null, targetState: play?.targetState ?? null, targetProvince: play?.targetProvince ?? null, goal: (play && levelGoal(play.progress.openLevel)?.text) ?? null,
     };
   },
 };

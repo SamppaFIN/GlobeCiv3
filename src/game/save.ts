@@ -23,7 +23,7 @@ import { ADVANCE_LIST, LUX_RATES, RESOURCE_KINDS, TAX_RATES, type Advance, type 
 import type { Relation, Ties } from './diplomacy';
 import { TERRAINS, type ResourceKind } from './terrainTypes';
 import { ERAS } from './persons';
-import { GOVERNMENT_LIST, type Government } from './government';
+import { GOVERNMENT_LIST, REVOLUTION_TARGETS, type Government, type RevolutionTarget } from './government';
 import { ADVISOR_LEVELS, CITY_ADVISOR_LIST, PLANET_ADVISOR_LIST, PROVINCE_ADVISOR_LIST, STATE_ADVISOR_LIST, TOWN_ADVISOR_LIST, TOWN_OF_CITY, type CityAdvisor, type PlanetAdvisor, type ProvinceAdvisor, type StateAdvisor, type TownAdvisor } from './advisors';
 import { ACTORS, COMMAND_KINDS, FIRST_SCOPES, PACT_ACTS, RAID_CHOICES, type Command, type Logged } from './commands';
 import { TRADE_IDS } from './trade';
@@ -96,6 +96,8 @@ export interface SaveData {
   /** The government, and the day anarchy ends, or −1 (STORY-047); saves from before are under Despotism. */
   gov: Government;
   anarchyUntil: number;
+  /** The government the anarchy leads to (STORY-125); saves from before have none, and their anarchy ends in Monarchy. */
+  revolutionTo?: RevolutionTarget;
   /** The city level's advisor (STORY-105); a save from before gets the one its city area's advisor stands for. */
   townAdvisor: TownAdvisor;
   /** The city area's advisor (STORY-049); saves from before have none. */
@@ -192,8 +194,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
         case 'help': return { kind, unit: int(c.unit, 'unit'), city: tile(c.city) };
         case 'pick':
         case 'flag': return { kind, tile: tile(c.tile) };
-        case 'skip':
-        case 'revolution': return { kind };
+        case 'skip': return { kind };
+        case 'revolution': return c.to === undefined ? { kind } : { kind, to: oneOf(c.to, REVOLUTION_TARGETS, 'to') };
         case 'focus': return { kind, city: tile(c.city), focus: oneOf(c.focus, FOCUSES, 'focus') };
         case 'tax': return { kind, tax: oneOf(c.tax, TAX_RATES, 'tax') };
         case 'lux': return { kind, lux: oneOf(c.lux, LUX_RATES, 'lux') };
@@ -428,6 +430,8 @@ export function validateSave(raw: unknown, limits: SaveLimits): SaveData | null 
       lux: s.lux === undefined ? 0 : oneOf(s.lux, LUX_RATES, 'lux'),
       gov: s.gov === undefined ? 'despotism' : oneOf(s.gov, GOVERNMENT_LIST, 'gov'),
       anarchyUntil: s.anarchyUntil === undefined ? -1 : int(s.anarchyUntil, 'anarchyUntil', -1),
+      // Only an anarchy has a revolution's target (STORY-125)
+      ...(s.revolutionTo === undefined ? {} : s.gov === 'anarchy' ? { revolutionTo: oneOf(s.revolutionTo, REVOLUTION_TARGETS, 'revolutionTo') } : fail('revolutionTo')),
       townAdvisor,
       cityAdvisor: s.townAdvisor === undefined && openLevel === 4 ? 'none' : cityAdvisor,
       provinceAdvisor: s.provinceAdvisor === undefined ? 'none' : oneOf(s.provinceAdvisor, PROVINCE_ADVISOR_LIST, 'provinceAdvisor'),

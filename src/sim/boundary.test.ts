@@ -154,9 +154,9 @@ const DIRECT_ACTS = [
   /\b(setState|startRevolution|setTargetState|setStateLine|setAreaPlan)\(/,
   // Any field of the game written but the view's own (Utu's review: a list of fields let others by)
   new RegExp(String.raw`\bplay!?\??\.(?!(?:${VIEW_FIELDS})\b)[\w.!?\[\]]*${WRITE}`),
-  new RegExp(String.raw`\bp!?\.(?:gold|tax|lux|gov|targetProvince|targetState|anarchyUntil|cities|units|research|ties|rivals|raids|improvements)\b[\w.!?\[\]]*${WRITE}`),
+  new RegExp(String.raw`\bp!?\.(?:gold|tax|lux|gov|targetProvince|targetState|anarchyUntil|revolutionTo|cities|units|research|ties|rivals|raids|improvements)\b[\w.!?\[\]]*${WRITE}`),
   // Fields of the game's things, on whatever name they go by (not an element's dataset)
-  new RegExp(String.raw`(?<!dataset)\.(?:build|buildings|size|state|food|shields|focus|entertainers|gold|bulbs|tax|lux|gov|attitude|maps|since|flag|mode|task|path|target|targetProvince|targetState|anarchyUntil|plan)${WRITE}`),
+  new RegExp(String.raw`(?<!dataset)\.(?:build|buildings|size|state|food|shields|focus|entertainers|gold|bulbs|tax|lux|gov|attitude|maps|since|flag|mode|task|path|target|targetProvince|targetState|anarchyUntil|revolutionTo|plan)${WRITE}`),
   // The game's lists, sets and maps changed
   /\.(?:buildings|improvements|areaPlans|units\.units|known|kinds|cities|rivals|ties|bandits)\.(?:push|splice|pop|shift|unshift|add|set|delete|clear)\(/,
 ];

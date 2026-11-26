@@ -23,7 +23,7 @@ import type { Build } from './cities';
 import { RESOURCES, TERRAINS, TERRAIN_RULES, type ResourceKind } from './terrainTypes';
 
 export type Advance = 'alphabet' | 'bronze' | 'ceremonial' | 'pottery' | 'masonry' | 'currency' | 'writing' | 'law' | 'monarchy' | 'construction' | 'mapmaking' | 'horseback' | 'iron' | 'wheel' | 'mathematics'
-  | 'mysticism' | 'literacy' | 'trade' | 'philosophy' | 'astronomy' | 'bridges';
+  | 'mysticism' | 'literacy' | 'trade' | 'philosophy' | 'astronomy' | 'bridges' | 'republic';
 
 /** An advance, or a kind of special resource to study (STORY-072). */
 export type Study = Advance | ResourceKind;
@@ -60,6 +60,8 @@ export const ADVANCES: Record<Advance, { name: string; needs: Advance[]; from?: 
   philosophy: { name: 'Filosofia', needs: ['mysticism', 'literacy'] },
   astronomy: { name: 'Tähtitiede', needs: ['mysticism', 'mathematics'] },
   bridges: { name: 'Siltojenrakennus', needs: ['iron', 'construction'] },
+  // The Republic (STORY-125, techs.ruleset commit 04852fb): Code of Laws and Literacy
+  republic: { name: 'Tasavalta', needs: ['law', 'literacy'] },
 };
 export const ADVANCE_LIST = Object.keys(ADVANCES) as Advance[];
 

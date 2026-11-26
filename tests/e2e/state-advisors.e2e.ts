@@ -53,7 +53,8 @@ test('state advisors: science, taxes, the line, the revolution and the target pr
   await expect(card.getByRole('button', { name: /^Ohjaan itse/ })).toHaveAttribute('aria-pressed', 'true');
   await page.screenshot({ path: testInfo.outputPath('state-advisors.png') });
 
-  // Oppinut: the line Tutkimus, tax 30 %, writing first; and the revolution once Monarchy is known
+  // Oppinut: the line Tutkimus, tax 30 %, writing first; and the revolution once the Republic is
+  // known, not to Monarchy before it (STORY-125, Sami 2026-11-26: Oppinut waits for the Republic)
   await options.filter({ hasText: 'Oppinut' }).click();
   await page.getByRole('button', { name: 'Jatka' }).click();
   await page.waitForFunction(() => {
@@ -62,8 +63,12 @@ test('state advisors: science, taxes, the line, the revolution and the target pr
   }, null, { timeout: 30_000 });
   await expect(card.locator('.advisor-log')).toContainText('tutkitaan: Aakkoset');
   await page.evaluate(() => (window as any).globeDebug.learn('monarchy'));
-  await expect(card.locator('.advisor-log')).toContainText('vallankumous Monarkiaan', { timeout: 30_000 });
-  await page.waitForFunction(() => (window as any).globeGame.state.gov === 'monarchy', null, { timeout: 60_000 });
+  const day = (await page.evaluate(() => (window as any).globeGame.state.day)) as number;
+  await page.waitForFunction(d => (window as any).globeGame.state.day >= d + 2, day, { timeout: 60_000 });
+  expect(await page.evaluate(() => (window as any).globeGame.state.gov)).toBe('despotism');
+  await page.evaluate(() => (window as any).globeDebug.learn('republic'));
+  await expect(card.locator('.advisor-log')).toContainText('vallankumous Tasavaltaan', { timeout: 30_000 });
+  await page.waitForFunction(() => (window as any).globeGame.state.gov === 'republic', null, { timeout: 60_000 });
 
   // Laajentaja: the line Laajentuminen, tax 50 %, and a target province under 60 % mapped
   await options.filter({ hasText: 'Laajentaja' }).click();

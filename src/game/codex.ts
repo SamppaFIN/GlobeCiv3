@@ -218,6 +218,7 @@ export function advanceEffects(a: Advance): Page['facts'] {
   }
   if (a === 'mapmaking') facts.push({ label: 'Liike', value: ['Yksiköt kulkevat rannikkovesillä ruudun päivässä'] });
   if (a === 'monarchy') facts.push({ label: 'Hallitus', value: ['Vallankumous Monarkiaan: ruudut tuottavat täysin, ja yksiköt maksavat ylläpitoa alusta asti'] });
+  if (a === 'republic') facts.push({ label: 'Hallitus', value: ['Vallankumous Tasavaltaan: +1 kauppaa ruutuun, jolla on kauppaa, ja uudisasukas syö 2 ruokaa; sotilaat eivät rauhoita, ja jokainen hyökkäyskykyinen yksikkö kaupungin ulkopuolella tekee kotikaupunkiinsa tyytymättömän'] });
   // STORY-121: Mysticism's temples (Freeciv civ1), and the own rules of Philosophy and Bridge Building
   if (a === 'mysticism') facts.push({ label: 'Temppeli', value: [buildRef('temple'), ' rauhoittaa kaksi asukasta yhden sijaan, ja ', buildRef('oracle'), ' kanssa neljä'] });
   if (a === 'philosophy') facts.push({ label: 'Ensimmäiselle', value: ['Ilmainen keksintö, kun yksikään kilpailija ei vielä tunne Filosofiaa'] });
@@ -234,6 +235,7 @@ function advancePage(a: Advance, known: KnownKind): Page {
   const rewardOf = RESOURCE_BUILDING_LIST.filter(b => RESOURCE_BUILDINGS[b].reward === a);
   const more: Segment[] = a === 'mapmaking' ? ['Yksiköt kulkevat rannikkovesillä.']
     : a === 'monarchy' ? ['Kansa voi tehdä vallankumouksen Monarkiaan.']
+    : a === 'republic' ? ['Kansa voi tehdä vallankumouksen Tasavaltaan, myös Monarkiasta.']
     : a === 'mysticism' ? ['Temppelit rauhoittavat enemmän.']
     : a === 'philosophy' ? ['Ensimmäinen filosofien kansa saa keksinnön ilmaiseksi.']
     : a === 'bridges' ? ['Tiet valmistuvat puolessa ajassa.']
