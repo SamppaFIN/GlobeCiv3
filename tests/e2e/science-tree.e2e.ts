@@ -87,7 +87,7 @@ test('the science tree: its own button, every advance by what it needs, and each
   expect(errors).toEqual([]);
 });
 
-test('the science tree fits a phone: three columns in its width, nodes big enough to tap (STORY-109)', async ({ page }, testInfo) => {
+test('the science tree works on a phone: it scrolls sideways to the chosen advance, nodes big enough to tap (STORY-109, Sami 2026-11-26)', async ({ page }, testInfo) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 390, height: 844 });
   const errors: string[] = [];
@@ -105,8 +105,17 @@ test('the science tree fits a phone: three columns in its width, nodes big enoug
   await page.getByRole('button', { name: 'Tiedepuu' }).click();
   const tree = page.getByRole('dialog', { name: 'Tiedepuu' });
   await expect(tree).toBeVisible();
-  const fit = await tree.locator('.science-scroll').evaluate(el => ({ scroll: el.scrollWidth, client: el.clientWidth }));
-  expect(fit.scroll).toBeLessThanOrEqual(fit.client);
+  // The tree is wider than a phone (STORY-121: four columns), and scrolls sideways inside its
+  // own box; the page itself does not, and the chosen advance stands in view
+  const fit = await tree.locator('.science-scroll').evaluate(el => {
+    const box = el.getBoundingClientRect();
+    const chosen = el.querySelector('.science-node[aria-pressed="true"]')!.getBoundingClientRect();
+    return { scroll: el.scrollWidth, client: el.clientWidth, page: document.documentElement.scrollWidth, left: chosen.left - box.left, right: box.right - chosen.right };
+  });
+  expect(fit.scroll).toBeGreaterThan(fit.client);
+  expect(fit.page).toBeLessThanOrEqual(390);
+  expect(fit.left).toBeGreaterThanOrEqual(0);
+  expect(fit.right).toBeGreaterThanOrEqual(0);
   for (const box of await tree.locator('.science-node').evaluateAll(els => els.map(e => e.getBoundingClientRect()).map(r => ({ w: r.width, h: r.height })))) {
     expect(box.w).toBeGreaterThanOrEqual(44);
     expect(box.h).toBeGreaterThanOrEqual(44);

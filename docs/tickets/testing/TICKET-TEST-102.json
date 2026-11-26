@@ -1,0 +1,124 @@
+{
+  "id": "TICKET-TEST-102",
+  "story": "STORY-121",
+  "implementation_ticket": "TICKET-IMPL-102",
+  "status": "in_progress",
+  "ai_testing": {
+    "environment": "Paikallinen Linux (2 vCPU) ilman GPU:ta, Chromium headless (Playwright 1.64, SwiftShader), vite preview, pikselisuhde 0,5 (CI=1), siemen 42; Vitest 5 Nodessa",
+    "tooling": "Vitest, Playwright",
+    "cases": [
+      {
+        "steps": "Vitest science.test: uudet keksinnöt",
+        "expected": "Kuusi keksintöä civ1:n vaatimuksin, ihmeiden ja karavaanin keksinnöt NEEDSissä, tähtitorni +100 % ja kirjaston kanssa ×3",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest cities.test ja government.test: temppeli",
+        "expected": "Temppeli rauhoittaa 1, Mystiikan tai Ennustajan kanssa 2 ja molempien kanssa 4; hinnat 300, 300, 300 ja 50",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest save.test, commands.test, codex.test ja advisors.test",
+        "expected": "Tallennuksen listat vastaavat pelin listoja, help on komento, Tietokirjan sivumäärä ja rauta-ajan keksinnöt, ja jokainen tutkimusjärjestys kattaa kaikki keksinnöt",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/iron-age.test.ts (Node, siemen 42)",
+        "expected": "Suuri kirjasto antaa kahden kilpailijan tunteman keksinnön ja ilman ihmettä ei mitään; Filosofia antaa ensimmäiselle keksinnön ja ei, kun kilpailija tunsi sen ensin; Siltojenrakennus puolittaa tien päivät; karavaani tuo tuotantonsa hintaan asti, ei maksa ylläpitoa, tallentuu ja odottaa, kun ihme ei ole kesken",
+        "result": "8 testiä läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest iron-age.test: karavaani, jonka kaupunki luopui ihmeestä (Utun löydös 1, testi ennen korjausta)",
+        "expected": "Karavaani on vapaa, ja valtion neuvonantaja vie sen pääkaupungin ihmeeseen muutamassa päivässä",
+        "result": "Ennen korjausta punainen (karavaani jäi odottamaan), korjauksen jälkeen läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest iron-age.test: tuotantovaje ja karavaani (Utun löydös 2, testi ennen korjausta)",
+        "expected": "Kaupunki hajottaa sotureita, mutta karavaani jää",
+        "result": "Ennen korjausta punainen (karavaani hajotettiin), korjauksen jälkeen läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest koko sarja ja tsc --noEmit",
+        "expected": "Vihreä, ei tyyppivirheitä",
+        "result": "66 tiedostoa, 415 testiä läpi; tsc ilman virheitä",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/run.test.ts: kultaiset tilat",
+        "expected": "Node tulee samaan tilaan kuin selain päivinä 50, 100 ja 200; roam päivä 200 kirjoitettiin selaimessa uudelleen uusien keksintöjen myötä (sanottu ääneen)",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "Vitest tests/sim/autopilot.test.ts",
+        "expected": "Valtiotaso aukeaa kaikilla kolmella tavalla, enintään noin 20 % myöhemmin kuin ennen (189, 184 ja 288)",
+        "result": "Päivät 189, 184 ja 288, ennallaan",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E caravan.e2e: Ennustajan temppeli ja karavaani yksikköpaneelista",
+        "expected": "Ihme 'vaatii: Mystiikka' ja kuvaus, karavaanin nappi 'Vie ihmeeseen: Aamuranta' vähintään 44 px, komento help, karavaani saapuu ja ihme saa vähintään 50 tuotantoa, ei konsolivirheitä",
+        "result": "Läpi; ensimmäinen ajo löysi 30 px:n napin, joka korjattiin",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E science-tree.e2e: työpöytä",
+        "expected": "Oma nappi, 21 keksintöä ja 22 viivaa, kuva, selitys ja lausahdus, valinta komentona",
+        "result": "Läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E science-tree.e2e: puhelin 390 × 844 (Sami 2026-11-26)",
+        "expected": "Puu vierii omassa laatikossaan, sivu ei vieri, valittu keksintö on näkyvissä, solmut vähintään 44 px ja nimet mahtuvat",
+        "result": "Läpi; ensimmäinen ajo löysi Siltojenrakennuksen, joka ei mahtunut solmuun (tavutus ja solmun korkeus 68 px)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "E2E advance-card, codex, wonders ja science",
+        "expected": "Vihreä uusilla keksinnöillä",
+        "result": "7 testiä läpi (9,1 min)",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI: koko sarja mainin pushissa",
+        "expected": "Vihreä",
+        "result": "Ei vielä ajettu",
+        "outcome": "not_run"
+      }
+    ],
+    "console_findings": [],
+    "screenshots": [
+      "test-results/caravan.e2e.ts-*/caravan.png ja caravan-arrived.png (paikallinen ajo)",
+      "test-results/science-tree.e2e.ts-*/science-tree.png, science-tree-phone.png ja science-tree-phone-tree.png (paikallinen ajo)"
+    ]
+  },
+  "human_acceptance": {
+    "checked_items": [
+      {
+        "item": "Rauta-ajan keksinnöt: kortti, tiedepuu ja Tietokirja kertovat vaikutukset, ja kuvat ja lausahdukset sopivat peliin",
+        "checked": false
+      },
+      {
+        "item": "Karavaani: pelaaja lähettää sen yksikköpaneelista, ja valtion neuvonantaja rakennuttaa ja lähettää karavaanit pääkaupungin ihmeeseen",
+        "checked": false
+      },
+      {
+        "item": "Puhelimella tiedepuu vierii sivuttain ja avautuu valitun keksinnön kohdalta",
+        "checked": false
+      },
+      {
+        "item": "Päätös: hukataanko karavaanin ylijäämä hinnan yli (nyt) vai jääkö se varastoon kuten Freecivissä",
+        "checked": false
+      }
+    ],
+    "decision": null,
+    "signed_by": null,
+    "date": null
+  }
+}

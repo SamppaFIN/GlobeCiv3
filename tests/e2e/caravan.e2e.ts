@@ -37,7 +37,7 @@ test('the Oracle is built with a caravan\'s help, sent from the unit panel (STOR
   const oracle = card.getByRole('radio', { name: /^Ennustajan temppeli/ });
   await expect(oracle).toContainText('vaatii: Mystiikka');
   await page.evaluate(() => { const d = (window as any).globeDebug; for (const a of ['ceremonial', 'mysticism', 'bronze', 'alphabet', 'currency', 'law', 'trade']) d.learn(a); });
-  await expect(oracle).toContainText('300 tuotantoa · Ihme: jokaisen kaupungin temppeli rauhoittaa yhden lisää');
+  await expect(oracle).toContainText('300 tuotantoa · Ihme: jokaisen kaupungin temppeli rauhoittaa neljä asukasta');
   await oracle.click();
   await expect.poll(async () => (await state(page)).cities[0].build).toBe('oracle');
   await card.getByRole('button', { name: 'Sulje' }).click();

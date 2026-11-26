@@ -420,7 +420,8 @@ export function cityDays() {
   });
   play.cities.forEach((c, i) => {
     for (let short = shortfall(c, yields[i], supportOf(c)); short; short = shortfall(c, yields[i], supportOf(c))) {
-      const own = play!.units.units.filter(u => u.home === c.id && (short === 'shield' || u.kind === 'settler'));
+      // A caravan costs no upkeep (uk_shield 0), so cutting it would not help (review by Utu)
+      const own = play!.units.units.filter(u => u.home === c.id && u.kind !== 'caravan' && (short === 'shield' || u.kind === 'settler'));
       play!.units.disband(own[own.length - 1], world);
       yields = cityYields();
     }
@@ -748,6 +749,17 @@ export function wonderCities(u: Unit): City[] {
   return play!.cities.filter(wonderShort).sort((a, b) => at.angleTo(tileCenter(a.tile)) - at.angleTo(tileCenter(b.tile)));
 }
 
+/**
+ * A caravan free to be sent: none sent yet, or its city gave up its wonder or finished it while
+ * it walked or waited (review by Utu: it waits there, but may be sent to another wonder).
+ */
+export function caravanFree(u: Unit): boolean {
+  if (u.kind !== 'caravan') return false;
+  if (u.to === undefined) return true;
+  const c = play!.cities.find(x => x.tile === u.to);
+  return !c || !wonderShort(c);
+}
+
 function helpAt(unit: number, city: number): boolean {
   const u = unitById(unit);
   const c = play!.cities.find(x => x.tile === city);
@@ -771,7 +783,7 @@ function caravanBuild(c: City, available: Build[], wanted: Build | null): Build 
   const now = wanted ?? c.build;
   if (now !== 'coinage' && now !== 'caravan') return null;
   // The shields still short, less what is on its way, waiting or being built elsewhere
-  const coming = p.units.units.filter(u => u.kind === 'caravan' && (u.to === capital.tile || u.to === undefined)).length
+  const coming = p.units.units.filter(u => u.kind === 'caravan' && (u.to === capital.tile || caravanFree(u))).length
     + p.cities.filter(x => x !== c && x.build === 'caravan').length;
   const needed = wonderShort(capital) && BUILDS[capital.build].cost - capital.shields - CARAVAN_SHIELDS * coming > 0;
   return needed ? 'caravan' : c.build === 'caravan' ? 'coinage' : null;
@@ -1595,7 +1607,7 @@ function* advisorDay(): Generator<void, void, void> {
   // The caravans waiting go to the capital's wonder (STORY-121, own)
   const capital = p.cities[0];
   if (p.stateAdvisor !== 'none' && capital && wonderShort(capital)) {
-    for (const u of p.units.units.filter(x => x.kind === 'caravan' && x.to === undefined)) {
+    for (const u of p.units.units.filter(caravanFree)) {
       if (dispatch({ kind: 'help', unit: u.id, city: capital.tile }, 'state')) advise([unitRef(u.id, u.name), ' kohti ihmettä: ', cityRef(capital.tile, capital.name)], 'state');
     }
   }

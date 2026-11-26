@@ -3,7 +3,8 @@ import { BUILDS } from '../../src/game/cities';
 import { workDays } from '../../src/game/improvements';
 import { validateSave } from '../../src/game/save';
 import { TILE_COUNT } from '../../src/globe/hexTiles';
-import { saveState, supportOf, world } from '../../src/sim/game';
+import { CARAVAN_SHIELDS, caravanFree, foundAt, saveState, supportOf, terrainOf, world } from '../../src/sim/game';
+import { neighbors } from '../../src/globe/hexTiles';
 import { ADVANCES, type Advance } from '../../src/game/science';
 import { Run, type Advisors } from '../../src/sim/run';
 
@@ -144,5 +145,42 @@ describe('the caravan (STORY-121, Freeciv civ1 Caravan: HelpWonder, uk_shield 0)
     aDay(run);
     expect(s.units.units.some(x => x.id === u.id)).toBe(false);
     expect(capital.shields - before).toBeGreaterThanOrEqual(50);
+  }, 120_000);
+
+  it('a caravan whose city gave up its wonder is free again: the advisor sends it to the capital\'s (review by Utu)', () => {
+    const run = start();
+    const s = run.state;
+    const capital = s.cities[0];
+    knowWithNeeds(s.research.known, 'trade');
+    knowWithNeeds(s.research.known, 'literacy');
+    knowWithNeeds(s.research.known, 'mysticism');
+    // A second city, its wonder given up while the caravan stood there
+    const ring2 = [...new Set(neighbors(capital.tile).flatMap(n => neighbors(n)))];
+    const land = ring2.find(t => t !== capital.tile && !neighbors(capital.tile).includes(t) && terrainOf(t) !== 'ocean')!;
+    foundAt(land);
+    const other = s.cities.find(c => c.tile === land)!;
+    other.build = 'greatlibrary';
+    other.shields = 0;
+    const u = s.units.spawn('caravan', other.tile, world, other.id);
+    expect(run.give({ kind: 'help', unit: u.id, city: other.tile })).toBe(true);
+    other.build = 'coinage';
+    capital.build = 'oracle';
+    capital.shields = 0;
+    expect(caravanFree(u)).toBe(true);
+    // Within a few days the state's advisor takes it to the capital, which gets its shields
+    for (let i = 0; i < 6 && s.units.units.some(x => x.id === u.id); i++) aDay(run);
+    expect(s.units.units.some(x => x.id === u.id)).toBe(false);
+    expect(capital.shields >= CARAVAN_SHIELDS || capital.buildings.includes('oracle')).toBe(true);
+  }, 120_000);
+
+  it('a city short of shields for its units\' upkeep keeps its caravans, which cost none (review by Utu)', () => {
+    const run = start();
+    const s = run.state;
+    const capital = s.cities[0];
+    for (let i = 0; i < 12; i++) s.units.spawn('warrior', capital.tile, world, capital.id);
+    const u = s.units.spawn('caravan', capital.tile, world, capital.id);
+    aDay(run);
+    expect(s.units.units.filter(x => x.home === capital.id && x.kind === 'warrior').length).toBeLessThan(12);
+    expect(s.units.units.some(x => x.id === u.id)).toBe(true);
   }, 120_000);
 });

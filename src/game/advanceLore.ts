@@ -30,8 +30,10 @@
  *  - Adam Smith, The Wealth of Nations (1776), book I, chapter 2 (Cannan 1904): not from the
  *    benevolence of the butcher, the brewer, or the baker
  *  - Plato, Apology 38a (Jowett 1892): the unexamined life is not worth living
- *  - Galileo, Il Saggiatore (1623) 6, from the Italian: philosophy is written in this grand
- *    book, the universe, always open to our eyes, and it is written in the language of mathematics
+ *  - Galileo, Il Saggiatore (1623) 6 (chapter 6 in Flora's Opere 1953; Edizione Nazionale VI,
+ *    p. 232), from the Italian: philosophy is written in this grand book always open to our eyes
+ *    (I mean the universe) … it is written in the language of mathematics. Two sentences, the
+ *    words between them left out and marked (review by Utu)
  *  - Caesar, The Gallic War 4.17 (McDevitte & Bohn 1869): to cross by boats he deemed neither
  *    safe enough nor worthy of his own dignity or that of the Roman people, before the bridge
  *    over the Rhine
@@ -124,7 +126,7 @@ export const ADVANCE_LORE: Record<Advance, Lore> = {
   },
   astronomy: {
     what: 'Tähtien ja planeettojen radat mitataan ja kirjataan vuodesta toiseen. Kalenteri pitää kylvöt oikeassa ajassa, ja tähtitorni tekee kaupungistaan oppineiden keskuksen.',
-    quote: { text: 'Filosofia on kirjoitettu tähän suureen kirjaan, maailmankaikkeuteen, joka on alati auki silmiemme edessä, ja se on kirjoitettu matematiikan kielellä.', who: 'Galileo Galilei', where: 'Il Saggiatore (1623), 6' },
+    quote: { text: 'Filosofia on kirjoitettu tähän suureen kirjaan, joka on alati auki silmiemme edessä (tarkoitan maailmankaikkeutta) … Se on kirjoitettu matematiikan kielellä.', who: 'Galileo Galilei', where: 'Il Saggiatore (1623), 6' },
   },
   bridges: {
     what: 'Kivestä ja puusta rakennetaan siltoja jokien ja rotkojen yli. Tie ei enää kierrä estettä, ja rakentajat oppivat tekemään tiet puolessa ajassa.',

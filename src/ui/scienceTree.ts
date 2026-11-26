@@ -11,14 +11,14 @@ import { renderRich, type Rich, type RichLinks } from './richText';
 
 const CLOSE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>';
 
-/** A node's size and the gaps between, in pixels (fit three columns in 340 px). */
+/** A node's size and the gaps between, in pixels: a two-line name fits, and a phone scrolls the tree sideways. */
 const W = 96;
-const H = 66;
+const H = 68;
 const GAP_X = 22;
 const GAP_Y = 8;
 
 /** A long compound name may break at its seam in a narrow node: "Hautajais-riitit". */
-const SEAMS = ['Hautajais', 'Laki', 'Raha', 'Pronssi', 'Rauta', 'Kartan'];
+const SEAMS = ['Hautajais', 'Laki', 'Raha', 'Pronssi', 'Rauta', 'Kartan', 'Siltojen'];
 const breakable = (name: string) => {
   const seam = SEAMS.find(p => name.startsWith(p) && name.length > p.length + 3);
   return seam ? `${seam}\u00AD${name.slice(seam.length)}` : name;
@@ -206,6 +206,14 @@ export function createScienceTree(root: HTMLElement, on: { close(): void; select
     q<HTMLElement>('.science-detail').dataset.state = s.state;
   };
 
+  // On a phone the tree scrolls sideways (Sami 2026-11-26: the whole tree has 16 columns), and
+  // it opens with the chosen advance in the middle
+  const scroller = q<HTMLElement>('.science-scroll');
+  const bring = (a: Advance | undefined) => {
+    const b = a === undefined ? undefined : nodes.get(a);
+    if (b) scroller.scrollLeft = Math.max(0, b.offsetLeft + W / 2 - scroller.clientWidth / 2);
+  };
+
   const update = (v: TreeView) => {
     const key = JSON.stringify(v);
     if (key === last) return;
@@ -226,6 +234,7 @@ export function createScienceTree(root: HTMLElement, on: { close(): void; select
       root.classList.add('science-open');
       if (opened) {
         el.scrollTop = 0;
+        bring(v.selected?.advance);
         q<HTMLElement>('#science-title').focus({ preventScroll: true });
       }
     },
