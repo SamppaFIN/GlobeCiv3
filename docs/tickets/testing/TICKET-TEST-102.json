@@ -130,6 +130,24 @@
       {
         "steps": "CI: conquest- ja unlock-korjausten jälkeinen ajo mainissa",
         "expected": "Vihreä",
+        "result": "Punainen: ajo 45908116487 (c2f4eda), 126 läpi, 2 epäonnistui ja 1 vaihteli. Epäonnistuivat unit-markers.e2e:86 (puhelin, pinossa 2 yksikköä 3:n sijaan) ja unlock.e2e:136 (aikakatkaisu tason saapumisessa). Vaihteli play.e2e:57 (sekuntia päivässä 3,2, kun raja on 1,8), joka vaihtelee myös commitissa 3a6abbe. conquest.e2e ja unlock.e2e:60 menivät läpi.",
+        "outcome": "fail"
+      },
+      {
+        "steps": "unit-markers.e2e:86: luotain paikallisesti (työpöytä vaihteli samoin)",
+        "expected": "Pinon kolme yksikköä luodaan tauolla, mutta päivä 2 oli vielä laskematta: tauko laskee kesken olevan päivän loppuun (STORY-117), ja sen loppu siirsi tiedustelijan pinosta päivän vaihtumatta. Testi odottaa nyt ennen yksiköiden luontia, että peli on tauolla eikä päivää lasketa (uusi testikoukku globeDebug.dayRunning); testiä muutettiin, sanottu ääneen",
+        "result": "Luotain toisti vian (päivä 2, tauolla, pinossa 2); korjauksen jälkeen työpöytä ja puhelin läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "unlock.e2e:136: CI:n epäonnistuneen ajon sivu (error-context.md, ajo 45908116487)",
+        "expected": "Tason kortti oli yhä auki, kun testi odotti läänitasoa: Myöhemmin-napautus osui tiedustelijan kaupunkipaikan korttiin, jossa on myös Myöhemmin, ja tason kortti tuli vasta päivän lopussa. Testi sulkee kaupunkipaikat pois ja odottaa tason korttia 60 s, ja valtion kortti odottaa samoin 60 s; testiä muutettiin, sanottu ääneen. Ei toistunut paikallisesti, joten korjaus perustuu CI:n sivun tilaan",
+        "result": "unlock.e2e ja unit-markers.e2e paikallisesti 6/6 läpi",
+        "outcome": "pass"
+      },
+      {
+        "steps": "CI: unit-markers- ja unlock.e2e:136-korjausten jälkeinen ajo mainissa",
+        "expected": "Vihreä",
         "result": "Ei vielä ajettu",
         "outcome": "not_run"
       }

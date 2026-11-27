@@ -105,6 +105,8 @@ for (const size of [{ name: 'phone', width: 390, height: 844 }, { name: 'desktop
     await page.getByRole('button', { name: 'Myöhemmin' }).click();
     await mapShare(page, 'state', 0.61);
     await page.evaluate(() => (window as any).globeDebug.rise());
+    // A day begun before the pause is still worked out, and its units would walk off the stack
+    await page.waitForFunction(() => (window as any).globeGame.state.paused && !(window as any).globeDebug.dayRunning(), null, { timeout: 60_000 });
     const stack = await page.evaluate(() => {
       const w = window as any;
       const home = Math.floor(w.globeGame.state.startCity / 49);

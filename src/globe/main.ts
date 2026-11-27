@@ -3287,6 +3287,8 @@ frameStartPlanet();
 (window as any).globeMap = { isMapped: (id: number) => mapState.isMapped(id) };
 // For tests: map tiles without waiting for the scouts
 (window as any).globeDebug = {
+  /** Whether a day is still being worked out; a pause lets it finish (STORY-117). */
+  dayRunning: () => dayRunning(),
   reveal: (ids: number[]) => reveal(ids),
   /** Every notice told lately, also those a frame of several days covered at once. */
   notices: () => [...discoveryCard.log],

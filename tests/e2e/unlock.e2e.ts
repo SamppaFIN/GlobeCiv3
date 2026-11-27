@@ -136,14 +136,20 @@ test('three ready settlements open the province level (STORY-092; the old start\
 test('four provinces held open the state level, with the state line and a target province', async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const errors = await startGame(page);
+  // A scout's city site card also has Myöhemmin, and it could come first and be closed in place of
+  // the level's card (CI 45908116487)
+  await page.evaluate(() => (window as any).globeDebug.setSiteOffers(false));
   for (let i = 0; i < 3; i++) await foundIn(page);
-  await page.getByRole('button', { name: 'Myöhemmin' }).click();
+  // The level rises at the end of a day under way (STORY-117), some seconds of frames without a GPU
+  const risen = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Kolme valmista settlementtiä: lääni avautui, zoomaa ulos' }) });
+  await expect(risen).toBeVisible({ timeout: 60_000 });
+  await risen.getByRole('button', { name: 'Myöhemmin' }).click();
   // The minus key zooms out a level once it is open
   await page.keyboard.press('-');
   await arrive(page, 2);
   // The province's goal counts the home state's provinces held: three more cities in three more
   for (let k = 1; k <= 3; k++) expect(await foundIn(page, k)).not.toBeNull();
-  await expect(page.getByRole('heading', { name: 'Valtio avautui, zoomaa ulos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Valtio avautui, zoomaa ulos' })).toBeVisible({ timeout: 60_000 });
   await page.getByRole('button', { name: 'Zoomaa ulos' }).click();
   await arrive(page, 1);
   await expect(page.locator('.chip:not([hidden])')).toHaveCount(7);
