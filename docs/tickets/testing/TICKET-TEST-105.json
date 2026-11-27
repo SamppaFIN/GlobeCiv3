@@ -70,8 +70,8 @@
       {
         "steps": "CI: koko sarja mainin pushissa",
         "expected": "Vihreä",
-        "result": "Ajossa: 45910349302 (merge 54bd74b). Siinä ovat samat unit-markers- ja unlock.e2e:136-testit, jotka epäonnistuivat ajossa 45908116487 (TICKET-TEST-102).",
-        "outcome": "not_run"
+        "result": "Punainen: ajo 45910349302 (merge 54bd74b), 127 läpi, 1 epäonnistui ja 2 vaihteli. Epäonnistui unlock.e2e:136 (sama tason saapumisen aikakatkaisu kuin ajossa 45908116487), ja vaihtelivat unit-markers.e2e:86 (työpöytä) ja play.e2e:57. Ajossa olivat vielä näiden kahden testin vanhat versiot, jotka korjattiin commitissa 1007d79 (TICKET-TEST-102); STORY-125:n omat testit menivät läpi.",
+        "outcome": "fail"
       }
     ],
     "console_findings": [],
