@@ -148,8 +148,8 @@
       {
         "steps": "CI: unit-markers- ja unlock.e2e:136-korjausten jälkeinen ajo mainissa",
         "expected": "Vihreä",
-        "result": "Ei vielä ajettu",
-        "outcome": "not_run"
+        "result": "Vihreä: ajo 45922862765 (1007d79), 130/130 läpi ilman vaihtelua (E2E 1,2 h), ja Pages julkaistiin.",
+        "outcome": "pass"
       }
     ],
     "console_findings": [],
